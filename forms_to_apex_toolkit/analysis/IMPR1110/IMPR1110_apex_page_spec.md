@@ -11,7 +11,7 @@
 | Authorization | Page: `IMPR1110_ACCESS`; function menu: `FUN_<CODE>` (§13.3) |
 | Outputs | this file + `registry/IMPR1110_registry.sql` |
 | Replaces | `apex/IMPR1110/IMPR1110_page_spec.md` (v0, written against the summary-based package) → `rollback/IMPR1110/IMPR1110_page_spec_v0.md` |
-| Status | Design only. **No APEX export generated** (step 04). Packages written, **not compiled**. |
+| Status | Design. Step 04 export generated 2026-11-18: `apex/IMPR1110/f2000_impr1110.sql` + `impr1110.js` + `import_notes.md` (**not imported**). Packages **not compiled**. |
 | Date | 2026-11-18 – Claude Code |
 
 ---

@@ -4,7 +4,7 @@
 -- Target       : Oracle APEX 21.2 / Oracle Database 12.1.0.2
 -- Author       : Claude Code
 -- Created      : 2026-11-18
--- Version      : 1.0.0
+-- Version      : 1.0.1  (step 04: STR_DB.StrFormat flag 0/1 from CIC_LIB.pld; v1.0.0 in rollback/IMPR1110/pkg_impr1110_body_v1.sql)
 -- Status       : NOT COMPILED - compile in DEV first.
 -- Conversions  : Str.DispArbMsg(s,n,..) + RAISE FTF   -> disp_arb_ftf(s,n)
 --                Str.DispArbMsg(s,n,..) (no raise)     -> disp_arb_info(s,n)
@@ -1103,10 +1103,9 @@ AS
             g_set('PORT_CD', NULL);
             g_set('IMPR_NBR', NULL);
         ELSE
-            -- STR.StrFormat(x, TRUE): client STR.pll is MISSING SOURCE; the server twin
-            -- STR_DB.StrFormat is used by the form (GET_CR_DATA) with one argument only.
-            -- TODO: verify STR_DB.StrFormat has the 2-argument overload.
-            p_rec.impr_name_std  := str_db.strformat(p_rec.arbc_impr_name, TRUE);
+            -- STR.StrFormat(x, TRUE) = STR_DB.StrFormat(x, 1)
+            -- (source: forms/COMMON/libraries/CIC_LIB.pld, package STR, FUNCTION StrFormat)
+            p_rec.impr_name_std  := str_db.strformat(p_rec.arbc_impr_name, 1);
             p_rec.arbc_impr_name := '';
         END IF;
     END importers_pre_qry;
@@ -2306,8 +2305,8 @@ AS
         IF p_ctx.letter_nbr IS NOT NULL THEN
             p_rec.hq_impr_nbr := NULL;
         END IF;
-        -- STR.StrFormat (client) -> STR_DB.StrFormat, see importers_pre_qry
-        p_rec.impr_name_std := str_db.strformat(p_rec.arbc_impr_name);
+        -- STR.StrFormat(x) = STR_DB.StrFormat(x, 0) (CIC_LIB.pld, STR.StrFormat, SRCH DEFAULT FALSE)
+        p_rec.impr_name_std := str_db.strformat(p_rec.arbc_impr_name, 0);
         insert_audit_record(p_rec, p_ctx, 'U');
         IF p_rec.bus_id_brnch IS NULL THEN
             OPEN c2_hq_nbr;
@@ -4442,7 +4441,7 @@ AS
     IS
     BEGIN
         p_rec.arbc_impr_name := str_db.removerepeat(p_rec.arbc_impr_name);
-        p_rec.impr_name_std  := str_db.strformat(p_rec.arbc_impr_name);  -- STR.STRFORMAT (client)
+        p_rec.impr_name_std  := str_db.strformat(p_rec.arbc_impr_name, 0);  -- STR.STRFORMAT = STR_DB(x, 0)
     END arbc_impr_name_wvi;
 
     -- Source: IMPORTERS.ARBC_IMPR_NAME.KEY-NEXT-ITEM

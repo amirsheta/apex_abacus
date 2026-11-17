@@ -1,172 +1,279 @@
 -- =============================================================================
 -- Package     : pkg_impr1110
--- Source      : IMPR1110.fmb (module IMPR1110_PROD_CENTRL) - "إضافة وتعديل بيانات مستورد"
--- APEX        : application IMPR, page 1110 (alias IMPR1110), region Static ID IMPORTERS
--- Purpose     : server-side logic of block IMPORTERS (validations, PRE/POST DML,
---               POST-QUERY, function-menu actions). Member names = Forms trigger names
---               (see docs/apex_structure_standard.md section 5).
--- Target      : Oracle APEX 21.2 / Oracle Database 12.1.0.2 (identifiers <= 30 bytes,
---               no JSON_OBJECT_T -> APEX_JSON).
--- Depends on  : pkg_forms_compat, and existing DB code used by the form:
+-- Source form : IMPR1110.fmb (module IMPR1110_PROD_CENTRL) - "إضافة وتعديل بيانات مستورد"
+--               XML: forms/IMPR/IMPR1110_fmb.xml
+-- Target      : Oracle APEX 21.2 / Oracle Database 12.1.0.2
+-- Author      : Claude Code
+-- Created     : 2026-11-18
+-- Version     : 1.0.0  (step 02 - logic extraction, re-done from the full trigger text)
+-- Purpose     : Business logic of block IMPORTERS, organised like the form:
+--               FORM LEVEL -> BLOCK IMPORTERS (block triggers, item triggers in item order)
+--               -> PROGRAM UNITS (same names as in Forms) -> UI state recorder.
+-- Rules       : - no reference to APEX page items: item values come in as t_rec,
+--                 :PARAMETER.* as t_ctx; :GLOBAL.* through pkg_forms_compat.get/set_global.
+--               - INTRFACE.Make_Field_Entrable / SET_ITEM_PROPERTY / GO_ITEM are recorded
+--                 (ui_* below) at the exact place Forms executes them; the page reads
+--                 ui_json after each call and applies it with a Dynamic Action.
+--               - every identifier <= 30 bytes; no 12.2+/18c+ syntax.
+-- Depends on  : pkg_forms_compat, and DB code called by the form (see extraction report §7):
 --               GNRL, STR_DB, HIJDATE_DB, ACTIVITY, DB_JOURNAL, IMPR, IMPR_CENTRAL,
---               IMPR_UTILITIES, MCISERVICE (LIB_USR schema - verify grants/synonyms).
--- Status      : NOT YET COMPILED against a real 12.1.0.2 / APEX 21.2 instance.
+--               IMPR_UTILITIES, MCISERVICE, WEB_SERVICES_GAZT (LIB_USR schema).
+-- Status      : NOT COMPILED - no 12.1.0.2 / APEX 21.2 instance was available.
+-- History     : 2026-11-18 Claude Code 1.0.0 Replaces the summary-based draft
+--               (kept in rollback/IMPR1110/pkg_impr1110_*_v0.sql).
 -- =============================================================================
 SET DEFINE OFF
 
 CREATE OR REPLACE PACKAGE pkg_impr1110
 AUTHID DEFINER
 AS
-    c_page CONSTANT PLS_INTEGER := 1110;
+    c_version CONSTANT VARCHAR2(10) := '1.0.0';
 
-    -- :PARAMETER.* of the form (session context, filled by get_ctx)
+    -- Forms ALERT_BUTTON1 / ALERT_BUTTON2 answers passed back from a Confirm DA
+    c_yes     CONSTANT PLS_INTEGER := 1;
+    c_no      CONSTANT PLS_INTEGER := 2;
+
+    -- :PARAMETER.* of the form (session context)
     TYPE t_ctx IS RECORD (
         curr_port_cd  NUMBER,          -- :PARAMETER.P_CURR_PORT_CD
         user_id       VARCHAR2(30),    -- :PARAMETER.P_USER_ID
         ws_id         VARCHAR2(30),    -- :PARAMETER.P_WS_ID
         class_cd      NUMBER,          -- :PARAMETER.P_CLASS_CD
         user_type     NUMBER,          -- :PARAMETER.P_USER_TYPE
-        prsnl_impr    NUMBER,          -- :PARAMETER.PRSNL_IMPR (default 0)
-        letter_nbr    VARCHAR2(30)     -- :PARAMETER.LETTER_NBR
+        prsnl_impr    NUMBER,          -- :PARAMETER.PRSNL_IMPR
+        letter_nbr    VARCHAR2(30),    -- :PARAMETER.LETTER_NBR
+        code          VARCHAR2(30),    -- :PARAMETER.CODE (function code set by EXEC_FUNS)
+        brkr_port_cd  NUMBER,          -- :PARAMETER.P_BRKR_PORT_CD
+        lic_type      NUMBER,          -- :PARAMETER.P_LIC_TYPE
+        brkr_nbr      NUMBER           -- :PARAMETER.P_BRKR_NBR
     );
 
-    -- One record of block IMPORTERS (DB items + non-DB items used by the logic)
+    -- One record of block IMPORTERS (all base-table items + non-DB items used by the code)
     TYPE t_rec IS RECORD (
-        port_cd            NUMBER,
+        -- Forms record context
+        row_id             VARCHAR2(18),    -- ROWID of the queried row (Forms key mode ROWID)
+        rec_status         VARCHAR2(10),    -- NEW / INSERT / QUERY / CHANGED (:SYSTEM.RECORD_STATUS)
+        activity_entr      VARCHAR2(1),     -- 'Y' = item ACTIVITY currently enabled
+        bus_id_brnch_entr  VARCHAR2(1),     -- 'Y' = item BUS_ID_BRNCH currently enabled
+        -- base-table items (DatabaseItem = Yes)
+        port_cd            importers.port_cd%TYPE,
+        hq_impr_nbr        importers.hq_impr_nbr%TYPE,
+        impr_nbr           importers.impr_nbr%TYPE,
+        bus_id_status      importers.bus_id_status%TYPE,
+        impr_type_cd       importers.impr_type_cd%TYPE,
+        bus_id_exprd_dt    importers.bus_id_exprd_dt%TYPE,     -- Hijri, mask MI-MM-YYYY
+        bus_id_type_cd     importers.bus_id_type_cd%TYPE,
+        comm_rgstrtn_type  importers.comm_rgstrtn_type%TYPE,
+        city_code_of_id    importers.city_code_of_id%TYPE,
+        bus_id             importers.bus_id%TYPE,
+        bus_id_brnch       importers.bus_id_brnch%TYPE,
+        ctry_cd            importers.ctry_cd%TYPE,
+        impr_expr_type     importers.impr_expr_type%TYPE,
+        arbc_impr_name     importers.arbc_impr_name%TYPE,
+        impr_name_std      importers.impr_name_std%TYPE,
+        lst_tran_dt        importers.lst_tran_dt%TYPE,
+        impd_stmt_nbr      importers.impd_stmt_nbr%TYPE,
+        impr_data_srce     importers.impr_data_srce%TYPE,
+        eng_impr_name      importers.eng_impr_name%TYPE,
+        impr_cntct_name    importers.impr_cntct_name%TYPE,
+        impr_address       importers.impr_address%TYPE,
+        bus_id_issue_dt    importers.bus_id_issue_dt%TYPE,     -- Hijri
+        impr_nbr_parent    importers.impr_nbr_parent%TYPE,
+        add_ctry_cd        importers.add_ctry_cd%TYPE,
+        city_code          importers.city_code%TYPE,
+        impr_pob_nbr       importers.impr_pob_nbr%TYPE,
+        impr_zip_cd        importers.impr_zip_cd%TYPE,
+        impr_tel_nbr       importers.impr_tel_nbr%TYPE,
+        impr_fax_nbr       importers.impr_fax_nbr%TYPE,
+        impr_telex_nbr     importers.impr_telex_nbr%TYPE,
+        email              importers.email%TYPE,
+        mobile_no          importers.mobile_no%TYPE,
+        bank_iban          importers.bank_iban%TYPE,
+        id_nbr             importers.id_nbr%TYPE,
+        car_agent_flag     importers.car_agent_flag%TYPE,
+        express_post       importers.express_post%TYPE,
+        ctry_cd_of_id      importers.ctry_cd_of_id%TYPE,
+        expd_stmt_nbr      importers.expd_stmt_nbr%TYPE,
+        wvr_entry_nbr      importers.wvr_entry_nbr%TYPE,
+        activity           importers.activity%TYPE,
+        customs_entered    importers.customs_entered%TYPE,
+        creation_flag      importers.creation_flag%TYPE,
+        -- non-DB items
         port_name          VARCHAR2(200),
-        hq_impr_nbr        NUMBER,
-        impr_nbr           NUMBER,
-        suspn_status       VARCHAR2(500),
+        sdp_port_status    NUMBER,
+        suspn_status       VARCHAR2(2500),
         status_desc        VARCHAR2(200),
-        impr_type_cd       NUMBER,
         impr_type_name     VARCHAR2(200),
-        bus_id_exprd_dt    DATE,            -- Hijri, mask MI-MM-YYYY
-        bus_id_type_cd     NUMBER,
         bus_id_type_name   VARCHAR2(200),
-        comm_rgstrtn_type  NUMBER,
-        ctry_cd_of_id      NUMBER,
-        city_code_of_id    NUMBER,
         id_city_name       VARCHAR2(200),
-        id_mins_comm_cd    VARCHAR2(10),
-        bus_id             VARCHAR2(15),
-        brnh_city_cd       NUMBER,          -- non-DB
-        brnh_city_name     VARCHAR2(200),   -- non-DB
-        bus_id_brnch       VARCHAR2(10),
-        ctry_cd            NUMBER,
+        id_mins_comm_cd    NUMBER,
+        l_ct_city_status2  NUMBER,
+        brnh_id_mins_comm_cd NUMBER,
+        brnh_city_cd       NUMBER,
+        brnh_city_name     VARCHAR2(200),
         crty_arbc_name     VARCHAR2(200),
-        impr_expr_type     NUMBER,
-        arbc_impr_name     VARCHAR2(200),
-        eng_impr_name      VARCHAR2(200),
-        impr_cntct_name    VARCHAR2(200),
-        impr_address       VARCHAR2(2000),
-        bus_id_issue_dt    DATE,            -- Hijri
-        impr_nbr_parent    NUMBER,
+        ctry_ctry_status   NUMBER,
+        itidt_note         VARCHAR2(200),
+        status             NUMBER,
         impr_name_parent   VARCHAR2(200),
         wasl_city_name     VARCHAR2(200),
-        add_ctry_cd        NUMBER,
         add_crty_arbc_name VARCHAR2(200),
-        city_code          NUMBER,
         city_name          VARCHAR2(200),
-        impr_pob_nbr       VARCHAR2(20),
-        impr_zip_cd        VARCHAR2(20),
-        impr_tel_nbr       VARCHAR2(20),
-        impr_fax_nbr       VARCHAR2(20),
-        impr_telex_nbr     VARCHAR2(20),
-        b_email            VARCHAR2(200),   -- screen copy of EMAIL
-        email              VARCHAR2(200),
-        b_mobile_no        VARCHAR2(20),    -- screen copy of MOBILE_NO
-        mobile_no          VARCHAR2(20),
-        b_id_nbr           VARCHAR2(20),    -- screen copy of ID_NBR
-        id_nbr             VARCHAR2(20),
-        bank_iban          VARCHAR2(34),
-        car_agent_flag     NUMBER,
-        express_post       NUMBER,
-        impr_id_type       VARCHAR2(200),
-        activity           VARCHAR2(1000),
-        bus_id_status      VARCHAR2(10),
-        impr_name_std      VARCHAR2(200),
-        lst_tran_dt        DATE,
-        impd_stmt_nbr      NUMBER,
-        impr_data_srce     NUMBER,
-        expd_stmt_nbr      NUMBER,
-        wvr_entry_nbr      NUMBER,
-        customs_entered    NUMBER,
-        creation_flag      NUMBER
+        l_ct_city_status   NUMBER,
+        b_email            VARCHAR2(200),
+        b_mobile_no        VARCHAR2(31),
+        b_id_nbr           VARCHAR2(15),
+        impr_id_type       VARCHAR2(200)
     );
 
-    -- ---------------------------------------------------------------- context
-    FUNCTION  get_ctx RETURN t_ctx;
-    FUNCTION  get_page_rec RETURN t_rec;           -- P1110_* -> t_rec
-    PROCEDURE set_page_rec (p_rec IN t_rec);       -- t_rec -> P1110_*
+    -- =========================================================================
+    -- FORM LEVEL
+    -- =========================================================================
+    -- Source: IMPR1110.WHEN-NEW-FORM-INSTANCE (business part)  APEX: Before Header process
+    PROCEDURE wnfi (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
 
-    -- ---------------------------------------------------------------- helpers (program units)
-    FUNCTION  check_idno (p_id_no IN VARCHAR2) RETURN BOOLEAN;         -- PU CHECK_IDNO
-    FUNCTION  is_digit (p_txt IN VARCHAR2) RETURN BOOLEAN;             -- PU IS_DIGIT
-    FUNCTION  fmt_hijri (p_dt IN DATE) RETURN VARCHAR2;                -- TO_CHAR(dt,'MI-MM-YYYY')
-    FUNCTION  to_hijri (p_txt IN VARCHAR2) RETURN DATE;                -- TO_DATE(txt,'MI-MM-YYYY')
-    PROCEDURE chk_impr_dupl (p_rec IN t_rec);                          -- PU CHK_IMPR_DUPL
-    PROCEDURE chk_dupl_imp_brkr (p_rec IN t_rec, p_ctx IN t_ctx);      -- PU CHK_DUPL_IMP_BRKR
-    PROCEDURE chk_personal (p_rec IN t_rec);                           -- PU CHK_PERSONAL
-    PROCEDURE insert_audit_record (p_rec IN t_rec, p_ctx IN t_ctx, p_act_type IN VARCHAR2);
-    PROCEDURE update_basic_importer (p_rec IN t_rec);                  -- PU UPDATE_BASIC_IMPORTER (no COMMIT)
-    PROCEDURE chk_comm_rgstr (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx); -- shared block of PRE-INSERT/PRE-UPDATE
-
-    -- ---------------------------------------------------------------- form triggers
-    PROCEDURE wnfi (p_ctx IN t_ctx);                                   -- WHEN-NEW-FORM-INSTANCE (globals)
-    PROCEDURE importers_wcr (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);       -- WHEN-CREATE-RECORD
-    PROCEDURE importers_post_qry (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);  -- POST-QUERY
-    FUNCTION  impr_name_std_qry (p_arbc_name IN VARCHAR2) RETURN VARCHAR2;     -- PRE-QUERY (name search)
-
-    -- ---------------------------------------------------------------- item validations (WHEN-VALIDATE-ITEM)
-    PROCEDURE impr_nbr_wvi        (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE impr_type_cd_wvi    (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
-    PROCEDURE bus_id_exprd_dt_wvi (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE comm_rgstrtn_wlc    (p_rec IN OUT NOCOPY t_rec);         -- COMM_RGSTRTN_TYPE.WHEN-LIST-CHANGED
-    PROCEDURE city_code_of_id_wvi (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE bus_id_wvi          (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
-    PROCEDURE brnh_city_cd_wvi    (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE bus_id_brnch_wvi    (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
-    PROCEDURE ctry_cd_wvi         (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE arbc_impr_name_wvi  (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE eng_impr_name_wvi   (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE bus_id_issue_dt_wvi (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE impr_nbr_parent_wvi (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
-    PROCEDURE add_ctry_cd_wvi     (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE city_code_wvi       (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE impr_tel_nbr_wvi    (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE b_email_wvi         (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE b_mobile_no_wvi     (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
-    PROCEDURE bank_iban_wvi       (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE b_id_nbr_wvi        (p_rec IN OUT NOCOPY t_rec);
-
-    -- ---------------------------------------------------------------- DML (block IMPORTERS)
-    PROCEDURE importers_pre_ins  (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
-    PROCEDURE importers_ins      (p_rec IN OUT NOCOPY t_rec);   -- Forms default INSERT
+    -- =========================================================================
+    -- BLOCK IMPORTERS - block triggers
+    -- =========================================================================
+    -- Source: IMPORTERS.WHEN-CREATE-RECORD
+    PROCEDURE importers_wcr (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
+    -- Source: IMPORTERS.WHEN-NEW-RECORD-INSTANCE (needs p_answer for IMPR1110F1/F5 Confirm)
+    PROCEDURE importers_wnri (p_rec    IN OUT NOCOPY t_rec,
+                              p_ctx    IN OUT NOCOPY t_ctx,
+                              p_answer IN PLS_INTEGER DEFAULT c_yes);
+    -- IMPR1110F1/F5 Confirm text ("سيتم تعديل الإسم إلى ...") or NULL when no Confirm is shown
+    FUNCTION  wnri_confirm_text (p_rec IN t_rec, p_ctx IN t_ctx) RETURN VARCHAR2;
+    -- Source: IMPORTERS.PRE-RECORD
+    PROCEDURE importers_pre_rec (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
+    -- Source: IMPORTERS.WHEN-CLEAR-BLOCK
+    PROCEDURE importers_wcb;
+    -- Source: IMPORTERS.PRE-QUERY (p_rec = query criteria; PORT_NAME criterion -> region SQL)
+    PROCEDURE importers_pre_qry (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
+    -- Source: IMPORTERS.POST-QUERY
+    PROCEDURE importers_post_qry (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
+    -- Source: IMPORTERS.PRE-INSERT (p_answer = answer to the class 1 / user type 3 Confirm)
+    PROCEDURE importers_pre_ins (p_rec    IN OUT NOCOPY t_rec,
+                                 p_ctx    IN t_ctx,
+                                 p_answer IN PLS_INTEGER DEFAULT c_yes);
+    -- Source: Forms default INSERT of block IMPORTERS (no ON-INSERT trigger exists)
+    PROCEDURE importers_ins (p_rec IN OUT NOCOPY t_rec);
+    -- Source: IMPORTERS.POST-INSERT
     PROCEDURE importers_post_ins (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
-    PROCEDURE importers_pre_upd  (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
-    PROCEDURE importers_upd      (p_rec IN t_rec);              -- Forms default UPDATE
-    PROCEDURE importers_post_upd (p_rec IN t_rec);
-    PROCEDURE importers_pre_del  (p_rec IN t_rec);
-    PROCEDURE importers_del      (p_rec IN t_rec);              -- KEY-DELREC
+    -- Source: IMPORTERS.PRE-UPDATE
+    PROCEDURE importers_pre_upd (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
+    -- Source: Forms default UPDATE of block IMPORTERS (key = ROWID, no ON-UPDATE trigger)
+    PROCEDURE importers_upd (p_rec IN t_rec);
+    -- Source: IMPORTERS.POST-UPDATE
+    PROCEDURE importers_post_upd (p_rec IN OUT NOCOPY t_rec);
+    -- Source: IMPORTERS.PRE-DELETE
+    PROCEDURE importers_pre_del (p_rec IN t_rec);
+    -- Source: IMPORTERS.KEY-DELREC (business part, after the Confirm DA answered "yes")
+    PROCEDURE importers_key_delrec (p_rec IN t_rec);
+    -- Source: IMPORTERS.ON-ERROR + PU CGTE$CHECK_CONSTRAINT_VIO: Forms text for a DB error.
+    -- p_op = 'I' / 'U' / 'D' (operation that failed: FRM-40508 / 40509 / 40510)
+    FUNCTION  importers_on_error (p_op      IN VARCHAR2,
+                                  p_sqlcode IN NUMBER,
+                                  p_sqlerrm IN VARCHAR2) RETURN VARCHAR2;
 
-    -- ---------------------------------------------------------------- function menu (EXEC_FUNS / ADJ_FUNS)
-    FUNCTION  fun_allowed (p_fun IN VARCHAR2, p_rec IN t_rec, p_ctx IN t_ctx) RETURN BOOLEAN;  -- ADJ_FUNS
-    FUNCTION  f1_comm_name (p_rec IN t_rec) RETURN VARCHAR2;   -- IMPR1110F1/F5: name from COMM_IMPR_RGSTR
-    PROCEDURE f3_set_type_19 (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);  -- IMPR1110F3 (class 19)
+    -- =========================================================================
+    -- BLOCK IMPORTERS - item triggers (Forms item order)
+    -- p_from_item = TRUE  when :SYSTEM.TRIGGER_ITEM = :SYSTEM.CURSOR_ITEM (user left the item)
+    --             = FALSE when the item is validated during record/commit validation
+    -- =========================================================================
+    PROCEDURE port_cd_wvi          (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE hq_impr_nbr_post_chg;
+    PROCEDURE impr_nbr_wvi         (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE impr_type_cd_wvi     (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
+    PROCEDURE impr_type_cd_post_chg(p_rec IN t_rec);
+    PROCEDURE impr_type_cd_wnii    (p_rec IN OUT NOCOPY t_rec);
+    -- LOV LOV_IMPR_TYPE return (KEY-LISTVAL after CALL_FORM)
+    PROCEDURE impr_type_cd_lov_ret (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE bus_id_exprd_dt_wvi  (p_rec IN t_rec, p_from_item IN BOOLEAN DEFAULT TRUE);
+    PROCEDURE bus_id_type_post_chg (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE comm_rgstrtn_wlc     (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE ctry_cd_of_id_wvi    (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE city_code_of_id_wvi  (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE city_code_of_id_wnii (p_rec IN t_rec);
+    -- p_cr_answer : answer to alert 9-120 (ALERT_BUTTON1 = take the prefixed number)
+    -- p_susp_answer: answer to the "suspended importer with same BUS_ID" warning
+    PROCEDURE bus_id_wvi           (p_rec         IN OUT NOCOPY t_rec,
+                                    p_ctx         IN t_ctx,
+                                    p_cr_answer   IN PLS_INTEGER DEFAULT c_yes,
+                                    p_susp_answer IN PLS_INTEGER DEFAULT c_yes);
+    -- Suspended importer number that triggers the BUS_ID warning (0 = no warning)
+    FUNCTION  bus_id_susp_impr     (p_rec IN t_rec) RETURN NUMBER;
+    PROCEDURE bus_id_post_chg;
+    PROCEDURE bus_id_wnii          (p_rec IN t_rec);
+    PROCEDURE brnh_city_cd_wvi     (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE brnh_city_cd_wnii;
+    PROCEDURE bus_id_brnch_wvi     (p_rec       IN OUT NOCOPY t_rec,
+                                    p_ctx       IN t_ctx,
+                                    p_cr_answer IN PLS_INTEGER DEFAULT c_yes);
+    PROCEDURE bus_id_brnch_post_chg;
+    PROCEDURE bus_id_brnch_wnii    (p_rec IN t_rec);
+    PROCEDURE ctry_cd_wvi          (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE impr_expr_type_post_chg;
+    PROCEDURE arbc_impr_name_wvi   (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE arbc_impr_name_key_nxt (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE eng_impr_name_wvi    (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE bus_id_issue_dt_wvi  (p_rec IN t_rec, p_from_item IN BOOLEAN DEFAULT TRUE);
+    PROCEDURE impr_nbr_parent_wvi  (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE add_ctry_cd_wvi      (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE city_code_wvi        (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE impr_tel_nbr_wvi     (p_rec IN t_rec);
+    PROCEDURE b_email_wvi          (p_rec IN t_rec, p_from_item IN BOOLEAN DEFAULT TRUE);
+    PROCEDURE b_email_post_chg     (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
+    PROCEDURE email_wvi            (p_rec IN t_rec, p_from_item IN BOOLEAN DEFAULT TRUE);
+    PROCEDURE b_mobile_no_wvi      (p_rec IN t_rec, p_ctx IN t_ctx);
+    PROCEDURE b_mobile_no_post_chg (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
+    PROCEDURE bank_iban_wvi        (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE bank_iban_wnii       (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE b_id_nbr_wvi         (p_rec IN t_rec);
+    PROCEDURE b_id_nbr_post_chg    (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
 
-    -- ---------------------------------------------------------------- UI state (INTRFACE.Make_Field_Entrable)
-    FUNCTION  ui_state_json (p_rec IN t_rec, p_ctx IN t_ctx) RETURN CLOB;
+    -- =========================================================================
+    -- PROGRAM UNITS (same names as in Forms)
+    -- =========================================================================
+    FUNCTION  check_idno (id_no IN VARCHAR2) RETURN BOOLEAN;
+    FUNCTION  is_digit (txt_num IN VARCHAR2) RETURN BOOLEAN;
+    PROCEDURE check_bus_id;
+    PROCEDURE chk_bus_id_brnch (p_rec IN t_rec);
+    PROCEDURE chk_impr_dupl (p_rec IN t_rec);
+    PROCEDURE chk_dupl_imp_brkr (p_rec IN t_rec, p_ctx IN t_ctx);
+    PROCEDURE chk_personal (p_rec          IN OUT NOCOPY t_rec,
+                            p_ctx          IN t_ctx,
+                            p_impr_type_cd IN NUMBER,
+                            p_hq_impr_nbr  IN NUMBER,
+                            p_stop         IN NUMBER DEFAULT 1);
+    PROCEDURE insert_audit_record (p_rec IN t_rec, p_ctx IN t_ctx, v_act_type IN VARCHAR2);
+    PROCEDURE update_basic_importer (p_rec IN t_rec);
+    PROCEDURE return_impr_id (p_rec IN t_rec, p_ctx IN t_ctx);
+    PROCEDURE broker_int (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE adj_funs (p_rec IN t_rec, p_ctx IN t_ctx);
+    -- Function-menu state after ADJ_FUNS: 'Y' enabled / 'N' disabled / NULL not touched
+    FUNCTION  fun_state (p_fun IN VARCHAR2) RETURN VARCHAR2;
+    PROCEDURE get_main_cr_data (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE get_branch_cr_data (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE get_cr_data (p_rec           IN OUT NOCOPY t_rec,
+                           p_string_result IN VARCHAR2,
+                           p_type          IN VARCHAR2);
+    -- EXEC_FUNS(CD): server part of every function code; UI part -> see extraction report §5
+    PROCEDURE exec_funs (p_rec IN OUT NOCOPY t_rec, p_ctx IN OUT NOCOPY t_ctx, cd IN VARCHAR2);
+    PROCEDURE create_brkr_impr_auth (p_rec IN t_rec, p_ctx IN t_ctx);
+    -- UPDATE_IMPORTER: Confirm text, then the update itself after "yes"
+    FUNCTION  update_importer_msg (p_rec IN t_rec) RETURN VARCHAR2;
+    PROCEDURE update_importer (p_rec IN t_rec);
+    -- LOV_UPDATE_MOBLIE: part after the LOV_UPDATE_IMPR_MOBILE dialog returned :GLOBAL.MOBILE_NO
+    FUNCTION  central_mobile (p_rec IN t_rec, p_ctx IN t_ctx) RETURN NUMBER;
+    PROCEDURE lov_update_moblie (p_rec IN t_rec);
 
-    -- ---------------------------------------------------------------- thin APEX wrappers
-    -- Validation "PL/SQL Function Body (returning Error Text)":
-    --     RETURN pkg_impr1110.validate_item('BUS_ID');
-    FUNCTION  validate_item (p_item IN VARCHAR2) RETURN VARCHAR2;
-    -- Process "IMPORTERS.PRE-INSERT/INSERT/POST-INSERT" etc. :  pkg_impr1110.page_dml(:REQUEST);
-    PROCEDURE page_dml (p_request IN VARCHAR2);
-    -- Before Header process "IMPORTERS.POST-QUERY": pkg_impr1110.page_fetch;
-    PROCEDURE page_fetch;
-    -- Before Header process "WHEN-NEW-FORM-INSTANCE"
-    PROCEDURE page_wnfi;
+    -- =========================================================================
+    -- UI STATE RECORDER (INTRFACE.Make_Field_Entrable / SET_ITEM_PROPERTY / GO_ITEM / alerts)
+    -- =========================================================================
+    PROCEDURE ui_reset;
+    -- {"items":[{"item":"BUS_ID","prop":"ENTRABLE","value":false},...],
+    --  "focus":"IMPR_NBR","messages":["..."],"funs":[{"fun":"IMPR1110F3","enabled":true}]}
+    FUNCTION  ui_json RETURN CLOB;
 
 END pkg_impr1110;
 /

@@ -1,0 +1,339 @@
+
+
+PACKAGE websocketJSI IS
+/******************************************************************************\
+ * websocketJSI
+ *   This package contains Forms WebSocketJSI routines. The procedures are
+ *   provided to raise requests to - initiate WebSocket server, to begin
+ *   a WebSocket session with WebSocket server and to get JavaScript code
+ *   executed by the Forms WebSocket JavaScript library running under a 
+ *   browser environment.
+ *
+ *   Note:
+ *     Changes to websocketJSI package are not permitted. Please contact
+ *     Oracle Support Services for any issues encountered while using this
+ *     package.
+\******************************************************************************/
+
+  /**
+   * StartServer - Initiates a request to start WebSocket server on given 
+   * port number. The WebSocket server will be started on the localhost
+   * where Forms client is running.
+   */
+  PROCEDURE StartServer(port NUMBER);
+
+  /**
+   * StopServer - Initiates a request to shutdown the WebSocket server.
+   */
+  PROCEDURE StopServer;
+
+  /**
+   * BeginSession - Raises a request to initiate WebSocket client session
+   * with WebSocket server. The connection request will be made on a given 
+   * port number and 'sessionId' will be assigned to the WebSocket session
+   * created by this request.
+   */
+  PROCEDURE BeginSession(port NUMBER, sessionId VARCHAR2);
+
+  /**
+   * EndSession - Terminates the WebSocket client session from WebSocket server.
+   */
+  PROCEDURE EndSession;
+
+  /**
+   * Javascript_Eval_Expr - Raises a request to evaluate a given JavaScript
+   * expression. The expression will be sent for the evaluation and the
+   * evaluated value will not be shared back with the caller. 
+   */
+  PROCEDURE Javascript_Eval_Expr(msg VARCHAR2);
+
+  /**
+   * Javascript_Eval_Function - Raises a request to evaluate a given JavaScript
+   * function or expression. The function or expression will be sent for the 
+   * evaluation and the evaluated value will be shared back with the caller. 
+   */
+  FUNCTION  Javascript_Eval_Function(msg VARCHAR2) RETURN VARCHAR2;
+
+  /**
+   * ErrorAlert - Handles the error or alert messages. It pops up alert with 
+   * a specific error message. Mainly used for throwing error when bean is
+   * not initialized.
+   */
+  PROCEDURE ErrorAlert(errText in VARCHAR2);
+
+  /**
+   * GetSessionId - Returns WebSocket client session ID. 
+   */
+  FUNCTION  GetSessionId RETURN VARCHAR2;
+
+  /**
+   * GetBeanVersion - Returns the bean version information.
+   */
+  FUNCTION  GetBeanVersion RETURN VARCHAR2;
+
+  /**
+   * ShowBeans - Displays or hides the window that actually holds the WebSocketJSI
+   * bean area. Also used for displaying the bean version.
+   */
+  PROCEDURE ShowBeans(show BOOLEAN);
+
+  /**
+   * IsServerUp - Returns the status of WebSocket server. TRUE will be returned 
+   * if server is up otherwise it will return FALSE.
+   */
+  FUNCTION  IsServerUp RETURN BOOLEAN;
+
+  /**
+   * IsSession - Returns the status of current WebSocket client session. 
+   */
+  FUNCTION  IsSession RETURN BOOLEAN;
+
+  /**
+   * IsLogging - Returns TRUE if logging is enabled otherwise FALSE will be 
+   * returned back.
+   */
+  FUNCTION  IsLogging RETURN BOOLEAN;
+
+  /**
+   * SetPort - Raises a request to set port number. 
+   */
+  PROCEDURE SetPort(port NUMBER);
+
+  /**
+   * IsPortAvailable - Returns whether a port number is available or not. The
+   * SetPort() procedure must be called before making a call to this function.
+   */
+  FUNCTION  IsPortAvailable RETURN BOOLEAN;
+
+END websocketJSI;
+
+PACKAGE BODY websocketJSI IS
+  -- Private Package Variables ------------------------------------------------------
+  /**
+   * Holds the WebSocket bean item id.
+   */
+  bean_id Item;
+
+  /**
+   * String to be displayed when WebSocket bean is not found.
+   */
+  BEAN_NOT_FOUND               CONSTANT VARCHAR2(32) := 'WEBSOCKETJSI bean not found.';
+
+  /**
+   * Holds the names of pre-packaged WebSocketJSI objects.
+   */
+  WEBSOCKETJSI_HIDDEN_WINDOW   CONSTANT VARCHAR2(32) := 'WEBSOCKETJSI_HIDDEN_WINDOW';
+  WEBSOCKETJSI_DUMMY_ITEM      CONSTANT VARCHAR2(32) := 'WEBSOCKETJSI.DUMMY';  
+  WEBSOCKETJSI_DISPLAYINFO     CONSTANT VARCHAR2(32) := 'WEBSOCKETJSI.DISPLAYINFO';
+  WEBSOCKETJSI_BEAN            CONSTANT VARCHAR2(32) := 'WEBSOCKETJSI.WEBSOCKETJSI';
+  
+  -- Private Program Units ----------------------------------------------------------
+  /**
+   * Private method to find the WebSocket bean item.
+   */
+  FUNCTION getbean RETURN Item IS
+  BEGIN
+    RETURN find_item(WEBSOCKETJSI_BEAN);
+  END;
+
+  -- Public Program Units -----------------------------------------------------------
+  PROCEDURE StartServer(port NUMBER) IS
+  BEGIN
+    bean_id := getbean;
+    IF Id_Null(bean_id) THEN
+      ErrorAlert(BEAN_NOT_FOUND);
+    ELSE
+      Set_Custom_Property( bean_id, 1, 'WSJSI_START_SERVER', port );
+    END IF;
+  END StartServer;
+
+  PROCEDURE StopServer IS
+  BEGIN
+    bean_id := getbean;
+    IF Id_Null(bean_id) THEN
+      ErrorAlert(BEAN_NOT_FOUND);
+    ELSE
+      Set_Custom_Property( bean_id, 1, 'WSJSI_STOP_SERVER', 'STOP_SERVER' ) ;
+    END IF;
+  END StopServer;
+
+  PROCEDURE BeginSession(port NUMBER, sessionId VARCHAR2) IS
+  BEGIN
+    bean_id := getbean;
+    IF Id_Null(bean_id) THEN
+      ErrorAlert(BEAN_NOT_FOUND);
+    ELSE
+      Set_Custom_Property( bean_id, 1, 'WSJSI_SET_SESSION_ID', sessionId );
+      Set_Custom_Property( bean_id, 1, 'WSJSI_BEGIN_SESSION', port ) ;
+    END IF;
+  END BeginSession;
+
+  PROCEDURE EndSession IS
+  BEGIN
+    bean_id := getbean;
+    IF Id_Null(bean_id) THEN
+      ErrorAlert(BEAN_NOT_FOUND);
+    ELSE
+      Set_Custom_Property( bean_id, 1, 'WSJSI_END_SESSION', 'DISCONNECT_SERVER' ) ;
+    END IF;
+  END EndSession;
+
+  PROCEDURE Javascript_Eval_Expr(msg VARCHAR2) IS
+  BEGIN
+    bean_id := getbean;
+    IF Id_Null(bean_id) THEN
+      ErrorAlert(BEAN_NOT_FOUND);
+    ELSE
+      Set_Custom_Property( bean_id, 1, 'WSJSI_JS_EVAL_EXPR', msg ) ;
+    END IF;
+  END Javascript_Eval_Expr;
+
+  FUNCTION Javascript_Eval_Function(msg VARCHAR2) RETURN VARCHAR2 IS
+  BEGIN
+    bean_id := getbean;
+    IF Id_Null(bean_id) THEN
+      ErrorAlert(BEAN_NOT_FOUND);
+      RETURN null;
+    ELSE
+      Set_Custom_Property( bean_id, 1, 'WSJSI_JS_EVAL_FUNCTION', msg ) ;
+      RETURN Get_Custom_Property( bean_id, 1, 'WSJSI_GET_JS_EVAL_VALUE') ;
+    END IF;
+  END Javascript_Eval_Function;
+
+  PROCEDURE ErrorAlert(errText in VARCHAR2) IS
+    ignore integer;
+    alert_item Alert;
+    BEGIN
+      alert_item := find_alert('WEBSOCKETJSI_ALERT');
+      IF not ID_NULL(alert_item) THEN 
+        SET_ALERT_PROPERTY(alert_item,ALERT_MESSAGE_TEXT,errText);
+        ignore := SHOW_ALERT(alert_item);
+      ELSE
+        message('WebSocketJSI Error'||': '||errText, NO_ACKNOWLEDGE);
+      END IF;
+    END ErrorAlert;
+ 
+
+  FUNCTION GetSessionId RETURN VARCHAR2 IS
+  BEGIN
+    bean_id := getbean;
+    IF Id_Null(bean_id) THEN
+      ErrorAlert(BEAN_NOT_FOUND);
+      RETURN null;
+    ELSE
+      RETURN Get_Custom_Property( bean_id, 1, 'WSJSI_GET_SESSION_ID') ;
+    END IF;
+  END GetSessionId;
+
+  FUNCTION GetBeanVersion RETURN VARCHAR2 IS
+  BEGIN
+    bean_id := getbean;
+    IF Id_Null(bean_id) THEN
+      ErrorAlert(BEAN_NOT_FOUND);
+      RETURN null;
+    ELSE
+      RETURN Get_Custom_Property( bean_id, 1, 'WSJSI_BEAN_VERSION') ;
+    END IF;
+  END GetBeanVersion;
+
+  PROCEDURE ShowBeans(show BOOLEAN) IS
+    hWin WINDOW := FIND_WINDOW(WEBSOCKETJSI_HIDDEN_WINDOW);
+    m_infoFrom ITEM;
+    beanVer VARCHAR2(100);
+  BEGIN
+    -- Bug 2955789 - don't attempt to do this when in Enter Query Mode
+    IF name_in('SYSTEM.MODE') = 'NORMAL' THEN 
+      IF not ID_NULL(hWin) THEN 
+        IF show THEN 
+          m_infoFrom := FIND_ITEM(name_in('SYSTEM.CURSOR_ITEM'));
+          beanVer := 'WebSocketJSI Version - '|| GetBeanVersion;
+          SET_WINDOW_PROPERTY(hWin,TITLE, beanVer);
+
+          COPY(beanVer, WEBSOCKETJSI_DISPLAYINFO);
+          SHOW_WINDOW(hWin);
+          go_item(WEBSOCKETJSI_DUMMY_ITEM);
+        ELSE
+          IF not id_null(m_infoFrom) THEN 
+              go_item(m_infoFrom);
+          END IF;
+          HIDE_WINDOW(hWin);
+        END IF;
+      END IF;
+    END IF;
+  END ShowBeans;
+
+  FUNCTION IsServerUp RETURN BOOLEAN IS
+    result VARCHAR2(32);
+  BEGIN
+    bean_id := getbean;
+    IF Id_Null(bean_id) THEN
+      ErrorAlert(BEAN_NOT_FOUND);
+      RETURN false;
+    ELSE
+      result := Get_Custom_Property( bean_id, 1, 'WSJSI_IS_SERVER_UP') ;
+      IF result = 'TRUE' THEN
+        RETURN true;
+      END IF;
+      RETURN false;
+    END IF;
+  END IsServerUp;
+
+  FUNCTION IsSession RETURN BOOLEAN IS
+    result VARCHAR2(32);
+  BEGIN
+    bean_id := getbean;
+    IF Id_Null(bean_id) THEN
+      ErrorAlert(BEAN_NOT_FOUND);
+      RETURN false;
+    ELSE
+      result := Get_Custom_Property( bean_id, 1, 'WSJSI_IS_SESSION') ;
+      IF result = 'TRUE' THEN
+        RETURN true;
+      END IF;
+     RETURN false;
+    END IF;
+  END IsSession;
+
+  FUNCTION IsLogging RETURN BOOLEAN IS
+    result VARCHAR2(32);
+  BEGIN
+    bean_id := getbean;
+    IF Id_Null(bean_id) THEN
+      ErrorAlert(BEAN_NOT_FOUND);
+      RETURN false;
+    ELSE
+      result := Get_Custom_Property( bean_id, 1, 'WSJSI_IS_LOGGING') ;
+      IF result = 'TRUE' THEN
+        RETURN true;
+      END IF;
+      RETURN false;
+    END IF;
+  END IsLogging;
+
+  PROCEDURE SetPort(port NUMBER) IS
+  BEGIN
+    bean_id := getbean;
+    IF Id_Null(bean_id) THEN
+      ErrorAlert(BEAN_NOT_FOUND);
+    ELSE
+      Set_Custom_Property( bean_id, 1, 'WSJSI_SET_PORT', port ) ;
+    END IF;
+  END SetPort;
+
+  FUNCTION IsPortAvailable RETURN BOOLEAN IS
+    result VARCHAR2(32);
+  BEGIN
+    bean_id := getbean;
+    IF Id_Null(bean_id) THEN
+      ErrorAlert(BEAN_NOT_FOUND);
+      RETURN false;
+    ELSE
+      result := Get_Custom_Property( bean_id, 1, 'WSJSI_IS_PORT_AVAILABLE') ;
+      IF result = 'TRUE' THEN
+        RETURN true;
+      END IF;
+      RETURN false;
+    END IF;
+  END IsPortAvailable;
+
+END websocketJSI;

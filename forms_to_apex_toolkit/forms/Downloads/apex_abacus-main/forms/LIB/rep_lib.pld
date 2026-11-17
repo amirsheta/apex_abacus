@@ -1,0 +1,911 @@
+.attach LIBRARY d2kwutil END NOCONFIRM
+
+
+PACKAGE ADJ_PRN IS
+
+FUNCTION ADJ_REPORT_PRINTER (MODULE_ID NUMBER, ERR_MSG OUT VARCHAR2) RETURN BOOLEAN;
+
+END;
+
+PACKAGE BODY ADJ_PRN IS
+
+
+FUNCTION ADJ_REPORT_PRINTER (MODULE_ID NUMBER, ERR_MSG OUT VARCHAR2) RETURN BOOLEAN IS
+	COMP_NAME VARCHAR2(2000);
+	PRN_PATH  VARCHAR2(2000);
+	EXE_FILE	VARCHAR2(2000);
+	REP_NAME  VARCHAR2(2000);
+BEGIN
+	BEGIN
+		SELECT SYS_OS_FILE_NAME
+		INTO REP_NAME
+		FROM SC_SYSTEM_OBJECTS
+		WHERE SYSOBJ_ID = MODULE_ID
+		;
+	EXCEPTION
+		WHEN NO_DATA_FOUND THEN
+			ERR_MSG := '·„ Ì„ﬂ‰ «·⁄ÀÊ— ⁄·Ï —„“ «· ﬁ—Ì—';
+			RETURN FALSE;
+	END;
+
+	BEGIN
+		SELECT VAR_VALUE
+		INTO EXE_FILE
+		FROM SC_PORT_SETTING
+		WHERE SYSOBJ_ID = 999
+		AND   VAR_NAME  = 'PRINTER_EXE_LOC'
+		;
+	EXCEPTION
+		WHEN NO_DATA_FOUND THEN
+			ERR_MSG := '·„ Ì„ﬂ‰ «·⁄ÀÊ— ⁄·Ï „·› ÷»ÿ «·ÿ«»⁄… «·≈› —«÷Ì…';
+			RETURN FALSE;
+	END;
+
+  BEGIN
+  	SELECT USERENV('TERMINAL')
+  	INTO   COMP_NAME
+  	FROM   DUAL
+  	;
+  EXCEPTION
+  	WHEN OTHERS THEN
+			ERR_MSG := '·„ Ì„ﬂ‰  ÕœÌœ «”„ «·ÃÂ«“ «·–Ì   „ „‰Â «·ÿ»«⁄… - —«Ã⁄ „—ﬂ“ «·„⁄·Ê„« ';
+			RETURN FALSE;
+  END;
+
+	BEGIN
+		SELECT PRINTER_PATH
+		INTO PRN_PATH
+		FROM REPORT_PRINTERS
+		WHERE TERMINAL_ID = COMP_NAME
+		AND   REPORT_NAME = REP_NAME
+		;
+	EXCEPTION
+		WHEN NO_DATA_FOUND THEN
+			NULL;
+	END;
+
+	PRN_PATH :='"' || PRN_PATH || '"';
+
+	Win_Api_Shell.WinExec(EXE_FILE || ' ' || PRN_PATH, WIN_API.SW_SHOWNORMAL, TRUE);
+
+	ERR_MSG := NULL;
+	RETURN TRUE;
+END ADJ_REPORT_PRINTER;
+
+
+END ADJ_PRN;
+
+PACKAGE BARCODE IS
+  Function Bar128AB(V_BarTextIn VARCHAR2, Subset CHAR) RETURN VARCHAR2;
+END;
+
+PACKAGE BODY BARCODE IS
+
+----------------------------------------------------------------------------------
+	Function Bar128AB(V_BarTextIn VARCHAR2, Subset CHAR) RETURN VARCHAR2 IS
+----------------------------------------------------------------------------------
+		BarTextIn      VARCHAR2(2000);
+		BarTextOut     VARCHAR2(2000);
+	  V_Sum          NUMBER;
+	  StartChar      CHAR;
+	  ThisChar       NUMBER;
+	  CharValue      NUMBER;
+	  CheckSumValue  NUMBER;
+	  CheckSum       CHAR;
+	  BarTempOut     VARCHAR2(2000);
+	BEGIN
+	-- Initialize input and output strings
+	BarTextOut := NULL;
+	BarTextIn := RTrim(LTrim(V_BarTextIn));
+	
+	-- Set up for the subset we are in
+	If Subset = 'A' Then
+	  V_Sum := 103;
+	  StartChar := '{';
+	Else
+	  V_Sum := 104;
+	  StartChar := '|';
+	End If;
+	
+	-- Calculate the checksum, mod 103 and build output string
+	For II IN 1 .. Length(BarTextIn) LOOP
+	  -- Find the ASCII value of the current character
+	  ThisChar := ASCII(SUBSTR(BarTextIn, II, 1));
+	  -- Calculate the bar code 128 value
+	  If ThisChar < 127 Then
+	    CharValue := ThisChar - 32;
+	  Else
+	    CharValue := ThisChar - 103;
+	  End If;
+	  -- add this value to sum for checksum work
+	  V_Sum := V_Sum + (CharValue * II);
+	
+	  -- Now work on output string, no spaces in TrueType fonts, quotes replaced for Word mailmerge bug
+	  If SUBSTR(BarTextIn, II, 1) = ' ' Then
+	    BarTextOut := BarTextOut || Chr(228);
+	  ElsIf ASCII(SUBSTR(BarTextIn, II, 1)) = 34 Then
+	    BarTextOut := BarTextOut || Chr(226);
+	  Else
+	    BarTextOut := BarTextOut || SUBSTR(BarTextIn, II, 1);
+	  End If;
+	END LOOP;
+	
+	-- Find the remainder when Sum is divided by 103
+	CheckSumValue := Mod(V_Sum, 103);
+	-- Translate that value to an ASCII character
+	If CheckSumValue > 90 Then
+	  CheckSum := Chr(CheckSumValue + 103);
+	ElsIf CheckSumValue > 0 Then
+	  CheckSum := Chr(CheckSumValue + 32);
+	Else			
+	  CheckSum := Chr(228);
+	End If;
+	
+	-- Build ouput string, trailing space is for Windows rasterization bug
+	BarTempOut := StartChar || BarTextOut || CheckSum || '~ ';
+	
+	-- Return the string
+	RETURN BarTempOut;
+	End Bar128AB;
+
+END BARCODE;
+
+PACKAGE HijDate IS
+ /********************************************************************/
+ /* Refere to M. Fetouh 30-04-2001*/
+  
+  PROCEDURE TO_GREG (HDATE IN DATE , GDATE IN OUT DATE );
+  PROCEDURE TO_HIJRI (GDATE IN DATE, HDATE IN OUT DATE);
+
+  FUNCTION	Cur_Hij_Date  RETURN DATE;  
+  
+  FUNCTION  Add_Hij_Days (HDATE IN DATE, days IN INTEGER) RETURN DATE;
+  FUNCTION  Add_Hij_Months (HDATE IN DATE, Months IN INTEGER) RETURN DATE;
+  
+  PROCEDURE  Add_Hij_Days (HDATE IN OUT DATE, days IN INTEGER);
+  PROCEDURE  Add_Hij_Months (HDATE IN OUT DATE, Months IN INTEGER);
+
+  FUNCTION 	Hij_Date_Diff_In_Days (HDATE1 IN  DATE, HDATE2 IN  DATE) RETURN INTEGER;
+  FUNCTION 	Hij_Date_Diff_In_Months (HDATE1 IN  DATE, HDATE2 IN  DATE) RETURN NUMBER;  
+  
+  FUNCTION 	Valid_Hij_Date (HDATE IN DATE) RETURN BOOLEAN;
+	FUNCTION 	Compare_Hij_Dates (HDATE1 IN DATE, HDATE2 IN DATE) RETURN INTEGER;
+	
+	FUNCTION  Last_Hij_Date(HDate IN DATE)RETURN DATE;
+	FUNCTION  Last_Hij_Day(HDate IN DATE)RETURN NUMBER;	
+END;
+
+PACKAGE BODY HijDate IS
+ /********************************************************************/
+ /* Refere to M. Fetouh 30-04-2001*/
+ 
+------------------------------------------------------------------------------------------
+PROCEDURE TO_GREG (HDATE IN DATE , GDATE IN OUT DATE ) IS
+------------------------------------------------------------------------------------------
+	V_DD_Num Number;
+	BGDATE date;
+	BHDATE date;
+	  
+	HALF_MONTH_DATE DATE;  
+begin
+		IF HDATE IS NOT NULL AND HIJdate.VALID_HIJ_DATE(HDate) THEN
+	  
+ 			HALF_MONTH_DATE := TO_DATE('15'||'-'||TO_CHAR(HDATE, 'MM-YYYY'),'DD-MM-YYYY');
+
+		  SELECT GREG_DATE , HIJ_DATE 
+		   INTO BGDATE , BHDATE
+		   FROM GREG_HIJ_DATES
+		   WHERE HIJ_DATE  = (SELECT MAX(HIJ_DATE)
+		                             FROM GREG_HIJ_DATES
+		                             WHERE HIJ_DATE < HALF_MONTH_DATE );
+
+	  	V_DD_Num := TO_NUMBER(TO_CHAR(HDATE,'MI'));
+
+		  GDATE := BGDATE + V_DD_Num - 1;
+  END IF;
+END TO_GREG ;
+
+
+ /********************************************************************/
+ /* Refere to M. Fetouh 30-04-2001*/
+
+------------------------------------------------------------------------------------------
+PROCEDURE TO_HIJRI (GDATE IN DATE, HDATE IN OUT DATE) IS
+------------------------------------------------------------------------------------------
+	BGDATE DATE;
+	BHDATE DATE;
+
+	BGDATE2 DATE;
+	BHDATE2 DATE;
+	V_DD_NUM NUMBER;
+	V_MM_NUM NUMBER;
+	V_YYYY_NUM NUMBER;
+
+	V_G_DD_Num INTEGER;
+	V_DD_Last_Date Number;
+	Pure_Date date;
+	
+	RET NUMBER;
+BEGIN
+	IF GDATE IS NOT NULL THEN            
+    Pure_Date := TO_DATE(TO_CHAR(GDATE, 'YYYY-MM-DD'), 'YYYY-MM-DD');
+    
+	  SELECT GREG_DATE , HIJ_DATE 
+	   INTO BGDATE , BHDATE
+	   FROM GREG_HIJ_DATES
+	   WHERE GREG_DATE   = (SELECT  MIN(GREG_DATE)
+	                        				FROM GREG_HIJ_DATES
+	                        				WHERE GREG_DATE <= Pure_Date); 
+	  SELECT GREG_DATE , HIJ_DATE 
+	   INTO BGDATE2 , BHDATE2
+	   FROM GREG_HIJ_DATES
+	   WHERE GREG_DATE   = (SELECT  MAX(GREG_DATE)
+	                        				FROM GREG_HIJ_DATES
+	                        				WHERE GREG_DATE > Pure_Date); 
+  	IF Pure_Date BETWEEN BGDATE AND BGDATE2 THEN 
+	    SELECT GREG_DATE , HIJ_DATE 
+	     INTO BGDATE , BHDATE
+	     FROM GREG_HIJ_DATES
+	     WHERE GREG_DATE   = (SELECT MAX(GREG_DATE)
+	                     			FROM GREG_HIJ_DATES
+	                          WHERE GREG_DATE <= Pure_Date );
+			V_G_DD_Num := Pure_Date - BGDATE;
+			V_DD_Last_Date := HIJDATE.Last_Hij_day(BHDATE);
+			
+		  V_DD_NUM := TO_NUMBER(TO_CHAR(BHDATE, 'DD'));
+		  V_MM_NUM := TO_NUMBER(TO_CHAR(BHDATE, 'MM'));
+		  V_YYYY_NUM := TO_NUMBER(TO_CHAR(BHDATE, 'YYYY'));
+	
+			IF (V_DD_Last_Date >= V_G_DD_Num  + 1 ) THEN
+				V_DD_NUM := V_G_DD_Num + 1;
+			ELSE
+				V_MM_NUM := V_MM_NUM + 1;
+				IF V_MM_NUM = 13 THEN  V_MM_NUM := 1; V_YYYY_NUM := V_YYYY_NUM + 1; END IF;
+				V_DD_NUM := V_G_DD_Num - V_DD_Last_Date + 1;
+			END IF;
+			HDate := TO_DATE(V_YYYY_NUM||'-'||V_MM_NUM||'-'||V_DD_NUM,'YYYY-MM-MI');
+		END IF;
+	END IF;
+
+END TO_HIJRI ;
+
+ /********************************************************************/
+ /* Refere to M. Fetouh 01-05-2001*/
+
+------------------------------------------------------------------------------------------
+FUNCTION Add_Hij_Days (HDATE IN DATE, days IN INTEGER) RETURN DATE IS
+------------------------------------------------------------------------------------------
+GDate DATE;
+GNewDate DATE;
+HNewDate DATE;
+
+BEGIN
+	To_Greg(HDATE, GDate);
+	GNewDate := GDate + days;
+	To_Hijri(GNewDate, HNewDate);
+	RETURN (HNewDate);
+END Add_Hij_Days;
+
+ /********************************************************************/
+ /* Refere to M. Fetouh 01-05-2001*/
+
+------------------------------------------------------------------------------------------
+PROCEDURE Add_Hij_Days (HDATE IN OUT DATE, days IN INTEGER) IS
+------------------------------------------------------------------------------------------
+GDate DATE;
+GNewDate DATE;
+
+BEGIN
+	To_Greg(HDATE, GDate);
+	GNewDate := GDate + days;
+	To_Hijri(GNewDate, HDATE );
+END Add_Hij_Days;
+
+ /********************************************************************/
+ /* Refere to M. Fetouh 01-05-2001*/
+
+------------------------------------------------------------------------------------------
+FUNCTION Add_Hij_Months (HDATE IN DATE, Months IN INTEGER) RETURN DATE IS
+------------------------------------------------------------------------------------------
+V_DD 		NUMBER;
+V_MM 		NUMBER;
+V_YYYY 	NUMBER; 
+
+V_MM_N 		INTEGER;
+V_YYYY_N 	INTEGER; 
+HNewDate  DATE;
+V_LAST_DAY NUMBER;
+BEGIN
+	V_DD := TO_NUMBER(TO_CHAR(HDATE, 'MI'));
+	V_MM := TO_NUMBER(TO_CHAR(HDATE, 'MM'));
+	V_YYYY := TO_NUMBER(TO_CHAR(HDATE, 'YYYY'));
+
+	V_YYYY_N := TRUNC(Months / 12);
+	V_MM_N := Mod(Months, 12);
+
+	V_MM := V_MM + V_MM_N ;
+	V_YYYY := V_YYYY + V_YYYY_N;
+
+
+	IF V_MM < 0 THEN
+		V_YYYY_N := TRUNC(V_MM / 12);
+		V_MM_N := Mod(V_MM, 12);
+
+		V_MM := 12 + V_MM_N ;
+		V_YYYY := V_YYYY + V_YYYY_N - 1;
+	END IF;
+
+	IF V_MM = 0 THEN
+		V_MM := 12 ;
+		V_YYYY := V_YYYY - 1;		
+	END IF;
+
+	IF V_MM > 12 THEN
+		V_YYYY_N := TRUNC(V_MM / 12);
+		V_MM_N := Mod(V_MM, 12);
+
+		V_MM := V_MM_N ;
+		V_YYYY := V_YYYY + V_YYYY_N;
+	END IF;
+	
+  HNewDate := TO_DATE(V_DD||'-'||V_MM||'-'||V_YYYY  , 'MI-MM-YYYY');	
+	V_LAST_DAY := Last_Hij_Day(HNewDate);
+
+	IF V_DD > V_LAST_DAY THEN
+		HNewDate := TO_DATE(V_LAST_DAY||'-'||V_MM||'-'||V_YYYY  , 'MI-MM-YYYY');
+	END IF;
+	
+  RETURN (HNewDate);
+  
+END Add_Hij_Months;
+
+
+ /********************************************************************/
+ /* Refere to M. Fetouh 01-05-2001*/
+
+------------------------------------------------------------------------------------------
+PROCEDURE Add_Hij_Months (HDATE IN OUT DATE, Months IN INTEGER) IS
+------------------------------------------------------------------------------------------
+BEGIN
+	HDATE := Add_Hij_Months(HDATE , Months);
+END Add_Hij_Months;
+
+ /********************************************************************/
+ /* Refere to M. Fetouh 01-05-2001*/
+
+------------------------------------------------------------------------------------------
+FUNCTION Hij_Date_Diff_In_Days (HDATE1 IN  DATE, HDATE2 IN  DATE) RETURN INTEGER IS
+------------------------------------------------------------------------------------------
+GDate1 DATE;
+GDate2 DATE;
+HDate11 DATE := HDATE1;
+HDate12 DATE := HDATE2;
+
+Days INTEGER;
+
+BEGIN
+	To_Greg(HDATE11, GDate1);
+	To_Greg(HDATE12, GDate2);
+	Days := GDate2 - GDate1;
+	RETURN Days;
+END Hij_Date_Diff_In_Days;
+
+
+ /********************************************************************/
+ /* Refere to M. Fetouh 01-05-2001*/
+
+------------------------------------------------------------------------------------------
+FUNCTION Hij_Date_Diff_In_Months (HDATE1 IN DATE, HDATE2 IN DATE) RETURN NUMBER IS
+------------------------------------------------------------------------------------------
+GDate1 DATE;
+GDate2 DATE;
+HDate11 DATE := HDATE1;
+HDate12 DATE := HDATE2;
+
+Months NUMBER;
+
+BEGIN
+	
+	To_Greg(HDATE11, GDate1);
+	To_Greg(HDATE12, GDate2);
+	Months := Months_Between(GDate1, GDate2);
+	RETURN Months;
+END Hij_Date_Diff_In_Months;
+
+
+ /********************************************************************/
+ /* Refere to M. Fetouh 30-04-2001*/
+
+------------------------------------------------------------------------------------------
+FUNCTION VALID_HIJ_DATE (HDate IN DATE)RETURN BOOLEAN IS
+------------------------------------------------------------------------------------------
+  V_DD_NUM NUMBER;
+  HDATE1 DATE;
+  HDATE2 DATE;
+  
+  GDATE1 DATE;
+  GDATE2 DATE;
+  
+  HALF_MONTH_DATE DATE;  
+  DATE_NUM INTEGER;
+  
+  RET    NUMBER;
+	TXT VARCHAR2(200);
+  	
+ BEGIN
+ 	HALF_MONTH_DATE := TO_DATE('15'||'-'||TO_CHAR(HDATE, 'MM-YYYY'),'DD-MM-YYYY');
+ 	
+  SELECT GREG_DATE , HIJ_DATE 
+   INTO GDATE1 , HDATE1
+   FROM GREG_HIJ_DATES
+   WHERE HIJ_DATE   = (SELECT MIN(HIJ_DATE)
+                        FROM GREG_HIJ_DATES
+                        WHERE HIJ_DATE < HALF_MONTH_DATE); 
+
+  SELECT GREG_DATE , HIJ_DATE 
+   INTO GDATE2 , HDATE2
+   FROM GREG_HIJ_DATES
+   WHERE HIJ_DATE   = (SELECT MAX(HIJ_DATE)
+                        FROM GREG_HIJ_DATES
+                        WHERE HIJ_DATE > HALF_MONTH_DATE); 
+
+  IF HALF_MONTH_DATE BETWEEN HDATE1 AND HDATE2 THEN 
+
+	  DATE_NUM := HIJDATE.LAST_HIJ_day(HDATE);
+	  V_DD_NUM := TO_NUMBER(TO_CHAR(HDATE, 'MI'));
+
+	  IF V_DD_NUM  > DATE_NUM OR V_DD_NUM <= 0 THEN
+	  	RETURN FALSE;	
+	  ELSE
+  		RETURN TRUE;
+	  END IF;
+	ELSE
+	  	RETURN FALSE;	
+  END IF;
+END Valid_Hij_Date;
+
+
+ /********************************************************************/
+ /* Refere to M. Fetouh 05-05-2001*/
+
+------------------------------------------------------------------------------------------
+FUNCTION 	Compare_Hij_Dates (HDATE1 IN DATE, HDATE2 IN DATE) RETURN INTEGER IS
+------------------------------------------------------------------------------------------
+ BEGIN
+	IF TO_CHAR(HDATE1, 'YYYY-MM-MI') < TO_CHAR(HDATE2, 'YYYY-MM-MI') THEN
+		RETURN (-1);
+	ELSIF TO_CHAR(HDATE1, 'YYYY-MM-MI') > TO_CHAR(HDATE2, 'YYYY-MM-MI') THEN
+		RETURN (1);
+	ELSIF TO_CHAR(HDATE1, 'YYYY-MM-MI') = TO_CHAR(HDATE2, 'YYYY-MM-MI') THEN
+		RETURN (0);		
+	END IF;
+
+END Compare_Hij_Dates ;
+
+
+ /********************************************************************/
+ /* Refere to M. Fetouh 30-04-2001*/
+
+------------------------------------------------------------------------------------------
+FUNCTION	Cur_Hij_Date  RETURN DATE IS
+------------------------------------------------------------------------------------------
+GDATE DATE;
+HDATE DATE;
+RET NUMBER;
+BEGIN
+ 		Select SYSDATE into GDATE from dual;
+ 		HIJDATE.To_Hijri(GDATE, HDATE);
+		RETURN(HDATE);
+END Cur_Hij_Date;
+
+ /********************************************************************/
+ /* Refere to M. Fetouh 30-04-2001*/
+
+------------------------------------------------------------------------------------------
+FUNCTION Last_Hij_Day(HDate IN DATE)RETURN NUMBER IS
+------------------------------------------------------------------------------------------
+
+  HDATE1 DATE;
+  HDATE2 DATE;
+  GDATE1 DATE;
+  GDATE2 DATE;
+
+  HALF_MONTH_DATE DATE;  
+
+  DATE_NUM INTEGER;
+  Ret NUMBER;
+
+ BEGIN
+	 	HALF_MONTH_DATE := TO_DATE('15'||'-'||TO_CHAR(HDATE, 'MM-YYYY'),'DD-MM-YYYY');
+	
+	  SELECT GREG_DATE , HIJ_DATE 
+	   INTO GDATE1 , HDATE1
+	   FROM GREG_HIJ_DATES
+	   WHERE HIJ_DATE   = (SELECT MAX(HIJ_DATE)
+	                        FROM GREG_HIJ_DATES
+	                        WHERE HIJ_DATE < HALF_MONTH_DATE); 
+	
+	  SELECT GREG_DATE , HIJ_DATE 
+	   INTO GDATE2 , HDATE2
+	   FROM GREG_HIJ_DATES
+	   WHERE HIJ_DATE   = (SELECT MIN(HIJ_DATE)
+	                        FROM GREG_HIJ_DATES
+	                        WHERE HIJ_DATE > HALF_MONTH_DATE); 
+	                             
+	  DATE_NUM := GDATE2 - GDATE1;
+		
+	  RETURN (DATE_NUM);                             
+
+END Last_Hij_Day;
+
+ /********************************************************************/
+ /* Refere to M. Fetouh 30-04-2001*/
+
+------------------------------------------------------------------------------------------
+FUNCTION Last_Hij_Date(HDate IN DATE)RETURN DATE IS
+------------------------------------------------------------------------------------------
+
+  HDATE1 DATE;
+  HDATE2 DATE;
+  GDATE1 DATE;
+  GDATE2 DATE;
+
+  HALF_MONTH_DATE DATE;  
+
+  DATE_NUM INTEGER;
+  
+  Ret NUMBER;
+	
+ BEGIN
+	 	HALF_MONTH_DATE := TO_DATE('15'||'-'||TO_CHAR(HDATE, 'MM-YYYY'),'DD-MM-YYYY');
+	
+	
+	  SELECT GREG_DATE , HIJ_DATE 
+	   INTO GDATE1 , HDATE1
+	   FROM GREG_HIJ_DATES
+	   WHERE HIJ_DATE   = (SELECT MAX(HIJ_DATE)
+	                        FROM GREG_HIJ_DATES
+	                        WHERE HIJ_DATE < HALF_MONTH_DATE); 
+	
+	
+	  SELECT GREG_DATE , HIJ_DATE 
+	   INTO GDATE2 , HDATE2
+	   FROM GREG_HIJ_DATES
+	   WHERE HIJ_DATE   = (SELECT MIN(HIJ_DATE)
+	                        FROM GREG_HIJ_DATES
+	                        WHERE HIJ_DATE > HALF_MONTH_DATE); 
+	
+	                             
+	  DATE_NUM := GDATE2 - GDATE1;
+	
+	  RETURN (TO_DATE(DATE_NUM||'-'||TO_CHAR(HDATE, 'MM-YYYY'), 'MI-MM-YYYY'));
+END Last_Hij_Date;
+
+END HijDate;
+
+
+PACKAGE REVENUE IS
+ 
+  TYPE THREE_DGT_TYPE IS TABLE OF VARCHAR2(50) index by binary_integer;
+  TYPE TWO_DGT_TYPE IS TABLE OF VARCHAR2(50) index by binary_integer;  
+  TYPE PART_WT_TYPE IS TABLE OF VARCHAR2(50) index by binary_integer;  
+
+  THREE_DGT THREE_DGT_TYPE;
+  TWO_DGT TWO_DGT_TYPE;
+  PART_WT PART_WT_TYPE ;
+  MAX_PART_NBR NUMBER;
+
+  PROCEDURE LOAD_MEANING;
+  FUNCTION MONEY_IN_TXT(V_NBR NUMBER) RETURN VARCHAR2;
+  FUNCTION NBR_IN_TXT(V_NBR NUMBER) RETURN VARCHAR2;  
+  FUNCTION GET_THREE(V_NBR_STR VARCHAR2) RETURN VARCHAR2;
+  FUNCTION GET_TWO(V_NBR_STR VARCHAR2) RETURN VARCHAR2;
+
+	FUNCTION GET_FISCAL_YEAR_START(HDATE DATE) RETURN DATE;
+	FUNCTION GET_FISCAL_YEAR_TEXT(HDATE DATE) RETURN VARCHAR2;
+
+END REVENUE;
+
+PACKAGE BODY REVENUE IS
+
+	--************************************************************
+	-- Refere  M.FETOUH 12-May-2002
+
+-------------------------------------------------------------------------------------------
+  PROCEDURE LOAD_MEANING IS
+-------------------------------------------------------------------------------------------
+  BEGIN
+		THREE_DGT(0) := NULL;
+		THREE_DGT(1) := '„«∆…';
+		THREE_DGT(2) := '„«∆ «‰';
+		THREE_DGT(3) := 'À·«À„«∆…';
+		THREE_DGT(4) := '√—»⁄„«∆…';
+		THREE_DGT(5) := 'Œ„”„«∆…';
+		THREE_DGT(6) := '” „«∆…';
+		THREE_DGT(7) := '”»⁄„«∆…';
+		THREE_DGT(8) := 'À„‰„«∆…';
+		THREE_DGT(9) := ' ”⁄„«∆…';	
+		
+		TWO_DGT(0 ) := NULL;
+		TWO_DGT(1 ) := 'Ê«Õœ';
+		TWO_DGT(2 ) := '«À‰«‰';			
+		TWO_DGT(3 ) := 'À·«À…';
+		TWO_DGT(4 ) := '«—»⁄…';			
+		TWO_DGT(5 ) := 'Œ„”…';
+		TWO_DGT(6 ) := '” …';			
+		TWO_DGT(7 ) := '”»⁄…';
+		TWO_DGT(8 ) := 'À„«‰Ì…';			
+		TWO_DGT(9 ) := ' ”⁄…';
+		TWO_DGT(10) := '⁄‘—…';			
+		TWO_DGT(11) := '√Õœ ⁄‘—…';
+		TWO_DGT(12) := '«À‰Ì ⁄‘—…';			
+		TWO_DGT(13) := 'À·«À… ⁄‘—…';
+		TWO_DGT(14) := '√—»⁄… ⁄‘—…';			
+		TWO_DGT(15) := 'Œ„”… ⁄‘—…';
+		TWO_DGT(16) := '” … ⁄‘—…';
+		TWO_DGT(17) := '”»⁄… ⁄‘—…';			
+		TWO_DGT(18) := 'À„«‰Ì… ⁄‘—…';
+		TWO_DGT(19) := ' ”⁄… ⁄‘—…';			
+		TWO_DGT(20) := '⁄‘—Ê‰';
+		TWO_DGT(21) := 'À·«ÀÊ‰';			
+		TWO_DGT(22) := '«—»⁄Ê‰';
+		TWO_DGT(23) := 'Œ„”Ê‰';			
+		TWO_DGT(24) := '” Ê‰';
+		TWO_DGT(25) := '”»⁄Ê‰';			
+		TWO_DGT(26) := 'À„«‰Ê‰';
+		TWO_DGT(27) := ' ”⁄Ê‰';			
+
+		-- M.FETOUH -- TO INCREMENT THE LEVELS JUST ADD THE NEW LEVEL NAME IN PART_WT(M)
+		-- AND BUT LAST LEVEL IN THE VARIABLE "MAX_PART_NBR" THE LEVEL MUST BE IN 1000 STEPS
+		PART_WT(1) := NULL;			
+		PART_WT(2) := '√·›';
+		PART_WT(3) := '„·ÌÊ‰';
+		PART_WT(4) := '„·Ì«—';
+		PART_WT(5) := ' —Ì·ÌÊ‰';
+		PART_WT(6) := ' ‘Ì·ÌÊ‰';
+		PART_WT(7) := '”‰ ·ÌÊ‰';						
+
+		MAX_PART_NBR := 7;
+  END LOAD_MEANING;
+  
+
+	--************************************************************
+	-- Refere  M.FETOUH 12-May-2002
+
+-------------------------------------------------------------------------------------------
+  FUNCTION MONEY_IN_TXT(V_NBR NUMBER) RETURN VARCHAR2 IS
+-------------------------------------------------------------------------------------------
+	V_LEFT_NBR_STR VARCHAR2(2000);
+	V_RIGHT_NBR_STR VARCHAR2(10);	
+	V_PART_NBR NUMBER;
+	V_LENGTH NUMBER;
+	V_LENGTH_PAD NUMBER;
+	V_CUR_PART_RSLT VARCHAR2(2000);
+	V_RESULT VARCHAR2(2000);
+	V_HALLALA_RESULT VARCHAR2(2000);	
+  BEGIN
+  	LOAD_MEANING;
+
+  	V_LEFT_NBR_STR := FLOOR(ABS(V_NBR));
+  	V_RIGHT_NBR_STR := TRUNC(ABS(V_NBR) - V_LEFT_NBR_STR, 2);
+  	V_RIGHT_NBR_STR := REPLACE(V_RIGHT_NBR_STR,'.');
+  	
+  	V_LENGTH := LENGTH(V_LEFT_NBR_STR);
+  	V_LENGTH_PAD := MOD(V_LENGTH,3);
+  	IF V_LENGTH_PAD <> 0 THEN
+  		V_LENGTH := V_LENGTH + (3-V_LENGTH_PAD);
+  	END IF;
+
+  	SELECT LPAD(V_LEFT_NBR_STR,V_LENGTH , '0') INTO V_LEFT_NBR_STR FROM DUAL;
+  	SELECT RPAD(V_RIGHT_NBR_STR, 2, '0') INTO V_RIGHT_NBR_STR FROM DUAL;  	
+  	
+  	V_PART_NBR := TRUNC(V_LENGTH / 3);
+  	
+  	IF V_PART_NBR > MAX_PART_NBR THEN
+  		RETURN NULL;
+  	END IF;
+ 		FOR I IN REVERSE 1..V_PART_NBR LOOP
+			V_CUR_PART_RSLT := GET_THREE(SUBSTR(V_LEFT_NBR_STR,((V_PART_NBR-I)*3) + 1,3));
+			IF PART_WT(I) IS NOT NULL AND V_CUR_PART_RSLT IS NOT NULL THEN
+				V_CUR_PART_RSLT := V_CUR_PART_RSLT||' '||PART_WT(I);
+			END IF;
+
+			IF V_CUR_PART_RSLT IS NOT NULL THEN
+				IF V_RESULT IS NOT NULL THEN
+					V_RESULT := V_RESULT ||' Ê '||V_CUR_PART_RSLT;
+				ELSE
+					V_RESULT := V_CUR_PART_RSLT;				
+				END IF;
+			END IF;
+ 		END LOOP;
+
+		IF V_RESULT IS NOT NULL THEN
+ 			V_RESULT := V_RESULT||' —Ì«· ';
+		END IF;
+		
+ 		V_HALLALA_RESULT := GET_TWO(V_RIGHT_NBR_STR);
+
+		IF V_HALLALA_RESULT IS NOT NULL THEN
+ 			V_HALLALA_RESULT := V_HALLALA_RESULT||' Â··Â ›ﬁÿ ·« €Ì— ';
+ 		
+			IF V_RESULT IS NOT NULL THEN
+	 			V_RESULT := V_RESULT ||' Ê '||V_HALLALA_RESULT;
+			ELSE
+	 			V_RESULT := V_HALLALA_RESULT;			
+			END IF;
+		ELSE
+ 			V_RESULT := V_RESULT||' ›ﬁÿ ·« €Ì— ';			
+		END IF;  	
+
+  	RETURN V_RESULT;  	
+  END MONEY_IN_TXT;
+
+-------------------------------------------------------------------------------------------
+  FUNCTION NBR_IN_TXT(V_NBR NUMBER) RETURN VARCHAR2 IS
+-------------------------------------------------------------------------------------------
+	V_LEFT_NBR_STR VARCHAR2(2000);
+	V_RIGHT_NBR_STR VARCHAR2(10);	
+	V_PART_NBR NUMBER;
+	V_LENGTH NUMBER;
+	V_LENGTH_PAD NUMBER;
+	V_CUR_PART_RSLT VARCHAR2(2000);
+	V_RESULT VARCHAR2(2000);
+	V_SUB_RESULT VARCHAR2(2000);	
+  BEGIN
+  	LOAD_MEANING;
+
+  	V_LEFT_NBR_STR := FLOOR(ABS(V_NBR));
+  	V_RIGHT_NBR_STR := TRUNC(ABS(V_NBR) - V_LEFT_NBR_STR, 2);
+  	V_RIGHT_NBR_STR := REPLACE(V_RIGHT_NBR_STR,'.');
+  	
+  	V_LENGTH := LENGTH(V_LEFT_NBR_STR);
+  	V_LENGTH_PAD := MOD(V_LENGTH,3);
+  	IF V_LENGTH_PAD <> 0 THEN
+  		V_LENGTH := V_LENGTH + (3-V_LENGTH_PAD);
+  	END IF;
+
+  	SELECT LPAD(V_LEFT_NBR_STR,V_LENGTH , '0') INTO V_LEFT_NBR_STR FROM DUAL;
+  	SELECT RPAD(V_RIGHT_NBR_STR, 2, '0') INTO V_RIGHT_NBR_STR FROM DUAL;  	
+  	
+  	V_PART_NBR := TRUNC(V_LENGTH / 3);
+  	
+  	IF V_PART_NBR > MAX_PART_NBR THEN
+  		RETURN NULL;
+  	END IF;
+ 		FOR I IN REVERSE 1..V_PART_NBR LOOP
+			V_CUR_PART_RSLT := GET_THREE(SUBSTR(V_LEFT_NBR_STR,((V_PART_NBR-I)*3) + 1,3));
+			IF PART_WT(I) IS NOT NULL AND V_CUR_PART_RSLT IS NOT NULL THEN
+				V_CUR_PART_RSLT := V_CUR_PART_RSLT||' '||PART_WT(I);
+			END IF;
+
+			IF V_CUR_PART_RSLT IS NOT NULL THEN
+				IF V_RESULT IS NOT NULL THEN
+					V_RESULT := V_RESULT ||' Ê '||V_CUR_PART_RSLT;
+				ELSE
+					V_RESULT := V_CUR_PART_RSLT;				
+				END IF;
+			END IF;
+ 		END LOOP;
+
+ 		V_SUB_RESULT := GET_TWO(V_RIGHT_NBR_STR);
+
+		IF V_SUB_RESULT IS NOT NULL THEN
+ 			V_SUB_RESULT := V_SUB_RESULT||' „‰ „«∆… ';
+ 		
+			IF V_RESULT IS NOT NULL THEN
+	 			V_RESULT := V_RESULT ||' Ê '||V_SUB_RESULT;
+			ELSE
+	 			V_RESULT := V_SUB_RESULT;			
+			END IF;
+		END IF;  	
+
+  	RETURN V_RESULT;  	
+  END NBR_IN_TXT;
+
+	--************************************************************
+	-- Refere  M.FETOUH 12-May-2002
+
+-------------------------------------------------------------------------------------------
+  FUNCTION GET_THREE(V_NBR_STR VARCHAR2) RETURN VARCHAR2 IS
+-------------------------------------------------------------------------------------------
+  	V_RESULT VARCHAR2(2000);
+  	V_TENS_RESULT VARCHAR2(2000);  	
+  BEGIN
+  	IF (TO_NUMBER(SUBSTR(V_NBR_STR, 1, 3)) = 0) THEN
+  		RETURN NULL;
+  	END IF;
+
+  	V_RESULT := THREE_DGT(TO_NUMBER(SUBSTR(V_NBR_STR, 1, 1)));
+  	V_TENS_RESULT := GET_TWO(SUBSTR(V_NBR_STR, 2, 2));
+	
+  	IF V_TENS_RESULT IS NOT NULL THEN
+			IF V_RESULT IS NOT NULL THEN
+				V_RESULT := V_RESULT||' Ê '||V_TENS_RESULT;
+			ELSE
+				V_RESULT := V_TENS_RESULT;				
+			END IF;
+  	END IF;
+  	
+  	RETURN V_RESULT;
+  END GET_THREE;
+  
+	--************************************************************
+	-- Refere  M.FETOUH 12-May-2002
+
+-------------------------------------------------------------------------------------------
+  FUNCTION GET_TWO(V_NBR_STR VARCHAR2) RETURN VARCHAR2 IS
+-------------------------------------------------------------------------------------------
+  	V_TENS_DGT NUMBER;
+  	V_ONES_DGT NUMBER;  	
+  	V_RESULT VARCHAR2(2000);
+  	V_ONES_RESULT VARCHAR2(2000);  	
+  BEGIN
+  	IF (TO_NUMBER(SUBSTR(V_NBR_STR, 1, 2)) = 0) THEN
+  		RETURN NULL;
+  	END IF;
+
+		V_TENS_DGT := TO_NUMBER(SUBSTR(V_NBR_STR, 1, 1));
+		V_ONES_DGT := TO_NUMBER(SUBSTR(V_NBR_STR, 2, 1));		
+
+		IF V_TENS_DGT = 1 THEN		
+			RETURN(TWO_DGT(V_ONES_DGT + 10));
+		END IF;
+		
+		V_RESULT := TWO_DGT(V_ONES_DGT);
+		
+		IF V_TENS_DGT > 1 THEN
+				IF	V_RESULT IS NOT NULL THEN
+						V_RESULT := V_RESULT||' Ê '||TWO_DGT(V_TENS_DGT+18);
+				ELSE
+						V_RESULT := TWO_DGT(V_TENS_DGT+18);
+				END IF;
+		END IF;
+	
+  	RETURN V_RESULT;
+  END GET_TWO;
+  
+  
+	--************************************************************
+	-- Refere  HESHAM ABDEL-FATTAH 8-May-2002
+
+------------------------------------------------------------------------------
+FUNCTION GET_FISCAL_YEAR_START(HDATE DATE) RETURN DATE IS
+	GDATE		DATE;
+	GYEAR		NUMBER;
+	RET_DT	DATE;
+------------------------------------------------------------------------------
+BEGIN
+	HIJDATE.TO_GREG (HDATE, GDATE);
+
+	IF TO_CHAR(GDATE, 'MM-DD') = '12-31' THEN
+		RET_DT := HDATE;
+	ELSE
+		GYEAR := TO_NUMBER(TO_CHAR(GDATE, 'YYYY'));
+		GYEAR := GYEAR - 1;
+		GDATE := TO_DATE(GYEAR || '-12-31', 'YYYY-MM-DD');
+		HIJDATE.TO_HIJRI(GDATE, RET_DT);
+	END IF;
+
+	RETURN RET_DT;
+END GET_FISCAL_YEAR_START;
+
+
+	--************************************************************
+	-- Refere  HESHAM ABDEL-FATTAH 8-May-2002
+
+------------------------------------------------------------------------------
+FUNCTION GET_FISCAL_YEAR_TEXT(HDATE DATE) RETURN VARCHAR2 IS
+	FSC_DT	DATE;
+	HYEAR		NUMBER;
+	RET			VARCHAR2(100);
+------------------------------------------------------------------------------
+BEGIN
+	FSC_DT := GET_FISCAL_YEAR_START(HDATE);
+	HYEAR  := TO_NUMBER(TO_CHAR(FSC_DT, 'YYYY'));
+	RET    := HYEAR || ' - ' || HYEAR + 1;
+
+	RETURN RET;
+END GET_FISCAL_YEAR_TEXT;
+
+
+END REVENUE;

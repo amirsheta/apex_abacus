@@ -1,0 +1,152 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Module version="122011900" xmlns="http://xmlns.oracle.com/Forms">
+   <MenuModule Name="CIC_MENU" StartupCode="NIB.MENU_ITEM_PRIV;" DirtyInfo="true" MainMenu="MAIN_MENU" MenuFilename="CIC_MENU">
+      <AttachedLibrary Name="CIC_LIB" LibraryLocation="CIC_LIB" LibrarySource="File"/>
+      <AttachedLibrary Name="CAPTION" LibraryLocation="caption" LibrarySource="File"/>
+      <AttachedLibrary Name="D2KWUTIL" LibraryLocation="d2kwutil" LibrarySource="File"/>
+      <AttachedLibrary Name="WEBUTIL" LibraryLocation="webutil" LibrarySource="File"/>
+      <Menu Name="ACTION" DirtyInfo="true" TearOffMenu="false">
+         <MenuItem Name="SAVE" Hint="تخزيــن" DirtyInfo="true" IconFilename="save" VisualAttributeName="DEFAULT" Label="تخزيــن" CommandType="PL/SQL" MenuItemCode="do_key('Commit_form');" VisibleInHorizontalMenuToolbar="true"/>
+         <MenuItem Name="CLEAR_ALL" Hint="مســـح الكــل" DirtyInfo="true" VisualAttributeName="DEFAULT" Label="مســـح الكــل" RoleCount="2" CommandType="PL/SQL" MenuItemCode="do_key('Clear_form');" DisplayNoPriv="false">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+         <MenuItem Name="SEP1" MenuItemType="Separator" Label="Sep1"/>
+         <MenuItem Name="PRINT" Hint="طباعـــة" DirtyInfo="true" IconFilename="rt_print" VisualAttributeName="DEFAULT" Label="طباعـــة" CommandType="PL/SQL" Visible="false" MenuItemCode="do_key('print');" VisibleInHorizontalMenuToolbar="false"/>
+         <MenuItem Name="PRINT_SETUP" Hint="Print Setup" MenuItemType="Magic" IconFilename="rt_pset" Label="Print Setup..." MagicItem="Page Setup (Obsolete)" MenuItemCode="null;" VisibleInHorizontalMenuToolbar="false"/>
+         <MenuItem Name="SEP2" MenuItemType="Separator" DirtyInfo="true" Label="Sep2" VisibleInHorizontalMenuToolbar="true"/>
+         <MenuItem Name="EXIT" Hint="خروج  [F8]" DirtyInfo="true" IconFilename="exit" VisualAttributeName="DEFAULT" Label="خروج  [F8]" CommandType="PL/SQL" MenuItemCode="do_key('Exit_form');" VisibleInHorizontalMenuToolbar="true"/>
+         <MenuItem Name="SEP" MenuItemType="Separator" VisibleInMenu="false" DirtyInfo="true" Label="Sep" VisibleInHorizontalMenuToolbar="true"/>
+      </Menu>
+      <Menu Name="BLOCK" DirtyInfo="true" TearOffMenu="false">
+         <MenuItem Name="PREVIOUS" Hint="Previous" VisibleInMenu="false" DirtyInfo="true" VisualAttributeName="DEFAULT" Label="Previous" RoleCount="2" CommandType="PL/SQL" MenuItemCode="do_key('Previous_block');" DisplayNoPriv="false">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+         <MenuItem Name="NEXT" Hint="Next" VisibleInMenu="false" DirtyInfo="true" VisualAttributeName="DEFAULT" Label="Next" RoleCount="2" CommandType="PL/SQL" MenuItemCode="do_key('Next_block');" DisplayNoPriv="false">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+         <MenuItem Name="CLEAR" Hint="مسح  [F3]" DirtyInfo="true" VisualAttributeName="DEFAULT" Label="مسح  [F3]" RoleCount="2" CommandType="PL/SQL" MenuItemCode="do_key('Clear_block');" DisplayNoPriv="false">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+      </Menu>
+      <Menu Name="MAIN_MENU" DirtyInfo="true" TearOffMenu="false">
+         <MenuItem Name="ACTION" Hint="إجــــراء" MenuItemType="Plain" DirtyInfo="true" VisualAttributeName="DEFAULT" Label="إجــــراء" MagicItem="None" RoleCount="2" SubMenuName="action" CommandType="Menu" DisplayNoPriv="false">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+         <MenuItem Name="EDIT" Hint="تحريـــر" MenuItemType="Plain" DirtyInfo="true" VisualAttributeName="DEFAULT" Label="تحريـــر" MagicItem="None" RoleCount="2" SubMenuName="edit" CommandType="Menu" DisplayNoPriv="false">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+         <MenuItem Name="QUERY" Hint="إستعـــلام" MenuItemType="Plain" DirtyInfo="true" VisualAttributeName="DEFAULT" Label="إستعـــلام" MagicItem="None" RoleCount="2" SubMenuName="query" CommandType="Menu" DisplayNoPriv="false">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+         <MenuItem Name="BLOCK" Hint="قطعــة" MenuItemType="Plain" DirtyInfo="true" VisualAttributeName="DEFAULT" Label="قطعــة" MagicItem="None" RoleCount="2" SubMenuName="block" CommandType="Menu" DisplayNoPriv="false">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+         <MenuItem Name="RECORD" Hint="سجــل" MenuItemType="Plain" DirtyInfo="true" VisualAttributeName="DEFAULT" Label="سجــل" MagicItem="None" RoleCount="2" SubMenuName="record" CommandType="Menu" DisplayNoPriv="false">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+         <MenuItem Name="FIELD" Hint="Field" VisibleInMenu="false" MagicItem="None" CommandType="Menu" MenuItemType="Plain" DirtyInfo="true" VisualAttributeName="DEFAULT" Label="Field" RoleCount="2" SubMenuName="field" Visible="false" DisplayNoPriv="false">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+         <MenuItem Name="WINDOW" MenuItemType="Magic" Label="Window" MagicItem="Window" CommandType="Null"/>
+         <MenuItem Name="HELP" Hint="Help" MenuItemType="Magic" DirtyInfo="true" VisualAttributeName="DEFAULT" Label="Help" MagicItem="Help" RoleCount="2" SubMenuName="help" CommandType="Menu" DisplayNoPriv="false">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+      </Menu>
+      <Menu Name="EDIT" DirtyInfo="true" TearOffMenu="false">
+         <MenuItem Name="CUT" Hint="قــص" MenuItemType="Magic" DirtyInfo="true" IconFilename="cut" VisualAttributeName="DEFAULT" Label="قــص" MagicItem="Cut" CommandType="Null" VisibleInHorizontalMenuToolbar="true"/>
+         <MenuItem Name="COPY" Hint="نســخ" MenuItemType="Magic" DirtyInfo="true" IconFilename="copy" VisualAttributeName="DEFAULT" Label="نســخ" MagicItem="Copy" CommandType="Null" VisibleInHorizontalMenuToolbar="true"/>
+         <MenuItem Name="PASTE" Hint="لصــق" MenuItemType="Magic" DirtyInfo="true" IconFilename="paste" VisualAttributeName="DEFAULT" Label="لصــق" MagicItem="Paste" CommandType="Null" VisibleInHorizontalMenuToolbar="true"/>
+         <MenuItem Name="SEP3" MenuItemType="Separator" DirtyInfo="true" Label="Sep3" CommandType="Null" VisibleInHorizontalMenuToolbar="true"/>
+         <MenuItem Name="EDIT" Hint="تحريــر" DirtyInfo="true" IconFilename="NVRBKIDF" VisualAttributeName="DEFAULT" Label="تحريــر" CommandType="PL/SQL" MenuItemCode="Edit_field;" VisibleInHorizontalMenuToolbar="true"/>
+         <MenuItem Name="LIST" Hint="قائمة  [F2]" DirtyInfo="true" IconFilename="ellipsis" VisualAttributeName="DEFAULT" Label="قائمة  [F2]" CommandType="PL/SQL" MenuItemCode="do_key('List_values');" VisibleInHorizontalMenuToolbar="true"/>
+         <MenuItem Name="SEP4" MenuItemType="Separator" DirtyInfo="true" Label="Sep3" CommandType="Null" VisibleInHorizontalMenuToolbar="true"/>
+      </Menu>
+      <Menu Name="FIELD" DirtyInfo="true" TearOffMenu="false">
+         <MenuItem Name="PREVIOUS" Hint="Previous" VisualAttributeName="DEFAULT" Label="Previous" RoleCount="2" CommandType="PL/SQL" MenuItemCode="do_key('Previous_field');" DisplayNoPriv="false">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+         <MenuItem Name="NEXT" Hint="Next" VisualAttributeName="DEFAULT" Label="Next" RoleCount="2" CommandType="PL/SQL" MenuItemCode="do_key('Next_field');" DisplayNoPriv="false">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+         <MenuItem Name="CLEAR" Hint="Clear" VisualAttributeName="DEFAULT" Label="Clear" RoleCount="2" CommandType="PL/SQL" MenuItemCode="Clear_field;" DisplayNoPriv="false">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+         <MenuItem Name="SEP8" MenuItemType="Separator" Label="Sep8"/>
+         <MenuItem Name="DUPLICATE" Hint="Duplicate" VisualAttributeName="DEFAULT" Label="Duplicate" RoleCount="2" CommandType="PL/SQL" MenuItemCode="do_key('Duplicate_field');" DisplayNoPriv="false">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+      </Menu>
+      <Menu Name="HELP" DirtyInfo="true" TearOffMenu="false">
+         <MenuItem Name="HELP" Hint="مساعدة  [F1]" DirtyInfo="true" IconFilename="help" VisualAttributeName="DEFAULT" Label="مساعدة  [F1]" CommandType="PL/SQL" MenuItemCode="--do_key('help');&amp;#10;--do_key('help');&amp;#10;DECLARE&amp;#10;BEGIN&amp;#10;DEFAULT_VALUE('','global.current_version') ;&amp;#10;if :global.current_version is not null then&amp;#10;&#x9;str.dispalert('الإصدار الحالي هو رقم :  '||:global.current_version,'INformation');&amp;#10;else&amp;#10;&#x9;&#x9;&#x9;str.dispalert(' لم يتم وضع إصدار بعد   ','INformation');&amp;#10;&#x9;&#x9;&#x9;end if;&amp;#10;END;" VisibleInHorizontalMenuToolbar="true"/>
+         <MenuItem Name="SEP9" MenuItemType="Separator" Label="Sep9"/>
+         <MenuItem Name="KEYS" Hint="Keys" VisualAttributeName="DEFAULT" Label="Keys" RoleCount="2" CommandType="PL/SQL" MenuItemCode="show_keys;" DisplayNoPriv="false">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+         <MenuItem Name="DISPLAY_ERROR" Hint="Display Error" VisualAttributeName="DEFAULT" Label="Display Error" RoleCount="2" CommandType="PL/SQL" MenuItemCode="display_error;" DisplayNoPriv="false">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+         <MenuItem Name="DEBUG" VisualAttributeName="DEFAULT" Label="Debug" RoleCount="2" CommandType="PL/SQL" MenuItemCode="break;" DisplayNoPriv="false">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+      </Menu>
+      <Menu Name="QUERY" DirtyInfo="true" TearOffMenu="false">
+         <MenuItem Name="ENTER" Hint="بحث  [F7]" DirtyInfo="true" IconFilename="entqry" VisualAttributeName="DEFAULT" Label="بحث  [F7]" CommandType="PL/SQL" MenuItemCode="enable_disable_query_items;&amp;#10;enable_disable_toolbar_items;&amp;#10;do_key('Enter_query');&amp;#10;enable_disable_regular_items;&amp;#10;" VisibleInHorizontalMenuToolbar="true"/>
+         <MenuItem Name="EXECUTE" Hint="استعلام  [F7]" DirtyInfo="true" IconFilename="exeqry" VisualAttributeName="DEFAULT" Label="استعلام  [F7]" CommandType="PL/SQL" MenuItemCode="do_key('Execute_query');" VisibleInHorizontalMenuToolbar="true"/>
+         <MenuItem Name="CANCEL" Hint="خروج  [F8]" DirtyInfo="true" IconFilename="canqry" VisualAttributeName="DEFAULT" Label="خروج  [F8]" CommandType="PL/SQL" MenuItemCode="do_key('Exit_form');" VisibleInHorizontalMenuToolbar="true"/>
+         <MenuItem Name="SEP4" MenuItemType="Separator" VisibleInMenu="false" DirtyInfo="true" Label="Sep4" VisibleInHorizontalMenuToolbar="true"/>
+         <MenuItem Name="LAST_CRITERIA" Hint="Last criteria" VisibleInMenu="false" DirtyInfo="true" VisualAttributeName="DEFAULT" Label="Last Criteria" CommandType="PL/SQL" MenuItemCode="do_key('Enter_query');"/>
+         <MenuItem Name="SEP5" MenuItemType="Separator" VisibleInMenu="false" DirtyInfo="true" Label="Sep5" VisibleInHorizontalMenuToolbar="false"/>
+         <MenuItem Name="COUNT_HITS" Hint="count Hits" VisibleInMenu="false" DirtyInfo="true" VisualAttributeName="DEFAULT" Label="Count Hits" CommandType="PL/SQL" MenuItemCode="do_key('Count_query');"/>
+         <MenuItem Name="FETCH_NEXT_SET" Hint="Fetch next set" VisibleInMenu="false" DirtyInfo="true" VisualAttributeName="DEFAULT" Label="Fetch Next Set" CommandType="PL/SQL" MenuItemCode="do_key('Next_set');"/>
+      </Menu>
+      <Menu Name="RECORD" DirtyInfo="true" TearOffMenu="false">
+         <MenuItem Name="PREVIOUS" Hint="الأول [Ctrl+PageUp]" DirtyInfo="true" IconFilename="nxtblk" VisualAttributeName="DEFAULT" Label="الأول [Ctrl+PageUp]" CommandType="PL/SQL" MenuItemCode="do_key('Previous_record');" VisibleInHorizontalMenuToolbar="true"/>
+         <MenuItem Name="SCROLL_UP" Hint="صفحة لأعلى [PageUp]" DirtyInfo="true" IconFilename="nxtrec" VisualAttributeName="DEFAULT" Label="صفحة لأعلى [PageUp]" CommandType="PL/SQL" MenuItemCode="do_key('Scroll_up');" VisibleInHorizontalMenuToolbar="true"/>
+         <MenuItem Name="SCROLL_DOWN" Hint="صفحة لأسفل [PageD]" DirtyInfo="true" IconFilename="prvrec" VisualAttributeName="DEFAULT" Label="صفحة لأسفل [PageD]" CommandType="PL/SQL" MenuItemCode="do_key('Scroll_down');" VisibleInHorizontalMenuToolbar="true"/>
+         <MenuItem Name="NEXT" Hint="الأخير [Ctrl+PageD]" DirtyInfo="true" IconFilename="prvblk" VisualAttributeName="DEFAULT" Label="الأخير [Ctrl+PageD]" CommandType="PL/SQL" MenuItemCode="do_key('Next_record');" VisibleInHorizontalMenuToolbar="true"/>
+         <MenuItem Name="SEP6" MenuItemType="Separator" DirtyInfo="true" Label="Sep6" VisibleInHorizontalMenuToolbar="true"/>
+         <MenuItem Name="INSERT" Hint="Insert Record" VisibleInMenu="false" DirtyInfo="true" IconFilename="insrec" VisualAttributeName="DEFAULT" Label="Insert" RoleCount="2" CommandType="PL/SQL" MenuItemCode="do_key('Create_record');" DisplayNoPriv="false" VisibleInHorizontalMenuToolbar="true">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+         <MenuItem Name="REMOVE" Hint="حذف  [F6]" DirtyInfo="true" IconFilename="delrec" VisualAttributeName="DEFAULT" Label="حذف  [F6]" RoleCount="2" CommandType="PL/SQL" MenuItemCode="do_key('Delete_record');" DisplayNoPriv="false" VisibleInHorizontalMenuToolbar="true">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+         <MenuItem Name="LOCK" Hint="Lock Record" VisibleInMenu="false" DirtyInfo="true" IconFilename="lockrec" VisualAttributeName="DEFAULT" Label="Lock" RoleCount="2" CommandType="PL/SQL" MenuItemCode="do_key('Lock_record');" DisplayNoPriv="false" VisibleInHorizontalMenuToolbar="true">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+         <MenuItem Name="SEP7" MenuItemType="Separator" VisibleInMenu="false" DirtyInfo="true" Label="Sep7" VisibleInHorizontalMenuToolbar="true"/>
+         <MenuItem Name="DUPLICATE" Hint="Duplicate" VisibleInMenu="false" DirtyInfo="true" VisualAttributeName="DEFAULT" Label="Duplicate" RoleCount="2" CommandType="PL/SQL" MenuItemCode="do_key('Duplicate_record');" DisplayNoPriv="false">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+         <MenuItem Name="CLEAR" Hint="Clear" VisibleInMenu="false" DirtyInfo="true" VisualAttributeName="DEFAULT" Label="Clear" RoleCount="2" CommandType="PL/SQL" MenuItemCode="do_key('Clear_record');" DisplayNoPriv="false">
+            <MenuItemRole Index="1" Value="CLERKS"/>
+            <MenuItemRole Index="2" Value="MANAGERS"/>
+         </MenuItem>
+      </Menu>
+      <ProgramUnit Name="ENABLE_DISABLE_REGULAR_ITEMS" ProgramUnitText="/*procedure enable_disable_regular_items is&amp;#10;begin&amp;#10;    disable_item('Query','Last_criteria');&amp;#10;    disable_item('Query','Cancel');&amp;#10;    enable_item('Action','Save');&amp;#10;    enable_item('Action','Exit');&amp;#10;    enable_item('Block','Previous');&amp;#10;    enable_item('Block','Next');&amp;#10;    enable_item('Record','Previous');&amp;#10;    enable_item('Record','Next');&amp;#10;    enable_item('Record','Scroll_up');&amp;#10;    enable_item('Record','Scroll_down');&amp;#10;    enable_item('Record','Insert');&amp;#10;    enable_item('Record','Duplicate');&amp;#10;    enable_item('Record','Lock');&amp;#10;end;&amp;#10;*/&amp;#10;&amp;#10;procedure enable_disable_regular_items is&amp;#10;begin&amp;#10;    SET_MENU_ITEM_PROPERTY('Query.Last_criteria', ENABLED, PROPERTY_FALSE);&amp;#10;    SET_MENU_ITEM_PROPERTY('Query.Cancel', ENABLED, PROPERTY_FALSE);&amp;#10;   &amp;#10;    &amp;#10;    SET_MENU_ITEM_PROPERTY('Action.Save', ENABLED, PROPERTY_TRUE);&amp;#10;    SET_MENU_ITEM_PROPERTY('Action.Exit', ENABLED, PROPERTY_TRUE);&amp;#10;    &amp;#10;    SET_MENU_ITEM_PROPERTY('Block.Previous', ENABLED, PROPERTY_TRUE);&amp;#10;    SET_MENU_ITEM_PROPERTY('Block.Next', ENABLED, PROPERTY_TRUE);&amp;#10;    &amp;#10;    SET_MENU_ITEM_PROPERTY('Record.Previous', ENABLED, PROPERTY_TRUE);&amp;#10;    SET_MENU_ITEM_PROPERTY('Record.Next', ENABLED, PROPERTY_TRUE);&amp;#10;    SET_MENU_ITEM_PROPERTY('Record.Scroll_up', ENABLED, PROPERTY_TRUE);&amp;#10;    SET_MENU_ITEM_PROPERTY('Record.Scroll_down', ENABLED, PROPERTY_TRUE);&amp;#10;    SET_MENU_ITEM_PROPERTY('Record.Insert', ENABLED, PROPERTY_TRUE);&amp;#10;    SET_MENU_ITEM_PROPERTY('Record.Duplicate', ENABLED, PROPERTY_TRUE);&amp;#10;    SET_MENU_ITEM_PROPERTY('Record.Lock', ENABLED, PROPERTY_TRUE);&amp;#10;end;&amp;#10;&amp;#10;" ProgramUnitType="Procedure"/>
+      <ProgramUnit Name="ENABLE_DISABLE_QUERY_ITEMS" ProgramUnitText="/*begin&amp;#10;    enable_item('Query','Last_Criteria');&amp;#10;    enable_item('Query','Cancel');&amp;#10;    disable_item('Action','Save');&amp;#10;    disable_item('Action','Exit');&amp;#10;    disable_item('Block','Previous');&amp;#10;    disable_item('Block','Next');&amp;#10;    disable_item('Record','Previous');&amp;#10;    disable_item('Record','Next');&amp;#10;    disable_item('Record','Scroll_up');&amp;#10;    disable_item('Record','Scroll_down');&amp;#10;    disable_item('Record','Insert');&amp;#10;    disable_item('Record','Duplicate');&amp;#10;    disable_item('Record','Lock');&amp;#10;end;&amp;#10;&amp;#10;*/&amp;#10;procedure enable_disable_query_items is&amp;#10;begin&amp;#10;    SET_MENU_ITEM_PROPERTY('Query.Last_Criteria', ENABLED, PROPERTY_TRUE);&amp;#10;    SET_MENU_ITEM_PROPERTY('Query.Cancel', ENABLED, PROPERTY_TRUE);&amp;#10;    &amp;#10;    SET_MENU_ITEM_PROPERTY('Action.Save', ENABLED, PROPERTY_FALSE);&amp;#10;    SET_MENU_ITEM_PROPERTY('Action.Exit', ENABLED, PROPERTY_FALSE);&amp;#10;    &amp;#10;    SET_MENU_ITEM_PROPERTY('Block.Previous', ENABLED, PROPERTY_FALSE);&amp;#10;    SET_MENU_ITEM_PROPERTY('Block.Next', ENABLED, PROPERTY_FALSE);&amp;#10;    &amp;#10;    SET_MENU_ITEM_PROPERTY('Record.Previous', ENABLED, PROPERTY_FALSE);&amp;#10;    SET_MENU_ITEM_PROPERTY('Record.Next', ENABLED, PROPERTY_FALSE);&amp;#10;    SET_MENU_ITEM_PROPERTY('Record.Scroll_up', ENABLED, PROPERTY_FALSE);&amp;#10;    SET_MENU_ITEM_PROPERTY('Record.Scroll_down', ENABLED, PROPERTY_FALSE);&amp;#10;    SET_MENU_ITEM_PROPERTY('Record.Insert', ENABLED, PROPERTY_FALSE);&amp;#10;    SET_MENU_ITEM_PROPERTY('Record.Duplicate', ENABLED, PROPERTY_FALSE);&amp;#10;    SET_MENU_ITEM_PROPERTY('Record.Lock', ENABLED, PROPERTY_FALSE);&amp;#10;    &amp;#10;&amp;#10;end;&amp;#10;&amp;#10;&amp;#10;&amp;#10;&amp;#10;&amp;#10;&amp;#10;&amp;#10;&amp;#10;" ProgramUnitType="Procedure"/>
+      <ProgramUnit Name="ENABLE_DISABLE_TOOLBAR_ITEMS" ProgramUnitText="procedure enable_disable_toolbar_items is&amp;#10;begin&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.SAVE',VISIBLE,PROPERTY_FALSE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.EXIT',VISIBLE,PROPERTY_FALSE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.CLEAR_ALL',VISIBLE,PROPERTY_FALSE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.REMOVE',VISIBLE,PROPERTY_FALSE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.LIST_VALUE',VISIBLE,PROPERTY_FALSE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.HELP',VISIBLE,PROPERTY_FALSE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.ENTER',VISIBLE,PROPERTY_FALSE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.FUN_BUT',VISIBLE,PROPERTY_FALSE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.EXIT1',VISIBLE,PROPERTY_TRUE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.LAST_REC',VISIBLE,PROPERTY_TRUE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.RE_ENTER_QUERY',VISIBLE,PROPERTY_TRUE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.FIRST_REC',VISIBLE,PROPERTY_TRUE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.PAGE_UP',VISIBLE,PROPERTY_TRUE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.PAGE_DOWN',VISIBLE,PROPERTY_TRUE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.EXECUTE',VISIBLE,PROPERTY_TRUE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.HELP',ENABLED,PROPERTY_FALSE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.EXIT1',ENABLED,PROPERTY_TRUE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.LAST_REC',ENABLED,PROPERTY_TRUE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.FIRST_REC',ENABLED,PROPERTY_TRUE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.RE_ENTER_QUERY',ENABLED,PROPERTY_TRUE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.PAGE_UP',ENABLED,PROPERTY_TRUE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.PAGE_DOWN',ENABLED,PROPERTY_TRUE);&amp;#10;SET_ITEM_PROPERTY('TOOLBAR.EXECUTE',ENABLED,PROPERTY_TRUE);&amp;#10;    &amp;#10;&amp;#10;end;" ProgramUnitType="Procedure"/>
+   </MenuModule>
+</Module>

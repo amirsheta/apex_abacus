@@ -1,0 +1,1375 @@
+.attach LIBRARY Ofgmes END NOCONFIRM
+
+
+PROCEDURE CG$CHK_PACKAGE_FAILURE IS
+/* If packaged procedure has failed then raise */
+/* FORM_TRIGGER_FAILURE */
+BEGIN
+  IF NOT FORM_SUCCESS THEN
+    RAISE FORM_TRIGGER_FAILURE;
+  END IF;
+END;
+
+
+PACKAGE cg$form_errors IS
+
+ procedure raise_failure;
+
+ procedure push(msg      in varchar2,
+                error    in varchar2 default 'I',
+                msg_type in varchar2 default '',
+                msgid    in integer  default 0,
+                loc      in varchar2 default '');
+
+
+ function  MsgGetText(p_MsgNo    in Number,
+                      p_DfltText in Varchar2 default null,
+                      p_Subst1   in Varchar2 default null,
+                      p_Subst2   in Varchar2 default null,
+                      p_Subst3   in Varchar2 default null,
+                      p_Subst4   in Varchar2 default null,
+                      p_lanId    in number   default null)
+      return varchar2;
+END;
+
+
+PACKAGE BODY cg$form_errors IS
+
+procedure raise_failure is
+begin
+  raise form_trigger_failure;
+end;
+
+procedure push(msg      in varchar2,
+               error    in varchar2 default 'I',
+               msg_type in varchar2 default '',
+               msgid    in integer  default 0,
+               loc      in varchar2 default '')
+is
+  msg_string   varchar2(1000) := msg;
+  alert_is     alert;
+  alert_button number;
+begin
+
+/* select the alert to use from the template form */
+/* according to the value in errt                 */
+if (error  = 'F')  
+then  
+  alert_is   := find_alert('CFG_SYSTEM_ERROR');
+  msg_string := 'Fatal Error: '||msg_string;   
+elsif (error  = 'E')  
+then  
+  alert_is := find_alert('CFG_ERROR');  
+  msg_string := 'Error: '||msg_string;   
+elsif (error = 'W')  
+then  
+  alert_is := find_alert('CFG_WARNING_A');  
+  msg_string := 'Warning: '||msg_string;
+elsif (error  = 'I')  
+then  
+  alert_is := find_alert('CFG_INFORMATION');  
+  msg_string := 'Information: '||msg_string;
+end if;  
+
+if (error IN ('F','E','W','I'))  
+and (not id_null(alert_is)) 
+then 
+  set_alert_property(alert_is, ALERT_MESSAGE_TEXT, msg_string );  
+  alert_button := show_alert(alert_is);  
+else
+  message(msg_string);
+end if;  
+
+end;
+
+procedure push(msg      in varchar2,
+               error    in boolean  default TRUE,
+               msg_type in varchar2 default '',
+               msgid    in integer  default 0,
+               loc      in varchar2 default '')
+is
+begin
+  message(msg);
+end;
+
+function  MsgGetText(p_MsgNo    in Number,
+                     p_DfltText in Varchar2 default null,
+                     p_Subst1   in Varchar2 default null,
+                     p_Subst2   in Varchar2 default null,
+                     p_Subst3   in Varchar2 default null,
+                     p_Subst4   in Varchar2 default null,
+                     p_lanId    in number   default null)
+     return varchar2 is
+  l_temp varchar2(1000) := p_DfltText;
+BEGIN
+
+  /* Get the message from the library */
+  /* for generator messages           */
+  if ( p_MsgNo != 0 )
+  then
+    cg$message.get_message(p_MsgNo, l_temp, p_Subst1, p_Subst2, p_Subst3, p_Subst4);
+  end if;
+
+  l_temp := replace(l_temp, '<p1>', p_Subst1);
+  l_temp := replace(l_temp, '<p2>', p_Subst2);
+  l_temp := replace(l_temp, '<p3>', p_Subst3);
+  l_temp := replace(l_temp, '<p4>', p_Subst4);
+
+  return l_temp;
+
+END;
+
+
+END;
+
+
+PACKAGE cg$globals IS
+  block_where_clause varchar2(2000) := 'first_time';
+END;
+
+
+procedure CG$QUERY_FIND (lov_name       in VARCHAR2) is  
+begin  
+  validate(record_scope);  
+  if not(FORM_SUCCESS) then  
+    go_item(name_in('SYSTEM.ERROR_BLOCK')||'.'  
+          ||name_in('SYSTEM.ERROR_ITEM'));  
+    raise FORM_TRIGGER_FAILURE;  
+  end if;  
+  
+  if show_LOV(lov_name) then  
+    do_key('clear_block');  
+    -- Make sure the clear block was successful  
+    if name_in('SYSTEM.BLOCK_STATUS') != 'NEW' then  
+      raise FORM_TRIGGER_FAILURE;  
+    end if;  
+   
+    copy('TRUE', 'parameter.CG$QUERY_FIND');  
+    do_key('Execute_Query');  
+    copy('FALSE', 'parameter.CG$QUERY_FIND');  
+  
+  end if;  
+end cg$query_find; 
+
+
+PACKAGE CGDV$REF_CODES IS
+
+  /* Hard LOV style domain validation */
+
+  /* overload the validate function for the six scenarios  */
+  /* 1) Validate char field with meaning displayed         */
+  /* 2) Validate number field with meaning displayed       */
+  /* 3) Validate date field with meaning displayed         */
+  /* 4) Validate char field                                */
+  /* 5) Validate number field                              */
+  /* 6) Validate date field                                */
+         
+  /* Validate char field with meaning displayed */
+  function val( rg_name    in     varchar2
+               ,rg_value   in out varchar2
+               ,rg_meaning in out varchar2
+               ,val_code   in     boolean
+              ) return boolean;
+         
+  /* Validate number field with meaning displayed */
+  function val( rg_name    in     varchar2
+               ,rg_value   in out number
+               ,rg_meaning in out varchar2
+               ,val_code   in     boolean
+              ) return boolean;
+  /* Validate date field with meaning displayed */
+  function val( rg_name    in     varchar2
+               ,rg_value   in out date
+               ,rg_meaning in out varchar2
+               ,fmt_mask   in     varchar2
+               ,val_code   in     boolean
+              ) return boolean;
+         
+  /* Validate char field without meaning displayed */
+  function val( rg_name    in     varchar2
+               ,rg_value   in out varchar2
+              ) return boolean;
+         
+  /* Validate number field without meaning displayed */
+  function val( rg_name    in     varchar2
+               ,rg_value   in out number
+              ) return boolean;
+
+  /* Validate date field without meaning displayed */
+  function val( rg_name    in     varchar2
+               ,rg_value   in out date
+               ,fmt_mask   in     varchar2
+              ) return boolean;
+
+
+  /* Soft LOV style domain validation */
+
+  /* overload the validate function for the three scenarios  */
+  /* 1) Validate char field with meaning displayed           */
+  /* 2) Validate number field with meaning displayed         */
+  /* 3) Validate date field with meaning displayed           */
+  /* 4) Validate char field without meaning displayed        */
+  /* 5) Validate number field without meaning displayed      */
+  /* 6) Validate date field without meaning displayed        */
+
+/* Check numeric ref codes */
+  procedure soft_val( p_value   in out number
+                     ,p_domain  in     varchar2
+                     ,p_table   in     varchar2 default null
+                    );
+
+  /* Check character ref codes */
+  procedure soft_val( p_value   in out varchar2
+                     ,p_domain  in     varchar2
+                     ,p_table   in     varchar2 default null
+                    );
+
+  /* Check date ref codes */
+  procedure soft_val( p_value   in out date
+                     ,p_domain  in     varchar2
+                     ,fmt_mask  in     varchar2
+                     ,p_table   in     varchar2 default null
+                    );
+
+  /* Check numeric ref codes */
+  procedure soft_val( p_value   in out number
+                     ,p_meaning in out varchar2
+                     ,p_domain  in     varchar2
+                     ,p_val_code  in     boolean
+                     ,p_table   in     varchar2 default null
+                    );
+
+  /* Check character ref codes */
+  procedure soft_val( p_value   in out varchar2
+                     ,p_meaning in out varchar2
+                     ,p_domain  in     varchar2
+                     ,p_val_code  in     boolean
+                     ,p_table   in     varchar2 default null
+                    );
+
+  /* Check date ref codes */
+  procedure soft_val( p_value   in out date
+                     ,p_meaning in out varchar2
+                     ,p_domain  in     varchar2
+                     ,fmt_mask  in     varchar2
+                     ,p_val_code  in     boolean
+                     ,p_table   in     varchar2 default null
+                    );
+END;
+
+
+PACKAGE BODY CGDV$REF_CODES IS
+ 
+  rg_id        RecordGroup;
+  low_value    GroupColumn;
+  high_value   GroupColumn;
+  abbreviation GroupColumn;
+  meaning      GroupColumn;
+  RowCount     Number;
+ 
+  procedure setup(rg_name in varchar2);
+ 
+ 
+/* Validate char field with meaning displayed */
+function val( rg_name    in     varchar2
+             ,rg_value   in out varchar2
+             ,rg_meaning in out varchar2
+             ,val_code   in     boolean
+            ) return boolean
+IS
+BEGIN
+  setup(rg_name);
+  /* 
+  ** Loop through the records, getting the specified column's 
+  ** value at each iteration and comparing it to 'the_value' 
+  ** passed in.  Compare the values in a case insensitive 
+  ** manner. 
+  */ 
+  FOR j IN 1..Rowcount
+  LOOP 
+    /* 
+    ** Several different scenarios here:
+    ** i)  range
+    ** ii) use abbreviation
+    */ 
+  if (val_code)
+  then
+    IF (Id_Null(high_value) )  /* High value is null - not a range */
+    THEN 
+      If (rg_value = Get_Group_Char_Cell( low_value, j ))
+      then
+ 
+        rg_meaning := Get_Group_Char_Cell( meaning, j );
+        return(TRUE);
+ 
+      elsif ((Id_Null(abbreviation) = FALSE ) 
+         and (rg_value = Get_Group_Char_Cell( abbreviation, j)))
+      then
+ 
+        rg_value   := Get_Group_Char_Cell( low_value, j );
+        rg_meaning := Get_Group_Char_Cell( meaning, j );
+        return(TRUE);
+ 
+      end if;
+    ELSE
+      /* ie it is a range */
+      if ( ( ascii(rg_value) >= ascii(Get_Group_Char_Cell( low_value, j )))
+       and ( ascii(rg_value) <= ascii(Get_Group_Char_Cell( high_value, j))) )
+      then
+        rg_meaning := Get_Group_Char_Cell( meaning, j );
+        return(TRUE);
+      end if;
+    END IF; 
+  else
+    If (rg_meaning = Get_Group_Char_Cell( meaning, j ))
+    then
+      rg_value := Get_Group_Char_Cell( low_value, j );
+      return(TRUE);
+    end if;
+  end if;
+  END LOOP; 
+ 
+  /* If we didn't find a value then set the output to NULL */
+  if (val_code)
+  then
+    rg_meaning := NULL;
+  else
+  	rg_value := NULL;
+  end if;
+  
+  return(FALSE);
+ 
+END;
+ 
+/* Validate number field with meaning displayed */
+function val( rg_name    in     varchar2
+             ,rg_value   in out number
+             ,rg_meaning in out varchar2
+             ,val_code   in     boolean
+            ) return boolean
+IS
+BEGIN
+
+  setup(rg_name); 
+  /* 
+  ** Loop through the records, getting the specified column's 
+  ** value at each iteration and comparing it to 'the_value' 
+  ** passed in.  Compare the values in a case insensitive 
+  ** manner. 
+  */ 
+  FOR j IN 1..Rowcount
+  LOOP
+  	if (val_code)
+  		then 
+	    IF (Id_Null(high_value) )  /* High value is null - not a range */
+	    THEN 
+	      If (rg_value = Get_Group_Char_Cell( low_value, j ))
+	      then
+	 
+	        rg_meaning := Get_Group_Char_Cell( meaning, j );
+	        return(TRUE);
+	 
+	      end if;
+	    ELSE
+	      /* ie it is a range */
+	      if ( ( rg_value >= to_number(Get_Group_Char_Cell( low_value, j )))
+	       and ( rg_value <= to_number(Get_Group_Char_Cell( high_value, j))) )
+	      then
+	        rg_meaning := Get_Group_Char_Cell( meaning, j );
+	        return(TRUE);
+	      end if;
+	    END IF; 
+    else
+      If (rg_meaning = Get_Group_Char_Cell( meaning, j ))
+      then
+        rg_value := Get_Group_Char_Cell( low_value, j );
+        return(TRUE);
+      end if;
+    end if;
+  END LOOP; 
+  
+  /* If we didn't find a value then set the output to NULL */
+  if (val_code)
+  then
+    rg_meaning := NULL;
+  else
+  	rg_value := NULL;
+  end if;
+  
+  return(FALSE);
+ 
+END;
+
+/* Validate date field with meaning displayed */
+function val( rg_name    in     varchar2
+             ,rg_value   in out date
+             ,rg_meaning in out varchar2
+             ,fmt_mask   in     varchar2
+             ,val_code   in     boolean
+            ) return boolean
+IS
+--  fmt_mask varchar2(200) := get_item_property(:SYSTEM.TRIGGER_ITEM, FORMAT_MASK);
+BEGIN
+  
+  setup(rg_name); 
+
+  /* 
+  ** Loop through the records, getting the specified column's 
+  ** value at each iteration and comparing it to 'the_value' 
+  ** passed in.  Compare the values in a case insensitive 
+  ** manner. 
+  */ 
+  FOR j IN 1..Rowcount
+  LOOP 
+  	if (val_code)
+  	then
+	    IF (Id_Null(high_value) )  /* High value is null - not a range */
+	    THEN 
+	      If (rg_value = to_date(Get_Group_Char_Cell( low_value,j), fmt_mask))
+	      then
+	 
+	        rg_meaning := Get_Group_Char_Cell( meaning, j );
+	        return(TRUE);
+	 
+	      end if;
+	    ELSE
+	
+	      /* ie it is a range */
+	      if ( ( rg_value >= to_date(Get_Group_Char_Cell( low_value, j ), fmt_mask))
+	       and ( rg_value <= to_date(Get_Group_Char_Cell( high_value, j), fmt_mask)) )
+	      then
+	        rg_meaning := Get_Group_Char_Cell( meaning, j );
+	        return(TRUE);
+	      end if;
+	    END IF; 
+    else
+      If (rg_meaning = Get_Group_Char_Cell( meaning, j ))
+      then
+        rg_value := Get_Group_Char_Cell( low_value, j );
+        return(TRUE);
+      end if;
+    end if;
+  END LOOP; 
+   
+  /* If we didn't find a value then set the output to NULL */
+  if (val_code)
+  then
+    rg_meaning := NULL;
+  else
+  	rg_value := NULL;
+  end if;
+  
+  return(FALSE);
+END;
+
+
+ 
+/* Validate char field without meaning displayed */
+function val( rg_name    in     varchar2
+             ,rg_value   in out varchar2
+            ) return boolean
+IS
+BEGIN
+  setup(rg_name);
+  /* 
+  ** Loop through the records, getting the specified column's 
+  ** value at each iteration and comparing it to 'the_value' 
+  ** passed in.  Compare the values in a case insensitive 
+  ** manner. 
+  */ 
+  FOR j IN 1..Rowcount
+  LOOP 
+    /* 
+    ** Several different scenarios here:
+    ** i)  range
+    ** ii) use abbreviation
+    */ 
+    IF (Id_Null(high_value) )  /* High value is null - not a range */
+    THEN 
+      If (rg_value = Get_Group_Char_Cell( low_value, j ))
+      then
+        return(TRUE);
+      elsif ((Id_Null(abbreviation) = FALSE ) 
+         and (rg_value = Get_Group_Char_Cell( abbreviation, j)))
+      then
+        rg_value   := Get_Group_Char_Cell( low_value, j );
+        return(TRUE);
+      end if;
+    ELSE
+      /* ie it is a range */
+      if ( ( ascii(rg_value) >= ascii(Get_Group_Char_Cell( low_value, j )))
+       and ( ascii(rg_value) <= ascii(Get_Group_Char_Cell( high_value, j))) )
+      then
+        return(TRUE);
+      end if;
+    END IF; 
+  END LOOP; 
+ 
+  return(FALSE);
+ 
+END;
+ 
+/* Validate number field without meaning displayed */
+function val( rg_name    in     varchar2
+             ,rg_value   in out number
+            ) return boolean
+IS
+BEGIN
+  setup(rg_name); 
+  /* 
+  ** Loop through the records, getting the specified column's 
+  ** value at each iteration and comparing it to 'the_value' 
+  ** passed in.  Compare the values in a case insensitive 
+  ** manner. 
+  */ 
+  FOR j IN 1..Rowcount
+  LOOP 
+    IF (Id_Null(high_value) )  /* High value is null - not a range */
+    THEN 
+      If (rg_value = Get_Group_Char_Cell( low_value, j ))
+      then
+        return(TRUE);
+      end if;
+    ELSE
+      /* ie it is a range */
+      if ( ( rg_value >= to_number(Get_Group_Char_Cell( low_value, j )))
+       and ( rg_value <= to_number(Get_Group_Char_Cell( high_value, j))) )
+      then
+         return(TRUE);
+      end if;
+    END IF; 
+  END LOOP; 
+ 
+  return(FALSE);
+ 
+END;
+ 
+/* Validate date field without meaning displayed */
+function val( rg_name    in     varchar2
+             ,rg_value   in out date
+             ,fmt_mask   in     varchar2
+            ) return boolean
+IS
+--  fmt_mask varchar2(200) := get_item_property(:SYSTEM.TRIGGER_ITEM, FORMAT_MASK);
+BEGIN
+  setup(rg_name); 
+  /* 
+  ** Loop through the records, getting the specified column's 
+  ** value at each iteration and comparing it to 'the_value' 
+  ** passed in.  Compare the values in a case insensitive 
+  ** manner. 
+  */ 
+  FOR j IN 1..Rowcount
+  LOOP 
+    IF (Id_Null(high_value) )  /* High value is null - not a range */
+    THEN 
+      If (rg_value = to_date(Get_Group_Char_Cell(low_value, j), fmt_mask))
+      then
+        return(TRUE);
+      end if;
+    ELSE
+      /* ie it is a range */
+      if ( ( rg_value >= to_date(Get_Group_Char_Cell( low_value, j ), fmt_mask))
+       and ( rg_value <= to_date(Get_Group_Char_Cell( high_value, j), fmt_mask)) )
+      then
+         return(TRUE);
+      end if;
+    END IF; 
+  END LOOP; 
+ 
+  return(FALSE);
+ 
+END;
+  
+/* Do the common stuff */
+procedure setup(rg_name in varchar2)
+IS
+BEGIN
+  rg_id := Find_Group(rg_name);
+  
+  IF Id_Null(rg_id) 
+  THEN 
+    Message('Record Group '||rg_name||' does not exist.'); 
+    RAISE form_trigger_failure; 
+  END IF; 
+  
+  /* 
+  ** Make sure the column name specified exists in the  
+  ** record Group. 
+  */ 
+  low_value    := Find_Column( rg_name||'.rv_low_value' ); 
+  high_value   := Find_Column( rg_name||'.rv_high_value' ); 
+  abbreviation := Find_Column( rg_name||'.rv_abbreviation' ); 
+  meaning      := Find_Column( rg_name||'.rv_meaning' ); 
+  
+  /* 
+  ** Get a count of the number of records in the record group
+  */ 
+  RowCount := Get_Group_Row_Count( rg_id ); 
+  
+END;
+
+/***********************************************************/
+/* Soft LOV Style Domain Validation                        */
+/***********************************************************/
+
+/* Check numeric ref codes                                             */
+/* This checks that the given value exists in the REF_CODES            */
+/* table for the given domain.  It must be either one of the distinct  */
+/* values, or within one of the ranges (high value not null).          */
+procedure soft_val( p_value   in out number
+                   ,p_meaning in out varchar2
+                   ,p_domain  in     varchar2
+                   ,p_val_code  in     boolean 
+                   ,p_table   in     varchar2 DEFAULT NULL 
+                  ) IS
+  new_value    varchar2(240);
+  curr_value   varchar2(240);
+BEGIN
+  if (p_table is null)
+  then
+    if (p_val_code)
+    then
+      curr_value := P_VALUE;
+      IF (curr_value IS NOT NULL) THEN
+        SELECT  decode(RV_HIGH_VALUE, NULL, RV_LOW_VALUE, curr_value)
+            , RV_MEANING
+        INTO   new_value
+            , P_MEANING
+        FROM    CG_REF_CODES
+        WHERE  ( (RV_HIGH_VALUE IS NULL   AND    
+                  /* this will compare them as chars, as the */
+                  /* abbreviation will most often be a char  */
+                  curr_value IN (RV_LOW_VALUE, RV_ABBREVIATION)) OR 
+                 (to_number(curr_value) BETWEEN 
+                  to_number(RV_LOW_VALUE) AND to_number(RV_HIGH_VALUE))
+                 )
+        AND     ROWNUM = 1
+        AND     RV_DOMAIN = P_DOMAIN;
+      END IF;
+    else
+      SELECT  RV_LOW_VALUE
+            , RV_MEANING
+      INTO    new_value
+            , P_MEANING
+      FROM    CG_REF_CODES
+      WHERE   p_meaning = RV_MEANING
+      AND     ROWNUM = 1
+      AND     RV_DOMAIN = P_DOMAIN;   
+    end if;
+    P_VALUE := to_number(new_value);
+  ELSE
+    DECLARE
+      sql_statment   varchar2(4000);
+      query_cursor   INTEGER;
+      rows_processed INTEGER;
+      sql_stmt       VARCHAR2(4000);
+      q_value        varchar2(240);
+      q_meaning      varchar2(240);
+    BEGIN 
+    	if (p_val_code) 
+      then
+        sql_stmt := 
+         'SELECT  decode(RV_HIGH_VALUE, NULL, RV_LOW_VALUE, '''||P_VALUE||''')
+              , RV_MEANING
+         FROM   '||P_TABLE||'
+         WHERE  ( (RV_HIGH_VALUE IS NULL   AND    
+                  /* this will compare them as chars, as the */
+                  /* abbreviation will most often be a char  */
+                  '''||P_VALUE||'''IN (RV_LOW_VALUE, RV_ABBREVIATION)) OR 
+                 (to_number('''||P_VALUE||''') BETWEEN 
+                  to_number(RV_LOW_VALUE) AND to_number(RV_HIGH_VALUE))
+                 )
+         AND     ROWNUM = 1
+         AND     RV_DOMAIN = '''||P_DOMAIN||'''';
+    	else
+    		sql_stmt := 
+         'SELECT  RV_LOW_VALUE
+                , RV_MEANING
+          FROM   '||P_TABLE||'
+          WHERE   RV_MEANING = '''||P_MEANING||'''
+          AND     ROWNUM = 1
+          AND     RV_DOMAIN = '''||P_DOMAIN||'''';
+      end if;
+      --  Prepare a cursor to select from the query
+      query_cursor := dbms_sql.open_cursor;
+
+      dbms_sql.parse(query_cursor, sql_stmt, 1);  -- Should use dbms_sql.native here !!
+
+      dbms_sql.define_column(query_cursor, 1, q_value, 240);
+      dbms_sql.define_column(query_cursor, 2, q_meaning, 240);
+
+      rows_processed := dbms_sql.execute_and_fetch(query_cursor);
+
+      if (rows_processed = 0) then
+        dbms_sql.close_cursor(query_cursor);
+        raise no_data_found;
+      end if;
+
+      --  Get column values of row into table of records
+      dbms_sql.column_value(query_cursor, 1, NEW_VALUE);
+      dbms_sql.column_value(query_cursor, 2, P_MEANING);
+      P_VALUE := to_number(new_value);
+
+      dbms_sql.close_cursor(query_cursor);
+    END;
+  END IF;
+END;
+
+
+/* Check character ref codes                                          */
+/* This checks that the given value exists in the REF_CODES           */
+/* table for the given domain.  It must be either one of the distinct */
+/* values, or within one of the ranges (high value not null).         */
+procedure soft_val( p_value   in out varchar2
+                   ,p_meaning in out varchar2
+                   ,p_domain  in     varchar2
+                   ,p_val_code  in     boolean
+                   ,p_table   in     varchar2 DEFAULT NULL
+                  ) IS
+  new_value    varchar2(240);
+  curr_value   varchar2(240);
+BEGIN
+  
+  if (p_table is null)
+  then
+    if (p_val_code) 
+    then    
+      curr_value := P_VALUE;
+      IF (curr_value IS NOT NULL) THEN
+        SELECT  decode(RV_HIGH_VALUE, NULL, RV_LOW_VALUE, curr_value)
+              , RV_MEANING
+        INTO   new_value
+              , P_MEANING
+        FROM    CG_REF_CODES
+        WHERE  ( (RV_HIGH_VALUE IS NULL   AND    
+                 curr_value IN  (RV_LOW_VALUE, RV_ABBREVIATION) ) OR 
+                 (curr_value BETWEEN  RV_LOW_VALUE AND     RV_HIGH_VALUE)
+                 )
+        AND     ROWNUM = 1
+        AND     RV_DOMAIN = P_DOMAIN;
+        P_VALUE := new_value;
+      END IF;
+    else
+      SELECT  RV_LOW_VALUE
+            , RV_MEANING      
+      INTO    P_VALUE
+            , P_MEANING
+      FROM    CG_REF_CODES
+      WHERE   p_meaning = RV_MEANING
+      AND     ROWNUM = 1
+      AND     RV_DOMAIN = P_DOMAIN;
+    end if;
+  ELSE
+  	DECLARE
+  	  sql_statment   varchar2(4000);
+      query_cursor   INTEGER;
+      rows_processed INTEGER;
+      sql_stmt       VARCHAR2(4000);
+      q_value        varchar2(240);
+      q_meaning      varchar2(240);
+    BEGIN
+  	  if (p_val_code)
+  	  then
+        sql_stmt := 
+         'SELECT  decode(RV_HIGH_VALUE, NULL, RV_LOW_VALUE, '''||P_VALUE||''')
+              , RV_MEANING
+         FROM   '||P_TABLE||'
+         WHERE  ( (RV_HIGH_VALUE IS NULL   AND    
+                    '''||P_VALUE||''' IN  (RV_LOW_VALUE, RV_ABBREVIATION) ) OR 
+                   ('''||P_VALUE||''' BETWEEN  RV_LOW_VALUE AND RV_HIGH_VALUE)
+                  )
+          AND     ROWNUM = 1
+          AND     RV_DOMAIN = '''||P_DOMAIN||'''';
+  	  else
+  	    sql_stmt := 
+         'SELECT  RV_LOW_VALUE
+                , RV_MEANING
+          FROM   '||P_TABLE||'
+          WHERE   RV_MEANING = '''||P_MEANING||'''
+          AND     ROWNUM = 1
+          AND     RV_DOMAIN = '''||P_DOMAIN||'''';
+       end if;
+
+      --  Prepare a cursor to select from the query
+      query_cursor := dbms_sql.open_cursor;
+
+      dbms_sql.parse(query_cursor, sql_stmt, 1);  -- Should use dbms_sql.native here !!
+
+      dbms_sql.define_column(query_cursor, 1, q_value, 240);
+      dbms_sql.define_column(query_cursor, 2, q_meaning, 240);
+
+      rows_processed := dbms_sql.execute_and_fetch(query_cursor);
+
+      if (rows_processed = 0) then
+        dbms_sql.close_cursor(query_cursor);
+        raise no_data_found;
+      end if;
+
+      --  Get column values of row into table of records
+      dbms_sql.column_value(query_cursor, 1, P_VALUE);
+      dbms_sql.column_value(query_cursor, 2, P_MEANING);
+
+      dbms_sql.close_cursor(query_cursor);
+    END;
+  END IF;
+
+END;
+
+/* Check date ref codes                                               */
+procedure soft_val( p_value   in out date
+                   ,p_meaning in out varchar2
+                   ,p_domain  in     varchar2
+                   ,fmt_mask  in     varchar2
+                   ,p_val_code  in     boolean
+                   ,p_table   in     varchar2 DEFAULT NULL
+                  ) IS
+  new_value    varchar2(240);
+  curr_value   varchar2(240);
+BEGIN
+  
+  if (p_table is null)
+  then
+    if (p_val_code)
+    then
+      curr_value := P_VALUE;
+      IF (curr_value IS NOT NULL) THEN
+        SELECT  decode(RV_HIGH_VALUE, NULL, RV_LOW_VALUE, curr_value)
+              , RV_MEANING
+        INTO   new_value
+              , P_MEANING
+        FROM    CG_REF_CODES
+        WHERE  ( (RV_HIGH_VALUE IS NULL   AND    
+                (p_value = TO_DATE(RV_LOW_VALUE, fmt_mask) OR
+                 curr_value = RV_ABBREVIATION)) OR 
+               (p_value BETWEEN 
+                to_date(RV_LOW_VALUE, fmt_mask) AND 
+                to_date(RV_HIGH_VALUE, fmt_mask))
+               )
+        AND     ROWNUM = 1
+        AND     RV_DOMAIN = P_DOMAIN;
+      END IF;
+    else
+      SELECT  RV_LOW_VALUE
+            , RV_MEANING
+      INTO     new_value
+             , P_MEANING
+      FROM    CG_REF_CODES
+      WHERE   p_meaning = RV_MEANING
+      AND     ROWNUM = 1
+      AND     RV_DOMAIN = P_DOMAIN;   	
+    end if;
+    P_VALUE := to_date(new_value, fmt_mask);
+  ELSE
+    DECLARE
+		  sql_statment   varchar2(4000);
+		  query_cursor   INTEGER;
+		  rows_processed INTEGER;
+		  sql_stmt       VARCHAR2(4000);
+		  q_value        varchar2(240);
+		  q_meaning      varchar2(240);
+    BEGIN 
+    if (p_val_code)
+    then
+	    sql_stmt := 
+	     'SELECT  decode(RV_HIGH_VALUE, NULL, RV_LOW_VALUE, '''||P_VALUE||''')
+	            , RV_MEANING
+	      FROM   '||P_TABLE||'
+	      WHERE  ( (RV_HIGH_VALUE IS NULL   AND    
+	               ('''||P_VALUE||''' = TO_DATE(RV_LOW_VALUE, '''||FMT_MASK||''') OR
+	               '''||P_VALUE||''' = RV_ABBREVIATION)) OR 
+	              ('''||P_VALUE||''' BETWEEN 
+	               to_date(RV_LOW_VALUE, '''||FMT_MASK||''') AND 
+	               to_date(RV_HIGH_VALUE, '''||FMT_MASK||'''))
+	              )
+	      AND     ROWNUM = 1
+	      AND     RV_DOMAIN = '''||P_DOMAIN||'''';
+    else
+      sql_stmt :=
+       'SELECT  RV_LOW_VALUE
+              , RV_MEANING
+        FROM   '||P_TABLE||'
+        WHERE   RV_MEANING = '''||P_MEANING||'''
+        AND     ROWNUM = 1
+        AND     RV_DOMAIN = '''||P_DOMAIN||'''';   	
+	  end if;
+	    --  Prepare a cursor to select from the query
+	    query_cursor := dbms_sql.open_cursor;
+	
+	    dbms_sql.parse(query_cursor, sql_stmt, 1);  -- Should use dbms_sql.native here !!
+	
+	    dbms_sql.define_column(query_cursor, 1, q_value, 240);
+	    dbms_sql.define_column(query_cursor, 2, q_meaning, 240);
+	
+	    rows_processed := dbms_sql.execute_and_fetch(query_cursor);
+
+	    if (rows_processed = 0) then
+        dbms_sql.close_cursor(query_cursor);
+        raise no_data_found;
+      end if;
+
+	    --  Get column values of row into table of records
+	    dbms_sql.column_value(query_cursor, 1, NEW_VALUE);
+	    dbms_sql.column_value(query_cursor, 2, P_MEANING);
+	    P_VALUE := to_date(new_value, fmt_mask);
+	
+	    dbms_sql.close_cursor(query_cursor);
+	  END;
+  END IF;
+END;
+
+/* Check numeric ref codes      (no meaning)                           */
+/* This checks that the given value exists in the REF_CODES            */
+/* table for the given domain.  It must be either one of the distinct  */
+/* values, or within one of the ranges (high value not null).          */
+/* NB: This is without a meaning set */
+procedure soft_val( p_value   in out number   /* Value to be validated */
+                   ,p_domain  in     varchar2 /* Reference codes domain*/
+                   ,p_table   in     varchar2 /* Reference codes table */
+                  ) is
+  new_value  varchar2(240);
+  curr_value varchar2(240);
+BEGIN
+  if (p_table is null)
+  then
+    curr_value := P_VALUE;
+    IF (curr_value IS NOT NULL) THEN
+      SELECT  decode(RV_HIGH_VALUE, NULL, RV_LOW_VALUE, curr_value)
+      INTO   new_value
+      FROM    CG_REF_CODES
+      WHERE  ( (RV_HIGH_VALUE IS NULL   AND    
+                /* this will compare them as chars, as the */
+                /* abbreviation will most often be a char  */
+                curr_value IN (RV_LOW_VALUE, RV_ABBREVIATION)) OR 
+               (to_number(curr_value) BETWEEN 
+                to_number(RV_LOW_VALUE) AND to_number(RV_HIGH_VALUE))
+               )
+      AND     ROWNUM = 1
+      AND     RV_DOMAIN = P_DOMAIN;
+      P_VALUE := to_number(new_value);
+    END IF;
+  ELSE
+    DECLARE
+      sql_statment   varchar2(4000);
+      query_cursor   INTEGER;
+      rows_processed INTEGER;
+      sql_stmt       VARCHAR2(4000);
+      q_value        varchar2(240);
+    BEGIN  
+      sql_stmt := 
+     'SELECT  decode(RV_HIGH_VALUE, NULL, RV_LOW_VALUE, '''||P_VALUE||''')
+      FROM   '||P_TABLE||'
+      WHERE  ( (RV_HIGH_VALUE IS NULL   AND    
+                /* this will compare them as chars, as the */
+                /* abbreviation will most often be a char  */
+                '''||P_VALUE||'''IN (RV_LOW_VALUE, RV_ABBREVIATION)) OR 
+               (to_number('''||P_VALUE||''') BETWEEN 
+                to_number(RV_LOW_VALUE) AND to_number(RV_HIGH_VALUE))
+               )
+      AND     ROWNUM = 1
+      AND     RV_DOMAIN = '''||P_DOMAIN||'''';
+
+      --  Prepare a cursor to select from the query
+      query_cursor := dbms_sql.open_cursor;
+
+      dbms_sql.parse(query_cursor, sql_stmt, 1);  -- Should use dbms_sql.native here !!
+
+      dbms_sql.define_column(query_cursor, 1, q_value, 240);
+
+      rows_processed := dbms_sql.execute_and_fetch(query_cursor);
+
+      if (rows_processed = 0) then
+        dbms_sql.close_cursor(query_cursor);
+        raise no_data_found;
+      end if;
+
+      --  Get column values of row into table of records
+      dbms_sql.column_value(query_cursor, 1, NEW_VALUE);
+      P_VALUE := to_number(new_value);
+
+      dbms_sql.close_cursor(query_cursor);
+    END;
+  END IF;
+END;
+
+/* Check character ref codes  (no meaning)                            */
+/* This checks that the given value exists in the REF_CODES           */
+/* table for the given domain.  It must be either one of the distinct */
+/* values, or within one of the ranges (high value not null).         */
+procedure soft_val( p_value   in out varchar2
+                   ,p_domain  in     varchar2
+                   ,p_table   in     varchar2 /* Reference codes table */
+                  ) IS
+new_value  varchar2(240);
+curr_value varchar2(240);
+BEGIN
+  
+  if (p_table is null)
+  then
+    curr_value := P_VALUE;
+    IF (curr_value IS NOT NULL) THEN
+      SELECT  decode(RV_HIGH_VALUE, NULL, RV_LOW_VALUE, curr_value)
+      INTO   new_value
+      FROM    CG_REF_CODES
+      WHERE  ( (RV_HIGH_VALUE IS NULL   AND    
+               curr_value IN  (RV_LOW_VALUE, RV_ABBREVIATION) ) OR 
+               (curr_value BETWEEN  RV_LOW_VALUE AND     RV_HIGH_VALUE)
+               )
+      AND     ROWNUM = 1
+      AND     RV_DOMAIN = P_DOMAIN;
+      P_VALUE := new_value;
+    END IF;
+  ELSE
+  	DECLARE
+  	  sql_statment   varchar2(4000);
+      query_cursor   INTEGER;
+      rows_processed INTEGER;
+      sql_stmt       VARCHAR2(4000);
+      q_value        varchar2(240);
+    BEGIN
+  	
+      sql_stmt := 
+       'SELECT  decode(RV_HIGH_VALUE, NULL, RV_LOW_VALUE, '''||P_VALUE||''')
+        FROM   '||P_TABLE||'
+        WHERE  ( (RV_HIGH_VALUE IS NULL   AND    
+                  '''||P_VALUE||''' IN  (RV_LOW_VALUE, RV_ABBREVIATION) ) OR 
+                 ('''||P_VALUE||''' BETWEEN  RV_LOW_VALUE AND RV_HIGH_VALUE)
+                 )
+        AND     ROWNUM = 1
+        AND     RV_DOMAIN = '''||P_DOMAIN||'''';
+
+      --  Prepare a cursor to select from the query
+      query_cursor := dbms_sql.open_cursor;
+
+      dbms_sql.parse(query_cursor, sql_stmt, 1);  -- Should use dbms_sql.native here !!
+
+      dbms_sql.define_column(query_cursor, 1, q_value, 240);
+
+      rows_processed := dbms_sql.execute_and_fetch(query_cursor);
+
+      if (rows_processed = 0) then
+        dbms_sql.close_cursor(query_cursor);
+        raise no_data_found;
+      end if;
+
+      --  Get column values of row into table of records
+      dbms_sql.column_value(query_cursor, 1, P_VALUE);
+
+      dbms_sql.close_cursor(query_cursor);
+    END;
+  END IF;
+
+END;
+
+/* Check date ref codes   (no meaning)                     */
+procedure soft_val( p_value   in out date
+                   ,p_domain  in     varchar2
+                   ,fmt_mask  in     varchar2
+                   ,p_table   in     varchar2 /* Reference codes table */
+                  ) IS
+new_value  varchar2(240);
+curr_value varchar2(240);
+BEGIN
+  
+  if (p_table is null)
+  then
+    curr_value := P_VALUE;
+    IF (curr_value IS NOT NULL) THEN
+      SELECT  decode(RV_HIGH_VALUE, NULL, RV_LOW_VALUE, curr_value)
+      INTO   new_value
+      FROM    CG_REF_CODES
+      WHERE  ( (RV_HIGH_VALUE IS NULL   AND    
+               (p_value = TO_DATE(RV_LOW_VALUE, fmt_mask) OR
+                curr_value = RV_ABBREVIATION)) OR 
+              (p_value BETWEEN 
+               to_date(RV_LOW_VALUE, fmt_mask) AND 
+               to_date(RV_HIGH_VALUE, fmt_mask))
+              )
+      AND     ROWNUM = 1
+      AND     RV_DOMAIN = P_DOMAIN;
+      P_VALUE := to_date(new_value, fmt_mask);
+    END IF;
+  ELSE
+    DECLARE
+		  sql_statment   varchar2(4000);
+		  query_cursor   INTEGER;
+		  rows_processed INTEGER;
+		  sql_stmt       VARCHAR2(4000);
+		  q_value        varchar2(240);
+    BEGIN 
+	    sql_stmt := 
+	     'SELECT  decode(RV_HIGH_VALUE, NULL, RV_LOW_VALUE, '''||P_VALUE||''')
+	      FROM   '||P_TABLE||'
+	      WHERE  ( (RV_HIGH_VALUE IS NULL   AND    
+	               ('''||P_VALUE||''' = TO_DATE(RV_LOW_VALUE, '''||FMT_MASK||''') OR
+	               '''||P_VALUE||''' = RV_ABBREVIATION)) OR 
+	              ('''||P_VALUE||''' BETWEEN 
+	               to_date(RV_LOW_VALUE, '''||FMT_MASK||''') AND 
+	               to_date(RV_HIGH_VALUE, '''||FMT_MASK||'''))
+	              )
+	      AND     ROWNUM = 1
+	      AND     RV_DOMAIN = '''||P_DOMAIN||'''';
+	
+	    --  Prepare a cursor to select from the query
+	    query_cursor := dbms_sql.open_cursor;
+	
+	    dbms_sql.parse(query_cursor, sql_stmt, 1);  -- Should use dbms_sql.native here !!
+	
+	    dbms_sql.define_column(query_cursor, 1, q_value, 240);
+	
+	    rows_processed := dbms_sql.execute_and_fetch(query_cursor);
+
+	    if (rows_processed = 0) then
+        dbms_sql.close_cursor(query_cursor);
+        raise no_data_found;
+      end if;
+
+	    --  Get column values of row into table of records
+	    dbms_sql.column_value(query_cursor, 1, NEW_VALUE);
+	    P_VALUE := to_date(new_value, fmt_mask);
+	
+	    dbms_sql.close_cursor(query_cursor);
+	  END;
+  END IF;
+END;
+ 
+END;
+
+
+PROCEDURE CGHP$CALL_HELP_FORM
+(
+  CG_HELP_FRM in varchar2,
+  CG_HELP_MOD in varchar2,
+  CG_HELP_APP in varchar2,
+  CG_HELP_MTITLE_1 in varchar2,
+  CG_HELP_MTITLE_2 in varchar2
+) IS
+hlp_param_list_id paramlist;
+itype varchar2(30) := 'TEXT ITEM';
+help_table varchar2(100);
+
+/* CGHP$CALL_HELP_FORM */
+/* Call the help form after setting globals with current block and */
+/*   ITEM                                                         */
+BEGIN
+
+  default_value(NULL,'GLOBAL.CGHP$LAST_ITEM_ACCESSED');
+
+  if (id_null(hlp_param_list_id))
+  then
+      hlp_param_list_id := Create_Parameter_list('hlp_param_list');
+      Add_Parameter(hlp_param_list_id, 'CG_HELP_MODP', TEXT_PARAMETER, 
+                    CG_HELP_MOD);
+      Add_Parameter(hlp_param_list_id, 'CG_HELP_APPP', TEXT_PARAMETER,
+                    CG_HELP_APP);
+      Add_Parameter(hlp_param_list_id, 'CG_HELP_MTITLE_2P', TEXT_PARAMETER,
+                    CG_HELP_MTITLE_2);
+      Add_Parameter(hlp_param_list_id, 'CG_HELP_MTITLE_1P', TEXT_PARAMETER,
+                    CG_HELP_MTITLE_1);
+      Add_Parameter(hlp_param_list_id, 'CG_HELP_BLKP', TEXT_PARAMETER,
+                    NAME_IN('SYSTEM.CURSOR_BLOCK'));
+      Add_Parameter(hlp_param_list_id, 'CG_HELP_FLDP', TEXT_PARAMETER,
+                    NAME_IN('SYSTEM.CURSOR_ITEM'));
+
+      help_table := get_block_property(NAME_IN('SYSTEM.CURSOR_BLOCK'),BASE_TABLE);
+      help_table := substr(help_table, instr(help_table,'.')+1, length(help_table));
+      Add_Parameter(hlp_param_list_id, 'CG_HELP_TABP', TEXT_PARAMETER, help_table);
+
+      itype := get_item_property(NAME_IN('SYSTEM.CURSOR_ITEM'),ITEM_TYPE);
+      if (itype = 'TEXT ITEM')
+      then
+          Add_Parameter(hlp_param_list_id, 'CG_HELP_LOV_AVAILABLEP',
+                        TEXT_PARAMETER, get_item_property(
+                                        NAME_IN('SYSTEM.CURSOR_ITEM'),LIST));
+      else
+          Add_Parameter(hlp_param_list_id, 'CG_HELP_LOV_AVAILABLEP',
+                        TEXT_PARAMETER, 'FALSE');
+      end if;
+      Add_Parameter(hlp_param_list_id, 'CG_HELP_EDIT_AVAILABLEP',
+                    TEXT_PARAMETER, itype);
+  end if;
+
+  IF get_item_property(NAME_IN('SYSTEM.CURSOR_ITEM'),AUTO_HINT) = 'TRUE' 
+  THEN
+     COPY(NULL,'GLOBAL.CGHP$LAST_ITEM_ACCESSED');
+     COPY('N','GLOBAL.CG_HELP_LOV_REQUESTED');
+     COPY('N','GLOBAL.CG_HELP_EDIT_REQUESTED');
+
+     call_form(CG_HELP_FRM,NO_HIDE,NO_REPLACE,QUERY_ONLY,hlp_param_list_id);
+
+     IF NOT FORM_SUCCESS THEN
+       message('Unable to call help form '||CG_HELP_FRM);
+     END IF;
+
+     Destroy_Parameter_list(hlp_param_list_id);
+
+     IF (NAME_IN('GLOBAL.CG_HELP_LOV_REQUESTED') = 'Y')
+     THEN LIST_VALUES;
+     END IF;
+
+     IF (NAME_IN('GLOBAL.CG_HELP_EDIT_REQUESTED') = 'Y')
+     THEN EDIT_TEXTITEM;
+     END IF;
+  ELSE
+    IF (NAME_IN('SYSTEM.CURSOR_ITEM') = 
+        NAME_IN('GLOBAL.CGHP$LAST_ITEM_ACCESSED')) 
+    THEN
+      COPY(NULL,'GLOBAL.CGHP$LAST_ITEM_ACCESSED');
+      COPY('N','GLOBAL.CG_HELP_LOV_REQUESTED');
+      COPY('N','GLOBAL.CG_HELP_EDIT_REQUESTED');
+
+      call_form(CG_HELP_FRM,NO_HIDE,NO_REPLACE,QUERY_ONLY,hlp_param_list_id);
+
+      IF NOT FORM_SUCCESS THEN
+        message('Unable to call help form'||CG_HELP_FRM);
+      END IF;
+
+      Destroy_Parameter_list(hlp_param_list_id);
+
+      IF (NAME_IN('GLOBAL.CG_HELP_LOV_REQUESTED') = 'Y')
+      THEN LIST_VALUES;
+      END IF;
+      
+      IF (NAME_IN('GLOBAL.CG_HELP_EDIT_REQUESTED') = 'Y')
+      THEN EDIT_TEXTITEM;
+      END IF;
+    ELSE
+      COPY(NAME_IN('SYSTEM.CURSOR_ITEM'),'GLOBAL.CGHP$LAST_ITEM_ACCESSED');
+      help;
+      Destroy_Parameter_list(hlp_param_list_id);
+    END IF;
+  END IF;
+END;
+
+
+procedure CGIM$READ_IMAGE_FILE(iname IN varchar2, iitem in varchar2) is
+mypic item;
+itype char(4) := upper(substr(iname,greatest((length(iname)-3),1)));
+begin
+  if (iname IS NOT NULL)
+  then
+
+    mypic := find_item(iitem);
+ 
+    if (get_item_property(mypic,UPDATEABLE) = 'FALSE'
+        and 
+        NAME_IN('system.record_status') in ('CHANGED','QUERY')
+        and 
+        NAME_IN('system.mode') = 'NORMAL')
+    then
+        message('ERROR: Image not updateable');
+        raise FORM_TRIGGER_FAILURE;
+    else
+        if (itype not in ('TIFF','JFIF','PICT'))
+        then itype := upper(substr(iname,greatest((length(iname)-2),1)));
+        end if;
+
+        if (itype = 'TIF')
+        then itype := 'TIFF';
+        end if;
+
+        read_image_file(iname, itype, mypic);
+
+    end if;
+
+  end if;
+end;
+
+
+procedure CGLY$SYNC_CANVAS(canvas_is in char,
+                      scrollx in number,
+                      block_is char) is
+canvas_movement number(3);
+view_id viewport;
+
+begin
+
+  view_id := find_view(canvas_is);
+
+  canvas_movement := (scrollx *
+      (to_number(get_block_property(block_is,CURRENT_RECORD)) -
+       to_number(get_block_property(block_is,TOP_RECORD))));
+
+  set_view_property(view_id,POSITION_ON_CANVAS,0,canvas_movement);
+
+end;
+
+
+PROCEDURE CGTE$OTHER_EXCEPTIONS IS
+/* General purpose reporting procedure for otherwise unhandled
+   exceptions */
+BEGIN
+  IF (SQLCODE = 100) THEN
+    RAISE NO_DATA_FOUND;
+  ELSIF (SQLCODE = -100501) THEN
+    RAISE FORM_TRIGGER_FAILURE;
+  ELSE
+    message(SQLERRM);
+    RAISE FORM_TRIGGER_FAILURE;
+  END IF;
+END;
+
+
+PROCEDURE CGTE$POP_ERROR_STACK
+(
+  P_ERR_CODE  IN OUT NUMBER,
+  P_ERR_MSG   IN OUT VARCHAR2
+) IS
+
+  start_pos  number := instr(P_ERR_MSG, 'ORA-', 5);
+
+BEGIN
+
+  if ( start_pos != 0 )
+    then
+      P_ERR_MSG  := substr(P_ERR_MSG, start_pos);
+      P_ERR_CODE := to_number(
+                      substr(P_ERR_MSG, 5, instr(P_ERR_MSG, ':', 5) - 5)
+                             );
+    else
+      P_ERR_MSG  := null;
+      P_ERR_CODE := 0;
+  end if;
+
+END CGTE$POP_ERROR_STACK;
+
+
+FUNCTION CGTE$STRIP_CONSTRAINT
+(
+  P_MSG_TEXT  IN  VARCHAR2
+) RETURN VARCHAR2 is
+
+  start_pos   number := instr(P_MSG_TEXT, '.', instr(P_MSG_TEXT,'('));
+
+BEGIN
+
+  if ( start_pos != 0 )
+    then
+      return( substr(P_MSG_TEXT, start_pos +1,
+                     instr(P_MSG_TEXT, ')', start_pos) - start_pos -1
+                     )
+            );
+    else
+      return( null );
+  end if;
+
+RETURN NULL; END CGTE$STRIP_CONSTRAINT;
+
+
+FUNCTION CGTE$STRIP_FIRST_ERROR
+(
+   P_MSG  IN  VARCHAR2
+) RETURN VARCHAR2 IS
+
+  end_pos  number := instr(P_MSG, 'ORA-', 5);
+
+BEGIN
+
+  if ( end_pos != 0 )
+    then
+      return( substr(substr(P_MSG,1, end_pos -2 ),12) );
+    else
+      return( substr(P_MSG,12) );
+  end if;
+
+RETURN NULL; END CGTE$STRIP_FIRST_ERROR;

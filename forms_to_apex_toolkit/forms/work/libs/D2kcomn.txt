@@ -1,0 +1,1527 @@
+
+
+FUNCTION d2kcomn RETURN varchar2 IS
+-- Returns the Version number of this Library
+BEGIN
+	Return 'D2KCOMN Version 6.0.1 Production';
+END;
+
+FUNCTION D2K_Build_Paramlist (ParamString in varchar2, ParamListName in varchar2 default NULL) RETURN paramlist IS
+-- Takes a UnTeminated Delimited String in the format "Paramname=Paramvalue|Paramname=Paramvalue|..."
+-- Uses D2K_Delimited_String for Parsing.
+
+  iCounter		pls_integer;
+  plRC			paramlist;
+  vcListName		varchar2(30);
+  vcParamName		varchar2(30);
+  vcParamValue		varchar2(250);
+  vcParamPair		varchar2(281);
+
+BEGIN
+  if ParamString is null then 
+	plRC.id := 0;
+  else
+	-- 1. Get a name for the list
+	if ParamListName is null then 
+		vcListName := 'BP$PARAMLIST';
+	else 
+		vcListName := ParamListName;
+	end if;
+	
+	-- 2. Delete it if it exists already
+  	plRC := get_parameter_list(vcListName);
+  	if not id_null(plRC) then 
+		destroy_parameter_list(plRC);
+ 	end if;
+
+	-- 3. Create it
+ 	plRC := create_parameter_list(vcListName);
+	if id_null(plRC) then 
+		Raise NO_DATA_FOUND;
+	end if;
+
+	-- 4. parse the string into paramters
+ 	for iCounter in 1..D2K_Delimited_String.Counter(ParamString,TRUE,'|') LOOP
+		vcParamPair  := D2K_Delimited_String.GetString(ParamString,iCounter,TRUE,'|');
+		vcParamName  := upper(substr(vcParamPair,1,instr(vcParamPair,'=')-1));
+		vcParamValue := substr(vcParamPair,instr(vcParamPair,'=')+1);
+		-- check the paramtype and add to the list
+		if substr(vcParamName,1,5) = 'DATA:' then 
+			add_parameter(plRC,substr(vcParamName,6),DATA_PARAMETER,vcParamValue);
+		else
+			add_parameter(plRC,vcParamName,TEXT_PARAMETER,vcParamValue);
+		end if;
+	end loop;
+  end if;
+-- 5. return the id of the list
+RETURN plRC;  
+END;
+
+
+PACKAGE D2K_Delimited_String IS
+  /*-----------------------------------------------------------------*\
+   * D2K_Delimited_String: 
+   *           A series of handy functions for Parsing and handling 
+   *           Delimited strings, e.g. comma seperated values
+   *	       in the format <field1><delimiter><field2><delimiter> etc.
+   *	       The delimiter will default to a comma if not specified
+   * Functions are:
+   * 		COUNTER	 -> Returns the number of "fields" in the string
+   *		PUT   	 -> Adds (or replaces) a Number, string or date 
+   *			    to the string at the specified position
+   *			    (dates are stored with full precision)
+   *		GETSTRING-> Returns the String value of the nth field
+   *		GETNUMBER-> Returns the number value of the nth field
+   *		GETDATE  -> Returns the Date value of the nth field
+   *		LOCATE   -> Returns the Field number of a particular 
+   *			    String
+   * All the functions are overloaded where required
+  \*-----------------------------------------------------------------*/
+ 
+	function  Counter(	Source_string 	in varchar2,
+			 	UnTerminated	in Boolean  default FALSE,
+			 	Delimiter 	in varchar2 default ',') return number;
+	Procedure Put	(	Source_string 	in out varchar2,
+			 	String_to_add 	in varchar2,
+			 	Field_position 	in number,
+			 	UnTerminated	in Boolean  default FALSE,
+			 	Delimiter 	in varchar2 default ',');
+	Procedure Put	(	Source_string 	in out varchar2,
+			 	number_to_add 	in number,
+			 	Field_position 	in number,
+			 	UnTerminated	in Boolean  default FALSE,
+			 	Delimiter 	in varchar2 default ',');
+	Procedure Put	(	Source_string 	in out varchar2,
+			 	Date_to_add 	in date,
+			 	Field_position 	in number,
+			 	UnTerminated	in Boolean  default FALSE,
+			 	Delimiter 	in varchar2 default ',');
+
+
+	Procedure PutString(	Source_string 	in out varchar2,
+			 	String_to_add 	in varchar2,
+			 	Field_position 	in number,
+			 	UnTerminated	in Boolean  default FALSE,
+			 	Delimiter 	in varchar2 default ',');
+	Procedure PutNumber(	Source_string 	in out varchar2,
+			 	number_to_add 	in number,
+			 	Field_position 	in number,
+			 	UnTerminated	in Boolean  default FALSE,
+			 	Delimiter 	in varchar2 default ',');
+	Procedure PutDate(	Source_string 	in out varchar2,
+			 	Date_to_add 	in date,
+			 	Field_position 	in number,
+			 	UnTerminated	in Boolean  default FALSE,
+			 	Delimiter 	in varchar2 default ',');
+	function  GetString(	Source_string	in varchar2,
+			 	Field_position 	in number,
+			 	UnTerminated	in Boolean  default FALSE,
+			 	Delimiter 	in varchar2 default ',') return varchar2;
+	function  GetNumber(	Source_string	in varchar2,
+			 	Field_position in number,
+			 	UnTerminated	in Boolean  default FALSE,
+			 	Delimiter 	in varchar2 default ',') return number;
+	function  GetDate(	Source_string	in varchar2,
+			 	Field_position in number,
+			 	UnTerminated	in Boolean  default FALSE,
+			 	Delimiter 	in varchar2 default ',') return date;
+	function  Locate(	Source_string	in varchar2,
+			 	Search_String	in varchar2,
+			 	UnTerminated	in Boolean  default FALSE,
+			 	Delimiter	in varchar2 default ',') return number;
+	function  Locate(	Source_string	in varchar2,
+			 	Search_date	in date,
+			 	UnTerminated	in Boolean  default FALSE,
+			 	Delimiter	in varchar2 default ',') return number;
+	function  Locate(	Source_string	in varchar2,
+			 	Search_number	in number,
+			 	UnTerminated	in Boolean  default FALSE,
+			 	Delimiter	in varchar2 default ',') return number;
+END D2K_Delimited_String;
+
+
+PACKAGE BODY D2K_Delimited_String IS
+  	function  Counter(Source_string 	in varchar2,
+			 UnTerminated	in Boolean default FALSE,
+			 Delimiter 	in varchar2 default ',') return number is
+		iModifier	pls_integer := 0;
+		iOldSize	pls_integer := length(Source_string);
+		db3	pls_integer;
+		db2	NUMBER;   -- DCN change to number
+		db1	varchar2(255);
+	begin
+		if Unterminated then iModifier := 1; end if;
+		db1 := replace(Source_string,Delimiter);
+		db2 := length(db1);
+		db3 := (iOldSize - db2) + iModifier;
+		return db3; 
+	end Counter;
+
+	Procedure PutString	(Source_string 	in out varchar2,
+			 String_to_add 	in varchar2,
+			 Field_position in number,
+			 UnTerminated	in Boolean  default FALSE,
+			 Delimiter 	in varchar2 default ',') is
+		iStrLen		NUMBER := length(Source_String);
+		iStrFragLen	NUMBER := Length(String_to_add);
+		iPtrStart	NUMBER := 0;
+		iPtrEnd		NUMBER := 0;
+ 		vcSepBuffer	varchar2(2000);
+		iCounter	NUMBER;
+	begin
+	-- 1. is the string Zero Length?
+		if iStrLen = 0 then
+			if Field_Position > 1 then 
+				for iCounter in 2..Field_Position loop
+					vcSepBuffer := vcSepBuffer||Delimiter;
+				end loop;
+		end if;
+		Source_string := vcSepBuffer||String_to_add;
+		if Not UnTerminated then 
+			Source_string := Source_String||Delimiter;
+			iStrLen	      := length(Source_string);
+		end if;
+		else			
+	-- 2. Cope with unterminated strings 
+			if UnTerminated then 
+				Source_string := Source_string||Delimiter;
+			end if;
+
+	-- 3. Locate the nth-1 separator
+			if Field_Position > 1 then 
+				LOOP
+					iPtrStart := (instr(Source_string||vcSepBuffer,Delimiter,1,Field_Position-1)-1) + length(Delimiter);
+					EXIT when iPtrStart > 0;
+					vcSepBuffer	:= vcSepBuffer||Delimiter;
+				END LOOP;
+				if vcSepBuffer is not null then 	
+					iPtrEnd := iStrLen;
+				else 
+					iPtrEnd := instr(Source_string,Delimiter,1,Field_Position);
+					if iPtrEnd = 0 then 
+						iPtrEnd := iStrLen;
+					end if;
+				end if;
+			else 	iPtrStart := 0;
+				iPtrEnd := instr(Source_string,Delimiter,1,Field_Position);
+				if iPtrEnd = 0 then 
+					iPtrEnd := iStrLen;
+				end if;
+			end if;
+			-- 3. Rebuild the string
+			Source_string := substr(Source_string,1,iPtrStart)||vcSepBuffer||
+					 String_to_add||Delimiter||substr(Source_string,iPtrEnd+length(Delimiter));
+	-- 4. Sort out termination
+			if UnTerminated then 
+				Source_string := substr(Source_String,1,(length(Source_string)-length(Delimiter)));
+			end if;
+		end if;
+	end PutString;
+
+	Procedure PutNumber	(Source_string 	in out varchar2,
+			 number_to_add 	in number,
+			 Field_position in number,
+			 UnTerminated	in Boolean  default FALSE,
+			 Delimiter 	in varchar2 default ',') is
+	
+	begin
+	-- 1. Just do datatype conversions and call the varchar2 varsion of put..
+		D2K_Delimited_String.PutString(Source_string, to_char(number_to_add), Field_position, UnTerminated, Delimiter);
+	end PutNumber;
+
+	Procedure PutDate	(Source_string 	in out varchar2,
+			 Date_to_add 	in date,
+			 Field_position in number,
+			 UnTerminated	in Boolean  default FALSE,
+			 Delimiter 	in varchar2 default ',') is
+		
+	begin
+	-- 1. Just do datatype conversions and call the varchar2 varsion of put..
+		D2K_Delimited_String.PutString(Source_string, to_char(date_to_add,'DD-MON-YYYY HH24:MI:SS'), Field_position, UnTerminated, Delimiter);
+	end PutDate;
+
+       -- Overloaded versions of the "Puts"
+	Procedure Put	(Source_string 	in out varchar2,
+			 String_to_add 	in varchar2,
+			 Field_position in number,
+			 UnTerminated	in Boolean  default FALSE,
+			 Delimiter 	in varchar2 default ',') is
+	
+	begin
+	-- 1. Just do datatype conversions and call the varchar2 varsion of put..
+		D2K_Delimited_String.PutString(Source_string, string_to_add, Field_position, UnTerminated, Delimiter);
+	end Put;
+
+	Procedure Put	(Source_string 	in out varchar2,
+			 number_to_add 	in number,
+			 Field_position in number,
+			 UnTerminated	in Boolean  default FALSE,
+			 Delimiter 	in varchar2 default ',') is
+	
+	begin
+	-- 1. Just do datatype conversions and call the varchar2 varsion of put..
+		D2K_Delimited_String.PutString(Source_string, to_char(number_to_add), Field_position, UnTerminated, Delimiter);
+	end Put;
+
+	Procedure Put	(Source_string 	in out varchar2,
+			 Date_to_add 	in date,
+			 Field_position in number,
+			 UnTerminated	in Boolean  default FALSE,
+			 Delimiter 	in varchar2 default ',') is
+		
+	begin
+	-- 1. Just do datatype conversions and call the varchar2 varsion of put..
+		D2K_Delimited_String.PutString(Source_string, to_char(date_to_add,'DD-MON-YYYY HH24:MI:SS'), Field_position, UnTerminated, Delimiter);
+	end Put;
+
+
+	function  GetString (Source_string	in varchar2,
+			 Field_position in number,
+			 UnTerminated	in Boolean  default FALSE,
+			 Delimiter 	in varchar2 default ',') return varchar2 is
+		iPtrEnd		pls_integer 	:= 0;
+		iPtrStart	pls_integer 	:= 0;
+		vcSourceStrCopy varchar2(2000) 	:= Source_string;
+	begin
+		if UnTerminated then 
+			vcSourceStrCopy := vcSourceStrCopy||Delimiter;
+		end if;
+
+		if Field_Position > 1 then 
+			iPtrStart := instr(vcSourceStrCopy,Delimiter,1,Field_Position-1)+ length(Delimiter);
+		else iPtrStart := 1;
+		end if ; 
+		iPtrEnd	 := instr(vcSourceStrCopy,Delimiter,1,Field_Position);
+		return substr(vcSourceStrCopy,iPtrStart,(iPtrEnd-iPtrStart));
+	end GetString; /* String Version */
+
+	
+	function  GetNumber(Source_string	in varchar2,
+			 Field_position in number,
+			 UnTerminated	in Boolean  default FALSE,
+			 Delimiter 	in varchar2 default ',') return number is
+		iRc	pls_integer;
+	begin 
+		Return to_number(GetString(Source_string, Field_Position, UnTerminated, Delimiter));
+	end GetNumber; /* Number Version */
+
+	function  GetDate(Source_string	in varchar2,
+			 Field_position in number,
+			 UnTerminated	in Boolean  default FALSE,
+			 Delimiter 	in varchar2 default ',') return date is
+	begin 
+		return to_date(GetString(Source_string, Field_Position, UnTerminated, Delimiter),'DD-MON-YYYY HH24:MI:SS');
+	end GetDate; /* Date Version */
+
+	function  Locate(Source_string	in varchar2,
+			 Search_String	in varchar2,
+			 UnTerminated	in Boolean  default FALSE,
+			 Delimiter	in varchar2 default ',') return number is 
+		iHit	  pls_integer := 0;
+		iCounter  pls_integer;
+		vcCompare varchar2(2000);
+	begin 
+		for iCounter in 1..Counter(Source_String, UnTerminated, Delimiter) LOOP
+			if GetString(Source_String,iCounter, UnTerminated, Delimiter) = Search_String then 
+				iHit := iCounter;
+				Exit;
+			end if;
+		end loop;
+		Return iHit;
+	end Locate;
+
+	function  Locate(Source_string	in varchar2,
+			 Search_date	in date,
+			 UnTerminated	in Boolean  default FALSE,
+			 Delimiter	in varchar2 default ',') return number is
+	begin
+		return Locate( Source_string, to_char(Search_date,'DD-MON-YYYY HH24:MI:SS'), UnTerminated, Delimiter);
+	end Locate; /* Date Version */
+
+	function  Locate(Source_string	in varchar2,
+			 Search_number	in number,
+			 UnTerminated	in Boolean  default FALSE,
+			 Delimiter	in varchar2 default ',') return number is
+	begin
+		return Locate( Source_string, to_char(Search_number), UnTerminated, Delimiter);
+	end Locate; /* Number Version */
+
+END D2K_Delimited_String; /* Body */
+
+
+PACKAGE D2k_Filler IS
+  /*-----------------------------------------------------------*\
+   * D2K_Filler - Forms Progress Bar
+   *-----------------------------------------------------------
+   * Version       : 1.0
+   * Author        : DRMILLS
+   * Change History:
+   *        31-DEC-96 - Creation
+  \*-----------------------------------------------------------*/
+
+
+  Interrupted		exception;
+
+  procedure Setup(	WindowTitle	in varchar2,
+			MessageText	in varchar2,
+			ReturnTo	in varchar2,
+			MinValue	in number   default 0,
+			MaxValue	in number   default 100,
+			FillerBlock	in varchar2 default 'FILLER$');
+
+  procedure Increment(  Activity	in varchar2,
+                        IncrementBy     in number   default 1,
+			AddToMessageTxt in varchar2 default NULL,
+			Append		in boolean  default TRUE);
+
+  procedure OK_Button;
+
+  procedure Aborted;
+END;
+
+
+PACKAGE BODY D2k_Filler IS
+  -- Private Variables
+	hFillerBar	item;
+	hFillerPB	item;
+	vcFillerBlock	varchar2(30) := 'Not Defined';
+	vcFillerWin	varchar2(30);
+        vcReturnLoc     varchar2(61);
+	iMaxInitLength  number;
+	iWorkingRange   number;
+        iHighWater      number;
+
+
+
+  procedure Setup(	WindowTitle	in varchar2,
+			MessageText	in varchar2,
+			ReturnTo	in varchar2,
+			MinValue	in number default 0,
+			MaxValue	in number default 100,
+			FillerBlock	in varchar2 default 'FILLER$') is
+  begin
+	-- 1. Setup...
+	if FillerBlock <> vcFillerBlock then 
+		hFillerBar	:= find_item(FillerBlock||'.filler_bar');
+		hFillerPB	:= find_item(FillerBlock||'.filler_pb_ok');
+		vcFillerWin	:= get_view_property(get_item_property(hFillerBar,ITEM_CANVAS),WINDOW_NAME);
+		iMaxInitLength	:= get_item_property(hFillerBar,WIDTH);
+		vcFillerBlock	:= FillerBlock;
+	end if;
+
+	-- 2. Set the Window Title 
+	Set_window_property(vcFillerWin,TITLE,WindowTitle);
+
+	-- 3. Set the Message text
+	copy(MessageText,vcFillerBlock||'.filler_text');
+
+	-- 4. Set the Bar to Zero Length 
+	set_item_property(hFillerBar,WIDTH,0);
+
+	-- 5. Set the Persistant variables
+	iWorkingRange := (MaxValue - MinValue);
+        iHighWater  := 0;
+        vcReturnLoc := ReturnTo;
+
+	-- 6. Disable the OK button if not on Windows where we can interrupt it
+	if get_application_property(OPERATING_SYSTEM) not in ('MSWINDOWS','WIN32COMMON') then
+		set_item_property(hFillerPB,ENABLED,PROPERTY_FALSE);
+	else
+		set_item_property(hFillerPB,LABEL,'Cancel');
+	end if;
+
+	-- 7. Show the Window
+	D2k_Show_window_centered(vcFillerWin);
+  end;
+
+  procedure Increment(	Activity	in varchar2,
+			IncrementBy	in number   default 1,
+			AddToMessageTxt in varchar2 default NULL,
+			Append		in boolean  default TRUE) is 
+        iSetLength      number;
+	vcBuff		varchar2(2000);
+  begin 
+	-- 1. Ensure we are in the filler window
+	go_item(vcFillerBlock||'.filler_dummy');
+
+	-- 2. Set the progress message
+	copy(Activity,vcFillerBlock||'.filler_activity');
+
+	-- 3. If a change required to Message Append/Replace it
+	if AddToMessageTxt is not NULL then 
+		if Append then 
+			vcBuff := name_in(vcFillerBlock||'.filler_text')||chr(10)||AddToMessageTxt;
+		else
+			vcBuff := AddToMessageTxt;
+		end if;
+		copy(vcBuff,vcFillerBlock||'.filler_text');
+	end if;
+
+	-- 4. Set the Length of the item
+        iHighWater := iHighWater + IncrementBy;
+	iSetLength := floor(iMaxInitLength / ( iWorkingRange / iHighWater));
+	if iSetLength > 0 then 
+		set_item_property(hFillerBar,WIDTH,iSetLength);
+	end if;
+	if iSetLength = iMaxInitLength then 
+		set_item_property(hFillerPB,LABEL,'OK');
+		set_item_property(hFillerPB,ENABLED,PROPERTY_TRUE);
+	end if;
+
+	-- 5. Sync
+	synchronize;
+  exception
+	when VALUE_ERROR then
+		Aborted;
+	when Interrupted then 
+		Aborted;
+	when others then 
+		raise;
+  end;
+
+  procedure OK_Button is
+  begin 
+   go_item(vcReturnLoc);
+  end;
+
+  procedure Aborted is
+  begin 
+   -- Reset the Bar width to Max
+  	set_item_property(hFillerBar,WIDTH,iMaxInitLength);
+  end;
+
+END;
+
+
+PACKAGE d2k_Finder IS
+  /*-----------------------------------------------------------*\
+   * D2K_Finder - File Location Utility
+   *-----------------------------------------------------------
+   * Version       : 2.0
+   * Author        : DRMILLS
+   * Change History:
+   *        10-NOV-96 - Creation
+   *        31-DEC-96 - Upgrade to PL/SQL V2.0
+  \*-----------------------------------------------------------*/
+
+  /*-----------------------------------------------------------*\
+   * D2k_Finder is a package that we use to determine all 
+   * the possible locations of a particular file that 
+   * Forms will not find on it's own
+   * - This is primarily for locating resource files when 
+   *   they are not in the working directory or on the 
+   *   path
+   * Normal Usage would be to loop from 1 to PossiblePaths 
+   * and get the string for each one and check it.
+   * Use to use the GetLocation Proc which Does it for you
+  \*-----------------------------------------------------------*/
+
+  -- Public Variables
+
+  /*-----------------------------------------------------------*\
+   * PossiblePaths provides the number of directory locations 
+   * that exist in 
+   * FORMS45_PATH, FORMS50_PATH, TK23_ICON, TK25_ICON, 
+   * ORACLE_PATH & Form base Directory
+  \*-----------------------------------------------------------*/
+  PossiblePaths	pls_integer := 0;
+
+  -- Public PU's
+  /*-----------------------------------------------------------*\
+   * GetDirString:
+   * Get the string of the Nth path in the list 
+  \*-----------------------------------------------------------*/
+  function GetDirString	(PathIndex in pls_integer)	return varchar2;
+
+  /*-----------------------------------------------------------*\
+   * GetLocation:
+   * Search through all the possible paths and return the 
+   * Correct location and filename of the first match 
+  \*-----------------------------------------------------------*/
+  function GetLocation	(FileName in varchar2)	return varchar2;
+
+  /*-----------------------------------------------------------*\
+   * FileExists:
+   * Return True if the names file exits.
+  \*-----------------------------------------------------------*/
+  function FileExists (FileName in varchar2) return boolean;
+
+END D2k_Finder;
+
+
+PACKAGE BODY D2K_Finder IS
+
+ -- Private Types
+  type tStrings is table of varchar2(256) index by binary_integer;
+
+ -- Private Variables
+  arrPathList   tStrings;
+  vcBuffer	varchar2(2000) := NULL;
+  cSep          char(1);
+
+ -- Private PU's
+  procedure SplitPath (FullString in varchar2);
+  procedure ProcessEnv (VariableName in varchar2);
+
+  
+  Function GetDirString	(PathIndex in pls_integer)	return varchar2 is 
+  begin 
+	if (PathIndex < 1) or (PathIndex > PossiblePaths) then 
+		return NULL;
+	else
+		return arrPathList(PathIndex);
+	end if;
+  end;
+
+  function GetLocation	(FileName in varchar2)	return varchar2 is
+  begin
+    vcBuffer := NULL; 
+    for iCounter in 1..PossiblePaths LOOP
+        if FileExists(arrPathList(iCounter)||FileName) then 
+           vcBuffer := arrPathList(iCounter)||FileName;
+           exit;
+	elsif FileExists(arrPathList(iCounter)||'resource'||cSep||FileName) then 
+           vcBuffer := arrPathList(iCounter)||'resource'||cSep||FileName;
+           exit;
+        end if;
+    end loop;
+
+    if vcBuffer is not null then 
+       return vcBuffer;
+    else
+       raise NO_DATA_FOUND;
+    end if;
+  end;
+
+  Function FileExists (FileName in varchar2) return boolean is
+	hdummy	text_io.file_type;
+  begin 
+  	hDummy := text_io.fopen(FileName,'R');
+  	text_io.Fclose(hDummy);
+	return TRUE;
+  exception
+  when others then /* no file or empty */
+     if text_io.is_open(hDummy) then 
+    	text_io.fclose(hDummy);
+    end if;
+    return FALSE;
+  end;
+
+
+
+  Procedure SplitPath (FullString in varchar2) is
+	vcFullString	varchar2(2000);
+	iLen		pls_integer := length(FullString);
+	iInd		pls_integer;
+  begin 
+	if iLen > 0 then 
+		vcFullString := FullString;
+		if substr(vcFullString,-1,1) = ';' then 
+			vcFullString := substr(vcFullString,1,(iLen - 1));
+		end if;
+		loop
+			iInd := instr(vcFullString,';');
+			if iInd = 0 then  /* Last Entry */
+				if vcFullString is not null then  
+					PossiblePaths := PossiblePaths + 1;
+					arrPathList(PossiblePaths) := vcFullString;
+				end if;
+				EXIT;
+			else
+				PossiblePaths := PossiblePaths + 1;
+				arrPathList(PossiblePaths) := substr(vcFullString,1,(iInd-1));
+				vcFullString := substr(vcFullString,(iInd+1));
+			end if; 
+		end loop;		
+	end if;
+   end;
+		 
+  procedure ProcessEnv (VariableName in varchar2) is
+  begin
+   vcBuffer := NULL;
+   tool_env.getvar(VariableName,vcBuffer);
+   if vcBuffer <> NULL then 
+      SplitPath(vcBuffer);
+   end if; 
+  end;
+   
+
+
+BEGIN 
+ -- 1. Sort out the Separator Char for this O/S
+      cSep := d2k_OSFiles.SepChar;
+
+ -- 2. Always have the first Path as NULL e.g. Current Dir.
+   arrPathList(1) := NULL;
+   PossiblePaths  := 1;
+
+ -- 3. Add in the Directory of the Current form (if not null);
+   vcBuffer := get_form_property(name_in('SYSTEM.CURRENT_FORM'),FILE_NAME);
+   vcBuffer := d2k_OSFiles.Path(vcBuffer);
+   if vcBuffer is not NULL then 
+	PossiblePaths := PossiblePaths + 1;
+        arrPathList(PossiblePaths) := vcBuffer;
+   end if;
+
+ -- 4. Process each of the various PATH variables
+ --    Add any other variables required in here.
+   ProcessEnv('FORMS60_PATH');
+   ProcessEnv('ORACLE_PATH');
+   ProcessEnv('UI_ICON');
+
+ -- 5. Set the counter and double check that each entry das a trailing dir sep
+   for iCounter in 1..PossiblePaths LOOP
+	if substr(arrPathList(iCounter),-1,1) <> cSep then 
+		arrPathList(iCounter) := arrPathList(iCounter)||cSep;
+	end if;
+   end Loop;
+END D2k_Finder;
+
+
+PACKAGE d2k_OSFiles IS
+  /*-----------------------------------------------------------*\
+   * D2K_OSFiles - File Name Parser Utility
+   *-----------------------------------------------------------
+   * Version       : 1.0
+   * Author        : DRMILLS
+   * Change History:
+   *        15-FEB-97 - Creation
+  \*-----------------------------------------------------------*/
+
+  /*-----------------------------------------------------------*\
+   * This package deals with various aspects of Parsing Filenames
+   * Into just the Name, Just the Path etc. etc,
+  \*-----------------------------------------------------------*/
+  
+
+  -- SepChar - Returns the Directory Separator for the Platform
+  function SepChar return varchar2;
+
+  -- Name - Parses out just the filename (no Path, No extension)
+  function Name (FileString in varchar2) return varchar2;
+
+  -- FullName - Parses out Path and Filename but no extension
+  function FullName (FileString in varchar2) return varchar2;
+
+  -- QualifiedName - Parses out Filename and extension but no path
+  function QualifiedName (FileString in varchar2) return varchar2;
+
+  -- Path - Parses out the path only
+  function Path (FileString in varchar2) return varchar2;
+
+  -- Extension - Parses out the extension only
+  function Extension (FileString in varchar2) return varchar2; 
+
+  -- MakeName - Creates a complete path name & extension from Constituents
+  function MakeName (Path in varchar2, FileName in varchar2, Extension in varchar2) return varchar2;
+
+END;
+
+
+PACKAGE BODY d2k_OSFiles IS
+  -- Private Vars
+  vcSepChar	varchar2(1);
+  vcExt		varchar2(1) := '.';
+  vcOS		varchar2(20) := upper(get_application_property(OPERATING_SYSTEM));
+
+  function SepChar return varchar2 is
+  begin 
+   return vcSepChar;
+  end;
+
+  function Name (FileString in varchar2) return varchar2 is
+	iLoc	pls_integer;
+	vcBuff	varchar2(500);
+  begin 
+	vcBuff := Fullname(FileString);
+	iLoc := instr(vcBuff,vcSepChar,-1);
+	if iLoc > 0 then 
+		vcBuff := substr(vcBuff,(iLoc+1));
+	end if;
+	return vcBuff;
+  end;
+
+  function FullName (FileString in varchar2) return varchar2 is
+	iLoc	pls_integer;
+	vcBuff	varchar2(500);
+  begin 
+	iLoc := instr(FileString,vcExt,-1);
+	if iLoc > 0 then 
+		vcBuff := substr(FileString,1,(iLoc-1));
+	end if;
+	return vcBuff;
+  end;
+
+  function QualifiedName (FileString in varchar2) return varchar2 is
+	iLoc	pls_integer;
+	vcBuff	varchar2(500);
+  begin 
+	iLoc := instr(FileString,vcSepChar,-1);
+	if iLoc > 0 then 
+		vcBuff := substr(FileString,(iLoc+1));
+	else
+		vcBuff := FileString;
+	end if;
+	return vcBuff;
+  end;
+
+  function Path (FileString in varchar2) return varchar2 is
+	iLoc	pls_integer;
+	vcBuff	varchar2(500);
+  begin 
+	iLoc := instr(FileString,vcSepChar,-1);
+	if iLoc > 0 then 
+		vcBuff := substr(FileString,1,iLoc);
+	else 
+		vcBuff := NULL;
+	end if;
+	return vcBuff;
+  end;
+
+
+  function Extension (FileString in varchar2) return varchar2 is
+	iLoc	pls_integer;
+	vcBuff	varchar2(500);
+  begin 
+	iLoc := instr(FileString,vcExt,-1);
+	if iLoc > 0 then 
+		vcBuff := substr(FileString,(iLoc+1));
+	else 
+		vcBuff := NULL;
+	end if;
+	return vcBuff;
+  end; 
+
+  function MakeName (Path in varchar2, FileName in varchar2, Extension in varchar2) return varchar2 is
+	iLoc	pls_integer;
+	vcBuff	varchar2(500);
+  begin 
+	vcBuff := Path;
+	if Path is not Null and substr(Path,-1,1) <> vcSepChar then 
+		vcBuff := vcBuff||vcSepChar;
+	end if;
+	vcBuff := vcBuff||FileName||vcExt||Extension;
+	return vcBuff;
+  end;
+		
+
+BEGIN
+   if vcOS in ('MSWINDOWS','MSWINDOWS32','WIN32COMMON')then 
+     vcSepChar := '\';
+   elsif vcOS = 'VMS' then 
+      vcSepChar := ']';
+   elsif vcOS = 'MACINTOSH' then 
+      vcSepChar := '?'; /* Need to research this */
+   else
+      vcSepChar := '/';
+   end if;
+END;
+
+
+PACKAGE D2k_Res IS
+
+/*-------------------------------------------------------------------*\
+ * Reads Strings from Resource files, automates Alerts etc.
+ *-------------------------------------------------------------------*
+ * Author :   DRMILLS
+ * Version:   2.3
+ * Copyright: Oracle Corporation 1996,1997
+ *-------------------------------------------------------------------*
+ * Change History
+ * 
+ * 23-DEC-96	Add Args to each function to allow substition of "%s" 
+ *		Placeholders in resource strings
+ * 31-DEC-96    Upgrade to PL/SQL Release 2.0 and adapt for Shared PLL
+ *              Use.
+ * 13-JAN-97	Add %t substitution for embedded Tabs
+ * 11-MAR-97	Increase %s substitution placeholders from 6 to 10
+ * 20-MAR-97	Fix Debug For Strings
+\*-------------------------------------------------------------------*/
+
+
+
+  -- Reads strings from resource files
+ procedure	InitialiseRes	( ResourceList in varchar2, UseNLS in boolean default FALSE );
+ procedure	CloseRes;
+ procedure	Debug		( String	in boolean,
+				  Msg		in boolean,
+				  Response 	in boolean, 
+				  Files		in boolean);
+
+ function	GetString	( Target in varchar2, 
+				  MaxLength 	in pls_integer default 2000,
+				  Arg1		in varchar2 default NULL,
+				  Arg2		in varchar2 default NULL,
+				  Arg3		in varchar2 default NULL,
+				  Arg4		in varchar2 default NULL,
+				  Arg5		in varchar2 default NULL,
+				  Arg6		in varchar2 default NULL,
+				  Arg7		in varchar2 default NULL,
+				  Arg8		in varchar2 default NULL,
+				  Arg9		in varchar2 default NULL,
+				  Arg10		in varchar2 default NULL
+				) return varchar2;  
+ procedure	GetMsg		( Target in varchar2, 
+				  Arg1		in varchar2 default NULL,
+				  Arg2		in varchar2 default NULL,
+				  Arg3		in varchar2 default NULL,
+				  Arg4		in varchar2 default NULL,
+				  Arg5		in varchar2 default NULL,
+				  Arg6		in varchar2 default NULL,
+				  Arg7		in varchar2 default NULL,
+				  Arg8		in varchar2 default NULL,
+				  Arg9		in varchar2 default NULL,
+				  Arg10		in varchar2 default NULL
+				);
+ procedure	ClearMsg;
+ function	GetResponse	( Target in varchar2, 
+				  Arg1		in varchar2 default NULL,
+				  Arg2		in varchar2 default NULL,
+				  Arg3		in varchar2 default NULL,
+				  Arg4		in varchar2 default NULL,
+				  Arg5		in varchar2 default NULL,
+				  Arg6		in varchar2 default NULL,
+				  Arg7		in varchar2 default NULL,
+				  Arg8		in varchar2 default NULL,
+				  Arg9		in varchar2 default NULL,
+				  Arg10		in varchar2 default NULL
+				) return pls_integer; 
+
+
+END;
+
+
+PACKAGE BODY D2k_Res IS
+
+  -- Types 
+  type tControl is Record (FileCount     pls_integer 	:= 0,
+                           ClearMessage  boolean 	:= FALSE,
+                           DebugStrings   boolean 	:= FALSE,
+                           DebugMsg      boolean 	:= FALSE,
+                           DebugResponse boolean 	:= FALSE,
+                           DebugFiles    boolean 	:= FALSE);
+
+  type tResName   is table of varchar2(286) index by binary_integer;
+  type tResHandle is table of tool_res.rfHandle index by binary_integer;
+
+  type tArgs is table of varchar2(2000) index by binary_integer;
+
+  -- Internal Constants
+  PopupForm	constant	varchar2(8)	:= 'res$pop';
+  PopTimer	constant	varchar2(12)	:= 'RES$POPTIMER';	
+  ClearTimer	constant	varchar2(12)	:= 'RES$CLRTIMER';
+  ExitTimer	constant	varchar2(13)	:= 'RES$EXITTIMER';
+  ChkClrTimer	constant	varchar2(14)	:= 'RES$CKCLRTIMER';
+
+
+  -- Private Package Variables
+  hRES$Stop	 alert		:= find_alert('RES$Stop');
+  hRES$Caution	 alert		:= find_alert('RES$Caution');
+  hRES$Note	 alert		:= find_alert('RES$Note');
+  vcParamList	 varchar2(400);
+  hTimer	 timer;
+  arrOpenRes     tResName;
+  arrOpenHandles tResHandle;
+  Control        tControl;
+  hRes           tool_res.rfHandle;
+
+  
+  -- Internal PU declarations
+  function RegisterRes  (  ResourceName in varchar2
+			) return boolean;
+
+  function ShowAlert	( AlertName 	in varchar2,
+			  AlertTitle	in varchar2,
+			  AlertMsg	in varchar2,
+		   	  AlertB1		in varchar2,
+			  AlertB2		in varchar2,
+			  AlertB3		in varchar2
+			) return pls_integer;
+
+  function SubArgs 	( FullString	in varchar2,
+		 	  ArgList       in tArgs
+			) return varchar2;
+
+  procedure ArgToArgList(ArgList in out tArgs,
+                         Arg1    in     varchar2,
+                         Arg2    in     varchar2,
+                         Arg3    in     varchar2,
+                         Arg4    in     varchar2,
+                         Arg5    in     varchar2,
+                         Arg6    in     varchar2,
+			 Arg7	 in	varchar2,
+			 Arg8	 in	varchar2,
+			 Arg9	 in	varchar2,
+			 Arg10	 in	varchar2
+			);
+
+ function FromArglist(ArgList in tArgs, Index_no in pls_integer) return varchar2;
+			
+
+			 
+ 
+  -- Internal PU Bodies 
+  function RegisterRes (ResourceName in varchar2) return boolean is
+	bRegistered	boolean := FALSE;
+  begin 
+
+	-- 1. look through the data globals for a match on this file
+	for iCounter in 1..Control.FileCount LOOP
+		bRegistered := arrOpenRes(iCounter) = UPPER(ResourceName);
+		if bRegistered then 
+			if Control.DebugFiles then 
+				message('RES$DEBUG : File already loaded <'||ResourceName||'>');
+			end if;
+			exit;
+		else    /* For Clarity */
+			bRegistered := FALSE;
+		end if;
+	end LOOP;
+
+	-- 2. If the file is not already registered then attempt to load
+	if not bRegistered then 
+		hRes := tool_res.rfopen(ResourceName);
+		-- 3. If we have got this far then the file is open
+		--    Reset the Counter and set up a record in the Open Resources array
+                Control.FileCount := Control.FileCount + 1;
+                arrOpenRes(Control.FileCount)     := UPPER(ResourceName);
+                arrOpenHandles(Control.FileCount) := hRes;
+		if Control.DebugFiles then 
+			message('RES$DEBUG : File found <'||ResourceName||'>');
+		end if;
+	end if;
+	return TRUE;
+   exception 
+	when tool_res.file_not_found then 
+		if Control.DebugFiles then 
+			message('RES$DEBUG : File Not found <'||ResourceName||'>');
+		end if;
+		return FALSE;
+  end RegisterRes; 
+
+
+  function ShowAlert   (AlertName 	in varchar2,
+			AlertTitle	in varchar2,
+			AlertMsg	in varchar2,
+			AlertB1		in Varchar2,
+			AlertB2		in Varchar2,
+			AlertB3		in Varchar2) return pls_integer is 
+	hAlert	alert;
+  begin
+	if AlertName = 'STOP' then 
+		hAlert := hRES$Stop;
+	elsif AlertName = 'NOTE' then 
+		hAlert := hRES$Note;
+	else
+		hAlert := hRES$Caution;
+	end if;	
+
+	set_alert_property		(hAlert,TITLE,AlertTitle);
+	set_alert_property		(hAlert,ALERT_MESSAGE_TEXT,AlertMsg);
+	set_alert_button_property	(hAlert,ALERT_BUTTON1,LABEL,AlertB1);
+	set_alert_button_property	(hAlert,ALERT_BUTTON2,LABEL,AlertB2);
+	set_alert_button_property	(hAlert,ALERT_BUTTON3,LABEL,AlertB3);
+	return show_alert(hAlert);	 
+  end ShowAlert;
+
+  function SubArgs 	( FullString	in varchar2,
+                          ArgList       in tArgs
+			) return varchar2 is
+	vcBuff		varchar2(4000);	/* Working Max -> Could be up to 32K */
+	iLoc		pls_integer;
+	iCounter  	pls_integer := 0;
+  begin 
+	vcBuff := FullString;
+	iLoc := instr(upper(vcBuff),'%S');
+	if iLoc = 0 or ArgList.Count = 0  then 
+		NULL;
+	else 
+		LOOP
+			iCounter := iCounter + 1;
+			iLoc 	 := instr(upper(vcBuff),'%S');
+			if (iLoc = 0 or iCounter > ArgList.Count) then
+				exit;
+			end if;
+			vcBuff := substr(vcBuff,1,(iLoc -1))||FromArglist(Arglist,iCounter)||substr(vcBuff,iLoc+2);
+		end LOOP;
+	end if;
+	return replace(vcBuff,'%t',chr(09));	
+  exception 
+   when NO_DATA_FOUND then /* Problem with the ARGLIST */
+        return vcBuff;
+  end;
+ 
+  procedure ArgToArgList(ArgList in out tArgs,
+                         Arg1    in     varchar2,
+                         Arg2    in     varchar2,
+                         Arg3    in     varchar2,
+                         Arg4    in     varchar2,
+                         Arg5    in     varchar2,
+                         Arg6    in     varchar2,
+			 Arg7	 in	varchar2,
+			 Arg8	 in	varchar2,
+			 Arg9	 in	varchar2,
+			 Arg10	 in	varchar2
+) is
+  begin 
+   Arglist.delete;
+   ArgList(1) := Arg1;
+   ArgList(2) := Arg2;
+   ArgList(3) := Arg3;
+   ArgList(4) := Arg4;
+   ArgList(5) := Arg5;
+   ArgList(6) := Arg6;
+   ArgList(7) := Arg7;
+   ArgList(8) := Arg8;
+   ArgList(9) := Arg9;
+   ArgList(10) := Arg10;
+  end;
+
+ function FromArglist(ArgList in tArgs, Index_no in pls_integer) return varchar2 is
+  vcBuff	varchar2(2000);
+ begin
+  begin 
+  	vcBuff := ArgList(index_no);
+  exception
+	when NO_DATA_FOUND then 
+		vcBuff :=  NULL;
+  end;
+  return vcBuff;
+ end;
+  
+
+  -- Public PU Bodies
+
+  procedure	InitialiseRes	( ResourceList in varchar2, UseNLS in boolean default FALSE ) is
+   vcSuffix	varchar2(6);
+   vcBuff	varchar2(2000) := ResourceList;
+   vcTest	varchar2(256);
+   iArgCount	pls_integer;
+  begin
+	-- 1. sort out the suffix
+	if UseNLS then 
+		vcSuffix := ora_nls.get_lang_str(ora_nls.language_abbr)||'.res';
+	else 
+		vcSuffix := '.res';
+	end if;
+
+	-- 2. Parse the argument list
+	iArgCount := D2K_Delimited_String.counter(vcBuff,TRUE);
+
+	for iCount in 1..iArgCount LOOP
+		vcTest := D2K_Delimited_String.getstring(vcBuff,iCount,TRUE)||vcSuffix;
+		-- 3. For each member run through the various locations.
+                begin              
+		  if not RegisterRes(d2k_finder.getlocation(vcTest)) then 
+			NULL;
+		  end if;
+                exception
+                  when NO_DATA_FOUND then /* Check Resource sub Dirs */
+			begin 
+			  if not RegisterRes(d2k_finder.getlocation('resource'||d2k_OSfiles.sepchar||vcTest)) then 
+		     		NULL;
+			  end if;
+			exception 
+				when NO_DATA_FOUND then 
+					NULL;
+			end;
+                end;
+	end LOOP;
+  end InitialiseRes;
+
+  procedure	Debug		( String	in boolean,
+				  Msg		in boolean,
+				  Response 	in boolean, 
+				  Files		in boolean) is
+  begin 
+        Control.DebugStrings   := String;
+        Control.DebugMsg      := Msg;
+        Control.DebugResponse := Response;
+        Control.DebugFiles    := Files;
+  end Debug;
+		
+
+  function	GetString	( Target in varchar2, 
+				  MaxLength in pls_integer default 2000,
+				  Arg1		in varchar2 default NULL,
+				  Arg2		in varchar2 default NULL,
+				  Arg3		in varchar2 default NULL,
+				  Arg4		in varchar2 default NULL,
+				  Arg5		in varchar2 default NULL,
+  				  Arg6		in varchar2 default NULL,
+				  Arg7		in varchar2 default NULL,
+				  Arg8		in varchar2 default NULL,
+				  Arg9		in varchar2 default NULL,
+				  Arg10		in varchar2 default NULL
+				) return varchar2 is  
+	vcBuff		varchar2(3000);
+	vcPrefix	varchar2(62) := NULL; 
+        ArgList         tArgs;
+  begin 
+        ArgToArgList(ArgList,Arg1,Arg2,Arg3,Arg4,Arg5,Arg6,Arg7,Arg8,Arg9,Arg10);
+	vcBuff := SubArgs(tool_res.rfread(Target,'string'),ArgList);
+        Arglist.delete;
+	if Control.DebugStrings then 
+		vcPrefix := '<'||Target||'>';
+	end if;
+	return substr(vcPrefix||vcBuff,1,MaxLength);
+  exception
+    when tool_res.bad_file_handle or tool_res.no_resource then 
+	return '<'||Target||'> No Resource found';
+  end;
+
+  function	GetResponse	( Target in varchar2,
+				  Arg1		in varchar2 default NULL,
+				  Arg2		in varchar2 default NULL,
+				  Arg3		in varchar2 default NULL,
+				  Arg4		in varchar2 default NULL,
+				  Arg5		in varchar2 default NULL,
+				  Arg6		in varchar2 default NULL,
+				  Arg7		in varchar2 default NULL,
+				  Arg8		in varchar2 default NULL,
+				  Arg9		in varchar2 default NULL,
+				  Arg10		in varchar2 default NULL
+				) return pls_integer is
+	vcBuff		varchar2(2000);
+	vcPrefix	varchar2(34)	:= NULL; /* Max resource name length = 32 */
+        ArgList         tArgs;
+  begin 
+	-- 1. get the resource
+        ArgToArgList(ArgList,Arg1,Arg2,Arg3,Arg4,Arg5,Arg6,Arg7,Arg8,Arg9,Arg10);
+	vcBuff := SubArgs(tool_res.rfread(Target,'string'),ArgList);
+        Arglist.delete;
+	-- 2. Set the title prefix as we may have to embed Debug Info
+	if Control.DebugResponse then 
+		vcPrefix := '<'||Target||'>';
+	end if; 
+
+
+	-- 3. Display the alert & return  
+	return ShowAlert (	nvl(upper(D2K_Delimited_String.getstring(vcBuff,2,TRUE,'|')),'CAUTION'),	/* Type */
+				vcPrefix||nvl(D2K_Delimited_String.getstring(vcBuff,3,TRUE,'|'),'Caution'),	/* Title */
+				D2K_Delimited_String.getstring(vcBuff,1,TRUE,'|'),				/* Text */
+				nvl(D2K_Delimited_String.getstring(vcBuff,4,TRUE,'|'),'OK'),		/* Button 1 */
+				nvl(D2K_Delimited_String.getstring(vcBuff,5,TRUE,'|'),'Cancel'),		/* Button 2 */
+				nvl(D2K_Delimited_String.getstring(vcBuff,6,TRUE,'|'),''));			/* Button 3 */
+  exception
+	when tool_res.bad_file_handle or tool_res.no_resource then 
+		return ShowAlert(	'STOP',
+ 					'<'||Target||'> No Resource found',
+					'This resource could not be found',
+					'OK',
+					'',
+					'');
+
+  end;
+	
+	
+  procedure GetMsg 	( Target in varchar2,
+			  Arg1		in varchar2 default NULL,
+			  Arg2		in varchar2 default NULL,
+			  Arg3		in varchar2 default NULL,
+			  Arg4		in varchar2 default NULL,
+			  Arg5		in varchar2 default NULL,
+			  Arg6		in varchar2 default NULL,
+			  Arg7		in varchar2 default NULL,
+			  Arg8		in varchar2 default NULL,
+			  Arg9		in varchar2 default NULL,
+			  Arg10		in varchar2 default NULL
+			) is 
+	vcBuff		varchar2(2000);
+	vcPrefix	varchar2(32)	:= NULL;
+	vcMsgType	varchar2(8);
+	iIgnore		pls_integer;
+	iExpireTime	pls_integer;
+	hTimer		timer;
+        ArgList         tArgs;
+
+  begin 
+	-- 1. get the resource
+        ArgToArgList(ArgList,Arg1,Arg2,Arg3,Arg4,Arg5,Arg6,Arg7,Arg8,Arg9,Arg10);
+	vcBuff := SubArgs(tool_res.rfread(Target,'string'),ArgList);
+        ArgList.delete;
+
+	-- 2. Set the prefix as we may have to embed Debug Info
+	if Control.DebugMsg then 
+		vcPrefix := '<'||Target||'>';
+	end if; 
+
+	-- 3. get the type of message
+	vcMsgType := nvl(upper(D2K_Delimited_String.getstring(vcBuff,2,TRUE,'|')),'NONE');
+
+	-- 4. Should we Beep?
+	if toboolean(upper(D2K_Delimited_String.getstring(vcBuff,3,TRUE,'|')),'BEEP') then 
+		bell;
+	end if;
+
+	-- 5. Branch on type
+	if vcMsgType = 'NONE' then
+		iExpireTime := (nvl(D2K_Delimited_String.getstring(vcBuff,5,TRUE,'|'),0)*1000);
+		if iExpireTime > 0 then 
+			if not id_null(find_timer(ClearTimer)) then 
+				delete_timer(ClearTimer);
+			end if; 
+			hTimer := create_timer(ClearTimer,iExpireTime,NO_REPEAT);
+		end if;
+		message(vcPrefix||D2K_Delimited_String.getstring(vcBuff,1,TRUE,'|'),no_acknowledge);
+		synchronize;
+	else
+		iIgnore := ShowAlert (	vcMsgType,	/* Type */
+				vcPrefix||nvl(D2K_Delimited_String.getstring(vcBuff,4,TRUE,'|'),'Error'),	/* Title */
+				D2K_Delimited_String.getstring(vcBuff,1,TRUE,'|'),				/* Text */
+				'OK',								/* Button 1 */
+				NULL,								/* Button 2 */
+				NULL);								/* Button 3 */
+	end if;
+	
+  exception
+	when tool_res.bad_file_handle or tool_res.no_resource then 
+		iIgnore :=  ShowAlert(	'STOP',
+ 					'<'||Target||'> No Resource found',
+					'This resource could not be found',
+					'OK',
+					'',
+					'');
+
+  end;
+
+  procedure ClearMsg is
+  begin
+	clear_message;
+	Control.ClearMessage := TRUE;
+  end;
+  
+
+  procedure CloseRes is
+  begin 
+    for iCounter in 1..Control.FileCount LOOP
+	tool_res.rfclose(arrOpenHandles(iCounter));
+    end loop;
+  exception
+	when others then 
+		null; /* Ignore all errors */
+  end CloseRes;
+
+END;
+
+
+PROCEDURE D2K_SHOW_WINDOW_CENTERED ( 	win       in VARCHAR2, 
+				 	winstyle  in VARCHAR2	:= 'DOCUMENT',
+                                 	console   in BOOLEAN	:= TRUE,
+				 	XOffset   in number		:= 0,
+				 	YOffset   in number		:= 0) IS
+  win_id          window;
+  win_x           NUMBER;
+  win_y           NUMBER;
+  win_w           NUMBER;
+  win_h           NUMBER;
+  display_w       NUMBER;
+  display_h       NUMBER;
+  SDI             BOOLEAN := ToBoolean(upper(name_in('PARAMETER.USESDI')),'YES');
+  relative_to_mdi BOOLEAN := FALSE;
+  ch              NUMBER := to_number(
+                       Get_Form_property(
+                         name_in('SYSTEM.CURRENT_FORM'),
+                           CHARACTER_CELL_HEIGHT));
+BEGIN
+  IF Get_Application_Property(USER_INTERFACE)='MSWINDOWS'
+  AND UPPER(winstyle) = 'DOCUMENT' and NOT SDI 
+  THEN
+    relative_to_mdi := TRUE;
+  END IF;
+
+  win_id := FIND_WINDOW(win);
+
+  IF ID_NULL(win_id) THEN
+    RETURN;
+  END IF;
+
+  display_h := TO_NUMBER(GET_APPLICATION_PROPERTY(DISPLAY_HEIGHT));
+  display_w := TO_NUMBER(GET_APPLICATION_PROPERTY(DISPLAY_WIDTH));
+
+  win_x   := GET_WINDOW_PROPERTY(win_id, X_POS);
+  win_y   := GET_WINDOW_PROPERTY(win_id, Y_POS);
+  win_w   := GET_WINDOW_PROPERTY(win_id, WIDTH);
+  win_h   := GET_WINDOW_PROPERTY(win_id, HEIGHT);
+  IF relative_to_mdi THEN
+    IF GET_WINDOW_PROPERTY(FORMS_MDI_WINDOW,WINDOW_STATE) 
+       <> 'MAXIMIZE' THEN
+      display_w := GET_WINDOW_PROPERTY(FORMS_MDI_WINDOW,WIDTH) ;
+      display_h := GET_WINDOW_PROPERTY(FORMS_MDI_WINDOW,HEIGHT) ;
+    ELSE
+    display_h := display_h - 2.4*ch;
+    END IF;
+    IF console then 
+      display_h := display_h-1.35*ch;
+    else
+      DISPLAY_H := DISPLAY_H - 2.5*CH;
+    END IF;
+
+  END IF;
+    IF ( win_w >= display_w ) THEN
+      win_x := 0;
+    ELSE
+      win_x := ((display_w - win_w) / 2) + XOffset;
+    END IF;
+    IF ( win_h >= display_h ) THEN
+      win_y := 0;
+    ELSE
+      win_y := ((display_h -  win_h) / 2) + YOffset;
+    END IF;
+  -- Set window's new position
+
+  
+  if win_y < 0 then win_y := 0; end if;
+  SET_WINDOW_PROPERTY(win_id, X_POS, win_x);
+  SET_WINDOW_PROPERTY(win_id, Y_POS, win_y);
+
+  SHOW_WINDOW(win_id);
+END;
+
+
+PACKAGE d2k_TreeUtil IS
+  /*----------------------------------------------------------*\
+   * D2K_TreeUtil - A series of utility PUs for making the 
+   *                manipulation of the new FTree easier
+  \*----------------------------------------------------------*/
+  
+  /*----------------------------------------------------------*\
+   * WindowResizeReg - This Procedure gathers vital information
+   *                about any trees that we are going to re-size
+   *                The initial factor being the difference 
+   *                in size between it and it's parent window
+   *                Without these offsets, rounding errors 
+   *                would mean that in some circumstances the
+   *                resized Tree would not fit the window
+  \*----------------------------------------------------------*/
+  PROCEDURE WindowResizeReg (	TreeItem 					in VARCHAR2, 
+  														HorizontalToolbar in VARCHAR2 DEFAULT NULL,
+  														VerticalToolbar 	in VARCHAR2 DEFAULT NULL);
+
+   
+  
+  /*----------------------------------------------------------*\
+   * WindowResize - A Program unit that can takes the name of 
+   *                a Tree Item.
+   *                It then ensures that the Tree Completely 
+   *                fills it's window.
+   *								Must Call WindowResizeReg at Form Startup
+   *                in order for this Producedure to Work
+  \*----------------------------------------------------------*/   
+  PROCEDURE WindowResize (TreeItem 					in VARCHAR2);
+                                                                                             
+  
+END;
+
+PACKAGE BODY D2K_TreeUtil IS
+
+  -- Types to define the array to store vital info about each tree.
+  TYPE tTreeInfo is RECORD (WindowName				VARCHAR(30),
+  													CanvasName				VARCHAR2(30),
+  													LastWinWidth			NUMBER,
+  													LastWinHeight			NUMBER,
+  													ItemWidthOffset		NUMBER,
+  													ItemHeightOffset	NUMBER);
+  TYPE arrTreeInfo is TABLE of tTreeInfo index by BINARY_INTEGER;
+  
+  TreeInfo arrTreeInfo;
+
+
+-- Public PUs
+PROCEDURE WindowResizeReg (	TreeItem 					in VARCHAR2, 	
+  											  	HorizontalToolbar in VARCHAR2 DEFAULT NULL,
+  													VerticalToolbar 	in VARCHAR2 DEFAULT NULL) is
+  hTree ITEM;	
+  iTree	PLS_INTEGER;												
+begin
+  -- 1. Obtain the basic info about the Item
+	hTree := find_item(TreeItem);
+	iTree := hTree.Id;
+	TreeInfo(iTree).CanvasName 		:= get_item_property(hTree,CANVAS_NAME);
+	TreeInfo(iTree).WindowName 		:= get_view_property(TreeInfo(iTree).CanvasName,WINDOW_NAME);
+	TreeInfo(iTree).LastWinWidth 	:= get_window_property(TreeInfo(iTree).WindowName,WIDTH);
+	TreeInfo(iTree).LastWinHeight := get_window_property(TreeInfo(iTree).WindowName,HEIGHT);
+			
+	-- 2. Save away the sizes of the toolbars
+  if VerticalToolbar is NOT NULL then  
+  	TreeInfo(iTree).ItemWidthOffset := to_number(get_view_property(VerticalToolbar,WIDTH)); 
+  else
+  	TreeInfo(iTree).ItemWidthOffset := 0;
+  end if;
+
+  if HorizontalToolbar is NOT NULL then  
+  	TreeInfo(iTree).ItemHeightOffset := to_number(get_view_property(HorizontalToolbar,HEIGHT)); 
+  else
+  	TreeInfo(iTree).ItemHeightOffset := 0;
+  end if;
+  
+  -- 3. Account for the "Margins" between the Item and it's Window
+  TreeInfo(iTree).ItemWidthOffset 	:= TreeInfo(iTree).ItemWidthOffset +  (get_window_property(TreeInfo(iTree).WindowName,WIDTH) - get_item_property(hTree,WIDTH));
+  TreeInfo(iTree).ItemHeightOffset 	:= TreeInfo(iTree).ItemHeightOffset + (get_window_property(TreeInfo(iTree).WindowName,HEIGHT) - get_item_property(hTree,HEIGHT));
+end;
+	  													
+  												
+PROCEDURE WindowResize (TreeItem 					in VARCHAR2) is  												
+  hTree					ITEM;
+  iTree					PLS_INTEGER;  
+  hCanvas				CANVAS;
+  hWindow				WINDOW;
+  iWinWidth			NUMBER;
+  iWinHeight		NUMBER;
+  bWider				BOOLEAN := FALSE;
+  bTaller				BOOLEAN := TRUE;
+begin 
+	
+	-- 1. Get the Id of the Item
+	hTree := find_item(TreeItem);
+	iTree := hTree.Id;
+  
+  -- 2. Is the resize event for this window?
+  if TreeInfo(iTree).WindowName = name_in('SYSTEM.EVENT_WINDOW') then /* Yes! */
+  	-- 3. Get the new Height and Width for the Window
+  	hWindow 			:= find_window(TreeInfo(iTree).WindowName);
+  	hCanvas				:= find_canvas(TreeInfo(iTree).CanvasName);
+  	iWinWidth 		:= get_window_property(hWindow,WIDTH);
+  	iWinHeight 		:= get_window_property(hWindow,HEIGHT); 
+  	
+  	-- 4. Resize, in the correct order
+  	if iWinWidth  = TreeInfo(iTree).LastWinWidth then 
+  		NULL; 
+  	elsif  iWinWidth  > TreeInfo(iTree).LastWinWidth then 
+  		-- Resize the canvas, then the item
+  		set_canvas_property(hCanvas,WIDTH,iWinWidth + 10);  		
+  		set_item_property(hTree,WIDTH,(iWinWidth - TreeInfo(iTree).ItemWidthOffset));
+  	else
+  		-- Resize the item, then the canvas  	
+  		set_item_property(hTree,WIDTH,(iWinWidth - TreeInfo(iTree).ItemWidthOffset));
+  		set_canvas_property(hCanvas,WIDTH,iWinWidth + 10);  
+  	end if;		
+
+  	if iWinHeight  = TreeInfo(iTree).LastWinHeight then 
+  		NULL; 
+  	elsif  iWinHeight  > TreeInfo(iTree).LastWinHeight then 
+  		-- Resize the canvas, then the item
+  		set_canvas_property(hCanvas,HEIGHT,iWinHeight + 10);  		
+  		set_item_property(hTree,HEIGHT,(iWinHeight - TreeInfo(iTree).ItemHeightOffset));
+  	else
+  		-- Resize the item, then the canvas  	
+  		set_item_property(hTree,HEIGHT,(iWinHeight - TreeInfo(iTree).ItemHeightOffset));
+  		set_canvas_property(hCanvas,HEIGHT,iWinHeight + 10);  
+  	end if;		
+  		
+  	-- 5. Save away the Window Size 
+  	TreeInfo(iTree).LastWinWidth 	:= get_window_property(hWindow,WIDTH);
+		TreeInfo(iTree).LastWinHeight := get_window_property(hWindow,HEIGHT);
+  else
+  	null;
+  end if;
+end;
+  
+  	
+END D2K_TreeUtil;
+
+FUNCTION ToBoolean(Sample in varchar2, TrueValue in varchar2 default 'Y') RETURN BOOLEAN IS
+ -- converts a simple Y/N (Yes / No) flag to a Boolean value useful for checkboxes
+BEGIN
+  return upper(sample) = upper(TrueValue);
+END;

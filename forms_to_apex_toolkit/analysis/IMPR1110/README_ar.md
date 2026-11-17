@@ -6,8 +6,12 @@
 | الملف | المحتوى |
 |---|---|
 | `analysis/IMPR1110/IMPR1110_inventory.md` | جرد الشاشة: الكتل والحقول والتريجرات والمكتبات والقوائم والوظائف والرسائل، وتحديد ما يُحوَّل وما يُحذف |
+| `analysis/IMPR1110/IMPR1110_logic_extraction.md` | تقرير الخطوة 2: تصنيف كل التريجرات (376)، بدائل الـ built-ins، الرسائل، منطق الواجهة، المتغيرات العامة، والأسئلة المفتوحة |
 | `plsql/IMPR1110/pkg_impr1110_spec.sql` | مواصفة الحزمة `PKG_IMPR1110`، وأسماء الإجراءات فيها بأسماء تريجرات Forms نفسها |
-| `plsql/IMPR1110/pkg_impr1110_body.sql` | جسم الحزمة: كل منطق WHEN-VALIDATE-ITEM و PRE/POST-INSERT/UPDATE/DELETE و POST-QUERY والوظائف |
+| `plsql/IMPR1110/pkg_impr1110_body.sql` | جسم الحزمة: كل منطق WHEN-VALIDATE-ITEM و PRE/POST-INSERT/UPDATE/DELETE و POST-QUERY والوظائف، ومع كل إجراء كود Forms الأصلي حرفيًا كتعليق. لا تقرأ أي عنصر من عناصر الصفحة |
+| `plsql/IMPR1110/pkg_impr1110_apx_*.sql` | حزمة الربط مع APEX: الوحيدة التي تقرأ وتكتب `P1110_*`، وتستدعي الحزمة بترتيب تريجرات Forms |
+| `scripts/expand_orig.py` | يُدرج كود Forms الأصلي فوق كل إجراء ويفحص النصوص العربية والـ built-ins وطول الأسماء |
+| `rollback/IMPR1110/*_v0.sql` | النسخة السابقة من الحزمة (المبنية من ملخص الجرد) |
 | `plsql/IMPR1110/impr1110_shared_lovs.sql` | استعلامات القوائم المشتركة (LOVs) |
 | `apex/IMPR1110/IMPR1110_page_spec.md` | مواصفات بناء الصفحة 1110: المناطق والحقول والتحققات والعمليات والأزرار و Dynamic Actions |
 | `registry/IMPR1110_registry.sql` | تسجيل الشاشة وخريطة كائناتها في جداول متابعة الترحيل |
@@ -18,7 +22,7 @@
 1. `plsql_templates/pkg_forms_compat.sql`، إن لم يكن مثبتًا من قبل.
 2. `scripts/create_migration_registry.sql` ثم `registry/IMPR1110_registry.sql`.
 3. تأكد من وجود الحزم الخارجية وصلاحياتها في مخطط التطبيق: GNRL, STR_DB, HIJDATE_DB, ACTIVITY, DB_JOURNAL, IMPR, IMPR_CENTRAL، إضافة إلى المرادفات (synonyms) أو صلاحيات `EXECUTE`.
-4. `pkg_impr1110_spec.sql` ثم `pkg_impr1110_body.sql`، ثم أصلح أخطاء الترجمة.
+4. `pkg_impr1110_spec.sql` ثم `pkg_impr1110_body.sql` ثم `pkg_impr1110_apx_spec.sql` ثم `pkg_impr1110_apx_body.sql`، ثم أصلح أخطاء الترجمة.
 5. أنشئ عناصر التطبيق `AI_*` والقوائم من `impr1110_shared_lovs.sql` ورسائل النص (Text Messages).
 6. ابنِ الصفحة 1110 حسب `IMPR1110_page_spec.md`.
 7. شغّل `test_pkg_impr1110`، ثم نفّذ قائمة UAT بالمقارنة مع Forms.
@@ -26,22 +30,22 @@
 ## 3. قرارات التصميم الأساسية
 - الكتلة `IMPORTERS` صارت تقريرًا تفاعليًا للبحث (بديل Enter/Execute Query)، ومعه منطقة نموذج لسجل واحد.
 - الحفظ لا يعتمد Automatic Row Processing. يتم عبر `page_dml` حتى تبقى تريجرات PRE/POST بترتيب Forms نفسه. **أُزيلت كل أوامر COMMIT**، فـ APEX يحفظ في نهاية المعالجة أو يتراجع عند الخطأ.
-- تمكين الحقول وتعطيلها وجعلها إلزامية (INTRFACE.Make_Field_Entrable) يتم بدالة `ui_state_json`، وهي تُرجع JSON يطبّقه Dynamic Action. استخدمنا APEX_JSON لأن قاعدة 12.1 لا تدعم JSON_OBJECT_T.
+- تمكين الحقول وتعطيلها وجعلها إلزامية (INTRFACE.Make_Field_Entrable و SET_ITEM_PROPERTY و GO_ITEM) تُسجَّل داخل الحزمة في نفس موضعها في Forms، وتُرجعها `ui_json` بصيغة JSON يطبّقها Dynamic Action. استخدمنا APEX_JSON لأن قاعدة 12.1 لا تدعم JSON_OBJECT_T.
 - `:PARAMETER.P_*` و `:GLOBAL.*` صارت عناصر تطبيق `AI_*`.
 - التواريخ الهجرية بقيت حقول نص بقناع `MI-MM-YYYY` كما في Forms.
 - الكتل TITLE و EDI_MSG و LSIDE و TOOLBAR والمكتبات الخاصة بواجهة Windows حُذفت، وحلّت محلها مكونات APEX الأصلية.
 
 ## 4. أسئلة مفتوحة (تحتاج قرارًا قبل البناء)
-1. **`IMPR_CENTRAL.CREATE_UNI_IMPR_NEBRAS`**: هل يُدرج سجل IMPORTERS بنفسه؟ الحزمة الحالية تُدرج السجل بـ INSERT عادي ثم تستدعي الإجراء في POST-INSERT. إذا كان الإجراء يُدرج السجل أيضًا فسيحدث تكرار.
+1. **`IMPR_CENTRAL.CREATE_UNI_IMPR_NEBRAS`**: يُستدعى في PRE-INSERT (وليس POST-INSERT). بعده ينفذ Forms الـ INSERT الافتراضي و`IMPR_NBR` ما زال فارغًا، ثم يستدعي POST-INSERT الإجراء `INSERT_AUDIT_RECORD` الذي يفشل برسالة 9-140 إذا كان الرقم فارغًا. هذا لا يعمل كما هو مكتوب إلا بشيء خارج ملف XML، لذلك يلزم Trace لعملية إضافة واحدة في Forms (H1 في تقرير الخطوة 2).
 2. **مكان الحزم الخارجية** (STR/STR_DB, HIJDATE_DB, INTRFACE, GNRL, ACTIVITY, DB_JOURNAL, IMPR_UTILITIES, MCISERVICE في LIB_USR) وصلاحياتها على مخطط APEX.
 3. **سياسة الحذف:** الكتلة معرّفة بـ DeleteAllowed=false، لكن تريجر KEY-DELREC يحذف. هل نُبقي الحذف، وما الصلاحية المطلوبة له؟
 4. **التاريخ الهجري:** هل العمود من نوع DATE ويحمل أرقامًا هجرية؟ وهل القناع `MI-MM-YYYY` مقصود أم خطأ قديم، علمًا أن MI تعني الدقائق وليس اليوم؟
 5. **شاشات القوائم المستدعاة** (LOV Forms) وشاشة تحديث الجوال `LOV_UPDATE_IMPR_MOBILE`: ما الصفحات البديلة لها؟
 6. **مسار خطاب الدعم (SUPPORT_ENTRY / LETTER_NBR)**: من أين يأتي رقم الخطاب في APEX؟
-7. **خدمة وزارة التجارة (GET_CR_DATA)** و**تفويض المخلص (CREATE_BRKR_IMPR_AUTH)**: صُنّفتا MANUAL ولم تُحوَّلا بعد.
+7. **خدمة وزارة التجارة (GET_CR_DATA)** و**تفويض المخلص (CREATE_BRKR_IMPR_AUTH)**: حُوِّلتا بالكامل في الخطوة 2، وحُذف منهما COMMIT (H2).
 8. **استدعاءات IMPR1115** (IMPR1115_GZT) وF4 وSF6: ستُربط عند تحويل تلك الشاشات.
 9. **رقم التطبيق (app_id):** استخدمنا 2000 مؤقتًا في السجل والاختبارات.
-10. **رسائل TODO-VERIFY:** في جسم الحزمة 19 موضعًا لرسائل أُعيدت صياغتها ولم تُنقل حرفيًا. يجب مطابقتها مع نصوص Forms الأصلية، ومثلها نصوص قيود FK في ON-ERROR.
+10. **الرسائل:** أُغلق هذا البند. كل النصوص العربية في الحزمة منقولة حرفيًا من Forms، وفُحصت آليًا (213 نصًا، ولا فرق). بقيت فقط صيغة `STR.DispArbMsg` (المكتبة غير متوفرة).
 11. **قيمة 0 في نوع السجل التجاري:** تظهر في القائمة باسم "فرعي" إلى جانب القيمة 2. هل هي بيانات قديمة فقط؟
 
 ## 5. الخطوة التالية

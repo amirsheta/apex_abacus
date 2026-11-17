@@ -1,0 +1,962 @@
+PACKAGE CGBS$ IS
+
+     PROCEDURE CLEAR_MASTER_DETAIL
+     (
+       P_MASTER_BLOCK  IN  VARCHAR2,
+       P_COORD_OP      IN  VARCHAR2
+     );
+
+     PROCEDURE CLEAR_DETAIL
+     (
+       P_DETAIL_BLOCK  IN      VARCHAR2
+
+     ) ;
+
+     PROCEDURE QUERY_DETAILS
+     (
+       P_MASTER_BLOCK  IN  VARCHAR2,
+       P_QUERY_MODE    IN  VARCHAR2
+     ) ;
+
+     PROCEDURE SET_RELATIONS
+     (
+       P_QUERY_MODE   IN  VARCHAR2
+     ) ;
+
+     PROCEDURE NEW_BLOCK
+     (
+       P_TO_BLOCK     IN      VARCHAR2,
+       P_QUERY_MODE   IN      VARCHAR2
+     ) ;
+
+     PROCEDURE COORD_VISIBLE_BLKS
+     (
+       P_EVENT_BLOCK  IN  VARCHAR2
+     )  ;
+
+     PROCEDURE COORD_RELATION
+     (
+       P_RELATION_ID   IN  Relation,
+       P_QUERY_MODE    IN  VARCHAR2
+     ) ;
+
+     PROCEDURE DO_KEYQRY
+     (
+       P_BLOCK          IN  VARCHAR2,
+       P_OP             IN  VARCHAR2,
+       P_MODE           IN  VARCHAR2
+     ) ;
+
+  END CGBS$;
+
+
+PACKAGE CGBS2$ IS
+
+  PROCEDURE DO_COMMIT_DIALOGUE;
+
+   FUNCTION GET_BLOCK_WINDOW
+   (
+     P_BLOCK  IN  VARCHAR2
+   ) RETURN VARCHAR2;
+
+   FUNCTION GET_BLOCK_CANVAS
+   (
+     P_BLOCK  IN  VARCHAR2
+   ) RETURN       VARCHAR2;
+
+
+   FUNCTION IS_BLOCK_VISIBLE
+   (
+     P_BLOCK  IN  VARCHAR2
+   ) RETURN BOOLEAN;
+
+
+   FUNCTION IS_TREE_VISIBLE
+   (
+     P_BLOCK  IN  VARCHAR2
+   ) RETURN BOOLEAN;
+
+
+   FUNCTION GET_COORD_STYLE
+   RETURN VARCHAR2;
+
+   PROCEDURE SET_COORD_STYLE
+   (
+     P_COORD_STYLE  IN  VARCHAR2
+   );
+   
+   FUNCTION GET_QRY_ON_ENTRY
+   RETURN VARCHAR2;
+
+   PROCEDURE SET_QRY_ON_ENTRY
+   (
+    P_QRY_ON_ENTRY  IN  VARCHAR2
+   );
+   
+   FUNCTION GET_NAV_FROM_BLOCK
+   RETURN VARCHAR2;
+   
+   PROCEDURE SET_NAV_FROM_BLOCK
+   (
+     P_NAV_FROM_BLOCK  IN  VARCHAR2
+   );
+
+   FUNCTION IS_COMMIT_NEEDED
+   (
+     P_MASTER_BLOCK  IN      VARCHAR2
+   ) RETURN BOOLEAN;
+
+    FUNCTION IS_RECORD_DIRTY
+    (
+      P_BLOCK  IN  VARCHAR2
+    ) RETURN BOOLEAN;
+
+  END CGBS2$;
+
+
+PACKAGE BODY CGBS2$ IS
+    coord_style     VARCHAR2(1);  
+    qry_on_entry    VARCHAR2(1);  
+    nav_from_block  VARCHAR2(60); 
+    temp_canvas     VARCHAR2(60);
+
+    PROCEDURE DO_COMMIT_DIALOGUE IS
+
+      commit_answer  number;
+			PROP VARCHAR2(10);
+			PROP1 VARCHAR2(10);
+
+    BEGIN
+
+	PROP1 := GET_ITEM_PROPERTY('SAVE',ENABLED);
+  PROP  := GET_ITEM_PROPERTY('SAVE',VISIBLE);
+
+   IF PROP = 'FALSE' OR PROP1 = 'FALSE' THEN
+   		commit_answer := ALERT_BUTTON2;
+   ELSE
+      commit_answer := show_alert('CFG_ASK_COMMIT');
+   END IF;
+
+      if ( commit_answer = ALERT_BUTTON1 )    
+	then
+	  commit_form;
+	  if ( name_in('system.form_status') = 'CHANGED' )
+	    then
+	      raise form_trigger_failure;
+	  end if;
+
+      elsif ( commit_answer = ALERT_BUTTON2 ) 
+	then
+	  null;
+      elsif ( commit_answer = ALERT_BUTTON3 ) 
+	then
+	  raise form_trigger_failure;
+      end if;
+
+    END DO_COMMIT_DIALOGUE;
+
+   FUNCTION IS_TREE_VISIBLE
+   (
+     P_BLOCK  IN  VARCHAR2
+   ) RETURN BOOLEAN IS
+
+     rel_name     varchar2(60);
+     rel_id       Relation;
+
+     detail_block  varchar2(60);
+
+   BEGIN
+
+     if ( CGBS2$.IS_BLOCK_VISIBLE(P_BLOCK) )
+       then
+	 return( true );
+     end if;
+
+     rel_name := get_block_property(P_BLOCK, FIRST_MASTER_RELATION);
+
+     while ( rel_name is not null) loop
+
+       rel_id       := find_relation(P_BLOCK||'.'||rel_name);
+       detail_block := get_relation_property(rel_id, DETAIL_NAME);
+
+       if ( IS_TREE_VISIBLE(detail_block) )
+	 then
+	   return( true );
+       end if;
+
+       rel_name := get_relation_property(rel_id, NEXT_MASTER_RELATION);
+
+     end loop;
+
+     return( false );
+
+   END IS_TREE_VISIBLE;
+
+   FUNCTION IS_BLOCK_VISIBLE
+   (
+     P_BLOCK  IN  VARCHAR2
+   ) RETURN BOOLEAN IS
+
+   BEGIN
+    temp_canvas := CGBS2$.GET_BLOCK_CANVAS(P_BLOCK);
+    if ( temp_canvas is null)
+      then return( false );
+      elsif ( get_view_property(temp_canvas, VISIBLE) = 'TRUE' and
+	            get_window_property(CGBS2$.GET_BLOCK_WINDOW(P_BLOCK),
+	                                               VISIBLE) = 'TRUE' )
+       then return( true );
+       else return( false );
+    end if;
+
+   END IS_BLOCK_VISIBLE;
+
+
+   FUNCTION GET_BLOCK_WINDOW
+   (
+     P_BLOCK  IN  VARCHAR2
+   ) RETURN VARCHAR2 IS
+
+     canvas_name   CONSTANT  varchar2(60) := CGBS2$.GET_BLOCK_CANVAS(P_BLOCK);
+
+   BEGIN
+
+     if ( canvas_name is not null )
+       then
+	 return( get_view_property(canvas_name, WINDOW_NAME) );
+       else
+	 return( null );
+     end if;
+
+   END GET_BLOCK_WINDOW;
+
+   FUNCTION GET_BLOCK_CANVAS
+   (
+     P_BLOCK  IN  VARCHAR2
+   ) RETURN       VARCHAR2 IS
+
+     next_item    varchar2(60);
+     next_item_id Item;
+
+     canvas_name  varchar2(60);
+
+   BEGIN
+
+     if id_null(find_block(p_block)) then
+       return '';
+     end if;
+
+     next_item := get_block_property(P_BLOCK, FIRST_ITEM);
+
+     while ( next_item is not null ) loop
+
+       next_item_id := find_item(P_BLOCK||'.'||next_item);
+       canvas_name  := get_item_property(next_item_id, ITEM_CANVAS);
+
+       if ( canvas_name is not null and
+            substr(canvas_name,1,14) != 'CG$SINGLE_AREA'
+          )
+          then
+            return( canvas_name );
+       end if;
+
+       next_item := get_item_property(next_item_id, NEXTITEM);
+
+     end loop;
+
+     return( null );
+
+   END GET_BLOCK_CANVAS;
+
+   FUNCTION GET_COORD_STYLE
+   RETURN VARCHAR2 IS
+   BEGIN
+     return(CGBS2$.coord_style);
+   END GET_COORD_STYLE;
+
+   PROCEDURE SET_COORD_STYLE
+   (
+     P_COORD_STYLE  IN  VARCHAR2
+   ) IS
+   BEGIN
+     CGBS2$.coord_style := P_COORD_STYLE;
+   END SET_COORD_STYLE;
+
+   FUNCTION GET_QRY_ON_ENTRY
+   RETURN VARCHAR2 IS
+   BEGIN
+     return(CGBS2$.qry_on_entry);
+   END GET_QRY_ON_ENTRY;
+
+   PROCEDURE SET_QRY_ON_ENTRY
+   (
+    P_QRY_ON_ENTRY  IN  VARCHAR2
+   ) IS
+   BEGIN
+     CGBS2$.qry_on_entry := P_QRY_ON_ENTRY;
+   END SET_QRY_ON_ENTRY;
+   
+   FUNCTION GET_NAV_FROM_BLOCK
+   RETURN VARCHAR2 IS
+   BEGIN
+     return(CGBS2$.nav_from_block);
+   END GET_NAV_FROM_BLOCK;
+   
+   PROCEDURE SET_NAV_FROM_BLOCK
+   (
+     P_NAV_FROM_BLOCK  IN  VARCHAR2
+   ) IS
+   BEGIN
+     CGBS2$.nav_from_block := P_NAV_FROM_BLOCK;
+   END SET_NAV_FROM_BLOCK;
+
+   FUNCTION IS_COMMIT_NEEDED
+   (
+     P_MASTER_BLOCK  IN      VARCHAR2
+   ) RETURN BOOLEAN IS
+
+     rel_name                varchar2(60);
+     rel_id                  Relation;
+     detail_block            varchar2(60);
+
+     master_blk_id  CONSTANT Block := find_block(P_MASTER_BLOCK);
+
+   BEGIN
+
+     
+     
+
+     if ( get_block_property(master_blk_id, STATUS) = 'NEW' )
+       then
+	 return( false );
+     end if;
+
+     rel_name := get_block_property(master_blk_id, FIRST_MASTER_RELATION);
+
+     while ( rel_name is not null ) loop
+
+       rel_id       := find_relation(P_MASTER_BLOCK||'.'||rel_name);
+       detail_block := get_relation_property(rel_id, DETAIL_NAME);
+
+       
+
+       if ( get_block_property(detail_block, STATUS) = 'CHANGED' )
+	 then
+	   return( true );
+	 else
+
+	   
+	   
+
+	   if ( IS_COMMIT_NEEDED(detail_block) )
+	     then
+	       return( true );
+	   end if;
+       end if;
+
+       rel_name := get_relation_property(rel_id, NEXT_MASTER_RELATION);
+
+     end loop;
+
+     return( false );
+
+   END IS_COMMIT_NEEDED;
+    
+    FUNCTION IS_RECORD_DIRTY
+    (
+      P_BLOCK  IN  VARCHAR2
+    ) RETURN BOOLEAN IS
+
+    rec_status VARCHAR2(20);
+    
+    BEGIN
+      rec_status := get_record_property(get_block_property(P_BLOCK, CURRENT_RECORD),
+			       P_BLOCK, STATUS);
+		  	       
+      if ( rec_status = 'NEW' OR rec_status = 'INSERT' )
+	then
+	  return( false );
+      end if;
+
+      go_block(P_BLOCK);
+
+      if( name_in('SYSTEM.CURSOR_BLOCK') <> P_BLOCK ) THEN
+        raise form_trigger_failure;
+      end if;
+ 
+      validate(RECORD_SCOPE);
+
+      if ( FORM_FAILURE )
+	then
+	  return( true );
+      end if;
+
+      return( false );
+
+    END IS_RECORD_DIRTY;
+
+
+  END CGBS2$;
+
+
+PACKAGE BODY CGBS$ IS
+
+    PROCEDURE CHK_PACKAGE_FAILURE
+    IS
+
+    BEGIN
+      if not FORM_SUCCESS
+	 then
+	   raise FORM_TRIGGER_FAILURE;
+      end if;
+    END CHK_PACKAGE_FAILURE;
+
+     PROCEDURE QRY_ONE_BLK
+     (
+       P_TARGET_BLK  IN  VARCHAR2
+     ) IS
+     BEGIN
+
+       if ( get_block_property(P_TARGET_BLK, QUERY_ALLOWED) = 'TRUE' )
+	 then
+	   go_block(P_TARGET_BLK);	
+
+           if( name_in('SYSTEM.CURSOR_BLOCK') <> P_TARGET_BLK ) THEN
+             raise form_trigger_failure;
+           end if;
+
+	   execute_query;
+
+       end if;
+
+     END QRY_ONE_BLK;
+
+   PROCEDURE COORD_VISIBLE_BLKS
+   (
+     P_EVENT_BLOCK  IN  VARCHAR2
+   )  IS
+
+     event_canvas  CONSTANT varchar2(60)
+       := CGBS2$.GET_BLOCK_CANVAS(P_EVENT_BLOCK);
+     event_window  CONSTANT varchar2(60)
+       := CGBS2$.GET_BLOCK_WINDOW(P_EVENT_BLOCK);
+     current_block            varchar2(60)
+       := get_form_property(name_in('system.current_form'), FIRST_BLOCK);
+     current_block_id         Block;
+
+     start_item      CONSTANT varchar2(61) := name_in('system.cursor_item');
+     start_level     CONSTANT number       := name_in('system.message_level');
+
+   BEGIN
+
+     copy('5', 'system.message_level');
+
+     while ( current_block is not null) loop
+
+       current_block_id := find_block(current_block);
+
+       if ( get_block_property(current_block_id, COORDINATION_STATUS)
+		  = 'NON_COORDINATED' )
+	 then
+
+	   if ( CGBS2$.GET_COORD_STYLE = 'P' )
+	     then
+	       if ( CGBS2$.GET_BLOCK_CANVAS(current_block) = event_canvas )
+		 then
+		   CGBS$.QRY_ONE_BLK(current_block);
+	       end if;
+
+	   elsif ( CGBS2$.GET_COORD_STYLE = 'W' )
+	     then
+	       if ( CGBS2$.GET_BLOCK_WINDOW(current_block) = event_window )
+		 then
+		   if ( CGBS2$.IS_BLOCK_VISIBLE(current_block) )
+		     then
+		       CGBS$.QRY_ONE_BLK(current_block);
+		   end if;
+	       end if;
+	   elsif ( CGBS2$.GET_COORD_STYLE = 'F' )
+	     then
+	       if ( CGBS2$.IS_TREE_VISIBLE(current_block)
+		    or
+		    CGBS2$.GET_BLOCK_WINDOW(current_block) = event_window
+		  )
+		 then
+		   CGBS$.QRY_ONE_BLK(current_block);
+	       end if;
+	   end if;
+
+       end if;
+
+       current_block := get_block_property(current_block_id, NEXTBLOCK);
+
+     end loop;
+
+     if ( name_in('system.cursor_item') != start_item )
+       then
+	 go_item(start_item);
+     end if;
+
+     copy(to_char(start_level), 'system.message_level');
+
+   EXCEPTION
+     when FORM_TRIGGER_FAILURE then
+       copy(to_char(start_level), 'system.message_level');
+       raise;
+
+   END COORD_VISIBLE_BLKS;
+
+   PROCEDURE NEW_BLOCK
+   (
+     P_TO_BLOCK     IN      VARCHAR2,
+     P_QUERY_MODE   IN      VARCHAR2
+   ) IS
+
+   BEGIN
+
+     if ( P_QUERY_MODE = 'A'
+	  and
+	  ( CGBS2$.GET_QRY_ON_ENTRY = 'Y' or CGBS2$.GET_COORD_STYLE = 'F' )
+	  and
+	  CGBS2$.GET_NAV_FROM_BLOCK != P_TO_BLOCK
+	)
+       then
+	 if ( CGBS2$.GET_BLOCK_CANVAS(CGBS2$.GET_NAV_FROM_BLOCK) !=
+	      CGBS2$.GET_BLOCK_CANVAS(P_TO_BLOCK)
+	     )
+	   then
+	     CGBS$.COORD_VISIBLE_BLKS(P_TO_BLOCK);
+	 end if;
+    end if;
+
+     CGBS2$.SET_NAV_FROM_BLOCK(P_TO_BLOCK);
+
+   END NEW_BLOCK;
+
+   PROCEDURE SET_RELATIONS
+   (
+     P_QUERY_MODE   IN  VARCHAR2
+   ) IS
+
+     detail_block       varchar2(60);
+
+     master_block       varchar2(60);
+     master_block_id    Block;
+     master_canvas      varchar2(60);
+     master_window      varchar2(60);
+
+     rel_name           varchar2(60);
+     rel_id             Relation;
+
+  BEGIN
+     master_block := get_form_property(name_in('system.current_form'),
+				       FIRST_BLOCK);
+
+     while (master_block is not null) loop
+
+       master_block_id := find_block(master_block);
+       master_canvas   := CGBS2$.GET_BLOCK_CANVAS(master_block);
+       master_window   := CGBS2$.GET_BLOCK_WINDOW(master_block);
+
+       rel_name := get_block_property(master_block_id, FIRST_MASTER_RELATION);
+
+       while (rel_name is not null) loop
+
+	 rel_id := find_relation(master_block||'.'||rel_name);
+	 detail_block := get_relation_property(rel_id, DETAIL_NAME);
+	 if ( P_QUERY_MODE = 'A' )
+	   then
+
+	     if ( CGBS2$.GET_QRY_ON_ENTRY = 'N' )
+	       then
+		 if ( master_canvas = CGBS2$.GET_BLOCK_CANVAS(detail_block) )
+		   then
+		     set_relation_property(rel_id, AUTOQUERY, PROPERTY_ON);
+		     set_relation_property(rel_id,
+		       DEFERRED_COORDINATION, PROPERTY_OFF);
+		   else
+		     set_relation_property(rel_id, AUTOQUERY, PROPERTY_OFF);
+		     set_relation_property(rel_id,
+		       DEFERRED_COORDINATION, PROPERTY_ON);
+		 end if;
+	     elsif ( CGBS2$.GET_QRY_ON_ENTRY = 'Y' )
+	       then
+
+		 if ( CGBS2$.GET_COORD_STYLE = 'P' )
+		   then
+		     if ( master_canvas = CGBS2$.GET_BLOCK_CANVAS(detail_block))
+		      then
+			 set_relation_property(rel_id, AUTOQUERY, PROPERTY_ON);
+			 set_relation_property(rel_id,
+			   DEFERRED_COORDINATION, PROPERTY_OFF);
+		       else
+			 set_relation_property(rel_id, AUTOQUERY, PROPERTY_ON);
+			 set_relation_property(rel_id,
+			   DEFERRED_COORDINATION, PROPERTY_ON);
+		 end if;
+
+		 elsif ( CGBS2$.GET_COORD_STYLE in ('W', 'F') )
+		   then
+		     if ( master_canvas = CGBS2$.GET_BLOCK_CANVAS(detail_block)
+			  and
+			  master_window = CGBS2$.GET_BLOCK_WINDOW(detail_block)
+			)
+		       then
+			 set_relation_property(rel_id, AUTOQUERY, PROPERTY_ON);
+			 set_relation_property(rel_id,
+			   DEFERRED_COORDINATION, PROPERTY_OFF);
+		       else
+			 set_relation_property(rel_id, AUTOQUERY, PROPERTY_ON);
+			 set_relation_property(rel_id,
+			   DEFERRED_COORDINATION, PROPERTY_ON);
+		     end if;
+		 end if;
+	     end if;
+
+	 elsif ( P_QUERY_MODE = 'E' )
+	   then
+	     set_relation_property(rel_id, AUTOQUERY, PROPERTY_ON);
+	     set_relation_property(rel_id,
+				   DEFERRED_COORDINATION, PROPERTY_ON);
+	 elsif ( P_QUERY_MODE = 'N' )
+	   then
+	     set_relation_property(rel_id, AUTOQUERY, PROPERTY_OFF);
+	     set_relation_property(rel_id,
+				   DEFERRED_COORDINATION, PROPERTY_ON);
+	 end if;
+
+	 rel_name := get_relation_property(rel_id, NEXT_MASTER_RELATION);
+
+       end loop;
+
+       master_block := get_block_property(master_block_id, NEXTBLOCK);
+
+     end loop;
+
+   END SET_RELATIONS;
+
+   PROCEDURE QUERY_DETAILS
+   (
+     P_MASTER_BLOCK  IN  VARCHAR2,
+     P_QUERY_MODE    IN  VARCHAR2
+   ) IS
+
+     master_blk_id  CONSTANT  Block        := find_block(P_MASTER_BLOCK);
+
+     rel_name                 varchar2(60);
+     rel_id                   Relation;
+
+     start_item     CONSTANT  varchar2(61) := name_in('system.cursor_item');
+     start_level    CONSTANT  number       := name_in('system.message_level');
+
+   BEGIN
+     if ( get_record_property(get_block_property(master_blk_id, CURRENT_RECORD),
+			      P_MASTER_BLOCK, STATUS) in ( 'NEW', 'INSERT' ) )
+      then
+	 return;
+     end if;
+
+     copy('5','system.message_level');
+
+     rel_name := get_block_property(master_blk_id, FIRST_MASTER_RELATION);
+
+     while ( rel_name is not null ) loop
+
+       rel_id        := find_relation(P_MASTER_BLOCK||'.'||rel_name);
+
+       CGBS$.COORD_RELATION(rel_id, P_QUERY_MODE);
+
+       rel_name := get_relation_property(rel_id, NEXT_MASTER_RELATION);
+
+     end loop;
+
+     if ( name_in('system.cursor_item') != start_item )
+       then
+	 go_item(start_item);
+     end if;
+
+     copy(to_char(start_level), 'system.message_level');
+
+   EXCEPTION
+     when FORM_TRIGGER_FAILURE then
+       copy(to_char(start_level), 'system.message_level');
+       raise;
+
+   END QUERY_DETAILS;
+
+   PROCEDURE CLEAR_DETAIL
+   (
+     P_DETAIL_BLOCK  IN      VARCHAR2
+
+   ) IS
+
+     rel_name       varchar2(60);
+     rel_id         Relation;
+
+     detail_blk     varchar2(60);
+     detail_blk_id  Block;
+
+   BEGIN
+
+     rel_name := get_block_property(P_DETAIL_BLOCK, FIRST_MASTER_RELATION);
+
+     while ( rel_name is not null ) loop
+
+       rel_id        := find_relation(P_DETAIL_BLOCK||'.'||rel_name);
+       detail_blk    := get_relation_property(rel_id, DETAIL_NAME);
+       detail_blk_id := find_block(detail_blk);
+       if ( get_block_property(detail_blk_id, STATUS) != 'NEW' )
+	 then
+
+	   CGBS$.CLEAR_DETAIL(detail_blk);
+
+	   if ( get_block_property(detail_blk_id, STATUS) != 'NEW' )
+	     then
+	       go_block(detail_blk); 	       
+
+               if( name_in('SYSTEM.CURSOR_BLOCK') <> detail_blk ) THEN
+                 raise form_trigger_failure;
+               end if;
+
+	       clear_block(NO_VALIDATE);
+
+	   end if;
+       end if;
+
+       set_block_property(detail_blk_id,
+			  COORDINATION_STATUS, COORDINATED);
+
+       rel_name := get_relation_property(rel_id, NEXT_MASTER_RELATION);
+
+     end loop;
+
+   END CLEAR_DETAIL;
+
+   PROCEDURE CLEAR_MASTER_DETAIL
+   (
+     P_MASTER_BLOCK  IN  VARCHAR2,
+     P_COORD_OP      IN  VARCHAR2
+   ) IS
+
+    start_item  CONSTANT  varchar2(61) := name_in('system.cursor_item');
+
+   BEGIN
+
+     if ( P_COORD_OP in ('CLEAR_BLOCK', 'ENTER_QUERY', 'EXECUTE_QUERY',
+			                   'CLEAR_RECORD', 'DELETE_RECORD') )
+     then
+     
+	     CGBS$.CLEAR_DETAIL(P_MASTER_BLOCK);
+	     
+     elsif ( P_COORD_OP in ('CREATE_RECORD') ) -- Special Case for Create Record
+     then
+     
+  	   if ( CGBS2$.IS_COMMIT_NEEDED(P_MASTER_BLOCK) )
+  	   then
+  	    
+  	     CGBS2$.DO_COMMIT_DIALOGUE;  -- Detail records may need commiting B964106
+  	     
+  	   end if;
+  	   
+	     CGBS$.CLEAR_DETAIL(P_MASTER_BLOCK);  -- Need to Clear come what may B716254
+	     
+     else
+
+	     if ( CGBS2$.IS_RECORD_DIRTY(P_MASTER_BLOCK) )
+	     then
+	     
+  	     raise form_trigger_failure;
+  	     
+       end if;
+
+	     if ( CGBS2$.IS_COMMIT_NEEDED(P_MASTER_BLOCK) )
+	     then
+	     
+         CGBS2$.DO_COMMIT_DIALOGUE;
+         
+	     end if;
+
+	     CGBS$.CLEAR_DETAIL(P_MASTER_BLOCK);
+
+     end if;
+
+     if ( name_in('system.cursor_item') != start_item )
+       then
+	 go_item(start_item);
+     end if;
+
+  END CLEAR_MASTER_DETAIL;
+
+   PROCEDURE COORD_RELATION
+   (
+     P_RELATION_ID   IN  Relation,
+     P_QUERY_MODE    IN  VARCHAR2
+   ) IS
+
+     master_blk     CONSTANT  varchar2(60)
+       := get_relation_property(P_RELATION_ID, MASTER_NAME);
+     master_canvas  CONSTANT  varchar2(60)
+       := CGBS2$.GET_BLOCK_CANVAS(master_blk);
+     master_window  CONSTANT  varchar2(60)
+       := CGBS2$.GET_BLOCK_WINDOW(master_blk);
+
+     detail_blk     CONSTANT  varchar2(60)
+       := get_relation_property(P_RELATION_ID, DETAIL_NAME);
+     detail_canvas            varchar2(60);
+
+   BEGIN
+
+     if ( get_record_property(get_block_property(master_blk, CURRENT_RECORD),
+			      master_blk, STATUS) in ( 'NEW', 'INSERT' ) )
+       then
+	 return;
+     end if;
+
+     detail_canvas := CGBS2$.GET_BLOCK_CANVAS(detail_blk);
+
+     if ( P_QUERY_MODE = 'A' )
+       then
+	 if ( CGBS2$.GET_COORD_STYLE = 'P' )
+	  then
+	    if ( master_canvas = detail_canvas )
+	      then
+		CGBS$.QRY_ONE_BLK(detail_blk);
+	      else
+		 set_block_property(detail_blk,
+				    COORDINATION_STATUS, NON_COORDINATED);
+	     end if;
+
+	elsif ( CGBS2$.GET_COORD_STYLE = 'W' )
+	  then
+
+	    
+	    
+
+	    if ( master_canvas = detail_canvas )
+	      then
+		CGBS$.QRY_ONE_BLK(detail_blk);
+	    elsif ( master_window = CGBS2$.GET_BLOCK_WINDOW(detail_blk) )
+	      then
+		if ( CGBS2$.IS_BLOCK_VISIBLE(detail_blk) )
+		  then
+		    CGBS$.QRY_ONE_BLK(detail_blk);
+		  else
+		    set_block_property(detail_blk,
+				       COORDINATION_STATUS, NON_COORDINATED);
+		end if;
+	      else
+		set_block_property(detail_blk,
+				   COORDINATION_STATUS, NON_COORDINATED);
+	    end if;
+
+	elsif ( CGBS2$.GET_COORD_STYLE = 'F' )
+	  then
+
+	    
+
+	    if ( CGBS2$.IS_TREE_VISIBLE(detail_blk) )
+	      then
+		CGBS$.QRY_ONE_BLK(detail_blk);
+	      else
+		 set_block_property(detail_blk,
+				    COORDINATION_STATUS, NON_COORDINATED);
+	     end if;
+	end if;
+      else
+	set_block_property(detail_blk,
+			   COORDINATION_STATUS, NON_COORDINATED);
+     end if;
+
+   END COORD_RELATION;
+
+
+   
+   
+   
+   
+
+   PROCEDURE DO_KEYQRY
+   (
+     P_BLOCK          IN  VARCHAR2,
+     P_OP             IN  VARCHAR2,
+     P_MODE           IN  VARCHAR2
+   ) IS
+
+     start_level     CONSTANT number       := name_in('system.message_level');
+
+   BEGIN
+
+     
+
+     if ( P_MODE = 'ENTER-QUERY' )
+       then
+	 if ( P_OP = 'ENTER_QUERY' )
+	   then
+	     
+	     
+	     enter_query;
+	 elsif ( P_OP = 'EXECUTE_QUERY' )
+	   then
+	     
+	     execute_query;
+	 elsif ( P_OP = 'COUNT_QUERY' )
+	   then
+	     
+	     count_query;
+	 end if;
+	      
+	 return;
+     end if;
+
+     
+     
+
+     if ( CGBS2$.IS_RECORD_DIRTY(P_BLOCK) )
+       then
+	 raise form_trigger_failure;
+     end if;
+
+     
+
+     if ( get_block_property(P_BLOCK, STATUS) = 'CHANGED' or
+	  CGBS2$.IS_COMMIT_NEEDED(P_BLOCK)
+	)
+       then
+	 copy('5','system.message_level');
+	 CGBS2$.DO_COMMIT_DIALOGUE;
+	 copy(to_char(start_level), 'system.message_level');
+     end if;
+
+     
+
+     clear_block(NO_VALIDATE);
+
+     
+
+     if ( P_OP = 'ENTER_QUERY' )
+       then
+	 enter_query;
+     elsif ( P_OP = 'EXECUTE_QUERY' )
+       then
+	 execute_query;
+     elsif ( P_OP = 'COUNT_QUERY' )
+       then
+	 count_query;
+     end if;
+
+   EXCEPTION
+     when FORM_TRIGGER_FAILURE then
+       copy(to_char(start_level), 'system.message_level');
+       raise;
+
+   END DO_KEYQRY;
+
+   
+   
+   
+   
+   
+   
+
+  END CGBS$;
+
+

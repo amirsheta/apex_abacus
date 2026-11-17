@@ -1,0 +1,1867 @@
+<?xml version="1.0" encoding="WINDOWS-1256" ?>
+<report name="IMPR2130" DTDVersion="9.0.2.0.10"
+ beforeReportTrigger="beforereport">
+  <xmlSettings xmlTag="IMPR2130" xmlPrologType="text">
+  <![CDATA[<?xml version="1.0" encoding="&Encoding"?>]]>
+  </xmlSettings>
+  <comment>
+  <![CDATA[TAG_REPOSID:845972]]>
+  </comment>
+  <reportHtmlEscapes>
+    <beforeReportHtmlEscape>
+    <![CDATA[<html>
+<body bgcolor="#ffffff">
+]]>
+    </beforeReportHtmlEscape>
+    <beforePageHtmlEscape>
+    <![CDATA[#NULL#]]>
+    </beforePageHtmlEscape>
+    <afterPageHtmlEscape>
+    <![CDATA[<hr size=5 noshade>
+]]>
+    </afterPageHtmlEscape>
+    <beforeFormHtmlEscape>
+    <![CDATA[<html>
+<body bgcolor="#ffffff">
+<form method=post action="_action_">
+<input name="hidden_run_parameters" type=hidden value="_hidden_">
+<center>
+<p><table border=0 cellspacing=0 cellpadding=0>
+<tr>
+<td><input type=submit></td>
+<td width=15>
+<td><input type=reset></td>
+</tr>
+</table>
+<p><hr><p>
+]]>
+    </beforeFormHtmlEscape>
+    <pageNavigationHtmlEscape>
+    <![CDATA[<HTML>
+<TITLE>Oracle HTML Navigator</TITLE>
+<HEAD>
+<SCRIPT LANGUAGE = "JavaScript">
+
+var jump_index = 1			// Jump to this page
+var num_pages = &TotalPages			// Total number of pages
+var basefilename = "&file_name"		// Base file name
+var fileext = "&file_ext"		//File extension
+
+/* jumps to "new_page" */
+function new_page(form, new_page)
+{
+	form.reqpage.value = new_page;
+	parent.frames[0].location = basefilename + "_" + new_page + "."+fileext;
+}
+
+/* go back one page */
+function back(form)
+{
+	/* if we are not in first page */
+	if (jump_index > 1)
+	{
+		jump_index--;
+		new_page(form, jump_index);
+	}
+}
+
+/* go forward one page */
+function forward(form)
+{
+	/* if we are not in last page */
+	if (jump_index < num_pages)
+	{
+		jump_index++;
+		new_page(form, jump_index);
+	}
+}
+
+/* go to first page */
+function first(form)
+{
+	if(jump_index != 1)
+	{
+		jump_index = 1;
+		new_page(form, jump_index);
+	}
+}
+
+/* go to last page */
+function last(form)
+{
+	if(jump_index != num_pages)
+	{
+		jump_index = num_pages;
+		new_page(form, jump_index);
+	}
+}
+
+/* go to the user specified page number */
+function pagenum(form)
+{
+	/* sanity check */
+	if (form.reqpage.value < 1)
+	{
+		form.reqpage.value = 1;
+	}
+	if (form.reqpage.value > num_pages)
+	{
+		form.reqpage.value = num_pages;
+	}
+	jump_index = form.reqpage.value;
+	new_page(form, jump_index);
+}
+</SCRIPT>
+</HEAD>
+
+<BODY>
+<FORM NAME="ThisForm" onSubmit="pagenum(this); return false;">
+<center><table><tr>
+<td> <INPUT TYPE="button"  VALUE="<< " onClick="first(this.form)">
+<td> <INPUT TYPE="button"  VALUE=" < " onClick="back(this.form)">
+<td> <INPUT TYPE="button"  VALUE="Page:" onClick="pagenum(this.form)">
+<td> <INPUT NAME="reqpage" VALUE="1" SIZE=2>
+<td> <INPUT TYPE="button"  VALUE=" > " onClick="forward(this.form)">
+<td> <INPUT TYPE="button"  VALUE=" >>" onClick="last(this.form)">
+</table></center>
+</FORM></BODY>
+</HTML>
+]]>
+    </pageNavigationHtmlEscape>
+  </reportHtmlEscapes>
+  <data>
+    <userParameter name="CG$STARTUP_MODE" datatype="character" precision="10"
+     label="Cg Startup Mode" defaultWidth="0" defaultHeight="0" display="no"
+     templateSection="main"/>
+    <userParameter name="P_JOB_ID" datatype="number" precision="10"
+     label="P Job Id" defaultWidth="0" defaultHeight="0" display="no"
+     templateSection="main"/>
+    <userParameter name="P_MODULE_ID" datatype="number" precision="10"
+     label="P Module Id" defaultWidth="0" defaultHeight="0"
+     templateSection="main"/>
+    <userParameter name="P_MODULE_NAME" datatype="character" width="200"
+     precision="10" label="P Module Name" defaultWidth="0" defaultHeight="0"
+     display="no" templateSection="main"/>
+    <userParameter name="P_PORT_TYPE" datatype="character" precision="10"
+     label="P Port Type" defaultWidth="0" defaultHeight="0" display="no"
+     templateSection="main"/>
+    <userParameter name="P_USER_ID" datatype="character" precision="10"
+     label="P User Id" defaultWidth="0" defaultHeight="0" display="no"
+     templateSection="main"/>
+    <userParameter name="P_USER_NAME" datatype="character" precision="10"
+     label="P User Name" defaultWidth="0" defaultHeight="0" display="no"
+     templateSection="main"/>
+    <userParameter name="P_USER_TYPE" datatype="character" precision="10"
+     label="P User Type" defaultWidth="0" defaultHeight="0" display="no"
+     templateSection="main"/>
+    <userParameter name="P_WS_ID" datatype="character" precision="10"
+     label="P Ws Id" defaultWidth="0" defaultHeight="0" display="no"
+     templateSection="main"/>
+    <userParameter name="P_APPLICATION_NAME" datatype="character"
+     precision="10" label="P Application Name" defaultWidth="0"
+     defaultHeight="0" display="no" templateSection="main"/>
+    <userParameter name="P_DEPT_ID" datatype="number" precision="10"
+     label="P Dept Id" defaultWidth="0" defaultHeight="0" display="no"
+     templateSection="main"/>
+    <userParameter name="P_GROUP_CD" datatype="number" precision="10"
+     label="P Group Cd" defaultWidth="0" defaultHeight="0" display="no"
+     templateSection="main"/>
+    <userParameter name="P_CURR_PORT_CD" datatype="number" precision="10"
+     label="P Curr Port Cd" defaultWidth="0" defaultHeight="0"
+     templateSection="main"/>
+    <userParameter name="END_DT" datatype="date" precision="10"
+     inputMask="MI-MM-YYYY" label="End Dt" defaultWidth="0" defaultHeight="0"
+     templateSection="main"/>
+    <userParameter name="START_DT" datatype="date" precision="10"
+     inputMask="MI-MM-YYYY" label="Start Dt" defaultWidth="0"
+     defaultHeight="0" templateSection="main"/>
+    <userParameter name="V_ORDER" datatype="character" width="500"
+     precision="10" label="V Order" defaultWidth="0" defaultHeight="0"
+     display="no" templateSection="main"/>
+    <userParameter name="p_report_no" datatype="character" precision="10"
+     label="P Report No" defaultWidth="0" defaultHeight="0" display="no"
+     templateSection="main"/>
+    <userParameter name="P_SHPG_AGNT_NBR" datatype="number" width="30"
+     precision="10" label="P Shpg Agnt Nbr" defaultWidth="0" defaultHeight="0"
+     display="no" templateSection="main"/>
+    <userParameter name="P_BANK_CD" datatype="number" width="30"
+     precision="10" label="P Bank Cd" defaultWidth="0" defaultHeight="0"
+     templateSection="main"/>
+    <userParameter name="P_BANK_BRANCH" datatype="number" width="30"
+     precision="10" label="P Bank Branch" defaultWidth="0" defaultHeight="0"
+     display="no" templateSection="main"/>
+    <userParameter name="P_BRKR_PORT_CD" datatype="number" precision="10"
+     label="P Brkr Port Cd" defaultWidth="0" defaultHeight="0" display="no"
+     templateSection="main"/>
+    <userParameter name="P_LIC_TYPE" datatype="number" precision="10"
+     label="P Lic Type" defaultWidth="0" defaultHeight="0" display="no"
+     templateSection="main"/>
+    <userParameter name="P_BRKR_NBR" datatype="number" precision="10"
+     label="P Brkr Nbr" defaultWidth="0" defaultHeight="0" display="no"
+     templateSection="main"/>
+    <userParameter name="P_CLASS_CD" datatype="number" precision="10"
+     label="P Class Cd" defaultWidth="0" defaultHeight="0" display="no"
+     templateSection="main"/>
+    <userParameter name="P_IMPR_NBR" datatype="character" width="200"
+     label="P Impr Nbr" defaultWidth="0" defaultHeight="0"/>
+    <userParameter name="P_BANK_BRNCH_CD" datatype="character" width="40"
+     label="P Bank Brnch Cd" defaultWidth="0" defaultHeight="0"/>
+    <systemParameter name="ORIENTATION" initialValue="Landscape"/>
+    <systemParameter name="DESFORMAT" initialValue="html"/>
+    <dataSource name="IMPR_UPDTS">
+      <select>
+      <![CDATA[SELECT
+IU.IMPR_NBR IMPR_NBR,
+IU.ACT_DT ACT_DT,
+IU.ACT_TYPE ACT_TYPE,
+DECODE( IU.ACT_TYPE, 'U', 'تعديل السجل', 'D', 'حذف السجل', 'I', 'إضافة سجل', IU.ACT_TYPE ) ACT_TYPEM,
+L_CT.CITY_ARB_NAME ADD_CITY_ARB_NAME,
+IU.ARBC_IMPR_NAME ARBC_IMPR_NAME,
+IU.BUS_ID BUS_ID,
+IU.BUS_ID_BRNCH BUS_ID_BRNCH,
+L_BIT.BUS_ID_TYPE_NAME BUS_ID_TYPE_NAME,
+IU.ENG_IMPR_NAME ENG_IMPR_NAME,
+IU.HQ_IMPR_NBR HQ_IMPR_NBR,
+L_CT2.CITY_ARB_NAME ID_CITY_ARB_NAME,
+IU.IMPR_EXPR_TYPE IMPR_EXPR_TYPE,
+CG.RV_MEANING IMPR_EXPR_TYPEM,
+L_IT1.IMPR_TYPE_NAME IMPR_TYPE_NAME,
+L_USR.USR_ANAME L_USR_USR_ANAME,
+IU.USR_ID USR_ID,
+IU.BUS_ID_EXPRD_DT BUS_ID_EXPRD_DT,
+IU.EMAIL EMAIL,
+IU.IMPR_CNTCT_NAME IMPR_CNTCT_NAME,
+IU.IMPR_FAX_NBR IMPR_FAX_NBR,
+IU.IMPR_POB_NBR IMPR_POB_NBR,
+IU.IMPR_TELEX_NBR IMPR_TELEX_NBR,
+IU.IMPR_TEL_NBR IMPR_TEL_NBR,
+IU.IMPR_ZIP_CD IMPR_ZIP_CD,
+L_IMP.ARBC_IMPR_NAME PARENT_IMPR_NAME,
+L_IT1.IMPR_TYPE_CD L_IT1_IMPR_TYPE_CD,
+L_BIT.BUS_ID_TYPE_CD L_BIT_BUS_ID_TYPE_CD,
+L_ITIDT.IMPR_TYPE_CD L_ITIDT_IMPR_TYPE_CD,
+L_ITIDT.BUS_ID_TYPE_CD L_ITIDT_BUS_ID_TYPE_CD,
+L_IMP.PORT_CD L_IMP_PORT_CD,
+L_IMP.IMPR_NBR L_IMP_IMPR_NBR,
+L_CT2.CITY_CD L_CT2_CITY_CD,
+L_CT2.CTRY_CD L_CT2_CTRY_CD,
+L_CT.CITY_CD L_CT_CITY_CD,
+L_CT.CTRY_CD L_CT_CTRY_CD,
+L_CTRY.CTRY_CD L_CTRY_CTRY_CD,
+L_CTRY.CRTY_ARBC_NAME L_CTRY_CRTY_ARBC_NAME,
+L_USR.USER_ID L_USR_USER_ID,
+L_USR.PORT_CD L_USR_PORT_CD,
+IU.CITY_CODE CITY_CODE,
+IU.CTRY_CD CTRY_CD,
+IU.ADD_CTRY_CD ADD_CTRY_CD,
+IU.CITY_CODE_OF_ID CITY_CODE_OF_ID,
+IU.CTRY_CD_OF_ID CTRY_CD_OF_ID,
+IU.BUS_ID_TYPE_CD BUS_ID_TYPE_CD,
+IU.IMPR_TYPE_CD IMPR_TYPE_CD,
+IU.PORT_CD PORT_CD,
+IU.IMPR_NAME_STD IMPR_NAME_STD,
+IU.IMPR_DATA_SRCE IMPR_DATA_SRCE,
+IU.IMPD_STMT_NBR IMPD_STMT_NBR,
+IU.LST_TRAN_DT LST_TRAN_DT,
+IU.IMPR_NBR_PARENT IMPR_NBR_PARENT
+FROM
+CG_REF_CODES CG,
+COUNTRIES L_CTRY,
+CITIES L_CT,
+SC_USERS L_USR,
+BUS_ID_TYPES L_BIT,
+IMPR_TYPES L_IT1,
+IMPR_TYPE_ID_TYPES L_ITIDT,
+CITIES L_CT2,
+IMPORTERS L_IMP,
+IMPR_UPDTS IU
+WHERE
+IU.PORT_CD = L_IMP.PORT_CD AND
+IU.IMPR_NBR = L_IMP.IMPR_NBR AND
+IU.CTRY_CD_OF_ID = L_CT2.CTRY_CD (+) AND
+IU.CITY_CODE_OF_ID = L_CT2.CITY_CD (+) AND
+IU.IMPR_TYPE_CD = L_ITIDT.IMPR_TYPE_CD AND
+IU.BUS_ID_TYPE_CD = L_ITIDT.BUS_ID_TYPE_CD AND
+L_ITIDT.IMPR_TYPE_CD = L_IT1.IMPR_TYPE_CD AND
+L_ITIDT.BUS_ID_TYPE_CD = L_BIT.BUS_ID_TYPE_CD AND
+IU.PORT_CD = L_USR.PORT_CD AND
+IU.USR_ID = L_USR.USER_ID AND
+IU.ADD_CTRY_CD = L_CT.CTRY_CD AND
+IU.CITY_CODE = L_CT.CITY_CD AND
+IU.CTRY_CD = L_CTRY.CTRY_CD AND
+CG.RV_DOMAIN(+) = 'ALLOWED EXPORT' AND CG.RV_LOW_VALUE(+) = IU.IMPR_EXPR_TYPE
+AND (IU.ACT_DT  BETWEEN (:START_DT) AND (:END_DT) OR (:START_DT IS NULL AND :END_DT IS NULL))
+AND (L_IMP.PORT_CD = :P_CURR_PORT_CD  OR :P_CURR_PORT_CD IS NULL)
+
+&P_IMPR_NBR ]]>
+      </select>
+      <comment>
+      <![CDATA[TAG_REPOSID:845973
+]]>
+      </comment>
+      <displayInfo x="1.65002" y="1.00000" width="0.69995" height="0.19995"/>
+      <group name="CG$G_MAS_G">
+        <comment>
+        <![CDATA[TAG_REPOSID:1025035]]>
+        </comment>
+        <displayInfo x="1.37732" y="1.94995" width="1.24548" height="0.77246"
+        />
+        <formula name="CF_CG$G_MAS_G" source="cf_cg$g_mas_gformula"
+         datatype="number" width="1" defaultWidth="20000"
+         defaultHeight="10000" columnFlags="16" defaultLabel="Cf Cg G Mas G"
+         breakOrder="none">
+          <displayInfo x="0.00000" y="0.00000" width="0.00000"
+           height="0.00000"/>
+        </formula>
+        <summary name="CS_CG$G_DET_G" source="CF_CG$G_DET_G" function="count"
+         width="38" precision="1" reset="CG$G_MAS_G" defaultWidth="30000"
+         defaultHeight="10000" columnFlags="8" defaultLabel="Cs Cg G Det G">
+          <displayInfo x="0.00000" y="0.00000" width="0.00000"
+           height="0.00000"/>
+        </summary>
+        <dataItem name="IMPR_NBR" oracleDatatype="number" columnOrder="11"
+         width="22" defaultWidth="100000" defaultHeight="10000"
+         columnFlags="1" defaultLabel="رقم المستورد">
+          <dataDescriptor expression="IU.IMPR_NBR"
+           descriptiveExpression="IMPR_NBR" order="1" oracleDatatype="number"
+           width="22" precision="10"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+      </group>
+      <group name="CG$G_DET_G">
+        <comment>
+        <![CDATA[TAG_REPOSID:1025036]]>
+        </comment>
+        <displayInfo x="0.86462" y="3.13965" width="2.27087" height="1.62695"
+        />
+        <formula name="CF_CG$G_DET_G" source="cf_cg$g_det_gformula"
+         datatype="number" width="1" defaultWidth="0" defaultHeight="0"
+         columnFlags="48" breakOrder="none">
+          <displayInfo x="0.00000" y="0.00000" width="0.00000"
+           height="0.00000"/>
+        </formula>
+        <dataItem name="L_IT1_IMPR_TYPE_CD" oracleDatatype="number"
+         columnOrder="37" width="22" defaultWidth="30000"
+         defaultHeight="10000" columnFlags="0" defaultLabel="رمز نوع المستورد"
+         breakOrder="none">
+          <dataDescriptor expression="L_IT1.IMPR_TYPE_CD"
+           descriptiveExpression="L_IT1_IMPR_TYPE_CD" order="27"
+           oracleDatatype="number" width="22" precision="3"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="L_BIT_BUS_ID_TYPE_CD" oracleDatatype="number"
+         columnOrder="38" width="22" defaultWidth="30000"
+         defaultHeight="10000" columnFlags="0"
+         defaultLabel="رمز نوع الرقم  الاستدلالى" breakOrder="none">
+          <dataDescriptor expression="L_BIT.BUS_ID_TYPE_CD"
+           descriptiveExpression="L_BIT_BUS_ID_TYPE_CD" order="28"
+           oracleDatatype="number" width="22" precision="3"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="L_ITIDT_IMPR_TYPE_CD" oracleDatatype="number"
+         columnOrder="39" width="22" defaultWidth="30000"
+         defaultHeight="10000" columnFlags="0" defaultLabel="رمز نوع المستورد"
+         breakOrder="none">
+          <dataDescriptor expression="L_ITIDT.IMPR_TYPE_CD"
+           descriptiveExpression="L_ITIDT_IMPR_TYPE_CD" order="29"
+           oracleDatatype="number" width="22" precision="3"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="L_ITIDT_BUS_ID_TYPE_CD" oracleDatatype="number"
+         columnOrder="40" width="22" defaultWidth="30000"
+         defaultHeight="10000" columnFlags="0"
+         defaultLabel="رمز نوع الرقم  الاستدلالى" breakOrder="none">
+          <dataDescriptor expression="L_ITIDT.BUS_ID_TYPE_CD"
+           descriptiveExpression="L_ITIDT_BUS_ID_TYPE_CD" order="30"
+           oracleDatatype="number" width="22" precision="3"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="L_IMP_PORT_CD" oracleDatatype="number"
+         columnOrder="41" width="22" defaultWidth="30000"
+         defaultHeight="10000" columnFlags="0"
+         defaultLabel="رمز الجمرك للمستورد" breakOrder="none">
+          <dataDescriptor expression="L_IMP.PORT_CD"
+           descriptiveExpression="L_IMP_PORT_CD" order="31"
+           oracleDatatype="number" width="22" precision="3"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="L_IMP_IMPR_NBR" oracleDatatype="number"
+         columnOrder="42" width="22" defaultWidth="100000"
+         defaultHeight="10000" columnFlags="0" defaultLabel="مسلسل المستورد"
+         breakOrder="none">
+          <dataDescriptor expression="L_IMP.IMPR_NBR"
+           descriptiveExpression="L_IMP_IMPR_NBR" order="32"
+           oracleDatatype="number" width="22" precision="10"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="L_CT2_CITY_CD" oracleDatatype="number"
+         columnOrder="43" width="22" defaultWidth="30000"
+         defaultHeight="10000" columnFlags="0" defaultLabel="City Cd"
+         breakOrder="none">
+          <dataDescriptor expression="L_CT2.CITY_CD"
+           descriptiveExpression="L_CT2_CITY_CD" order="33"
+           oracleDatatype="number" width="22" precision="3"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="L_CT2_CTRY_CD" oracleDatatype="number"
+         columnOrder="44" width="22" defaultWidth="30000"
+         defaultHeight="10000" columnFlags="0" defaultLabel="رمز الدولة"
+         breakOrder="none">
+          <dataDescriptor expression="L_CT2.CTRY_CD"
+           descriptiveExpression="L_CT2_CTRY_CD" order="34"
+           oracleDatatype="number" width="22" precision="3"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="L_CT_CITY_CD" oracleDatatype="number" columnOrder="45"
+         width="22" defaultWidth="30000" defaultHeight="10000" columnFlags="0"
+         defaultLabel="City Cd" breakOrder="none">
+          <dataDescriptor expression="L_CT.CITY_CD"
+           descriptiveExpression="L_CT_CITY_CD" order="35"
+           oracleDatatype="number" width="22" precision="3"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="L_CT_CTRY_CD" oracleDatatype="number" columnOrder="46"
+         width="22" defaultWidth="30000" defaultHeight="10000" columnFlags="0"
+         defaultLabel="رمز الدولة" breakOrder="none">
+          <dataDescriptor expression="L_CT.CTRY_CD"
+           descriptiveExpression="L_CT_CTRY_CD" order="36"
+           oracleDatatype="number" width="22" precision="3"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="L_CTRY_CTRY_CD" oracleDatatype="number"
+         columnOrder="47" width="22" defaultWidth="30000"
+         defaultHeight="10000" columnFlags="0" defaultLabel="رمز الدولة"
+         breakOrder="none">
+          <dataDescriptor expression="L_CTRY.CTRY_CD"
+           descriptiveExpression="L_CTRY_CTRY_CD" order="37"
+           oracleDatatype="number" width="22" precision="3"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="L_CTRY_CRTY_ARBC_NAME" datatype="vchar2"
+         columnOrder="48" width="20" defaultWidth="100000"
+         defaultHeight="10000" columnFlags="0" breakOrder="none">
+          <dataDescriptor expression="L_CTRY.CRTY_ARBC_NAME"
+           descriptiveExpression="L_CTRY_CRTY_ARBC_NAME" order="38" width="20"
+          />
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="L_USR_USER_ID" datatype="vchar2" columnOrder="49"
+         width="30" defaultWidth="300000" defaultHeight="10000"
+         columnFlags="0" defaultLabel="رمز المستخدم" breakOrder="none">
+          <dataDescriptor expression="L_USR.USER_ID"
+           descriptiveExpression="L_USR_USER_ID" order="39" width="30"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="L_USR_PORT_CD" oracleDatatype="number"
+         columnOrder="50" width="22" defaultWidth="30000"
+         defaultHeight="10000" columnFlags="0" defaultLabel="رمز المنفذ"
+         breakOrder="none">
+          <dataDescriptor expression="L_USR.PORT_CD"
+           descriptiveExpression="L_USR_PORT_CD" order="40"
+           oracleDatatype="number" width="22" precision="3"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="CITY_CODE" oracleDatatype="number" columnOrder="51"
+         width="22" defaultWidth="30000" defaultHeight="10000" columnFlags="0"
+         defaultLabel="رمز المدينة للمستورد" breakOrder="none">
+          <dataDescriptor expression="IU.CITY_CODE"
+           descriptiveExpression="CITY_CODE" order="41"
+           oracleDatatype="number" width="22" precision="3"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="CTRY_CD" oracleDatatype="number" columnOrder="52"
+         width="22" defaultWidth="30000" defaultHeight="10000" columnFlags="0"
+         defaultLabel="رمز الدولة" breakOrder="none">
+          <dataDescriptor expression="IU.CTRY_CD"
+           descriptiveExpression="CTRY_CD" order="42" oracleDatatype="number"
+           width="22" precision="3"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="ADD_CTRY_CD" oracleDatatype="number" columnOrder="53"
+         width="22" defaultWidth="30000" defaultHeight="10000" columnFlags="0"
+         defaultLabel="Ct Ctry Cd" breakOrder="none">
+          <dataDescriptor expression="IU.ADD_CTRY_CD"
+           descriptiveExpression="ADD_CTRY_CD" order="43"
+           oracleDatatype="number" width="22" precision="3"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="CITY_CODE_OF_ID" oracleDatatype="number"
+         columnOrder="54" width="22" defaultWidth="30000"
+         defaultHeight="10000" columnFlags="0"
+         defaultLabel="رمز مدينة مصدر الرقم الاستدلالي" breakOrder="none">
+          <dataDescriptor expression="IU.CITY_CODE_OF_ID"
+           descriptiveExpression="CITY_CODE_OF_ID" order="44"
+           oracleDatatype="number" width="22" precision="3"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="CTRY_CD_OF_ID" oracleDatatype="number"
+         columnOrder="55" width="22" defaultWidth="30000"
+         defaultHeight="10000" columnFlags="0" defaultLabel="Ct Ctry Cd2"
+         breakOrder="none">
+          <dataDescriptor expression="IU.CTRY_CD_OF_ID"
+           descriptiveExpression="CTRY_CD_OF_ID" order="45"
+           oracleDatatype="number" width="22" precision="3"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="BUS_ID_TYPE_CD" oracleDatatype="number"
+         columnOrder="56" width="22" defaultWidth="30000"
+         defaultHeight="10000" columnFlags="0" defaultLabel="Bus Id Type Cd"
+         breakOrder="none">
+          <dataDescriptor expression="IU.BUS_ID_TYPE_CD"
+           descriptiveExpression="BUS_ID_TYPE_CD" order="46"
+           oracleDatatype="number" width="22" precision="3"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="IMPR_TYPE_CD" oracleDatatype="number" columnOrder="57"
+         width="22" defaultWidth="30000" defaultHeight="10000" columnFlags="0"
+         defaultLabel="رمز النشاط التجارى" breakOrder="none">
+          <dataDescriptor expression="IU.IMPR_TYPE_CD"
+           descriptiveExpression="IMPR_TYPE_CD" order="47"
+           oracleDatatype="number" width="22" precision="3"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="PORT_CD" oracleDatatype="number" columnOrder="58"
+         width="22" defaultWidth="30000" defaultHeight="10000" columnFlags="0"
+         defaultLabel="Port Cd" breakOrder="none">
+          <dataDescriptor expression="IU.PORT_CD"
+           descriptiveExpression="PORT_CD" order="48" oracleDatatype="number"
+           width="22" precision="3"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="IMPR_NAME_STD" datatype="vchar2" columnOrder="59"
+         width="200" defaultWidth="600000" defaultHeight="10000"
+         columnFlags="0" defaultLabel="اسم المستورد القياسى-للبحث"
+         breakOrder="none">
+          <dataDescriptor expression="IU.IMPR_NAME_STD"
+           descriptiveExpression="IMPR_NAME_STD" order="49" width="200"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="IMPR_DATA_SRCE" oracleDatatype="number"
+         columnOrder="60" width="22" defaultWidth="10000"
+         defaultHeight="10000" columnFlags="0" defaultLabel="مصدر السجل"
+         breakOrder="none">
+          <dataDescriptor expression="IU.IMPR_DATA_SRCE"
+           descriptiveExpression="IMPR_DATA_SRCE" order="50"
+           oracleDatatype="number" width="22" precision="6"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="IMPD_STMT_NBR" oracleDatatype="number"
+         columnOrder="61" width="22" defaultWidth="60000"
+         defaultHeight="10000" columnFlags="0"
+         defaultLabel="عدد بيانات الاستيراد الخاصه بالمستورد"
+         breakOrder="none">
+          <dataDescriptor expression="IU.IMPD_STMT_NBR"
+           descriptiveExpression="IMPD_STMT_NBR" order="51"
+           oracleDatatype="number" width="22" precision="6"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="LST_TRAN_DT" datatype="date" oracleDatatype="date"
+         columnOrder="62" width="9" defaultWidth="110000"
+         defaultHeight="10000" columnFlags="0" defaultLabel="تاريخ آخر حركة"
+         breakOrder="none">
+          <dataDescriptor expression="IU.LST_TRAN_DT"
+           descriptiveExpression="LST_TRAN_DT" order="52"
+           oracleDatatype="date" width="9"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="IMPR_NBR_PARENT" oracleDatatype="number"
+         columnOrder="63" width="22" defaultWidth="100000"
+         defaultHeight="10000" columnFlags="0"
+         defaultLabel="رقم المستورد الرئيسى" breakOrder="none">
+          <dataDescriptor expression="IU.IMPR_NBR_PARENT"
+           descriptiveExpression="IMPR_NBR_PARENT" order="53"
+           oracleDatatype="number" width="22" precision="10"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="ACT_DT" datatype="date" oracleDatatype="date"
+         columnOrder="12" width="9" defaultWidth="10000" defaultHeight="10000"
+         columnFlags="33" defaultLabel="تاريخ اضافة السجل">
+          <dataDescriptor expression="IU.ACT_DT"
+           descriptiveExpression="ACT_DT" order="2" oracleDatatype="date"
+           width="9"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="ACT_TYPE" datatype="vchar2" columnOrder="13" width="1"
+         defaultWidth="10000" defaultHeight="10000" columnFlags="0"
+         defaultLabel="نوع النشاط" breakOrder="none">
+          <dataDescriptor expression="IU.ACT_TYPE"
+           descriptiveExpression="ACT_TYPE" order="3" width="1"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="ACT_TYPEM" datatype="vchar2" columnOrder="14"
+         width="11" defaultWidth="110000" defaultHeight="10000"
+         columnFlags="35" defaultLabel="نوع النشاط" breakOrder="descending">
+          <dataDescriptor
+           expression="DECODE ( IU.ACT_TYPE , &apos;U&apos; , &apos;تعديل السجل&apos; , &apos;D&apos; , &apos;حذف السجل&apos; , &apos;I&apos; , &apos;إضافة سجل&apos; , IU.ACT_TYPE )"
+           descriptiveExpression="ACT_TYPEM" order="4" width="11"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="ADD_CITY_ARB_NAME" datatype="vchar2" columnOrder="15"
+         width="20" defaultWidth="10000" defaultHeight="10000"
+         columnFlags="33" defaultLabel="مدينة إصدار الحفيظه">
+          <dataDescriptor expression="L_CT.CITY_ARB_NAME"
+           descriptiveExpression="ADD_CITY_ARB_NAME" order="5" width="20"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="ARBC_IMPR_NAME" datatype="vchar2" columnOrder="16"
+         width="200" defaultWidth="10000" defaultHeight="10000"
+         columnFlags="33" defaultLabel="اسم المستورد">
+          <dataDescriptor expression="IU.ARBC_IMPR_NAME"
+           descriptiveExpression="ARBC_IMPR_NAME" order="6" width="200"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="BUS_ID" datatype="vchar2" columnOrder="17"
+         defaultWidth="10000" defaultHeight="10000" columnFlags="33"
+         defaultLabel="الرقم الاستدلالى للمستورد الرئيسى">
+          <dataDescriptor expression="IU.BUS_ID"
+           descriptiveExpression="BUS_ID" order="7" width="10"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="BUS_ID_BRNCH" datatype="vchar2" columnOrder="18"
+         width="5" defaultWidth="10000" defaultHeight="10000" columnFlags="33"
+         defaultLabel="رقم الفرع للمستورد الرئيسى">
+          <dataDescriptor expression="IU.BUS_ID_BRNCH"
+           descriptiveExpression="BUS_ID_BRNCH" order="8" width="5"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="BUS_ID_TYPE_NAME" datatype="vchar2" columnOrder="19"
+         width="25" defaultWidth="10000" defaultHeight="10000"
+         columnFlags="33" defaultLabel="مسمي نوع المستورد">
+          <dataDescriptor expression="L_BIT.BUS_ID_TYPE_NAME"
+           descriptiveExpression="BUS_ID_TYPE_NAME" order="9" width="25"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="ENG_IMPR_NAME" datatype="vchar2" columnOrder="20"
+         width="200" defaultWidth="10000" defaultHeight="10000"
+         columnFlags="33" defaultLabel="الاسم الأجنبى للمستورد">
+          <dataDescriptor expression="IU.ENG_IMPR_NAME"
+           descriptiveExpression="ENG_IMPR_NAME" order="10" width="200"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="HQ_IMPR_NBR" oracleDatatype="number" columnOrder="21"
+         width="22" defaultWidth="10000" defaultHeight="10000"
+         columnFlags="33" defaultLabel="الرقم الموحد">
+          <dataDescriptor expression="IU.HQ_IMPR_NBR"
+           descriptiveExpression="HQ_IMPR_NBR" order="11"
+           oracleDatatype="number" width="22" precision="10"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="ID_CITY_ARB_NAME" datatype="vchar2" columnOrder="22"
+         width="20" defaultWidth="10000" defaultHeight="10000"
+         columnFlags="33" defaultLabel="رمز مدينة إصدار الحفيظه">
+          <dataDescriptor expression="L_CT2.CITY_ARB_NAME"
+           descriptiveExpression="ID_CITY_ARB_NAME" order="12" width="20"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="IMPR_EXPR_TYPE" oracleDatatype="number"
+         columnOrder="23" width="22" defaultWidth="10000"
+         defaultHeight="10000" columnFlags="0" defaultLabel="نوع العمليه"
+         breakOrder="none">
+          <dataDescriptor expression="IU.IMPR_EXPR_TYPE"
+           descriptiveExpression="IMPR_EXPR_TYPE" order="13"
+           oracleDatatype="number" width="22" precision="1"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="IMPR_EXPR_TYPEM" datatype="vchar2" columnOrder="24"
+         width="240" defaultWidth="130000" defaultHeight="10000"
+         columnFlags="35" defaultLabel="نوع العمليه" breakOrder="descending">
+          <dataDescriptor expression="CG.RV_MEANING"
+           descriptiveExpression="IMPR_EXPR_TYPEM" order="14" width="240"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="IMPR_TYPE_NAME" datatype="vchar2" columnOrder="25"
+         width="40" defaultWidth="10000" defaultHeight="10000"
+         columnFlags="33" defaultLabel="نوع المستورد">
+          <dataDescriptor expression="L_IT1.IMPR_TYPE_NAME"
+           descriptiveExpression="IMPR_TYPE_NAME" order="15" width="40"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="L_USR_USR_ANAME" datatype="vchar2" columnOrder="26"
+         width="40" defaultWidth="10000" defaultHeight="10000"
+         columnFlags="33" defaultLabel="إسم المستخدم">
+          <dataDescriptor expression="L_USR.USR_ANAME"
+           descriptiveExpression="L_USR_USR_ANAME" order="16" width="40"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="USR_ID" datatype="vchar2" columnOrder="27" width="30"
+         defaultWidth="10000" defaultHeight="10000" columnFlags="33"
+         defaultLabel="المستخدم">
+          <dataDescriptor expression="IU.USR_ID"
+           descriptiveExpression="USR_ID" order="17" width="30"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="BUS_ID_EXPRD_DT" datatype="date" oracleDatatype="date"
+         columnOrder="28" width="9" defaultWidth="10000" defaultHeight="10000"
+         columnFlags="33" defaultLabel="تاريخ انتهاء سجل المستورد">
+          <dataDescriptor expression="IU.BUS_ID_EXPRD_DT"
+           descriptiveExpression="BUS_ID_EXPRD_DT" order="18"
+           oracleDatatype="date" width="9"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="EMAIL" datatype="vchar2" columnOrder="29" width="40"
+         defaultWidth="10000" defaultHeight="10000" columnFlags="33"
+         defaultLabel="البريد الإلكتروني للمستورد">
+          <dataDescriptor expression="IU.EMAIL" descriptiveExpression="EMAIL"
+           order="19" width="40"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="IMPR_CNTCT_NAME" datatype="vchar2" columnOrder="30"
+         width="200" defaultWidth="10000" defaultHeight="10000"
+         columnFlags="33" defaultLabel="اسم الوكيل المفوض">
+          <dataDescriptor expression="IU.IMPR_CNTCT_NAME"
+           descriptiveExpression="IMPR_CNTCT_NAME" order="20" width="200"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="IMPR_FAX_NBR" datatype="vchar2" columnOrder="31"
+         width="15" defaultWidth="10000" defaultHeight="10000"
+         columnFlags="33" defaultLabel="رقم الفاكس">
+          <dataDescriptor expression="IU.IMPR_FAX_NBR"
+           descriptiveExpression="IMPR_FAX_NBR" order="21" width="15"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="IMPR_POB_NBR" oracleDatatype="number" columnOrder="32"
+         width="22" defaultWidth="10000" defaultHeight="10000"
+         columnFlags="33" defaultLabel="صندوق البريد">
+          <dataDescriptor expression="IU.IMPR_POB_NBR"
+           descriptiveExpression="IMPR_POB_NBR" order="22"
+           oracleDatatype="number" width="22" precision="8"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="IMPR_TELEX_NBR" datatype="vchar2" columnOrder="33"
+         width="16" defaultWidth="10000" defaultHeight="10000"
+         columnFlags="33" defaultLabel="تلكس">
+          <dataDescriptor expression="IU.IMPR_TELEX_NBR"
+           descriptiveExpression="IMPR_TELEX_NBR" order="23" width="16"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="IMPR_TEL_NBR" datatype="vchar2" columnOrder="34"
+         width="15" defaultWidth="10000" defaultHeight="10000"
+         columnFlags="33" defaultLabel="رقم تليفون المستورد">
+          <dataDescriptor expression="IU.IMPR_TEL_NBR"
+           descriptiveExpression="IMPR_TEL_NBR" order="24" width="15"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="IMPR_ZIP_CD" oracleDatatype="number" columnOrder="35"
+         width="22" defaultWidth="10000" defaultHeight="10000"
+         columnFlags="33" defaultLabel="الرمز البريدى">
+          <dataDescriptor expression="IU.IMPR_ZIP_CD"
+           descriptiveExpression="IMPR_ZIP_CD" order="25"
+           oracleDatatype="number" width="22" precision="5"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+        <dataItem name="PARENT_IMPR_NAME" datatype="vchar2" columnOrder="36"
+         width="200" defaultWidth="10000" defaultHeight="10000"
+         columnFlags="33" defaultLabel="تابع لي">
+          <dataDescriptor expression="L_IMP.ARBC_IMPR_NAME"
+           descriptiveExpression="PARENT_IMPR_NAME" order="26" width="200"/>
+          <dataItemPrivate adtName="" schemaName=""/>
+        </dataItem>
+      </group>
+    </dataSource>
+    <summary name="CS_CG$G_MAS_G" source="CF_CG$G_MAS_G" function="count"
+     width="38" precision="1" reset="report" defaultWidth="10"
+     defaultHeight="0" columnFlags="40" defaultLabel="CS_CG$G_MAS_G">
+      <displayInfo x="0.00000" y="0.00000" width="0.79993" height="0.19995"/>
+    </summary>
+  </data>
+  <layout>
+  <section name="header" orientation="portrait"/>
+  <section name="main" width="11.00000" widthInChar="110"
+   orientation="landscape">
+    <body width="10.75000" height="5.93750">
+      <location x="0.25000" y="1.62500"/>
+      <frame name="M_CG$G_MAS_G_GRPFR">
+        <geometryInfo x="0.00000" y="0.00000" width="10.75000"
+         height="6.12500"/>
+        <generalLayout verticalElasticity="variable"
+         horizontalElasticity="variable"/>
+        <advancedLayout formatTrigger="m_cg$g_mas_g_grpfrformattrig"/>
+        <repeatingFrame name="R_CG$G_MAS_G" source="CG$G_MAS_G"
+         printDirection="across" minWidowRecords="1" columnMode="no">
+          <geometryInfo x="0.00000" y="0.00000" width="10.75000"
+           height="6.12500"/>
+          <generalLayout verticalElasticity="variable"/>
+          <visualSettings fillPattern="transparent"
+           fillForegroundColor="r88g88b75" fillBackgroundColor="custom8"
+           linePattern="solid" hideLeftBorder="yes" hideRightBorder="yes"
+           hideTopBorder="yes" hideBottomBorder="yes"/>
+          <field name="F_IMPR_NBR" source="IMPR_NBR" minWidowLines="1"
+           spacing="0" alignment="start">
+            <font face="Arial" size="0"/>
+            <geometryInfo x="1.18750" y="0.00000" width="1.06250"
+             height="0.25000"/>
+            <generalLayout verticalElasticity="expand"/>
+            <advancedLayout printObjectOnPage="allPage"
+             basePrintingOn="enclosingObject"/>
+            <visualSettings fillPattern="solid" fillForegroundColor="white"
+             lineForegroundColor="blue"/>
+          </field>
+          <frame name="M_CG$G_DET_G_GRPFR">
+            <geometryInfo x="0.00000" y="0.31250" width="10.75000"
+             height="5.62500"/>
+            <generalLayout verticalElasticity="variable"/>
+            <advancedLayout formatTrigger="m_cg$g_det_g_grpfrformattrig"/>
+            <repeatingFrame name="R_CG$G_DET_G" source="CG$G_DET_G"
+             printDirection="down" minWidowRecords="1" columnMode="no">
+              <geometryInfo x="0.00000" y="0.43750" width="10.75000"
+               height="2.93750"/>
+              <generalLayout pageProtect="yes" verticalElasticity="variable"/>
+              <advancedLayout printObjectOnPage="allPage"
+               basePrintingOn="enclosingObject"/>
+              <visualSettings fillForegroundColor="darkgray"
+               lineForegroundColor="white"/>
+              <roundedRectangle name="B_1">
+                <geometryInfo x="0.25000" y="0.50000" width="10.06250"
+                 height="2.43750"/>
+                <visualSettings linePattern="solid"/>
+                <points>
+                  <point x="0.25000" y="0.50000"/>
+                  <point x="10.06250" y="2.43750"/>
+                  <point x="0.13794" y="0.13794"/>
+                </points>
+              </roundedRectangle>
+              <field name="F_ACT_DT" source="ACT_DT" minWidowLines="1"
+               formatMask="DD-MM-YYYY" spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="2.25000" y="0.56250" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <field name="F_ACT_TYPEM" source="ACT_TYPEM" minWidowLines="1"
+               spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="2.25000" y="0.75000" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <field name="F_ADD_CITY_ARB_NAME" source="ADD_CITY_ARB_NAME"
+               minWidowLines="1" spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="2.25000" y="0.93750" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <field name="F_ARBC_IMPR_NAME" source="ARBC_IMPR_NAME"
+               minWidowLines="1" spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="2.25000" y="1.12500" width="2.31250"
+                 height="0.18750"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <field name="F_BUS_ID" source="BUS_ID" minWidowLines="1"
+               spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="2.25000" y="1.31250" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <field name="F_BUS_ID_BRNCH" source="BUS_ID_BRNCH"
+               minWidowLines="1" spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="2.25000" y="1.50000" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <field name="F_BUS_ID_TYPE_NAME" source="BUS_ID_TYPE_NAME"
+               minWidowLines="1" spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="2.25000" y="1.68750" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <field name="F_ENG_IMPR_NAME" source="ENG_IMPR_NAME"
+               minWidowLines="1" spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="2.25000" y="1.87500" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <field name="F_HQ_IMPR_NBR" source="HQ_IMPR_NBR"
+               minWidowLines="1" spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="2.25000" y="2.06250" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <field name="F_ID_CITY_ARB_NAME" source="ID_CITY_ARB_NAME"
+               minWidowLines="1" spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="2.25000" y="2.25000" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <field name="F_IMPR_EXPR_TYPEM" source="IMPR_EXPR_TYPEM"
+               minWidowLines="1" spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="2.25000" y="2.43750" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <field name="F_IMPR_TYPE_NAME" source="IMPR_TYPE_NAME"
+               minWidowLines="1" spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="2.25000" y="2.62500" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <text name="B_ACT_DT" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="0.43750" y="0.56250" width="1.68750"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[تـاريـــخ اضــافـــــة الــســجـــل :]]>
+                  </string>
+                </textSegment>
+              </text>
+              <text name="B_ACT_TYPEM" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="0.43750" y="0.75000" width="1.68750"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[نـــــــــــــــــــوع الــنــشــــــــاط :]]>
+                  </string>
+                </textSegment>
+              </text>
+              <text name="B_ADD_CITY_ARB_NAME" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="0.43750" y="0.93750" width="1.68750"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[مـــديــنــة إصـــدار الـحـفـيـظـه :]]>
+                  </string>
+                </textSegment>
+              </text>
+              <text name="B_ARBC_IMPR_NAME" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="0.43750" y="1.12500" width="1.68750"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[اســـــــــــــــم الــمــســتـــــورد :]]>
+                  </string>
+                </textSegment>
+              </text>
+              <text name="B_BUS_ID" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="0.43750" y="1.31250" width="1.68750"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[الـرقـم الاستـدلالـى للمـسـتـورد : ]]>
+                  </string>
+                </textSegment>
+              </text>
+              <text name="B_BUS_ID_BRNCH" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="0.43750" y="1.50000" width="1.68750"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[رقــــم الـفــرع للـمـسـتــــــورد  :]]>
+                  </string>
+                </textSegment>
+              </text>
+              <text name="B_BUS_ID_TYPE_NAME" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="0.43750" y="1.68750" width="1.68750"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[مـسـمـي نـــــــوع الـمـسـتــورد :]]>
+                  </string>
+                </textSegment>
+              </text>
+              <text name="B_ENG_IMPR_NAME" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="0.43750" y="1.87500" width="1.68750"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[الاســــم الأجـنـبـى للـمـسـتـورد :]]>
+                  </string>
+                </textSegment>
+              </text>
+              <text name="B_HQ_IMPR_NBR" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="0.43750" y="2.06250" width="1.68750"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[الــــــــرقـــــــم الــمــــــوحـــــد :]]>
+                  </string>
+                </textSegment>
+              </text>
+              <text name="B_ID_CITY_ARB_NAME" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="0.43750" y="2.25000" width="1.68750"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[رمـــز مـديـنـة إصـدار الحفيظه :]]>
+                  </string>
+                </textSegment>
+              </text>
+              <text name="B_IMPR_EXPR_TYPEM" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="0.43750" y="2.43750" width="1.68750"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[نــــــــــــــــوع الــعــمــلــيــــــه :]]>
+                  </string>
+                </textSegment>
+              </text>
+              <text name="B_IMPR_TYPE_NAME" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="0.43750" y="2.62500" width="1.68750"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[نــــــــــــــــوع الــمــســتــــورد :]]>
+                  </string>
+                </textSegment>
+              </text>
+              <text name="B_L_USR_USR_ANAME" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="4.56250" y="0.75000" width="1.75000"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[إســــــــــــــــم الــمــســتــخـــدم :]]>
+                  </string>
+                </textSegment>
+              </text>
+              <field name="F_USR_ID" source="USR_ID" minWidowLines="1"
+               spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="6.56250" y="0.56250" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <field name="F_L_USR_USR_ANAME" source="L_USR_USR_ANAME"
+               minWidowLines="1" spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="6.56250" y="0.75000" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <field name="F_BUS_ID_EXPRD_DT" source="BUS_ID_EXPRD_DT"
+               minWidowLines="1" formatMask="MI-MM-YYYY" spacing="0"
+               alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="6.56250" y="0.93750" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <field name="F_EMAIL" source="EMAIL" minWidowLines="1"
+               spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="6.56250" y="1.12500" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <field name="F_IMPR_CNTCT_NAME" source="IMPR_CNTCT_NAME"
+               minWidowLines="1" spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="6.56250" y="1.31250" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <field name="F_IMPR_FAX_NBR" source="IMPR_FAX_NBR"
+               minWidowLines="1" spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="6.56250" y="1.50000" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <field name="F_IMPR_POB_NBR" source="IMPR_POB_NBR"
+               minWidowLines="1" spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="6.56250" y="1.68750" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <field name="F_IMPR_TELEX_NBR" source="IMPR_TELEX_NBR"
+               minWidowLines="1" spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="6.56250" y="1.87500" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <field name="F_IMPR_TEL_NBR" source="IMPR_TEL_NBR"
+               minWidowLines="1" spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="6.56250" y="2.06250" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <field name="F_IMPR_ZIP_CD" source="IMPR_ZIP_CD"
+               minWidowLines="1" spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="6.56250" y="2.25000" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <field name="F_PARENT_IMPR_NAME" source="PARENT_IMPR_NAME"
+               minWidowLines="1" spacing="0" alignment="start">
+                <font face="Arial" size="11"/>
+                <geometryInfo x="6.56250" y="2.43750" width="1.75000"
+                 height="0.18750"/>
+                <generalLayout verticalElasticity="expand"/>
+                <visualSettings fillPattern="transparent"
+                 lineForegroundColor="blue"/>
+              </field>
+              <text name="B_USR_ID" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="4.56250" y="0.56250" width="1.75000"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[الـــــمــــســــتـــــخــــــــــــــــــدم :]]>
+                  </string>
+                </textSegment>
+              </text>
+              <text name="B_BUS_ID_EXPRD_DT" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="4.56250" y="0.93750" width="1.75000"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[تـاريـخ انتهـاء سجـل المستـورد :]]>
+                  </string>
+                </textSegment>
+              </text>
+              <text name="B_EMAIL" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="4.56250" y="1.12500" width="1.75000"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[البـريـد الإلكـتـروني للمستـــورد :]]>
+                  </string>
+                </textSegment>
+              </text>
+              <text name="B_IMPR_CNTCT_NAME" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="4.56250" y="1.31250" width="1.75000"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[اســــــم الـوكـيـل الـمـفــــــوض :]]>
+                  </string>
+                </textSegment>
+              </text>
+              <text name="B_IMPR_FAX_NBR" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="4.56250" y="1.50000" width="1.75000"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[رقـــــــــــــــــم الـــفــــاكــــــــس :]]>
+                  </string>
+                </textSegment>
+              </text>
+              <text name="B_IMPR_POB_NBR" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="4.56250" y="1.68750" width="1.75000"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[صـــنــــــــدوق الــبـــــــــــريــــد :]]>
+                  </string>
+                </textSegment>
+              </text>
+              <text name="B_IMPR_TELEX_NBR" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="4.56250" y="1.87500" width="1.75000"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[تـــــــــــــــــلـــــــــــــــكــــــــــس :]]>
+                  </string>
+                </textSegment>
+              </text>
+              <text name="B_IMPR_TEL_NBR" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="4.56250" y="2.06250" width="1.75000"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[رقـــــــم تـلـيـفــون الـمـسـتــورد :]]>
+                  </string>
+                </textSegment>
+              </text>
+              <text name="B_IMPR_ZIP_CD" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="4.56250" y="2.25000" width="1.75000"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[الــــــرمـــــــــز الــبـــــريــــــدى :]]>
+                  </string>
+                </textSegment>
+              </text>
+              <text name="B_PARENT_IMPR_NAME" minWidowLines="1">
+                <textSettings justify="center" spacing="0"/>
+                <geometryInfo x="4.56250" y="2.43750" width="1.75000"
+                 height="0.18750"/>
+                <visualSettings fillBackgroundColor="r88g100b100"
+                 lineForegroundColor="blue"/>
+                <textSegment>
+                  <font face="Arial" size="11" bold="yes"/>
+                  <string>
+                  <![CDATA[تــــــــــــــابـــــــــع لـــــــــــــــي :]]>
+                  </string>
+                </textSegment>
+              </text>
+            </repeatingFrame>
+          </frame>
+          <text name="B_IMPR_NBR" minWidowLines="1">
+            <textSettings justify="left" spacing="0"/>
+            <geometryInfo x="0.25000" y="0.00000" width="0.87500"
+             height="0.25000"/>
+            <advancedLayout printObjectOnPage="allPage"
+             basePrintingOn="enclosingObject"/>
+            <visualSettings fillPattern="solid" fillForegroundColor="white"
+             lineForegroundColor="blue"/>
+            <textSegment>
+              <font face="Arial" size="12" bold="yes"/>
+              <string>
+              <![CDATA[رقم المستورد :]]>
+              </string>
+            </textSegment>
+          </text>
+        </repeatingFrame>
+      </frame>
+    </body>
+    <margin>
+      <text name="B_3_SEC2_SEC2" minWidowLines="1" templateSection="main">
+        <textSettings spacing="0"/>
+        <geometryInfo x="8.75000" y="0.43750" width="0.89587" height="0.23962"
+        />
+        <textSegment>
+          <font face="Arial" size="14" bold="yes"/>
+          <string>
+          <![CDATA[التاريــخ :]]>
+          </string>
+        </textSegment>
+      </text>
+      <text name="B_2_SEC1_SEC2" minWidowLines="1" templateSection="main">
+        <textSettings spacing="0"/>
+        <geometryInfo x="8.73291" y="0.68750" width="0.89587" height="0.23962"
+        />
+        <textSegment>
+          <font face="Arial" size="14" bold="yes"/>
+          <string>
+          <![CDATA[المرفقات :]]>
+          </string>
+        </textSegment>
+      </text>
+      <text name="B_1_SEC2_SEC2" minWidowLines="1" templateSection="main">
+        <textSettings spacing="0"/>
+        <geometryInfo x="8.75000" y="0.18750" width="0.89587" height="0.23962"
+        />
+        <textSegment>
+          <font face="Arial" size="14" bold="yes"/>
+          <string>
+          <![CDATA[الـرقــــم :]]>
+          </string>
+        </textSegment>
+      </text>
+      <line name="B_3_SEC2" arrow="none" templateSection="main">
+        <geometryInfo x="0.25000" y="7.62500" width="10.75000"
+         height="0.00000"/>
+        <visualSettings fillBackgroundColor="r100g100b88" linePattern="solid"/>
+        <points>
+          <point x="0.25000" y="7.62500"/>
+          <point x="11.00000" y="7.62500"/>
+        </points>
+      </line>
+      <text name="B_2_SEC1_SEC1_SEC2" minWidowLines="1" templateSection="main"
+        >
+        <textSettings justify="center" spacing="0"/>
+        <geometryInfo x="3.46350" y="7.68408" width="0.38538" height="0.18750"
+        />
+        <visualSettings fillBackgroundColor="r100g100b88"/>
+        <textSegment>
+          <font face="Arial" size="11"/>
+          <string>
+          <![CDATA[م]]>
+          </string>
+        </textSegment>
+      </text>
+      <field name="F_DATE4_SEC1_SEC1_SEC2" source="CurrentDate"
+       minWidowLines="1" formatMask="MI-MM-YYYY" spacing="0" alignment="start"
+       templateSection="main">
+        <font face="Arial" size="11"/>
+        <geometryInfo x="1.87500" y="7.68750" width="0.75000" height="0.18750"
+        />
+        <generalLayout horizontalElasticity="variable"/>
+        <advancedLayout formatTrigger="f_date4_sec1_sec1_sec2formattr"/>
+      </field>
+      <text name="B_3_SEC1_SEC1_SEC2" minWidowLines="1" templateSection="main"
+        >
+        <textSettings justify="center" spacing="0"/>
+        <geometryInfo x="2.56665" y="7.68750" width="0.25000" height="0.18750"
+        />
+        <visualSettings fillBackgroundColor="r100g100b88"/>
+        <textSegment>
+          <font face="Arial" size="11"/>
+          <string>
+          <![CDATA[هـ]]>
+          </string>
+        </textSegment>
+      </text>
+      <field name="F_1_SEC2_SEC1_SEC2_SEC2" source="CurrentDate"
+       minWidowLines="1" formatMask="DD-MM-YYYY" spacing="0"
+       alignment="center" templateSection="main">
+        <font face="Arial" size="11"/>
+        <geometryInfo x="2.78540" y="7.68030" width="0.84375" height="0.19470"
+        />
+        <visualSettings fillBackgroundColor="r100g100b88"/>
+      </field>
+      <text name="B_3_SEC1_SEC2" minWidowLines="1" templateSection="main">
+        <textSettings spacing="0"/>
+        <geometryInfo x="1.43750" y="7.68750" width="0.43750" height="0.23962"
+        />
+        <textSegment>
+          <font face="Arial" size="11"/>
+          <string>
+          <![CDATA[تاريخه :]]>
+          </string>
+        </textSegment>
+      </text>
+      <text name="B_1_SEC1_SEC2" minWidowLines="1" templateSection="main">
+        <textSettings justify="center" spacing="0"/>
+        <geometryInfo x="0.25000" y="7.68750" width="0.75000" height="0.17969"
+        />
+        <textSegment>
+          <font face="Arial" size="11"/>
+          <string>
+          <![CDATA[رقم التقرير :]]>
+          </string>
+        </textSegment>
+      </text>
+      <field name="F_1_SEC2_SEC1_SEC1_SEC2" source="p_report_no"
+       minWidowLines="1" formatMask="DD-MM-YYYY" spacing="0"
+       alignment="center" templateSection="main">
+        <font face="Arial" size="11"/>
+        <geometryInfo x="0.93750" y="7.68750" width="0.50000" height="0.18750"
+        />
+        <visualSettings fillBackgroundColor="r100g100b88"/>
+      </field>
+      <line name="B_2_SEC2" arrow="none" templateSection="main">
+        <geometryInfo x="2.75415" y="7.68750" width="0.06250" height="0.18750"
+        />
+        <visualSettings linePattern="solid"/>
+        <points>
+          <point x="2.75415" y="7.68750"/>
+          <point x="2.81665" y="7.87500"/>
+        </points>
+      </line>
+      <field name="F$PageNum_SEC1_SEC1_SEC1_SEC2" source="PageNumber"
+       minWidowLines="1" spacing="0" alignment="end" templateSection="main">
+        <font face="Arial" size="11"/>
+        <geometryInfo x="5.12500" y="7.68030" width="0.38464" height="0.19470"
+        />
+        <generalLayout horizontalElasticity="variable"/>
+        <visualSettings fillBackgroundColor="gray8"/>
+        <pageNumbering header="yes" main="yes" trailer="yes" startAt="1"
+         incrementBy="1" resetAt="report"/>
+      </field>
+      <field name="F_1_SEC1_SEC1_SEC1_SEC2" source="TotalPages"
+       minWidowLines="1" spacing="0" alignment="start" templateSection="main">
+        <font face="Arial" size="11"/>
+        <geometryInfo x="5.58789" y="7.68030" width="0.34961" height="0.19470"
+        />
+        <generalLayout horizontalElasticity="variable"/>
+        <visualSettings fillBackgroundColor="gray8"/>
+        <pageNumbering header="yes" main="yes" trailer="yes" startAt="1"
+         incrementBy="1" resetAt="report"/>
+      </field>
+      <line name="B_1_SEC2" arrow="none" templateSection="main">
+        <geometryInfo x="5.51587" y="7.68030" width="0.06482" height="0.19470"
+        />
+        <visualSettings linePattern="solid"/>
+        <points>
+          <point x="5.51587" y="7.68030"/>
+          <point x="5.58069" y="7.87500"/>
+        </points>
+      </line>
+      <field name="F_1_SEC2" source="P_MODULE_NAME" minWidowLines="1"
+       spacing="0" alignment="center" templateSection="main">
+        <font face="Arial" size="14" bold="yes" textColor="blue"/>
+        <geometryInfo x="2.88440" y="1.24194" width="5.33313" height="0.25806"
+        />
+        <visualSettings fillBackgroundColor="r100g100b88"/>
+      </field>
+      <field name="V_PORT_NAME_SEC1" source="DESNAME" minWidowLines="1"
+       spacing="0" alignment="center" templateSection="main">
+        <font face="Times New Roman" size="14" bold="yes"/>
+        <geometryInfo x="0.27014" y="0.93750" width="2.37500" height="0.25000"
+        />
+        <advancedLayout formatTrigger="v_port_name_sec1formattrigger"/>
+        <visualSettings fillBackgroundColor="r25g50b50"
+         lineForegroundColor="r25g50b50"/>
+      </field>
+      <linkFile name="B_5" minWidowLines="1"
+       sourceFileName="D:\PROD\lib\Customs_New_logo_ Horizontal.jpg"
+       sourceFileFormat="image">
+        <geometryInfo x="3.64941" y="0.14966" width="3.10938" height="0.78125"
+        />
+        <advancedLayout formatTrigger="b_5formattrigger"/>
+        <points>
+          <point x="3.64941" y="0.14966"/>
+          <point x="3.10938" y="0.78125"/>
+        </points>
+        <textSettings justify="center" spacing="0"/>
+        <font face="Arial" size="14" bold="yes"/>
+      </linkFile>
+    </margin>
+  </section>
+  </layout>
+  <parameterForm>
+  <text name="PB_1" pageNumber="1" minWidowLines="1">
+    <textSettings spacing="single"/>
+    <geometryInfo x="1.49829" y="0.15979" width="1.03101" height="0.22205"/>
+    <visualSettings lineWidth="1"/>
+    <textSegment>
+      <font face="MS Sans Serif" size="12" bold="yes"/>
+      <string>
+      <![CDATA[معاملات التقرير]]>
+      </string>
+    </textSegment>
+  </text>
+  <text name="PB_2" pageNumber="1" minWidowLines="1">
+    <textSettings spacing="single"/>
+    <geometryInfo x="1.42542" y="0.49304" width="1.17676" height="0.18042"/>
+    <visualSettings lineWidth="1"/>
+    <textSegment>
+      <font face="MS Sans Serif" size="10" bold="yes"/>
+      <string>
+      <![CDATA[أدخل قيم المعاملات]]>
+      </string>
+    </textSegment>
+  </text>
+  <text name="PB_P_MODULE_ID" pageNumber="1" minWidowLines="1">
+    <textSettings spacing="single"/>
+    <geometryInfo x="0.24316" y="0.82629" width="0.74976" height="0.14929"/>
+    <visualSettings lineWidth="1"/>
+    <textSegment>
+      <font face="MS Sans Serif" size="8" bold="yes"/>
+      <string>
+      <![CDATA[P Module Id]]>
+      </string>
+    </textSegment>
+  </text>
+  <text name="PB_P_CURR_PORT_CD" pageNumber="1" minWidowLines="1">
+    <textSettings spacing="single"/>
+    <geometryInfo x="0.24316" y="1.15955" width="0.88513" height="0.14929"/>
+    <visualSettings lineWidth="1"/>
+    <textSegment>
+      <font face="MS Sans Serif" size="8" bold="yes"/>
+      <string>
+      <![CDATA[P Curr Port Cd]]>
+      </string>
+    </textSegment>
+  </text>
+  <text name="PB_END_DT" pageNumber="1" minWidowLines="1">
+    <textSettings spacing="single"/>
+    <geometryInfo x="0.24316" y="1.49280" width="0.44763" height="0.14929"/>
+    <visualSettings lineWidth="1"/>
+    <textSegment>
+      <font face="MS Sans Serif" size="8" bold="yes"/>
+      <string>
+      <![CDATA[End Dt]]>
+      </string>
+    </textSegment>
+  </text>
+  <text name="PB_START_DT" pageNumber="1" minWidowLines="1">
+    <textSettings spacing="single"/>
+    <geometryInfo x="0.24316" y="1.82605" width="0.49976" height="0.14929"/>
+    <visualSettings lineWidth="1"/>
+    <textSegment>
+      <font face="MS Sans Serif" size="8" bold="yes"/>
+      <string>
+      <![CDATA[Start Dt]]>
+      </string>
+    </textSegment>
+  </text>
+  <text name="PB_P_BANK_CD" pageNumber="1" minWidowLines="1">
+    <textSettings spacing="single"/>
+    <geometryInfo x="0.24316" y="2.15930" width="0.66638" height="0.14929"/>
+    <visualSettings lineWidth="1"/>
+    <textSegment>
+      <font face="MS Sans Serif" size="8" bold="yes"/>
+      <string>
+      <![CDATA[P Bank Cd]]>
+      </string>
+    </textSegment>
+  </text>
+  <text name="PB_P_IMPR_NBR" pageNumber="1" minWidowLines="1">
+    <textSettings spacing="single"/>
+    <geometryInfo x="0.24316" y="2.49255" width="0.66638" height="0.14929"/>
+    <visualSettings lineWidth="1"/>
+    <textSegment>
+      <font face="MS Sans Serif" size="8" bold="yes"/>
+      <string>
+      <![CDATA[P Impr Nbr]]>
+      </string>
+    </textSegment>
+  </text>
+  <text name="PB_P_BANK_BRNCH_CD1" pageNumber="1" minWidowLines="1">
+    <textSettings spacing="single"/>
+    <geometryInfo x="0.24316" y="2.82581" width="1.05176" height="0.14929"/>
+    <visualSettings lineWidth="1"/>
+    <textSegment>
+      <font face="MS Sans Serif" size="8" bold="yes"/>
+      <string>
+      <![CDATA[P Bank Brnch Cd]]>
+      </string>
+    </textSegment>
+  </text>
+  <field name="PF_P_MODULE_ID" source="P_MODULE_ID" pageNumber="1"
+   minWidowLines="1" spacing="0">
+    <font size="0"/>
+    <geometryInfo x="1.50000" y="0.78430" width="2.00000" height="0.26428"/>
+    <visualSettings lineWidth="1" linePattern="solid"/>
+  </field>
+  <field name="PF_P_CURR_PORT_CD" source="P_CURR_PORT_CD" pageNumber="1"
+   minWidowLines="1" spacing="0">
+    <font size="0"/>
+    <geometryInfo x="1.50000" y="1.11755" width="2.00000" height="0.26428"/>
+    <visualSettings lineWidth="1" linePattern="solid"/>
+  </field>
+  <field name="PF_END_DT" source="END_DT" pageNumber="1" minWidowLines="1"
+   spacing="0">
+    <font size="0"/>
+    <geometryInfo x="1.50000" y="1.45081" width="2.00000" height="0.26428"/>
+    <visualSettings lineWidth="1" linePattern="solid"/>
+  </field>
+  <field name="PF_START_DT" source="START_DT" pageNumber="1" minWidowLines="1"
+   spacing="0">
+    <font size="0"/>
+    <geometryInfo x="1.50000" y="1.78406" width="2.00000" height="0.26428"/>
+    <visualSettings lineWidth="1" linePattern="solid"/>
+  </field>
+  <field name="PF_P_BANK_CD" source="P_BANK_CD" pageNumber="1"
+   minWidowLines="1" spacing="0">
+    <font size="0"/>
+    <geometryInfo x="1.50000" y="2.11731" width="2.00000" height="0.26428"/>
+    <visualSettings lineWidth="1" linePattern="solid"/>
+  </field>
+  <field name="PF_P_IMPR_NBR" source="P_IMPR_NBR" pageNumber="1"
+   minWidowLines="1" spacing="0">
+    <font size="0"/>
+    <geometryInfo x="1.50000" y="2.45056" width="2.00000" height="0.26428"/>
+    <visualSettings lineWidth="1" linePattern="solid"/>
+  </field>
+  <field name="PF_P_BANK_BRNCH_CD1" source="P_BANK_BRNCH_CD" pageNumber="1"
+   minWidowLines="1" spacing="0">
+    <font size="0"/>
+    <geometryInfo x="1.50000" y="2.78381" width="2.00000" height="0.26428"/>
+    <visualSettings lineWidth="1" linePattern="solid"/>
+  </field>
+  </parameterForm>
+  <programUnits>
+    <function name="beforereport">
+      <textSource>
+      <![CDATA[function BeforeReport return boolean is
+begin
+
+
+  --                                                          CG$DF0001.WN..IMPORTERS'_UPDATES
+
+
+SRW.DO_SQL('alter session set NLS_DATE_FORMAT=''YYYY/MM/DD HH24:MI:SS''');
+  --                                                          CG$DF0001.WN..IMPORTERS'_UPDATES
+
+return(TRUE);
+end;]]>
+      </textSource>
+    </function>
+    <function name="cf_cg$g_mas_gformula" returnType="number">
+      <textSource>
+      <![CDATA[function CF_CG$G_MAS_GFormula return Number is
+-- TEMPLATE DERIVED CODE
+begin
+  return(1);
+end;]]>
+      </textSource>
+    </function>
+    <function name="m_cg$g_mas_g_grpfrformattrig">
+      <textSource>
+      <![CDATA[function M_CG$G_MAS_G_GRPFRFormatTrig return boolean is
+-- TEMPLATE DERIVED CODE
+begin
+  return ( CG$SuppressFrame(:CS_CG$G_MAS_G) );
+end;]]>
+      </textSource>
+    </function>
+    <function name="cf_cg$g_det_gformula" returnType="number">
+      <textSource>
+      <![CDATA[function CF_CG$G_DET_GFormula return Number is
+-- TEMPLATE DERIVED CODE
+begin
+  return(1);
+end;]]>
+      </textSource>
+    </function>
+    <function name="m_cg$g_det_g_grpfrformattrig">
+      <textSource>
+      <![CDATA[function M_CG$G_DET_G_GRPFRFormatTrig return boolean is
+-- TEMPLATE DERIVED CODE
+begin
+  return ( CG$SuppressFrame(:CS_CG$G_DET_G) );
+end;]]>
+      </textSource>
+    </function>
+    <function name="cg$suppressframe">
+      <textSource>
+      <![CDATA[function CG$SuppressFrame (num_recs in Number) return boolean is
+-- TEMPLATE DERIVED CODE
+begin
+  return(num_recs > 0);
+end;]]>
+      </textSource>
+    </function>
+    <function name="get_port_name" templateSection="main">
+      <textSource>
+      <![CDATA[FUNCTION GET_PORT_NAME RETURN char IS
+	V_PORT_NAME		VARCHAR2(100);
+BEGIN
+	TOOL_ENV.GETVAR('PORT_NAME',V_PORT_NAME);
+	RETURN V_PORT_NAME;
+END;
+]]>
+      </textSource>
+    </function>
+    <function name="f_date4_sec1_sec1_sec2formattr">
+      <textSource>
+      <![CDATA[function F_DATE4_SEC1_SEC1_SEC2FormatTr return boolean is
+	
+begin
+  
+	srw.set_field_date(0, HIJDATE.CUR_HIJ_DATE);
+ return (TRUE);
+end;]]>
+      </textSource>
+    </function>
+    <function name="v_port_name_sec1formattrigger">
+      <textSource>
+      <![CDATA[/*function V_PORT_NAME_SEC2FormatTrigger return boolean is
+V_NAME VARCHAR2(100);
+begin
+SELECT PORT_NAME
+INTO   V_NAME
+FROM   SD_PORTS
+ WHERE  PORT_CD = :P_CURR_PORT_CD ;
+ SRW.SET_FIELD_CHAR(0,V_NAME);	
+ 	RETURN(TRUE);
+ 
+EXCEPTION 
+	WHEN NO_DATA_FOUND THEN
+RETURN(NULL);
+RETURN(TRUE);
+	
+	
+	RETURN(TRUE);
+END;
+*/
+-----------------------------
+function V_PORT_NAME_SEC1FormatTrigger return boolean is
+V_NAME VARCHAR2(100);
+BEGIN
+	IF :P_CURR_PORT_CD = 99 THEN
+	RETURN(TRUE);
+	ELSE
+		
+  SELECT PORT_NAME
+  INTO   V_NAME
+  FROM   SD_PORTS
+  WHERE  PORT_CD = :P_CURR_PORT_CD ;
+  SRW.SET_FIELD_CHAR(0,V_NAME);	
+ 	RETURN(TRUE);
+ END IF;
+EXCEPTION 
+	WHEN NO_DATA_FOUND THEN
+--RETURN(NULL);
+	RETURN(TRUE);
+	
+	
+	RETURN(TRUE);
+END;]]>
+      </textSource>
+    </function>
+    <function name="b_5formattrigger">
+      <textSource>
+      <![CDATA[function B_5FormatTrigger return boolean is
+begin
+
+ 
+  	return (TRUE); 	
+
+end;]]>
+      </textSource>
+    </function>
+  </programUnits>
+  <attachedLibrary name="d2kwutil"/>
+  <attachedLibrary name="rep_lib"/>
+  <webSource>
+  <![CDATA[<%@ taglib uri="/WEB-INF/lib/reports_tld.jar" prefix="rw" %> 
+<%@ page language="java" import="java.io.*" errorPage="/rwerror.jsp" session="false" %>
+<%@ page contentType="text/html;charset=ISO-8859-1" %>
+<!--
+<rw:report id="report"> 
+<rw:objects id="objects">
+</rw:objects>
+-->
+
+<html>
+
+<head>
+<meta name="GENERATOR" content="Oracle 11gR1 Reports Developer"/>
+<title> Your Title </title>
+
+<rw:style id="yourStyle">
+   <!-- Report Wizard inserts style link clause here -->
+</rw:style>
+
+</head>
+
+
+<body>
+
+<rw:dataArea id="yourDataArea">
+   <!-- Report Wizard inserts the default jsp here -->
+</rw:dataArea>
+
+
+
+</body>
+</html>
+
+<!--
+</rw:report> 
+-->
+]]>
+  </webSource>
+  <reportPrivate defaultReportType="masterDetail" versionFlags2="0"
+   charPromptMustSplit="92" minFieldResizeRate="20" minFontPoints="8"
+   templateName="M:\REP_TEMP\REP_TMP_LS.TDF"/>
+  <reportWebSettings>
+  <![CDATA[#NULL#]]>
+  </reportWebSettings>
+</report>

@@ -1,0 +1,649 @@
+FORM IMPR1110_PROD_CENTRL إضافة وتعديل بيانات مستورد
+
+BLOCK {'Name': 'TITLE', 'Comment': 'CG$IGNORE_ON_DESIGN_CAPTURE'}
+  ITEM {'Name': 'CGSO$CHECK_BOX_U'}
+  ITEM {'Name': 'CGSO$CHAR_ARB_ED'}
+     ITRG KEY-LISTVAL 0
+  ITEM {'Name': 'CGSO$CHAR_ARB_DO_MLINE'}
+  ITEM {'Name': 'CGSO$CHAR_ARB_ORA_LOV'}
+  ITEM {'Name': 'CGSO$CHAR_ARB_DO_ENB_Y'}
+     ITRG KEY-LISTVAL 0
+  ITEM {'Name': 'CGSO$CHAR_ARB_MLINE'}
+     ITRG KEY-LISTVAL 0
+  ITEM {'Name': 'CGSO$CHAR_ARB'}
+     ITRG KEY-LISTVAL 0
+  ITEM {'Name': 'CGSO$CHAR_ARB_DO'}
+     ITRG KEY-LISTVAL 0
+  ITEM {'Name': 'SCREEN_NAME'}
+  ITEM {'Name': 'USER_NAME'}
+  ITEM {'Name': 'SYSTEM_DATE'}
+     ITRG WHEN-VALIDATE-ITEM 1
+  ITEM {'Name': 'VERSION'}
+
+BLOCK {'Name': 'EDI_MSG', 'Comment': 'CG$IGNORE_ON_DESIGN_CAPTURE'}
+  ITEM {'Name': 'EDI_MSG_TXT'}
+  ITEM {'Name': 'EDI_MSG_LOVE_BUT'}
+     ITRG WHEN-BUTTON-PRESSED 0
+
+BLOCK {'Name': 'LSIDE', 'Comment': 'CG$IGNORE_ON_DESIGN_CAPTURE'}
+  ITEM {'Name': 'FN1'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN50'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN2'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN49'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN3'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN48'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN4'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN47'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN5'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN46'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN6'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN45'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN7'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN44'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN8'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN43'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN9'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN42'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN10'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN41'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN11'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN40'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN12'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN39'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN13'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN38'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN14'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN37'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN15'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN36'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN16'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN17'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN34'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN35'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN18'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN33'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN19'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN32'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN20'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN31'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN21'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN30'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN22'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN29'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN23'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN28'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN24'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN27'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN25'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+  ITEM {'Name': 'FN26'}
+     ITRG WHEN-MOUSE-ENTER 0
+     ITRG WHEN-MOUSE-LEAVE 0
+     ITRG WHEN-MOUSE-CLICK 0
+
+BLOCK {'Name': 'TOOLBAR', 'Comment': 'CG$IGNORE_ON_DESIGN_CAPTURE'}
+  BTRG KEY-DOWN 1
+  BTRG KEY-UP 1
+  BTRG KEY-NEXT-ITEM 1
+  ITEM {'Name': 'DUMMY'}
+  ITEM {'Name': 'SAVE'}
+     ITRG WHEN-BUTTON-PRESSED 1
+  ITEM {'Name': 'CLEAR_ALL'}
+     ITRG WHEN-BUTTON-PRESSED 0
+  ITEM {'Name': 'EXIT'}
+     ITRG WHEN-BUTTON-PRESSED 1
+  ITEM {'Name': 'EXIT1'}
+     ITRG WHEN-BUTTON-PRESSED 1
+  ITEM {'Name': 'ENTER'}
+     ITRG WHEN-BUTTON-PRESSED 0
+  ITEM {'Name': 'EXECUTE'}
+     ITRG WHEN-BUTTON-PRESSED 0
+  ITEM {'Name': 'REMOVE'}
+     ITRG WHEN-BUTTON-PRESSED 0
+  ITEM {'Name': 'LIST_VALUE'}
+     ITRG WHEN-BUTTON-PRESSED 0
+  ITEM {'Name': 'HELP'}
+     ITRG WHEN-BUTTON-PRESSED 0
+  ITEM {'Name': 'LAST_REC'}
+     ITRG WHEN-BUTTON-PRESSED 1
+  ITEM {'Name': 'RE_ENTER_QUERY'}
+     ITRG WHEN-BUTTON-PRESSED 1
+  ITEM {'Name': 'FIRST_REC'}
+     ITRG WHEN-BUTTON-PRESSED 0
+  ITEM {'Name': 'PAGE_UP'}
+     ITRG WHEN-BUTTON-PRESSED 0
+  ITEM {'Name': 'PAGE_DOWN'}
+     ITRG WHEN-BUTTON-PRESSED 1
+  ITEM {'Name': 'FUN_BUT'}
+     ITRG WHEN-MOUSE-UP 1
+     ITRG WHEN-MOUSE-DOWN 1
+
+BLOCK {'Name': 'IMPORTERS', 'OrderByClause': 'ORDER BY IMPR_NBR DESC', 'DeleteAllowed': 'false', 'QueryDataSourceName': 'IMPORTERS', 'WhereClause': 'WHERE   ( IMPORTERS.PORT_CD=:PARAMETER.P_CURR_PORT_CD&#10;)', 'Comment': '*******************************************************************&#10;&#10;BLOCK NAME&#10;  IMPORTERS&#10;&#10;TABLE COMMENT&#10;  جدول المستوردين&#10;&#10;TABLE USAGE COMMENT&#10;  Autogenerated by App Des Transformer.&#10;&#10;TABLE USAGES&#10;  BASE   IMPORTERS                     SEL INS UPD&#10;  ...    PORT_CD                       SEL INS&#10;  ...    HQ_IMPR_NBR                   SEL         NUL&#10;  ...    IMPR_NBR                      SEL INS     NUL&#10;  ...    BUS_ID_STATUS                 SEL INS UPD NUL&#10;  ...    IMPR_TYPE_CD                  SEL INS&#10;  ...    BUS_ID_EXPRD_DT               SEL INS UPD NUL&#10;  ...    BUS_ID_TYPE_CD                SEL INS&#10;  ...    COMM_RGSTRTN_TYPE             SEL INS UPD NUL&#10;  ...    CITY_CODE_OF_ID               SEL INS     NUL&#10;  ...    BUS_ID                        SEL INS&#10;  ...    BUS_ID_BRNCH                  SEL INS     NUL&#10;  ...    CTRY_CD                       SEL INS&#10;  ...    IMPR_EXPR_TYPE                SEL INS UPD&#10;  ...    ARBC_IMPR_NAME                SEL INS UPD&#10;  ...    IMPR_NAME_STD                 SEL INS UPD&#10;  ...    LST_TRAN_DT                   SEL INS UPD NUL&#10;  ...    IMPD_STMT_NBR                 SEL INS UPD NUL&#10;  ...    IMPR_DATA_SRCE                SEL INS UPD NUL&#10;  ...    ENG_IMPR_NAME                 SEL INS UPD NUL&#10;  ...    IMPR_CNTCT_NAME               SEL INS UPD NUL&#10;  ...    IMPR_ADDRESS                  SEL INS UPD NUL&#10;  ...    BUS_ID_ISSUE_DT               SEL INS UPD NUL&#10;  ...    IMPR_NBR_PARENT               SEL INS UPD NUL&#10;  ...    ADD_CTRY_CD                   SEL INS UPD&#10;  ...    CITY_CODE                     SEL INS UPD NUL&#10;  ...    IMPR_POB_NBR                  SEL INS UPD NUL&#10;  ...    IMPR_ZIP_CD                   SEL INS UPD NUL&#10;  ...    IMPR_TEL_NBR                  SEL INS UPD NUL&#10;  ...    IMPR_FAX_NBR                  SEL INS UPD NUL&#10;  ...    IMPR_TELEX_NBR                SEL INS UPD NUL&#10;  ...    EMAIL                         SEL INS UPD NUL&#10;  ...    MOBILE_NO                     SEL INS UPD NUL&#10;  ...    BANK_IBAN                     SEL INS UPD NUL&#10;  ...    ID_NBR                        SEL INS UPD NUL&#10;  ...    CAR_AGENT_FLAG                SEL&#10;  ...    EXPRESS_POST                  SEL INS UPD NUL&#10;  ...    CTRY_CD_OF_ID                 SEL INS UPD NUL&#10;  ...    EXPD_STMT_NBR                 SEL INS UPD NUL&#10;  ...    WVR_ENTRY_NBR                 SEL INS UPD NUL&#10;  ...    ACTIVITY                      SEL INS UPD NUL&#10;  ...    CUSTOMS_ENTERED                   INS UPD NUL&#10;  ...    CREATION_FLAG                     INS UPD NUL&#10;&#10;TUI DESCRIPTION&#10;&#10;&#10;*******************************************************************'}
+  BTRG ON-ERROR 1
+  BTRG POST-QUERY 1
+  BTRG PRE-QUERY 1
+  BTRG PRE-INSERT 1
+  BTRG KEY-HELP 1
+  BTRG KEY-DELREC 1
+  BTRG POST-INSERT 1
+  BTRG POST-UPDATE 1
+  BTRG PRE-DELETE 1
+  BTRG PRE-RECORD 1
+  BTRG PRE-UPDATE 1
+  BTRG WHEN-CLEAR-BLOCK 1
+  BTRG WHEN-CREATE-RECORD 1
+  BTRG WHEN-NEW-ITEM-INSTANCE 1
+  BTRG WHEN-NEW-RECORD-INSTANCE 1
+  ITEM {'Name': 'SDP_PORT_STATUS', 'Hint': 'حالة السجل', 'InsertAllowed': 'false', 'MaximumLength': '2', 'InitializeValue': '1', 'UpdateAllowed': 'false', 'Required': 'false', 'DatabaseItem': 'false', 'Label': 'الحالة', 'Visible': 'false'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'L_CT_CITY_STATUS2', 'InsertAllowed': 'false', 'MaximumLength': '2', 'InitializeValue': '', 'UpdateAllowed': 'false', 'Required': 'false', 'DatabaseItem': 'false', 'Label': 'Cty Status', 'Visible': 'false'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'L_CT_CITY_STATUS', 'InsertAllowed': 'false', 'MaximumLength': '2', 'InitializeValue': '', 'UpdateAllowed': 'false', 'Required': 'false', 'DatabaseItem': 'false', 'Visible': 'false'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'PORT_CD', 'MaximumLength': '4', 'Required': 'true', 'CanvasName': 'CG$PAGE_1', 'Hint': 'رمز الجمــــــــــــرك للمستورد - list of values available', 'Prompt': 'رمز الجمــــــــــــــرك', 'TabPageName': '', 'DataType': 'Number', 'InitializeValue': '', 'UpdateAllowed': 'false', 'Label': 'رمز الجمــــــــــــــرك', 'ColumnName': 'PORT_CD', 'LovName': 'CGFK$IMPORTERS_PORT_CD'}
+     ITRG KEY-LISTVAL 1
+     ITRG WHEN-VALIDATE-ITEM 1
+  ITEM {'Name': 'PORT_CD2', 'TabPageName': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG WHEN-BUTTON-PRESSED 1
+  ITEM {'Name': 'PORT_NAME', 'Hint': 'اسم الميناء العربي', 'TabPageName': '', 'MaximumLength': '40', 'InitializeValue': '', 'Required': 'false', 'DatabaseItem': 'false', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'HQ_IMPR_NBR', 'Hint': 'Enter value for الرقم الموحد بالمصلحة - list of values available', 'Prompt': 'الرقم الموحد بالمصلحة', 'TabPageName': '', 'MaximumLength': '11', 'DataType': 'Number', 'InitializeValue': '', 'Label': 'الرقم الموحد بالمصلحة', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'HQ_IMPR_NBR', 'LovName': 'CGFK$IMPORTERS_HQ_IMPR_NBR'}
+     ITRG KEY-LISTVAL 1
+     ITRG POST-CHANGE 1
+  ITEM {'Name': 'IMPR_NBR', 'Hint': 'للإستعلام أدخل مسلسل المستورد بالحاسب الآلي - لإضافة مستورد جديد أترك الخانة بدون بيانات', 'Prompt': 'الرقــــــم الجمركــــى', 'TabPageName': '', 'MaximumLength': '11', 'DataType': 'Number', 'InitializeValue': '', 'UpdateAllowed': 'false', 'Label': 'الرقــــــم الجمركــــى', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'IMPR_NBR'}
+     ITRG KEY-LISTVAL 1
+     ITRG WHEN-VALIDATE-ITEM 1
+  ITEM {'Name': 'SUSPN_STATUS', 'Hint': 'Enter value for حالة المستورد بالمصلحة', 'Prompt': 'حالة المستورد بالمصلحة', 'TabPageName': '', 'InsertAllowed': 'false', 'InitializeValue': '', 'UpdateAllowed': 'false', 'DatabaseItem': 'false', 'Label': 'حالة المستورد بالمصلحة', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'STATUS_DESC', 'Hint': 'Enter value for حالة المستورد بالوزارة', 'Prompt': 'حالة المستورد بالوزارة', 'TabPageName': '', 'InitializeValue': '', 'Required': 'false', 'DatabaseItem': 'false', 'Label': 'حالة المستورد بالوزارة', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'BUS_ID_STATUS', 'Hint': 'حالة السجل التجاري بوزارة التجارة', 'MaximumLength': '2', 'InitializeValue': '', 'Label': 'حالة المستورد بالوزارة', 'FormatMask': '', 'Visible': 'false', 'ColumnName': 'BUS_ID_STATUS'}
+  ITEM {'Name': 'IMPR_TYPE_CD', 'MaximumLength': '4', 'Required': 'true', 'CanvasName': 'CG$PAGE_1', 'Hint': 'رمز النشاط التجارى - list of values available', 'Prompt': 'رمز النشاط التجارى', 'TabPageName': '', 'DataType': 'Number', 'InitializeValue': '', 'UpdateAllowed': 'false', 'Label': 'رمز النشاط التجارى', 'ColumnName': 'IMPR_TYPE_CD', 'LovName': 'CGFK$IMPORTERS_IMPR_TYPE_CD'}
+     ITRG KEY-LISTVAL 1
+     ITRG WHEN-VALIDATE-ITEM 1
+     ITRG POST-CHANGE 1
+     ITRG WHEN-NEW-ITEM-INSTANCE 1
+  ITEM {'Name': 'IMPR_TYPE_CD2', 'TabPageName': '', 'MaximumLength': '2', 'InitializeValue': '', 'Required': 'true', 'DatabaseItem': 'false', 'Label': '', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG WHEN-BUTTON-PRESSED 1
+  ITEM {'Name': 'IMPR_TYPE_NAME', 'Hint': 'مسمي نوع المستورد', 'TabPageName': '', 'MaximumLength': '40', 'InitializeValue': '', 'Required': 'false', 'DatabaseItem': 'false', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'BUS_ID_EXPRD_DT', 'Hint': 'تاريخ انتهاء سجل المستورد', 'Prompt': 'إنـتهـاء الـنشاط', 'TabPageName': '', 'InitializeValue': '', 'Label': 'إنـتهـاء الـنشاط', 'FormatMask': 'MI-MM-YYYY', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'BUS_ID_EXPRD_DT'}
+     ITRG KEY-LISTVAL 1
+     ITRG KEY-F4 1
+     ITRG WHEN-VALIDATE-ITEM 1
+     ITRG WHEN-NEW-ITEM-INSTANCE 1
+  ITEM {'Name': 'BUS_ID_TYPE_CD', 'MaximumLength': '4', 'Required': 'true', 'CanvasName': 'CG$PAGE_1', 'Hint': 'رمز نوع الرقم  الاستدلالى', 'Prompt': 'نوع الرقم الإستدلالي', 'TabPageName': '', 'InsertAllowed': 'true', 'DataType': 'Number', 'InitializeValue': '', 'Label': 'نوع الرقم الإستدلالي', 'ColumnName': 'BUS_ID_TYPE_CD'}
+     ITRG KEY-LISTVAL 1
+     ITRG POST-CHANGE 1
+  ITEM {'Name': 'BUTT', 'TabPageName': '', 'MaximumLength': '2', 'InitializeValue': '', 'Required': 'true', 'DatabaseItem': 'false', 'Label': '', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG WHEN-BUTTON-PRESSED 1
+  ITEM {'Name': 'BUS_ID_TYPE_NAME', 'Hint': 'مسمى  نوع الرقم الاستدلالى', 'TabPageName': '', 'MaximumLength': '40', 'InitializeValue': '', 'Required': 'false', 'DatabaseItem': 'false', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'COMM_RGSTRTN_TYPE', 'Hint': 'Enter value for نوع السجل التجاري', 'Prompt': 'نوع السجل التجاري', 'TabPageName': '', 'MaximumLength': '2', 'ItemType': 'List Item', 'DataType': 'Number', 'InitializeValue': '', 'Label': 'نوع السجل التجاري', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'COMM_RGSTRTN_TYPE'}
+     ITRG KEY-LISTVAL 1
+     ITRG WHEN-LIST-CHANGED 1
+     LIST رئيسي 1
+     LIST فرعي 0
+     LIST فرعي 2
+  ITEM {'Name': 'CITY_CODE_OF_ID', 'MaximumLength': '4', 'CanvasName': 'CG$PAGE_1', 'Hint': 'رمز المدينة السعودية - list of values available', 'Prompt': 'مصدررقم الإستدلالي', 'TabPageName': '', 'DataType': 'Number', 'InitializeValue': '', 'UpdateAllowed': 'false', 'Label': 'مصدررقم الإستدلالي', 'ColumnName': 'CITY_CODE_OF_ID', 'LovName': 'CGFK$IMPORTERS_CITY_CODE_OF_ID'}
+     ITRG KEY-LISTVAL 1
+     ITRG WHEN-VALIDATE-ITEM 1
+     ITRG WHEN-NEW-ITEM-INSTANCE 1
+  ITEM {'Name': 'CITY_CODE_OF_ID2', 'TabPageName': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG WHEN-BUTTON-PRESSED 1
+  ITEM {'Name': 'ID_CITY_NAME', 'Hint': 'مسمى الدولة العربي', 'TabPageName': '', 'MaximumLength': '20', 'InitializeValue': '', 'Required': 'false', 'DatabaseItem': 'false', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'BUS_ID', 'Hint': 'الرقم الاستدلالى للمستورد الرئيسى', 'Prompt': 'الـرقم الإستدلالي', 'TabPageName': '', 'MaximumLength': '15', 'InitializeValue': '', 'UpdateAllowed': 'false', 'Required': 'true', 'Label': 'الـرقم الإستدلالي', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'BUS_ID'}
+     ITRG KEY-LISTVAL 1
+     ITRG POST-CHANGE 1
+     ITRG WHEN-NEW-ITEM-INSTANCE 1
+     ITRG WHEN-VALIDATE-ITEM 1
+  ITEM {'Name': 'BRNH_ID_MINS_COMM_CD', 'InsertAllowed': 'false', 'InitializeValue': '', 'UpdateAllowed': 'false', 'DatabaseItem': 'false', 'FormatMask': '', 'Visible': 'false'}
+  ITEM {'Name': 'BRNH_CITY_CD', 'Hint': 'Enter value for مصدر الرقم الفرعي', 'Prompt': 'مصدر الرقم الفرعي', 'TabPageName': '', 'InsertAllowed': 'true', 'InitializeValue': '', 'DatabaseItem': 'false', 'Label': 'مصدر الرقم الفرعي', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG KEY-LISTVAL 1
+     ITRG WHEN-NEW-ITEM-INSTANCE 1
+     ITRG WHEN-VALIDATE-ITEM 1
+  ITEM {'Name': 'BRNH_CITY_CD_LOV', 'TabPageName': '', 'MaximumLength': '2', 'InitializeValue': '', 'Required': 'true', 'DatabaseItem': 'false', 'Label': '', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG WHEN-BUTTON-PRESSED 1
+  ITEM {'Name': 'BRNH_CITY_NAME', 'Hint': 'Enter value for ', 'TabPageName': '', 'InsertAllowed': 'true', 'InitializeValue': '', 'DatabaseItem': 'false', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'BUS_ID_BRNCH', 'Hint': 'رقم الفرع التابع للمستورد الرئيسى', 'Prompt': 'الـرقم الــفــرعي', 'TabPageName': '', 'InsertAllowed': 'true', 'MaximumLength': '10', 'InitializeValue': '', 'Label': 'الـرقم الــفــرعي', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'BUS_ID_BRNCH'}
+     ITRG KEY-LISTVAL 1
+     ITRG POST-CHANGE 1
+     ITRG WHEN-NEW-ITEM-INSTANCE 1
+     ITRG WHEN-VALIDATE-ITEM 1
+  ITEM {'Name': 'CTRY_CD', 'MaximumLength': '4', 'Required': 'true', 'CanvasName': 'CG$PAGE_1', 'Hint': 'رمز الدولة - list of values available', 'Prompt': 'دولة الرقم الإستدلالي', 'TabPageName': '', 'DataType': 'Number', 'InitializeValue': '', 'UpdateAllowed': 'false', 'Label': 'دولة الرقم الإستدلالي', 'ColumnName': 'CTRY_CD', 'LovName': 'CGFK$IMPORTERS_CTRY_CD'}
+     ITRG KEY-LISTVAL 1
+     ITRG WHEN-VALIDATE-ITEM 1
+  ITEM {'Name': 'CTRY_CD2', 'TabPageName': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG WHEN-BUTTON-PRESSED 1
+  ITEM {'Name': 'CRTY_ARBC_NAME', 'Hint': 'اسم الدولة عربي', 'TabPageName': '', 'MaximumLength': '50', 'InitializeValue': '', 'Required': 'false', 'DatabaseItem': 'false', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'IMPR_EXPR_TYPE', 'Hint': 'يسمح للمستورد بالتصدير', 'Prompt': 'النشاط الجمركي', 'TabPageName': '', 'ItemType': 'List Item', 'DataType': 'Number', 'InitializeValue': '2', 'Required': 'true', 'Label': 'النشاط الجمركي', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'IMPR_EXPR_TYPE'}
+     ITRG KEY-LISTVAL 1
+     ITRG POST-CHANGE 1
+     LIST تصدير 0
+     LIST إستيراد 1
+     LIST إستيراد-تصدير 2
+  ITEM {'Name': 'CTRY_CTRY_STATUS', 'InsertAllowed': 'false', 'MaximumLength': '2', 'InitializeValue': '1', 'UpdateAllowed': 'false', 'Required': 'false', 'DatabaseItem': 'false', 'Label': 'Ctry Status', 'Visible': 'false'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'ID_MINS_COMM_CD', 'InsertAllowed': 'false', 'MaximumLength': '5', 'InitializeValue': '', 'UpdateAllowed': 'false', 'Required': 'false', 'DatabaseItem': 'false', 'Label': 'Mins Comm Cd', 'Visible': 'false'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'ITIDT_NOTE', 'InsertAllowed': 'false', 'MaximumLength': '200', 'InitializeValue': '', 'UpdateAllowed': 'false', 'Required': 'false', 'DatabaseItem': 'false', 'Label': 'ملاحظات', 'FormatMask': '', 'Visible': 'false'}
+  ITEM {'Name': 'ARBC_IMPR_NAME', 'Hint': 'اسم المستورد', 'Prompt': 'الاســــم العربــــــــى', 'TabPageName': '', 'InitializeValue': '', 'Required': 'true', 'Label': 'الاســــم العربــــــــى', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'ARBC_IMPR_NAME'}
+     ITRG KEY-LISTVAL 1
+     ITRG KEY-NEXT-ITEM 1
+     ITRG WHEN-VALIDATE-ITEM 1
+  ITEM {'Name': 'IMPR_NAME_STD', 'Hint': 'اسم المستورد القياسى-للبحث', 'InsertAllowed': 'false', 'MaximumLength': '200', 'InitializeValue': '', 'UpdateAllowed': 'false', 'Required': 'false', 'Label': 'Impr Name Std', 'FormatMask': '', 'Visible': 'false', 'ColumnName': 'IMPR_NAME_STD'}
+  ITEM {'Name': 'LST_TRAN_DT', 'InsertAllowed': 'false', 'InitializeValue': '', 'UpdateAllowed': 'false', 'Label': 'Lst Tran Dt', 'Visible': 'false', 'ColumnName': 'LST_TRAN_DT'}
+  ITEM {'Name': 'IMPD_STMT_NBR', 'Hint': 'عدد بيانات الاستيراد الخاصه بالمستورد', 'InsertAllowed': 'false', 'MaximumLength': '10', 'InitializeValue': '', 'UpdateAllowed': 'false', 'Label': 'Impd Stmt Nbr', 'Visible': 'false', 'ColumnName': 'IMPD_STMT_NBR'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'IMPR_DATA_SRCE', 'InsertAllowed': 'false', 'MaximumLength': '7', 'InitializeValue': '', 'UpdateAllowed': 'false', 'Label': 'Impr Data Srce', 'Visible': 'false', 'ColumnName': 'IMPR_DATA_SRCE'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'ENG_IMPR_NAME', 'Hint': 'الاسم الأجنبى للمستورد', 'Prompt': 'الاســــم الأجنبـــــــي', 'TabPageName': '', 'InitializeValue': '', 'Label': 'الاســــم الأجنبـــــــي', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'ENG_IMPR_NAME'}
+     ITRG KEY-LISTVAL 1
+     ITRG WHEN-VALIDATE-ITEM 1
+  ITEM {'Name': 'IMPR_CNTCT_NAME', 'Hint': 'اسم الوكيل المفوض', 'Prompt': 'الوكيل المفوض', 'TabPageName': '', 'InitializeValue': '', 'Label': 'الوكيل المفوض', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'IMPR_CNTCT_NAME'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'IMPR_ADDRESS', 'Hint': 'Enter value for الــعـــــــنـــــــوان', 'Prompt': 'الــعـــــــنـــــــوان', 'TabPageName': '', 'MaximumLength': '2000', 'InitializeValue': '', 'Label': 'الــعـــــــنـــــــوان', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'IMPR_ADDRESS'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'BUS_ID_ISSUE_DT', 'Hint': 'Enter value for تاريخ انشاء النشاط', 'Prompt': 'تاريخ انشاء النشاط', 'TabPageName': '', 'InitializeValue': '', 'Label': 'تاريخ انشاء النشاط', 'FormatMask': 'MI-MM-YYYY', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'BUS_ID_ISSUE_DT'}
+     ITRG WHEN-VALIDATE-ITEM 1
+  ITEM {'Name': 'STATUS', 'InsertAllowed': 'false', 'MaximumLength': '2', 'DataType': 'Number', 'InitializeValue': '1', 'UpdateAllowed': 'false', 'Required': 'false', 'DatabaseItem': 'false', 'Label': 'حالة سجل - نشط أو غير نشط', 'Visible': 'false'}
+  ITEM {'Name': 'IMPR_NBR_PARENT', 'Hint': 'مسلسل المستورد الأب', 'Prompt': 'تابــع الـــــــــــــــــى', 'TabPageName': '', 'MaximumLength': '11', 'DataType': 'Number', 'InitializeValue': '', 'Label': 'تابــع الـــــــــــــــــى', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'IMPR_NBR_PARENT'}
+     ITRG KEY-LISTVAL 1
+     ITRG WHEN-VALIDATE-ITEM 1
+  ITEM {'Name': 'IMPR_NBR_PARENT2', 'TabPageName': '', 'MaximumLength': '2', 'InitializeValue': '', 'Required': 'true', 'DatabaseItem': 'false', 'Label': '', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG WHEN-BUTTON-PRESSED 1
+  ITEM {'Name': 'IMPR_NAME_PARENT', 'Hint': 'اسم المستورد الأب', 'TabPageName': '', 'InitializeValue': '', 'DatabaseItem': 'false', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'WASL_CITY_NAME', 'Hint': 'Enter value for    المدينة', 'Prompt': '   المدينة', 'TabPageName': '', 'InitializeValue': '', 'Required': 'false', 'DatabaseItem': 'false', 'Label': '   المدينة', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'ADD_CTRY_CD', 'MaximumLength': '4', 'Required': 'true', 'CanvasName': 'CG$PAGE_1', 'Hint': 'Enter value for دولــــــــة الإقامـــــة - list of values available', 'Prompt': 'دولــــــــة الإقامـــــة', 'TabPageName': '', 'DataType': 'Number', 'InitializeValue': '', 'Label': 'دولــــــــة الإقامـــــة', 'ColumnName': 'ADD_CTRY_CD', 'LovName': 'CGFK$IMPORTERS_ADD_CTRY_CD'}
+     ITRG KEY-LISTVAL 1
+     ITRG WHEN-VALIDATE-ITEM 1
+  ITEM {'Name': 'ADD_CTRY_CD2', 'TabPageName': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG WHEN-BUTTON-PRESSED 1
+  ITEM {'Name': 'ADD_CRTY_ARBC_NAME', 'Hint': 'اسم الدولة عربي', 'TabPageName': '', 'MaximumLength': '50', 'InitializeValue': '', 'Required': 'false', 'DatabaseItem': 'false', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'CITY_CODE', 'Hint': 'رمز المدينة السعودية', 'Prompt': 'المدينـة', 'TabPageName': '', 'MaximumLength': '4', 'DataType': 'Number', 'InitializeValue': '', 'Label': 'المدينـة', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'CITY_CODE'}
+     ITRG KEY-LISTVAL 1
+     ITRG WHEN-VALIDATE-ITEM 1
+  ITEM {'Name': 'CITY_CODE2', 'TabPageName': '', 'MaximumLength': '2', 'InitializeValue': '', 'Required': 'true', 'DatabaseItem': 'false', 'Label': '', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG WHEN-BUTTON-PRESSED 1
+  ITEM {'Name': 'CITY_NAME', 'Hint': 'مسمى الدولة العربي', 'TabPageName': '', 'MaximumLength': '20', 'InitializeValue': '', 'Required': 'false', 'DatabaseItem': 'false', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'IMPR_POB_NBR', 'Hint': 'صندوق البريد', 'Prompt': 'صنــــدوق بريــــــــد', 'TabPageName': '', 'MaximumLength': '9', 'DataType': 'Number', 'InitializeValue': '', 'Label': 'صنــــدوق بريــــــــد', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'IMPR_POB_NBR'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'IMPR_ZIP_CD', 'Hint': 'الرمز البريدى', 'Prompt': 'رمز بريدي', 'TabPageName': '', 'MaximumLength': '11', 'DataType': 'Number', 'InitializeValue': '', 'Label': 'رمز بريدي', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'IMPR_ZIP_CD'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'IMPR_TEL_NBR', 'Hint': 'رقم تليفون المستورد', 'Prompt': 'تليفـون', 'TabPageName': '', 'MaximumLength': '15', 'InitializeValue': '', 'Label': 'تليفـون', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'IMPR_TEL_NBR'}
+     ITRG KEY-LISTVAL 1
+     ITRG WHEN-VALIDATE-ITEM 1
+  ITEM {'Name': 'IMPR_FAX_NBR', 'Hint': 'رقم الفاكس', 'Prompt': 'فاكــس', 'TabPageName': '', 'MaximumLength': '15', 'InitializeValue': '', 'Label': 'فاكــس', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'IMPR_FAX_NBR'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'IMPR_TELEX_NBR', 'Hint': 'تلكس', 'Prompt': 'تلكـــــــــــــــــــــــس', 'TabPageName': '', 'MaximumLength': '16', 'InitializeValue': '', 'Label': 'تلكـــــــــــــــــــــــس', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'IMPR_TELEX_NBR'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'B_EMAIL', 'Hint': 'Enter value for بريــد إلكترونى', 'Prompt': 'بريــد إلكترونى', 'TabPageName': '', 'InitializeValue': '', 'DatabaseItem': 'false', 'Label': 'بريــد إلكترونى', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG WHEN-VALIDATE-ITEM 1
+     ITRG POST-CHANGE 1
+  ITEM {'Name': 'EMAIL', 'Hint': 'البريد الإلكتروني للمستورد', 'InsertAllowed': 'false', 'InitializeValue': '', 'UpdateAllowed': 'false', 'Label': 'بريــد إلكترونى', 'FormatMask': '', 'Visible': 'false', 'ColumnName': 'EMAIL'}
+     ITRG WHEN-VALIDATE-ITEM 1
+  ITEM {'Name': 'B_MOBILE_NO', 'Hint': 'Enter value for رقم الجوال', 'Prompt': 'رقم الجوال', 'TabPageName': '', 'InitializeValue': '', 'DatabaseItem': 'false', 'Label': 'رقم الجوال', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG KEY-LISTVAL 1
+     ITRG POST-CHANGE 1
+     ITRG WHEN-VALIDATE-ITEM 1
+  ITEM {'Name': 'MOBILE_NO', 'InsertAllowed': 'false', 'MaximumLength': '31', 'InitializeValue': '', 'UpdateAllowed': 'false', 'Label': 'رقم الجـــــــــوال', 'Visible': 'false', 'ColumnName': 'MOBILE_NO'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'BANK_IBAN', 'Hint': 'Enter value for رقم حسـاب آيبان', 'Prompt': 'رقم حسـاب آيبان', 'TabPageName': '', 'MaximumLength': '60', 'InitializeValue': '', 'Label': 'رقم حسـاب آيبان', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'BANK_IBAN'}
+     ITRG WHEN-NEW-ITEM-INSTANCE 1
+     ITRG WHEN-VALIDATE-ITEM 1
+  ITEM {'Name': 'B_ID_NBR', 'Hint': 'Enter value for رقم هويه المستورد', 'Prompt': 'رقم هويه المستورد', 'TabPageName': '', 'InitializeValue': '', 'DatabaseItem': 'false', 'Label': 'رقم هويه المستورد', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG POST-CHANGE 1
+     ITRG WHEN-VALIDATE-ITEM 1
+  ITEM {'Name': 'ID_NBR', 'InsertAllowed': 'false', 'MaximumLength': '15', 'InitializeValue': '', 'UpdateAllowed': 'false', 'Label': 'رقم الهويه للمستورد', 'FormatMask': '', 'Visible': 'false', 'ColumnName': 'ID_NBR'}
+  ITEM {'Name': 'CAR_AGENT_FLAG', 'Hint': 'Enter value for وكيـــل سيـــارات؟', 'Prompt': 'وكيـــل سيـــارات؟', 'TabPageName': '', 'MaximumLength': '2', 'DataType': 'Number', 'InitializeValue': '0', 'Required': 'false', 'Label': 'وكيـــل سيـــارات؟', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'CAR_AGENT_FLAG'}
+     LIST ليس وكيل سيارات 0
+     LIST وكيل سيارات 1
+  ITEM {'Name': 'EXPRESS_POST', 'Hint': 'Enter value for بريد سريع', 'Prompt': 'بريد سريع', 'TabPageName': '', 'MaximumLength': '1', 'ItemType': 'List Item', 'InitializeValue': '0', 'Label': 'بريد سريع', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'EXPRESS_POST'}
+     ITRG KEY-LISTVAL 1
+     LIST لا 0
+     LIST نعم 1
+     LIST تم انشاءه بواسطة البريد السريع 2
+  ITEM {'Name': 'IMPR_ID_TYPE', 'Hint': 'Enter value for                نوع الاقامة', 'Prompt': '               نوع الاقامة', 'TabPageName': '', 'InitializeValue': '', 'Required': 'false', 'DatabaseItem': 'false', 'Label': '               نوع الاقامة', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'CTRY_CD_OF_ID', 'InsertAllowed': 'false', 'MaximumLength': '4', 'InitializeValue': '100', 'UpdateAllowed': 'false', 'Label': 'Ct Ctry Cd2', 'Visible': 'false', 'ColumnName': 'CTRY_CD_OF_ID'}
+     ITRG KEY-LISTVAL 1
+     ITRG WHEN-VALIDATE-ITEM 1
+  ITEM {'Name': 'EXPD_STMT_NBR', 'InsertAllowed': 'false', 'MaximumLength': '11', 'InitializeValue': '', 'UpdateAllowed': 'false', 'Label': 'Filler4', 'Visible': 'false', 'ColumnName': 'EXPD_STMT_NBR'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'WVR_ENTRY_NBR', 'InsertAllowed': 'false', 'MaximumLength': '8', 'InitializeValue': '', 'UpdateAllowed': 'false', 'Label': 'Filler5', 'Visible': 'false', 'ColumnName': 'WVR_ENTRY_NBR'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'ACTIVITY', 'Hint': 'Enter value for نشاط المستورد', 'Prompt': 'نشاط المستورد', 'TabPageName': '', 'MaximumLength': '1000', 'InitializeValue': '', 'Label': 'نشاط المستورد', 'FormatMask': '', 'CanvasName': 'CG$PAGE_1', 'ColumnName': 'ACTIVITY'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'CUSTOMS_ENTERED', 'Hint': ' - list of values available', 'InsertAllowed': 'false', 'MaximumLength': '2', 'InitializeValue': '', 'UpdateAllowed': 'false', 'Label': 'Customs Entered', 'Visible': 'false', 'ColumnName': 'CUSTOMS_ENTERED', 'LovName': 'CGDV$IMPORTERS_CUSTOMS_ENTERED'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'CUSTOMS_ENTERED2'}
+     ITRG WHEN-BUTTON-PRESSED 1
+  ITEM {'Name': 'CREATION_FLAG', 'Hint': 'نوع تكوين السجل التجاري - list of values available', 'InsertAllowed': 'false', 'MaximumLength': '4', 'InitializeValue': '1', 'UpdateAllowed': 'false', 'Label': 'نوع تكوين السجل التجاري', 'Visible': 'false', 'ColumnName': 'CREATION_FLAG', 'LovName': 'CGDV$IMPORTERS_CREATION_FLAG'}
+     ITRG KEY-LISTVAL 1
+  ITEM {'Name': 'CREATION_FLAG2'}
+     ITRG WHEN-BUTTON-PRESSED 1
+
+FTRG KEY-EDIT 1
+FTRG KEY-DUPREC 1
+FTRG PRE-FORM 1
+FTRG WHEN-NEW-FORM-INSTANCE 1
+FTRG WHEN-WINDOW-ACTIVATED 1
+FTRG KEY-ENTQRY 1
+FTRG ON-ERROR 1
+FTRG ON-MESSAGE 1
+FTRG KEY-CLRBLK 1
+FTRG KEY-DELREC 1
+FTRG KEY-F5 1
+FTRG KEY-F4 0
+FTRG KEY-NXTREC 1
+FTRG KEY-PRVREC 1
+FTRG KEY-DOWN 1
+FTRG KEY-UP 1
+FTRG KEY-SCRUP 1
+FTRG KEY-SCRDOWN 1
+FTRG KEY-PRINT 1
+FTRG KEY-EXIT 1
+FTRG WHEN-MOUSE-DOWN 1
+FTRG KEY-EXEQRY 1
+FTRG KEY-F9 1
+FTRG WHEN-TIMER-EXPIRED 1
+FTRG KEY-HELP 1
+FTRG KEY-CLRFRM 1
+PU CHECK_TIMEOUT Function 1
+PU MOUSE_CLICK Procedure 1
+PU TOGGEL_WND Procedure 1
+PU PRINT_REPORT Procedure 1
+PU EXECUTE_FUNCTION Procedure 1
+PU TERMINATE_FUN Procedure 1
+PU CHECK_EDI_MSG_LOV Function 1
+PU CHECK_EDI_MSG_TIMER Function 1
+PU CHECK_EDI_ROLE_ID Function 1
+PU EDI_MSG_LOV Procedure 1
+PU FOR_EDI_MSG Procedure 1
+PU RETURN_MSG Procedure 1
+PU TURN_MSG Procedure 1
+PU WHEN_TIMER_EXPIRED_MSG Procedure 1
+PU CG$WHEN_NEW_FORM_INSTANCE Procedure 1
+PU CGDV$POPULATE_DYNAMIC_LISTS Procedure 1
+PU CGFK$QRY_IMPORTERS_IMP_SDP_FK Procedure 1
+PU CGFK$CHK_IMPORTERS_IMP_SDP_FK Procedure 1
+PU CG$IMPR1110_PROD_CENTRL_GLOBAL Package Spec 1
+PU CGFK$CHK_IMPORTERS_IMP_MB_FK Procedure 1
+PU CGFK$QRY_IMPORTERS_IMP_ITIDT_F Procedure 1
+PU CGFK$CHK_IMPORTERS_IMP_ITIDT_F Procedure 1
+PU CGFK$QRY_IMPORTERS_IMP_CTRY_FK Procedure 1
+PU CGFK$CHK_IMPORTERS_IMP_CTRY_FK Procedure 1
+PU CGFK$QRY_IMPORTERS_IMP_BUS_ID_ Procedure 1
+PU CGFK$CHK_IMPORTERS_IMP_BUS_ID_ Procedure 1
+PU CGSF$CLRLU_IMPORTERS_IMP_BUS_I Procedure 1
+PU CGFK$QRY_IMPORTERS_IMP_ADD_CIT Procedure 1
+PU CGFK$CHK_IMPORTERS_IMP_ADD_CIT Procedure 1
+PU CGTE$CHECK_CONSTRAINT_VIO Function 1
+PU UPDATE_IMPORTER Procedure 1
+PU UPDATE_BASIC_IMPORTER Procedure 1
+PU RETURN_IMPR_ID Procedure 1
+PU LOV_UPDATE_MOBLIE Procedure 1
+PU IS_DIGIT Function 1
+PU INSERT_AUDIT_RECORD Procedure 1
+PU GET_MAIN_CR_DATA Procedure 1
+PU GET_CR_DATA Procedure 1
+PU GET_BRANCH_CR_DATA Procedure 1
+PU EXEC_FUNS Procedure 1
+PU DEV_VERSIONS Procedure 1
+PU CREATE_BRKR_IMPR_AUTH Procedure 1
+PU CHK_PERSONAL Procedure 1
+PU CHK_IMPR_DUPL Procedure 1
+PU CHK_DUPL_IMP_BRKR Procedure 1
+PU CHECK_IDNO Function 1
+PU CHECK_BUS_ID Procedure 1
+PU CALL_LOV_COUNTRIES Procedure 1
+PU CALL_LOV_COUN_GULF Procedure 1
+PU BROKER_INT Procedure 1
+PU ADJ_FUNS Procedure 1
+PU VIEW_SAME_BUSID Procedure 1
+PU CHK_BUS_ID_BRNCH Procedure 1
+LIB OFGTEL OFGTEL
+LIB OFGMES Ofgmes
+LIB OFGHPL OFGHPL
+LIB CIC_AMSG CIC_AMSG
+LIB SEC_LIB SEC_LIB
+LIB CAPTION caption
+LIB OFGBSL OFGBSL
+LIB D2KWUTIL d2kwutil
+LIB CUSTOMDLL CUSTOMDLL
+LIB D2KWUTIL_PDF D2kwutil_PDF
+LIB GETCOMP getcomp
+LIB OFGTAB OFGTAB
+LIB PICKLIST picklist
+LIB POS POS
+LIB SCDLL SCDLL
+LIB VCDLL VCDLL
+LIB CIC_LIB CIC_LIB
+ALERT USR_CONFIRM_B None None None None
+ALERT USR_CONFIRM None None None None
+ALERT USR_WARNING_C None None None None
+ALERT USR_WARNING_B None None None None
+ALERT CFG_WARNING_A None None None None
+ALERT CFG_INFORMATION None None None None
+ALERT CFG_ERROR None None None None
+ALERT CFG_SYSTEM_ERROR None None None None
+ALERT CFG_ASK_COMMIT None None None None
+RG CGDV$CREATION_FLAG None SELECT  substr(RV_LOW_VALUE,1,2)  RV_LOW_VALUE&#10;      , substr(RV_MEANING,1,38)  RV_MEANING&#10;FROM    CG_REF_CODES&#10;WHERE   RV_DOMAIN = 'CREATION_FLAG'&#10;ORDER BY  RV_LOW_VALUE
+RG CGFK$IMPORTERS_ADD_CTRY_CD None SELECT ADD_CITY.CITY_STATUS  L_CT_CITY_STATUS  /* CG$FK */&#10;      ,ADD_CITY.CTRY_CD  ADD_CTRY_CD&#10;      ,L_CTRY.CRTY_ARBC_NAME  ADD_CRTY_ARBC_NAME&#10;      ,ADD_CITY.CITY_CD  CITY_CODE&#10;      ,ADD_CITY.CITY_ARB_NAME  CITY_NAME&#10;FROM   CITIES ADD_CITY&#10;      ,COUNTRIES L_CTRY&#10;WHERE  ((&#10;(:SYSTEM.MODE = 'ENTER-QUERY')&#10;)&#10;OR ((:SYSTEM.MODE = 'NORMAL')&#10;AND    ADD_CITY.CITY_STATUS = 1&#10;))&#10;AND    L_CTRY.CTRY_CD = ADD_CITY.CTRY_CD
+RG CGFK$IMPORTERS_CITY_CODE_OF_ID None SELECT ID_CITY.CITY_STATUS  L_CT_CITY_STATUS2  /* CG$FK */&#10;      ,ID_CITY.CITY_CD  CITY_CODE_OF_ID&#10;      ,ID_CITY.CITY_ARB_NAME  ID_CITY_NAME&#10;      ,ID_CITY.MINS_COMM_CD  ID_MINS_COMM_CD&#10;      ,ID_CITY.CTRY_CD  CTRY_CD_OF_ID&#10;FROM   CITIES ID_CITY&#10;WHERE  ((&#10;(:SYSTEM.MODE = 'ENTER-QUERY')&#10;)&#10;OR ((:SYSTEM.MODE = 'NORMAL')&#10;AND    ID_CITY.CITY_STATUS = 1&#10;))
+RG CGFK$IMPORTERS_CTRY_CD None SELECT CTRY.CTRY_CD  CTRY_CD  /* CG$FK */&#10;      ,CTRY.CRTY_ARBC_NAME  CRTY_ARBC_NAME&#10;      ,CTRY.CTRY_STATUS  CTRY_CTRY_STATUS&#10;FROM   COUNTRIES CTRY&#10;WHERE  ((&#10;(:SYSTEM.MODE = 'ENTER-QUERY')&#10;)&#10;OR ((:SYSTEM.MODE = 'NORMAL')&#10;AND    CTRY.CTRY_STATUS = 1&#10;))
+RG CGFK$IMPORTERS_HQ_IMPR_NBR None SELECT HQ_IMPR_NBR  HQ_IMPR_NBR  /* CG$FK */&#10;FROM   HQ_IMPRS
+RG CGFK$IMPORTERS_IMPR_TYPE_CD None SELECT ITIDT.IMPR_TYPE_CD  IMPR_TYPE_CD  /* CG$FK */&#10;      ,ITIDT.BUS_ID_TYPE_CD  BUS_ID_TYPE_CD&#10;      ,IT.IMPR_TYPE_NAME  IMPR_TYPE_NAME&#10;      ,BIT.BUS_ID_TYPE_NAME  BUS_ID_TYPE_NAME&#10;      ,ITIDT.NOTE  ITIDT_NOTE&#10;      ,ITIDT.STATUS  STATUS&#10;FROM   IMPR_TYPE_ID_TYPES ITIDT&#10;      ,IMPR_TYPES IT&#10;      ,BUS_ID_TYPES BIT&#10;WHERE  IT.IMPR_TYPE_CD = ITIDT.IMPR_TYPE_CD&#10;AND    BIT.BUS_ID_TYPE_CD = ITIDT.BUS_ID_TYPE_CD
+RG CGFK$IMPORTERS_PORT_CD None SELECT L_SDP.PORT_STATUS  SDP_PORT_STATUS  /* CG$FK */&#10;      ,L_SDP.PORT_CD  PORT_CD&#10;      ,L_SDP.PORT_NAME  PORT_NAME&#10;FROM   SD_PORTS L_SDP
+RG CGDV$IMPORTERS_CUSTOMS_ENTERED Static 
+LOV CGDV$IMPORTERS_CREATION_FLAG CGDV$CREATION_FLAG Valid values for نوع تكوين السجل التجاري
+   MAP RV_LOW_VALUE IMPORTERS.CREATION_FLAG الكود 1068
+   MAP RV_MEANING  الاختيار 7599
+LOV CGFK$IMPORTERS_ADD_CTRY_CD CGFK$IMPORTERS_ADD_CTRY_CD Valid values for دولــــــــة الإقامـــــة
+   MAP L_CT_CITY_STATUS IMPORTERS.L_CT_CITY_STATUS City Status 5224
+   MAP ADD_CTRY_CD IMPORTERS.ADD_CTRY_CD دولــــــــة الإقامـــــة 5026
+   MAP ADD_CRTY_ARBC_NAME IMPORTERS.ADD_CRTY_ARBC_NAME Crty Arbc Name 4037
+LOV CGFK$IMPORTERS_CITY_CODE_OF_ID CGFK$IMPORTERS_CITY_CODE_OF_ID Valid values for مصدررقم الإستدلالي
+   MAP L_CT_CITY_STATUS2 IMPORTERS.L_CT_CITY_STATUS2 Cty Status 2057
+   MAP CITY_CODE_OF_ID IMPORTERS.CITY_CODE_OF_ID مصدررقم الإستدلالي 3641
+   MAP ID_CITY_NAME IMPORTERS.ID_CITY_NAME City Arb Name 4037
+   MAP ID_MINS_COMM_CD IMPORTERS.ID_MINS_COMM_CD Mins Comm Cd 2453
+LOV CGFK$IMPORTERS_CTRY_CD CGFK$IMPORTERS_CTRY_CD Valid values for دولة الرقم الإستدلالي
+   MAP CTRY_CD IMPORTERS.CTRY_CD دولة الرقم الإستدلالي 4235
+   MAP CRTY_ARBC_NAME IMPORTERS.CRTY_ARBC_NAME Crty Arbc Name 4037
+   MAP CTRY_CTRY_STATUS IMPORTERS.CTRY_CTRY_STATUS Ctry Status 2255
+LOV CGFK$IMPORTERS_HQ_IMPR_NBR CGFK$IMPORTERS_HQ_IMPR_NBR Valid values for الرقم الموحد بالمصلحة
+   MAP HQ_IMPR_NBR IMPORTERS.HQ_IMPR_NBR الرقم الموحد بالمصلحة 4235
+LOV CGFK$IMPORTERS_IMPR_TYPE_CD CGFK$IMPORTERS_IMPR_TYPE_CD قائمة رموز الأنشطة التجارية أرقامها الإستدلالية
+   MAP IMPR_TYPE_CD IMPORTERS.IMPR_TYPE_CD رمز النشاط التجارى 3641
+LOV CGFK$IMPORTERS_PORT_CD CGFK$IMPORTERS_PORT_CD Valid values for رمز الجمــــــــــــــرك
+   MAP SDP_PORT_STATUS IMPORTERS.SDP_PORT_STATUS الحالة 1266
+   MAP PORT_CD IMPORTERS.PORT_CD رمز الجمــــــــــــــرك 4828
+   MAP PORT_NAME IMPORTERS.PORT_NAME Port Name 6016
+LOV CGDV$IMPORTERS_CUSTOMS_ENTERED CGDV$IMPORTERS_CUSTOMS_ENTERED Valid values for Customs Entered
+   MAP RV_LOW_VALUE IMPORTERS.CUSTOMS_ENTERED الكود 1068
+   MAP RV_MEANING  الاختيار 15912
+CANVAS LSIDE None None
+CANVAS EDI_MSG None None
+CANVAS TITLE None None
+CANVAS TOOLBAR None None
+CANVAS CG$PAGE_1 None CGSO$WINDOW_1
+WIN CGSO$WINDOW_1 Importers
+PARAM P_SHPG_AGNT_NBR None None
+PARAM P_CTRL_LAST_EXEC_CD None None
+PARAM P_BANK_CD None None
+PARAM P_BANK_BRNCH_CD None None
+PARAM P_BRKR_PORT_CD None None
+PARAM P_LIC_TYPE None None
+PARAM P_BRKR_NBR None None
+PARAM P_CLASS_CD None None
+PARAM P_JOB_ID None None
+PARAM P_CURRENT_ITEM None None
+PARAM P_GROUP_CD None None
+PARAM P_USER_TYPE None None
+PARAM P_PORT_TYPE None None
+PARAM P_CURR_PORT_CD None None
+PARAM P_MODULE_ID None None
+PARAM P_MODULE_NAME None None
+PARAM P_APPLICATION_NAME None None
+PARAM P_USER_ID None None
+PARAM P_WS_ID None None
+PARAM P_USER_NAME None None
+PARAM CG$STARTUP_MODE None NORMAL
+PARAM LETTER_NBR None 
+PARAM CODE None 
+PARAM PRSNL_IMPR None 0
+REPORT {'Name': 'REPORT', 'ParentModule': 'CIC_OLB', 'ParentModuleType': '25', 'ParentName': 'REPORT', 'ParentFilename': 'CIC_OLB.olb', 'DirtyInfo': 'true', 'ParentType': '33'}

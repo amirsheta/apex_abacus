@@ -1,0 +1,8 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Module version="122011900" xmlns="http://xmlns.oracle.com/Forms">
+   <ObjectLibrary Name="OBJLIB4" DirtyInfo="true" ObjectCount="1">
+      <ObjectLibraryTab Name="LIB_TAB0" DirtyInfo="true" Label="LIB_TAB0" ObjectCount="1">
+         <Item Name="AA$CC" Width="3219" MaximumLength="100" ItemType="Text Item" XPosition="5104" FontName="Arabic Transparent" YPosition="1240" FontSize="1100" FontStyle="Plain" DirtyInfo="true" FontWeight="Light" Label="AA" FontSpacing="Normal" ForegroundColor="blue" CanvasName="LSIDE" Height="406"/>
+      </ObjectLibraryTab>
+   </ObjectLibrary>
+</Module>

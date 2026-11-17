@@ -1,0 +1,36 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Module version="122011900" xmlns="http://xmlns.oracle.com/Forms">
+   <ObjectLibrary Name="WEBSOCKETJSI" DirtyInfo="true" ObjectCount="1">
+      <ObjectLibraryTab Name="MAIN" DirtyInfo="true" Label="WebSocketJSI Objects" ObjectCount="1">
+         <ObjectGroup Name="WEBSOCKETJSI" DirtyInfo="true" ObjectGroupType="22">
+            <ObjectGroupChild Name="WEBSOCKETJSI_ALERT" DirtyInfo="true" Type="Alert"/>
+            <ObjectGroupChild Name="WEBSOCKETJSI" DirtyInfo="true" Type="Block"/>
+            <ObjectGroupChild Name="WEBSOCKETJSI_CANVAS" DirtyInfo="true" Type="Canvas"/>
+            <ObjectGroupChild Name="WEBSOCKETJSI_HIDDEN_WINDOW" DirtyInfo="true" Type="Window"/>
+         </ObjectGroup>
+      </ObjectLibraryTab>
+      <Alert Name="WEBSOCKETJSI_ALERT" DirtyInfo="true" Title="Oracle Forms WebSocket JSI" Comment="WebSocketJSI generic Alert"/>
+      <Block Name="WEBSOCKETJSI" DirtyInfo="true" ScrollbarWidth="13" ScrollbarLength="153" SingleRecord="true">
+         <Item Name="WEBSOCKETJSI" DatabaseItem="false" DirtyInfo="true" CanvasName="WEBSOCKETJSI_CANVAS" ItemType="Bean Area" Visible="true" Comment="Bean area that implements websocketjsi methods" ImplementationClass="oracle.forms.websocketjsi.WebSocketJSI"/>
+         <Item Name="DISPLAYINFO" Justification="Center" Width="348" MaximumLength="150" ItemType="Display Item" BackColor="OLAFVeryLight" YPosition="78" DatabaseItem="false" Bevel="None" DirtyInfo="true" FontWeight="Bold" CanvasName="WEBSOCKETJSI_CANVAS" Height="16"/>
+         <Item Name="DUMMY" XPosition="131" YPosition="130" DirtyInfo="true" Label="Ok" DefaultButton="true" Width="86" CanvasName="WEBSOCKETJSI_CANVAS" CursorStyle="hand" ItemType="Push Button" Height="24">
+            <Trigger Name="WHEN-BUTTON-PRESSED" DirtyInfo="true" TriggerText="if :system.cursor_block = 'WEBSOCKETJSI' then &amp;#10;&#x9;next_block;&amp;#10;end if;&amp;#10;websocketJSI.showBeans(false);"/>
+         </Item>
+      </Block>
+      <Canvas Name="WEBSOCKETJSI_CANVAS" DirtyInfo="true" Width="348" Comment="WebSocketJSI About canvas" WindowName="WEBSOCKETJSI_HIDDEN_WINDOW" Height="169" ViewportHeight="367" ViewportWidth="518">
+         <Graphics Name="GROUP34" DirtyInfo="true" GraphicsType="Group" HorizontalMargin="8" ScrollbarWidth="17" VerticalMargin="16" HorizontalObjectOffset="17" StartPromptOffset="8">
+            <Graphics Name="TEXT26" Width="95" FillPattern="none" EdgePattern="none" JoinStyle="Bevel" XPosition="126" YPosition="12" Bevel="None" HorizontalJustification="Center" ForegroundColor="black" GraphicsFontWeight="Medium" GraphicsFontSpacing="Normal" GraphicsType="Text" ScrollbarWidth="17" Height="19" GraphicsFontName="Arial" GraphicsFontSize="1600" GraphicsFontStyle="0" GraphicsText="Oracle Forms" DirtyInfo="true" GraphicsFontColor="black" GraphicsFontColorCode="0" HorizontalMargin="8" VerticalMargin="16" HorizontalObjectOffset="17" StartPromptOffset="8">
+               <CompoundText Name="CMPTXT27">
+                  <TextSegment Name="TEXTSTR28" FontName="Arial" FontSize="1600" FontStyle="Plain" DirtyInfo="true" FontWeight="Medium" FontSpacing="Normal" ForegroundColor="black" Text="Oracle Forms"/>
+               </CompoundText>
+            </Graphics>
+            <Graphics Name="TEXT31" Width="187" FillPattern="none" EdgePattern="none" JoinStyle="Bevel" XPosition="81" YPosition="34" Bevel="None" HorizontalJustification="Center" GraphicsFontWeight="Medium" GraphicsFontSpacing="Normal" GraphicsType="Text" ScrollbarWidth="17" Height="14" GraphicsFontName="Arial" GraphicsFontSize="1200" GraphicsFontStyle="0" GraphicsText="WebSocket - Java Script Integration" DirtyInfo="true" GraphicsFontColor="black" GraphicsFontColorCode="0" HorizontalMargin="8" VerticalMargin="16" HorizontalObjectOffset="17" StartPromptOffset="8">
+               <CompoundText Name="CMPTXT32">
+                  <TextSegment Name="TEXTSTR33" FontName="Arial" FontSize="1200" FontStyle="Plain" DirtyInfo="true" FontWeight="Medium" FontSpacing="Normal" ForegroundColor="black" Text="WebSocket - Java Script Integration"/>
+               </CompoundText>
+            </Graphics>
+         </Graphics>
+      </Canvas>
+      <Window Name="WEBSOCKETJSI_HIDDEN_WINDOW" MaximizeAllowed="false" DirtyInfo="true" MinimizeAllowed="false" Width="348" Comment="WebSocketJSI About window" Height="169" WindowStyle="Dialog" ResizeAllowed="false" PrimaryCanvas="WEBSOCKETJSI_CANVAS"/>
+   </ObjectLibrary>
+</Module>

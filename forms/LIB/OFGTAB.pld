@@ -1,0 +1,314 @@
+
+
+PACKAGE CGLT$TAB_BLOCKS IS
+
+activate  boolean := FALSE;
+
+PROCEDURE CGLT$NEW_BLOCK;
+
+PROCEDURE CGLT$TAB_CHANGED;
+
+END CGLT$TAB_BLOCKS;
+
+PACKAGE BODY CGLT$TAB_BLOCKS IS
+
+----------------------------------------------------------------------
+-- These are the different Types used to define the package variables
+----------------------------------------------------------------------
+
+  -- Type for table of stacked canvases for a named tab 
+  type stack_canvas_type is table of varchar2(50) INDEX BY BINARY_INTEGER;  
+
+
+------------------------------------------------------
+-- These are the actual variables used in the code
+------------------------------------------------------
+  stack_cvs  stack_canvas_type;     -- PL/SQL table with all stacked canvases with name CG$POPUP_ that
+                                    -- relate to any of the tabs
+
+-------------------------------------------------------------------------------------------------------
+FUNCTION CGLT$FND_MASTER_TAB_CVS(l_item in VARCHAR2) RETURN VARCHAR2 IS
+
+  c_val		VARCHAR2(200);
+  item_cvs VARCHAR2(61) := get_item_property(l_item, ITEM_CANVAS);
+  r_grp	     RecordGroup := Find_Group('CGLT$CVS_DATA');	-- record group containing tab data
+  r_count    number := Get_Group_Row_Count(r_grp);		-- and the number of records in it
+
+BEGIN
+  FOR i IN 1..r_count LOOP
+
+    c_val := Get_Group_Char_Cell('CGLT$CVS_DATA.MASTER_TAB', i);
+    IF instr(upper(item_cvs), c_val) > 0 THEN
+      RETURN c_val;
+    END IF;
+
+    c_val := Get_Group_Char_Cell('CGLT$CVS_DATA.PAGE', i);
+    IF instr(upper(item_cvs), c_val) > 0 THEN
+      c_val := Get_Group_Char_Cell('CGLT$CVS_DATA.MASTER_TAB', i);
+      RETURN c_val;
+    END IF;    
+
+    c_val := Get_Group_Char_Cell('CGLT$CVS_DATA.STACK_CANVAS', i);
+    IF instr(upper(item_cvs), c_val) > 0 THEN
+      c_val := Get_Group_Char_Cell('CGLT$CVS_DATA.MASTER_TAB', i);
+      RETURN c_val;
+    END IF;
+
+  END LOOP;
+RETURN NULL;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    message('Unexpected Error in CGLT$FND_MASTER_TAB_CVS');
+    pause;
+  
+RETURN NULL;
+END CGLT$FND_MASTER_TAB_CVS;
+
+--------------------------------------------------------------------------------------------------------
+FUNCTION CGLT$FND_NAV_ITEM(in_tab in varchar2) RETURN VARCHAR2 IS
+
+  c_val		VARCHAR2(200);
+  r_grp	     RecordGroup := Find_Group('CGLT$CVS_DATA');	-- record group containing tab data
+  r_count    number := Get_Group_Row_Count(r_grp);		-- and the number of records in it
+
+BEGIN
+  FOR i IN 1..r_count LOOP
+    c_val := Get_Group_Char_Cell('CGLT$CVS_DATA.NAME', i);
+
+    IF c_val = upper(in_tab) THEN
+      c_val := Get_Group_Char_Cell('CGLT$CVS_DATA.NAV_ITEM', i);
+      return c_val;
+    END IF;
+
+  END LOOP;
+RETURN NULL;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    message('Unexpected Error in CGLY$FND_NAV_ITEM');
+    pause;
+RETURN NULL;
+END CGLT$FND_NAV_ITEM;
+
+-------------------------------------------------------------------------------------------------------
+FUNCTION CGLT$FND_TAB(in_block in varchar2) RETURN VARCHAR2 IS
+
+  c_val		VARCHAR2(200);
+  r_grp	     RecordGroup := Find_Group('CGLT$CVS_DATA');	-- record group containing tab data
+  r_count    number := Get_Group_Row_Count(r_grp);		-- and the number of records in it
+
+BEGIN
+  FOR i IN 1..r_count LOOP
+    c_val := Get_Group_Char_Cell('CGLT$CVS_DATA.BLOCKS', i);
+
+    IF instr(c_val,upper(in_block)) > 0 THEN
+      c_val := Get_Group_Char_Cell('CGLT$CVS_DATA.NAME', i);
+      RETURN c_val;
+    END IF;
+
+  END LOOP;
+RETURN NULL;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    message('Unexpected Error in CGLT$FND_NAV_ITEM');
+    pause;
+RETURN NULL;
+END CGLT$FND_TAB;
+
+-------------------------------------------------------------------------------------------------------
+FUNCTION CGLT$FND_TAB_STACK_CVS(in_tab in varchar2) RETURN CGLT$TAB_BLOCKS.stack_canvas_type IS
+
+  c_val		VARCHAR2(200);
+  l_start       number := 1;
+  l_end         number;
+  stck_cnvs     CGLT$TAB_BLOCKS.stack_canvas_type;
+  j             number := 1;
+  r_grp	     RecordGroup := Find_Group('CGLT$CVS_DATA');	-- record group containing tab data
+  r_count    number := Get_Group_Row_Count(r_grp);		-- and the number of records in it
+
+BEGIN
+  FOR i IN 1..r_count LOOP
+    c_val := Get_Group_Char_Cell('CGLT$CVS_DATA.NAME', i);
+
+    IF c_val = upper(in_tab) THEN
+      --------------------------------------
+      -- Is there more than one stacked canvas for this tab
+      --------------------------------------
+      c_val := Get_Group_Char_Cell('CGLT$CVS_DATA.STACK_CANVAS', i);
+      l_end := instr(c_val,',');
+
+      IF l_end > 0 THEN
+        LOOP
+          stck_cnvs(j) := substr(c_val,l_start,l_end - l_start);
+
+          l_start := l_end + 1;
+          l_end := instr(c_val,',',l_start);
+
+	  j := j + 1; -- point to next canvas
+
+          --------------------------------------
+          -- If Last stacked canvas then return the table of stacked canvases
+          --------------------------------------
+          IF l_end = 0 THEN
+            stck_cnvs(j) := substr(c_val,l_start);
+            RETURN stck_cnvs;
+          END IF;
+        END LOOP;
+
+      --------------------------------------
+      -- If there is only one stacked canvas for the tab
+      -- not necessary to loop
+      --------------------------------------
+     ELSE
+        IF (c_val IS NOT NULL) THEN
+          stck_cnvs(j) := c_val;
+          return stck_cnvs;
+        END IF;
+      END IF;
+    END IF;
+  END LOOP;
+RETURN stck_cnvs;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    message('Unexpected Error in CGLT$FND_TAB_STACK_CVS');
+    pause;
+END CGLT$FND_TAB_STACK_CVS;
+
+-------------------------------------------------------------------------------------------------------
+PROCEDURE CGLT$NEW_BLOCK IS
+
+  l_tab  varchar2(50)  := CGLT$FND_TAB(name_in('system.trigger_block'));
+  l_item varchar2(100) := name_in('system.cursor_item');
+  l_stack_canvases     CGLT$TAB_BLOCKS.stack_canvas_type;  -- List of stacked canvases for the new active tab
+  tab_win VARCHAR2(61);
+  tab_cvs VARCHAR2(61);
+  c_val VARCHAR2(200);
+  r_grp	     RecordGroup := Find_Group('CGLT$CVS_DATA');	-- record group containing tab data
+  r_count    number := Get_Group_Row_Count(r_grp);		-- and the number of records in it
+
+BEGIN
+
+  tab_cvs := CGLT$FND_MASTER_TAB_CVS(l_item);
+
+  IF (tab_cvs IS NOT NULL) THEN
+
+    IF l_tab IS null THEN
+      l_tab := get_canvas_property(tab_cvs,topmost_tab_page);
+    END IF;
+
+    set_canvas_property(tab_cvs,topmost_tab_page,l_tab);
+    l_stack_canvases := CGLT$FND_TAB_STACK_CVS(l_tab);
+
+    --------------------------------------
+    -- This shouldn't be necessary, but due to some unexpected behavior
+    -- this workaround makes sure the cursor is still in the item that it
+    -- was in before we changed the active tab
+    --------------------------------------
+    go_item(l_item);
+
+    FOR i IN 1..r_count LOOP
+      c_val := Get_Group_Char_Cell('CGLT$CVS_DATA.MASTER_TAB', i);
+      IF (c_val = tab_cvs) THEN
+        tab_win  := Get_Group_Char_Cell('CGLT$CVS_DATA.WINDOW', i);
+        EXIT;
+      END IF;
+    END LOOP;
+
+    FOR i IN 1..r_count LOOP
+      c_val := Get_Group_Char_Cell('CGLT$CVS_DATA.WINDOW', i);
+      IF (c_val = tab_win) THEN
+        c_val := Get_Group_Char_Cell('CGLT$CVS_DATA.MASTER_TAB', i);
+        hide_view(c_val);
+      END IF;
+    END LOOP;
+
+    show_view(tab_cvs);
+
+    IF l_stack_canvases.count > 0 THEN
+      FOR i IN l_stack_canvases.first..l_stack_canvases.last LOOP
+        show_view(l_stack_canvases(i));
+      END LOOP;
+    END IF;
+  END IF;
+END CGLT$NEW_BLOCK;
+
+-------------------------------------------------------------------------------------------------------
+PROCEDURE CGLT$TAB_CHANGED is
+
+  l_stack_canvases   CGLT$TAB_BLOCKS.stack_canvas_type;  -- List of all stacked canvases for the active tab
+  l_nav_item         varchar2(100);               -- item to navigate to for the active tab
+  l_tab              varchar2(50) := name_in('system.tab_new_page');  -- The new active tab
+  j                  integer := 1;
+  tab_cvs            VARCHAR2(61);
+  tab_win VARCHAR2(61);
+  c_val VARCHAR2(200);
+  r_grp	     RecordGroup := Find_Group('CGLT$CVS_DATA');	-- record group containing tab data
+  r_count    number := Get_Group_Row_Count(r_grp);		-- and the number of records in it
+
+BEGIN
+
+  l_stack_canvases := CGLT$FND_TAB_STACK_CVS(l_tab);
+  l_nav_item := CGLT$FND_NAV_ITEM(l_tab);
+  tab_cvs := CGLT$FND_MASTER_TAB_CVS(l_nav_item);
+
+  IF (l_nav_item IS NOT NULL) THEN   
+     go_item(l_nav_item);
+  END IF;
+
+  IF NOT form_success THEN
+
+      set_canvas_property(tab_cvs,topmost_tab_page,name_in('system.tab_previous_page'));
+      go_item(name_in('system.trigger_item'));
+
+      --------------------------------------
+      -- If the master block is in Enter-Query and the user tries
+      -- to click a different tab than the current one, show the views for
+      -- the current tab since this is not allowed
+      --------------------------------------
+      IF name_in('system.mode') = 'ENTER-QUERY' THEN
+
+        -- retrieve list of all stacked canvases for the previously active tab
+        l_stack_canvases := CGLT$FND_TAB_STACK_CVS(get_canvas_property(tab_cvs,topmost_tab_page));
+
+        IF l_stack_canvases.count > 0 THEN
+          FOR rec in 1..l_stack_canvases.last LOOP
+            show_view(l_stack_canvases(rec));
+          END LOOP;
+        END IF;
+ 
+      ELSE
+        raise form_trigger_failure;
+      END IF;
+
+  ELSE
+
+    FOR i IN 1..r_count LOOP
+      c_val := Get_Group_Char_Cell('CGLT$CVS_DATA.MASTER_TAB', i);
+      IF (c_val = tab_cvs) THEN
+        tab_win  := Get_Group_Char_Cell('CGLT$CVS_DATA.WINDOW', i);
+        EXIT;
+      END IF;
+    END LOOP;
+
+    FOR i IN 1..r_count LOOP
+      c_val := Get_Group_Char_Cell('CGLT$CVS_DATA.WINDOW', i);
+      IF (c_val = tab_win) THEN
+        c_val := Get_Group_Char_Cell('CGLT$CVS_DATA.MASTER_TAB', i);
+        hide_view(c_val);
+      END IF;
+    END LOOP;
+
+    show_view(tab_cvs);
+      IF l_stack_canvases.count > 0 THEN
+        FOR rec in 1..l_stack_canvases.last LOOP
+          show_view(l_stack_canvases(rec));
+        END LOOP;
+      END IF;
+  END IF;
+
+END CGLT$TAB_CHANGED;
+
+END CGLT$TAB_BLOCKS;

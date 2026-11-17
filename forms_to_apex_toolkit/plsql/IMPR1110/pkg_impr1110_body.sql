@@ -128,6 +128,23 @@ AS
         RETURN v_clob;
     END ui_json;
 
+    FUNCTION ui_count RETURN PLS_INTEGER
+    IS
+    BEGIN
+        RETURN g_ui_item.COUNT;
+    END ui_count;
+
+    PROCEDURE ui_entry (p_idx  IN  PLS_INTEGER,
+                        p_item OUT VARCHAR2,
+                        p_prop OUT VARCHAR2,
+                        p_val  OUT VARCHAR2)
+    IS
+    BEGIN
+        p_item := g_ui_item(p_idx);
+        p_prop := g_ui_prop(p_idx);
+        p_val  := g_ui_val(p_idx);
+    END ui_entry;
+
     -- ======================================================================= private helpers
 
     PROCEDURE ftf (p_text IN VARCHAR2 DEFAULT NULL)

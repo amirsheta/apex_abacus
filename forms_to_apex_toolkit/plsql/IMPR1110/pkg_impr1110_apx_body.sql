@@ -2,10 +2,11 @@
 -- Package body : pkg_impr1110_apx  (APEX glue for pkg_impr1110, page 1110)
 -- Author       : Claude Code
 -- Created      : 2026-11-18
--- Version      : 1.0.0
+-- Version      : 1.1.0
 -- Status       : NOT COMPILED.
 -- Order rules  : item validation = POST-CHANGE then WHEN-VALIDATE-ITEM (Forms order);
---                save = PRE-INSERT -> INSERT -> POST-INSERT  /  PRE-UPDATE -> UPDATE -> POST-UPDATE;
+--                save = item validations (changed items only) -> required items ->
+--                PRE-INSERT -> INSERT -> POST-INSERT  /  PRE-UPDATE -> UPDATE -> POST-UPDATE;
 --                no COMMIT here - APEX commits after the page processes.
 -- =============================================================================
 SET DEFINE OFF
@@ -14,6 +15,23 @@ CREATE OR REPLACE PACKAGE BODY pkg_impr1110_apx
 AS
     c_mask CONSTANT VARCHAR2(10) := 'MI-MM-YYYY';   -- Hijri date mask of the form (as in Forms)
 
+    -- Items with a POST-CHANGE / WHEN-VALIDATE-ITEM trigger, in Forms item order (XML order)
+    TYPE t_names IS TABLE OF VARCHAR2(30);
+    c_val_items CONSTANT t_names := t_names(
+        'PORT_CD', 'HQ_IMPR_NBR', 'IMPR_NBR', 'IMPR_TYPE_CD', 'BUS_ID_EXPRD_DT', 'BUS_ID_TYPE_CD',
+        'CITY_CODE_OF_ID', 'BUS_ID', 'BRNH_CITY_CD', 'BUS_ID_BRNCH', 'CTRY_CD', 'IMPR_EXPR_TYPE',
+        'ARBC_IMPR_NAME', 'ENG_IMPR_NAME', 'BUS_ID_ISSUE_DT', 'IMPR_NBR_PARENT', 'ADD_CTRY_CD',
+        'CITY_CODE', 'IMPR_TEL_NBR', 'B_EMAIL', 'EMAIL', 'B_MOBILE_NO', 'BANK_IBAN', 'B_ID_NBR',
+        'CTRY_CD_OF_ID');
+    -- Items with Required = true in the form (static); dynamic changes come from the UI state
+    c_req_items CONSTANT t_names := t_names(
+        'PORT_CD', 'IMPR_TYPE_CD', 'BUS_ID_TYPE_CD', 'BUS_ID', 'CTRY_CD', 'IMPR_EXPR_TYPE',
+        'ARBC_IMPR_NAME', 'ADD_CTRY_CD');
+    -- Items whose REQUIRED property the form changes at runtime
+    c_dyn_req_items CONSTANT t_names := t_names(
+        'COMM_RGSTRTN_TYPE', 'CITY_CODE_OF_ID', 'BRNH_CITY_CD', 'BUS_ID_BRNCH');
+
+    -- ----------------------------------------------------------------- session state helpers
     FUNCTION v (p_item IN VARCHAR2) RETURN VARCHAR2
     IS
     BEGIN
@@ -50,6 +68,92 @@ AS
         RETURN NVL(TO_NUMBER(p_val), pkg_impr1110.c_yes);
     END answer;
 
+    -- ----------------------------------------------------------------- server item state
+    PROCEDURE state_reset
+    IS
+    BEGIN
+        apex_collection.create_or_truncate_collection(c_state_coll);
+    END state_reset;
+
+    FUNCTION state_seq (p_kind IN VARCHAR2, p_item IN VARCHAR2, p_prop IN VARCHAR2) RETURN NUMBER
+    IS
+        v_seq NUMBER;
+    BEGIN
+        SELECT MAX(seq_id) INTO v_seq
+          FROM apex_collections
+         WHERE collection_name = c_state_coll
+           AND c001 = p_kind AND c002 = p_item AND c003 = p_prop;
+        RETURN v_seq;
+    END state_seq;
+
+    PROCEDURE state_put (p_kind IN VARCHAR2, p_item IN VARCHAR2, p_prop IN VARCHAR2, p_val IN VARCHAR2)
+    IS
+        v_seq NUMBER;
+    BEGIN
+        IF NOT apex_collection.collection_exists(c_state_coll) THEN
+            state_reset;
+        END IF;
+        v_seq := state_seq(p_kind, p_item, p_prop);
+        IF v_seq IS NULL THEN
+            apex_collection.add_member(p_collection_name => c_state_coll,
+                                       p_c001 => p_kind, p_c002 => p_item, p_c003 => p_prop, p_c004 => p_val);
+        ELSE
+            apex_collection.update_member_attribute(p_collection_name => c_state_coll, p_seq => v_seq,
+                                                    p_attr_number => 4, p_attr_value => p_val);
+        END IF;
+    END state_put;
+
+    FUNCTION state_get (p_kind IN VARCHAR2, p_item IN VARCHAR2, p_prop IN VARCHAR2,
+                        p_found OUT BOOLEAN) RETURN VARCHAR2
+    IS
+        v_val VARCHAR2(4000);
+        v_cnt NUMBER;
+    BEGIN
+        p_found := FALSE;
+        IF apex_collection.collection_exists(c_state_coll) THEN
+            SELECT MAX(c004), COUNT(*) INTO v_val, v_cnt
+              FROM apex_collections
+             WHERE collection_name = c_state_coll
+               AND c001 = p_kind AND c002 = p_item AND c003 = p_prop;
+            p_found := v_cnt > 0;
+        END IF;
+        RETURN v_val;
+    END state_get;
+
+    -- 'Y' / 'N' for a UI property, p_default when the form never changed it
+    FUNCTION ui_state (p_item IN VARCHAR2, p_prop IN VARCHAR2, p_default IN VARCHAR2) RETURN VARCHAR2
+    IS
+        v_found BOOLEAN;
+        v_val   VARCHAR2(10) := state_get('UI', p_item, p_prop, v_found);
+    BEGIN
+        RETURN CASE WHEN v_found THEN v_val ELSE p_default END;
+    END ui_state;
+
+    -- Keep the UI entries recorded by the last pkg_impr1110 call (last one per item/prop wins)
+    PROCEDURE save_ui
+    IS
+        v_item VARCHAR2(61);
+        v_prop VARCHAR2(30);
+        v_val  VARCHAR2(10);
+    BEGIN
+        FOR i IN 1 .. pkg_impr1110.ui_count LOOP
+            pkg_impr1110.ui_entry(i, v_item, v_prop, v_val);
+            IF v_prop IN ('ENTRABLE', 'ENABLED', 'REQUIRED', 'VISIBLE') THEN
+                state_put('UI', v_item, v_prop, v_val);
+            END IF;
+        END LOOP;
+    END save_ui;
+
+    -- Current value of every validated item = "valid" (Forms: queried / created record)
+    PROCEDURE baseline_vals
+    IS
+    BEGIN
+        FOR i IN 1 .. c_val_items.COUNT LOOP
+            state_put('VAL', c_val_items(i), '-', v(c_val_items(i)));
+        END LOOP;
+    END baseline_vals;
+
+    -- ----------------------------------------------------------------- record / context
     FUNCTION get_ctx RETURN pkg_impr1110.t_ctx
     IS
         c pkg_impr1110.t_ctx;
@@ -81,8 +185,9 @@ AS
     BEGIN
         r.row_id            := v('ROW_ID');
         r.rec_status        := NVL(v('REC_STATUS'), CASE WHEN v('ROW_ID') IS NULL THEN 'NEW' ELSE 'QUERY' END);
-        r.activity_entr     := v('ACTIVITY_ENTR');
-        r.bus_id_brnch_entr := v('BUS_ID_BRNCH_ENTR');
+        -- GET_ITEM_PROPERTY(..., ENABLED): from the server state, never from the browser
+        r.activity_entr     := ui_state('ACTIVITY', 'ENTRABLE', 'Y');
+        r.bus_id_brnch_entr := ui_state('BUS_ID_BRNCH', 'ENTRABLE', 'Y');
         r.port_cd           := n('PORT_CD');           r.hq_impr_nbr       := n('HQ_IMPR_NBR');
         r.impr_nbr          := n('IMPR_NBR');          r.bus_id_status     := v('BUS_ID_STATUS');
         r.impr_type_cd      := n('IMPR_TYPE_CD');      r.bus_id_exprd_dt   := d('BUS_ID_EXPRD_DT');
@@ -160,10 +265,12 @@ AS
         s('IMPR_ID_TYPE', p_rec.impr_id_type);
     END set_rec;
 
-    -- Writes ui_json into P1110_UI_STATE (applied by the page-load Dynamic Action)
+    -- Writes ui_json into P1110_UI_STATE (applied by the page-load Dynamic Action) and keeps
+    -- the item state on the server
     PROCEDURE keep_ui
     IS
     BEGIN
+        save_ui;
         s('UI_STATE', dbms_lob.substr(pkg_impr1110.ui_json, 32000, 1));
     END keep_ui;
 
@@ -177,8 +284,9 @@ AS
         RETURN pkg_impr1110.importers_on_error(p_op, SQLCODE, SQLERRM);
     END err_text;
 
+    -- Block WHERE clause of IMPORTERS: PORT_CD = :PARAMETER.P_CURR_PORT_CD (always applied)
     PROCEDURE load_row (p_rec IN OUT NOCOPY pkg_impr1110.t_rec, p_where_rowid IN VARCHAR2,
-                        p_port_cd IN NUMBER, p_impr_nbr IN NUMBER)
+                        p_port_cd IN NUMBER, p_impr_nbr IN NUMBER, p_curr_port IN NUMBER)
     IS
     BEGIN
         SELECT ROWIDTOCHAR(ROWID), port_cd, hq_impr_nbr, impr_nbr, bus_id_status, impr_type_cd,
@@ -201,18 +309,74 @@ AS
                p_rec.ctry_cd_of_id, p_rec.expd_stmt_nbr, p_rec.wvr_entry_nbr, p_rec.activity,
                p_rec.customs_entered, p_rec.creation_flag
           FROM importers
-         WHERE (p_where_rowid IS NOT NULL AND ROWID = CHARTOROWID(p_where_rowid))
-            OR (p_where_rowid IS NULL AND port_cd = p_port_cd AND impr_nbr = p_impr_nbr);
+         WHERE port_cd = p_curr_port
+           AND ((p_where_rowid IS NOT NULL AND ROWID = CHARTOROWID(p_where_rowid))
+                OR (p_where_rowid IS NULL AND port_cd = p_port_cd AND impr_nbr = p_impr_nbr));
         p_rec.rec_status := 'QUERY';
     END load_row;
 
+    -- ----------------------------------------------------------------- dispatch (Forms order)
+    PROCEDURE run_validate (p_item IN VARCHAR2, r IN OUT NOCOPY pkg_impr1110.t_rec,
+                            c IN pkg_impr1110.t_ctx, a1 IN PLS_INTEGER, a2 IN PLS_INTEGER,
+                            p_from_item IN BOOLEAN)
+    IS
+    BEGIN
+        -- 1) POST-CHANGE
+        CASE p_item
+            WHEN 'HQ_IMPR_NBR'    THEN pkg_impr1110.hq_impr_nbr_post_chg;
+            WHEN 'IMPR_TYPE_CD'   THEN pkg_impr1110.impr_type_cd_post_chg(r);
+            WHEN 'BUS_ID_TYPE_CD' THEN pkg_impr1110.bus_id_type_post_chg(r);
+            WHEN 'BUS_ID'         THEN pkg_impr1110.bus_id_post_chg;
+            WHEN 'BUS_ID_BRNCH'   THEN pkg_impr1110.bus_id_brnch_post_chg;
+            WHEN 'IMPR_EXPR_TYPE' THEN pkg_impr1110.impr_expr_type_post_chg;
+            WHEN 'B_EMAIL'        THEN pkg_impr1110.b_email_post_chg(r, c);
+            WHEN 'B_MOBILE_NO'    THEN pkg_impr1110.b_mobile_no_post_chg(r, c);
+            WHEN 'B_ID_NBR'       THEN pkg_impr1110.b_id_nbr_post_chg(r, c);
+            ELSE NULL;
+        END CASE;
+        -- 2) WHEN-VALIDATE-ITEM
+        CASE p_item
+            WHEN 'PORT_CD'         THEN pkg_impr1110.port_cd_wvi(r);
+            WHEN 'IMPR_NBR'        THEN pkg_impr1110.impr_nbr_wvi(r);
+            WHEN 'IMPR_TYPE_CD'    THEN pkg_impr1110.impr_type_cd_wvi(r, c);
+            WHEN 'BUS_ID_EXPRD_DT' THEN pkg_impr1110.bus_id_exprd_dt_wvi(r, p_from_item);
+            WHEN 'CTRY_CD_OF_ID'   THEN pkg_impr1110.ctry_cd_of_id_wvi(r);
+            WHEN 'CITY_CODE_OF_ID' THEN pkg_impr1110.city_code_of_id_wvi(r);
+            WHEN 'BUS_ID'          THEN pkg_impr1110.bus_id_wvi(r, c, a1, a2);
+            WHEN 'BRNH_CITY_CD'    THEN pkg_impr1110.brnh_city_cd_wvi(r);
+            WHEN 'BUS_ID_BRNCH'    THEN pkg_impr1110.bus_id_brnch_wvi(r, c, a1);
+            WHEN 'CTRY_CD'         THEN pkg_impr1110.ctry_cd_wvi(r);
+            WHEN 'ARBC_IMPR_NAME'  THEN pkg_impr1110.arbc_impr_name_wvi(r);
+            WHEN 'ENG_IMPR_NAME'   THEN pkg_impr1110.eng_impr_name_wvi(r);
+            WHEN 'BUS_ID_ISSUE_DT' THEN pkg_impr1110.bus_id_issue_dt_wvi(r, p_from_item);
+            WHEN 'IMPR_NBR_PARENT' THEN pkg_impr1110.impr_nbr_parent_wvi(r);
+            WHEN 'ADD_CTRY_CD'     THEN pkg_impr1110.add_ctry_cd_wvi(r);
+            WHEN 'CITY_CODE'       THEN pkg_impr1110.city_code_wvi(r);
+            WHEN 'IMPR_TEL_NBR'    THEN pkg_impr1110.impr_tel_nbr_wvi(r);
+            WHEN 'B_EMAIL'         THEN pkg_impr1110.b_email_wvi(r, p_from_item);
+            WHEN 'EMAIL'           THEN pkg_impr1110.email_wvi(r, p_from_item);
+            WHEN 'B_MOBILE_NO'     THEN pkg_impr1110.b_mobile_no_wvi(r, c);
+            WHEN 'BANK_IBAN'       THEN pkg_impr1110.bank_iban_wvi(r);
+            WHEN 'B_ID_NBR'        THEN pkg_impr1110.b_id_nbr_wvi(r);
+            ELSE NULL;
+        END CASE;
+        IF r.rec_status = 'QUERY' THEN
+            r.rec_status := 'CHANGED';
+        ELSIF r.rec_status = 'NEW' THEN
+            r.rec_status := 'INSERT';
+        END IF;
+    END run_validate;
+
+    -- ----------------------------------------------------------------- page processes
     PROCEDURE page_wnfi
     IS
         r pkg_impr1110.t_rec := get_rec;
     BEGIN
+        state_reset;
         pkg_impr1110.ui_reset;
         pkg_impr1110.wnfi(r, get_ctx);
         set_rec(r);
+        s('FORM_OPEN', 'Y');
         keep_ui;
     END page_wnfi;
 
@@ -222,12 +386,14 @@ AS
         c   pkg_impr1110.t_ctx := get_ctx;
         q   pkg_impr1110.t_rec := get_rec;      -- query criteria / key
     BEGIN
+        s('NEED_FETCH', NULL);
         pkg_impr1110.ui_reset;
         pkg_impr1110.importers_pre_qry(q, c);   -- consumes :GLOBAL.EXEC_QUERY_NOW
-        IF q.row_id IS NULL AND (q.port_cd IS NULL OR q.impr_nbr IS NULL) THEN
+        q.port_cd := NVL(q.port_cd, c.curr_port_cd);
+        IF q.row_id IS NULL AND q.impr_nbr IS NULL THEN
             RETURN;
         END IF;
-        load_row(r, q.row_id, q.port_cd, q.impr_nbr);
+        load_row(r, q.row_id, q.port_cd, q.impr_nbr, c.curr_port_cd);
         IF c_post_chg_on_fetch THEN
             IF r.hq_impr_nbr IS NOT NULL THEN pkg_impr1110.hq_impr_nbr_post_chg; END IF;
             IF r.impr_type_cd IS NOT NULL THEN pkg_impr1110.impr_type_cd_post_chg(r); END IF;
@@ -242,10 +408,14 @@ AS
         pkg_impr1110.importers_wnri(r, c);
         set_rec(r);
         set_ctx(c);
+        baseline_vals;
         keep_ui;
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
-            apex_error.add_error(p_message => 'FRM-40350', p_display_location => apex_error.c_inline_in_notification);
+            -- Forms FRM-40350 "Query caused no records to be retrieved"
+            -- TODO: Arabic text used by NIB.ON_MESSAGE (MISSING SOURCE)
+            apex_error.add_error(p_message => 'FRM-40350',
+                                 p_display_location => apex_error.c_inline_in_notification);
     END page_fetch;
 
     PROCEDURE page_new_record
@@ -263,21 +433,25 @@ AS
         pkg_impr1110.importers_wnri(r, c);
         set_rec(r);
         set_ctx(c);
+        baseline_vals;
         keep_ui;
     END page_new_record;
 
+    -- ----------------------------------------------------------------- AJAX
     PROCEDURE reply (p_rec IN pkg_impr1110.t_rec, p_ctx IN pkg_impr1110.t_ctx)
     IS
         v_items CLOB;
     BEGIN
         set_rec(p_rec);
         set_ctx(p_ctx);
+        save_ui;
         apex_json.initialize_clob_output;
         apex_json.open_object;
         FOR i IN (SELECT item_name
                     FROM apex_application_page_items
                    WHERE application_id = TO_NUMBER(pkg_forms_compat.name_in('APP_ID'))
-                     AND page_id = c_page) LOOP
+                     AND page_id = c_page
+                     AND item_name NOT IN ('P1110_ROW_ID', 'P1110_UI_STATE', 'P1110_FORM_OPEN', 'P1110_NEED_FETCH')) LOOP
             apex_json.write(i.item_name, pkg_forms_compat.name_in(i.item_name), TRUE);
         END LOOP;
         apex_json.close_object;
@@ -290,6 +464,18 @@ AS
         htp.prn('}');
     END reply;
 
+    PROCEDURE reply_error (p_rec IN pkg_impr1110.t_rec, p_ctx IN pkg_impr1110.t_ctx, p_op IN VARCHAR2)
+    IS
+        v_text VARCHAR2(4000) := err_text(p_op);
+    BEGIN
+        set_rec(p_rec);                       -- Forms keeps item changes made before the failure
+        set_ctx(p_ctx);
+        save_ui;
+        apex_json.open_object;
+        apex_json.write('error', v_text);
+        apex_json.close_object;
+    END reply_error;
+
     PROCEDURE ajax_item
     IS
         v_item VARCHAR2(61) := UPPER(apex_application.g_x01);
@@ -301,50 +487,23 @@ AS
     BEGIN
         pkg_impr1110.ui_reset;
         IF v_evt = 'VALIDATE' THEN
-            -- 1) POST-CHANGE
-            CASE v_item
-                WHEN 'HQ_IMPR_NBR'    THEN pkg_impr1110.hq_impr_nbr_post_chg;
-                WHEN 'IMPR_TYPE_CD'   THEN pkg_impr1110.impr_type_cd_post_chg(r);
-                WHEN 'BUS_ID_TYPE_CD' THEN pkg_impr1110.bus_id_type_post_chg(r);
-                WHEN 'BUS_ID'         THEN pkg_impr1110.bus_id_post_chg;
-                WHEN 'BUS_ID_BRNCH'   THEN pkg_impr1110.bus_id_brnch_post_chg;
-                WHEN 'IMPR_EXPR_TYPE' THEN pkg_impr1110.impr_expr_type_post_chg;
-                WHEN 'B_EMAIL'        THEN pkg_impr1110.b_email_post_chg(r, c);
-                WHEN 'B_MOBILE_NO'    THEN pkg_impr1110.b_mobile_no_post_chg(r, c);
-                WHEN 'B_ID_NBR'       THEN pkg_impr1110.b_id_nbr_post_chg(r, c);
-                ELSE NULL;
-            END CASE;
-            -- 2) WHEN-VALIDATE-ITEM
-            CASE v_item
-                WHEN 'PORT_CD'         THEN pkg_impr1110.port_cd_wvi(r);
-                WHEN 'IMPR_NBR'        THEN pkg_impr1110.impr_nbr_wvi(r);
-                WHEN 'IMPR_TYPE_CD'    THEN pkg_impr1110.impr_type_cd_wvi(r, c);
-                WHEN 'BUS_ID_EXPRD_DT' THEN pkg_impr1110.bus_id_exprd_dt_wvi(r);
-                WHEN 'CTRY_CD_OF_ID'   THEN pkg_impr1110.ctry_cd_of_id_wvi(r);
-                WHEN 'CITY_CODE_OF_ID' THEN pkg_impr1110.city_code_of_id_wvi(r);
-                WHEN 'BUS_ID'          THEN pkg_impr1110.bus_id_wvi(r, c, a1, a2);
-                WHEN 'BRNH_CITY_CD'    THEN pkg_impr1110.brnh_city_cd_wvi(r);
-                WHEN 'BUS_ID_BRNCH'    THEN pkg_impr1110.bus_id_brnch_wvi(r, c, a1);
-                WHEN 'CTRY_CD'         THEN pkg_impr1110.ctry_cd_wvi(r);
-                WHEN 'ARBC_IMPR_NAME'  THEN pkg_impr1110.arbc_impr_name_wvi(r);
-                WHEN 'ENG_IMPR_NAME'   THEN pkg_impr1110.eng_impr_name_wvi(r);
-                WHEN 'BUS_ID_ISSUE_DT' THEN pkg_impr1110.bus_id_issue_dt_wvi(r);
-                WHEN 'IMPR_NBR_PARENT' THEN pkg_impr1110.impr_nbr_parent_wvi(r);
-                WHEN 'ADD_CTRY_CD'     THEN pkg_impr1110.add_ctry_cd_wvi(r);
-                WHEN 'CITY_CODE'       THEN pkg_impr1110.city_code_wvi(r);
-                WHEN 'IMPR_TEL_NBR'    THEN pkg_impr1110.impr_tel_nbr_wvi(r);
-                WHEN 'B_EMAIL'         THEN pkg_impr1110.b_email_wvi(r);
-                WHEN 'EMAIL'           THEN pkg_impr1110.email_wvi(r);
-                WHEN 'B_MOBILE_NO'     THEN pkg_impr1110.b_mobile_no_wvi(r, c);
-                WHEN 'BANK_IBAN'       THEN pkg_impr1110.bank_iban_wvi(r);
-                WHEN 'B_ID_NBR'        THEN pkg_impr1110.b_id_nbr_wvi(r);
-                ELSE NULL;
-            END CASE;
-            IF r.rec_status = 'QUERY' THEN
-                r.rec_status := 'CHANGED';
-            ELSIF r.rec_status = 'NEW' THEN
-                r.rec_status := 'INSERT';
+            -- City chosen from LOV_CITIES_IMP: COPY_SELECTED_VALUES set :GLOBAL.MINS_COMM_CD
+            IF v_item IN ('CITY_CODE_OF_ID', 'BRNH_CITY_CD') AND apex_application.g_x05 = 'LOV' THEN
+                FOR m IN (SELECT mins_comm_cd FROM cities
+                           WHERE city_cd = CASE v_item WHEN 'CITY_CODE_OF_ID' THEN r.city_code_of_id
+                                                       ELSE r.brnh_city_cd END
+                             AND ctry_cd = NVL(r.ctry_cd_of_id, ctry_cd)
+                             AND ROWNUM = 1) LOOP
+                    pkg_forms_compat.set_global('MINS_COMM_CD', m.mins_comm_cd);
+                END LOOP;
             END IF;
+            run_validate(v_item, r, c, a1, a2, TRUE);
+            -- the item itself is now valid with its final value (e.g. BUS_ID after the 9-120
+            -- prefix). Other items changed by the trigger keep their previous "validated" value
+            -- and are validated again at SAVE (Forms validates programmatically changed items
+            -- when the record is validated).
+            set_rec(r);
+            state_put('VAL', v_item, '-', v(v_item));
         ELSIF v_evt = 'WNII' THEN
             CASE v_item
                 WHEN 'IMPR_TYPE_CD'    THEN pkg_impr1110.impr_type_cd_wnii(r);
@@ -357,8 +516,18 @@ AS
             END CASE;
         ELSIF v_evt = 'WLC' AND v_item = 'COMM_RGSTRTN_TYPE' THEN
             pkg_impr1110.comm_rgstrtn_wlc(r);
-        ELSIF v_evt = 'LOV_RET' AND v_item = 'IMPR_TYPE_CD' THEN
+        ELSIF v_evt = 'LOV_RET' AND v_item = 'BUS_ID_TYPE_CD' THEN
+            -- LOV_IMPR_TYPE returned the pair IMPR_TYPE_CD / BUS_ID_TYPE_CD and both names
+            FOR t IN (SELECT it.impr_type_name, bit.bus_id_type_name
+                        FROM impr_types it, bus_id_types bit
+                       WHERE it.impr_type_cd = r.impr_type_cd
+                         AND bit.bus_id_type_cd = r.bus_id_type_cd) LOOP
+                r.impr_type_name   := t.impr_type_name;
+                r.bus_id_type_name := t.bus_id_type_name;
+            END LOOP;
             pkg_impr1110.impr_type_cd_lov_ret(r);
+            pkg_impr1110.bus_id_type_post_chg(r);            -- value changed -> POST-CHANGE
+            state_put('VAL', 'BUS_ID_TYPE_CD', '-', v('BUS_ID_TYPE_CD'));
         ELSIF v_evt = 'KEY_NXT' AND v_item = 'ARBC_IMPR_NAME' THEN
             pkg_impr1110.arbc_impr_name_key_nxt(r);
         ELSIF v_evt = 'WNRI' THEN
@@ -367,11 +536,7 @@ AS
         reply(r, c);
     EXCEPTION
         WHEN OTHERS THEN
-            set_rec(r);                       -- Forms keeps item changes made before the failure
-            set_ctx(c);
-            apex_json.open_object;
-            apex_json.write('error', err_text(CASE WHEN r.row_id IS NULL THEN 'I' ELSE 'U' END));
-            apex_json.close_object;
+            reply_error(r, c, CASE WHEN r.row_id IS NULL THEN 'I' ELSE 'U' END);
     END ajax_item;
 
     PROCEDURE ajax_confirm
@@ -416,20 +581,96 @@ AS
         ELSIF v_cd = 'IMPR1110_MOB_RET' THEN          -- after dialog LOV_UPDATE_IMPR_MOBILE closed
             pkg_impr1110.lov_update_moblie(r);
         ELSE
+            -- EXEC_FUNS may set :PARAMETER.CODE (reply item P1110_CODE). The page then runs
+            -- WHEN-NEW-RECORD-INSTANCE: IMPR1110_CONFIRM('WNRI') -> Confirm -> IMPR1110_ITEM('WNRI')
             pkg_impr1110.exec_funs(r, c, v_cd);
-            IF c.code IS NOT NULL THEN                -- EXEC_FUNS set :PARAMETER.CODE -> WNRI handles it
-                pkg_impr1110.importers_wnri(r, c, answer(apex_application.g_x02));
-            END IF;
         END IF;
         reply(r, c);
     EXCEPTION
         WHEN OTHERS THEN
-            set_rec(r);
-            set_ctx(c);
-            apex_json.open_object;
-            apex_json.write('error', err_text('U'));
-            apex_json.close_object;
+            reply_error(r, c, 'U');
     END ajax_fun;
+
+    -- ----------------------------------------------------------------- clear / query / dialogs
+    PROCEDURE page_clear
+    IS
+        v_empty pkg_impr1110.t_rec;
+    BEGIN
+        pkg_impr1110.ui_reset;
+        pkg_impr1110.importers_wcb;
+        set_rec(v_empty);
+        s('REC_STATUS', NULL);
+        s('NEED_FETCH', NULL);
+        IF apex_collection.collection_exists(c_state_coll) THEN
+            FOR m IN (SELECT seq_id FROM apex_collections
+                       WHERE collection_name = c_state_coll AND c001 = 'VAL') LOOP
+                apex_collection.delete_member(c_state_coll, m.seq_id);
+            END LOOP;
+        END IF;
+    END page_clear;
+
+    PROCEDURE page_query (p_impr_nbr IN NUMBER)
+    IS
+    BEGIN
+        page_clear;
+        s('PORT_CD', ai('P_CURR_PORT_CD'));
+        s('IMPR_NBR', p_impr_nbr);
+        s('NEED_FETCH', 'Y');
+    END page_query;
+
+    FUNCTION central_mobile (p_impr_nbr IN NUMBER) RETURN NUMBER
+    IS
+        r pkg_impr1110.t_rec;
+    BEGIN
+        r.impr_nbr := p_impr_nbr;
+        RETURN pkg_impr1110.central_mobile(r, get_ctx);
+    END central_mobile;
+
+    -- ----------------------------------------------------------------- validations on SAVE
+    FUNCTION validate_on_submit (p_item IN VARCHAR2) RETURN VARCHAR2
+    IS
+        r       pkg_impr1110.t_rec := get_rec;
+        c       pkg_impr1110.t_ctx := get_ctx;
+        v_found BOOLEAN;
+        v_last  VARCHAR2(4000) := state_get('VAL', UPPER(p_item), '-', v_found);
+        v_now   VARCHAR2(4000) := v(UPPER(p_item));
+    BEGIN
+        IF v_found AND (v_last = v_now OR (v_last IS NULL AND v_now IS NULL)) THEN
+            RETURN NULL;                               -- item is valid (Forms: not changed)
+        END IF;
+        pkg_impr1110.ui_reset;
+        run_validate(UPPER(p_item), r, c, pkg_impr1110.c_yes, pkg_impr1110.c_yes, FALSE);
+        set_rec(r);
+        save_ui;
+        state_put('VAL', UPPER(p_item), '-', v(UPPER(p_item)));
+        RETURN NULL;
+    EXCEPTION
+        WHEN OTHERS THEN
+            set_rec(r);
+            save_ui;
+            RETURN err_text(CASE WHEN r.row_id IS NULL THEN 'I' ELSE 'U' END);
+    END validate_on_submit;
+
+    FUNCTION required_items RETURN VARCHAR2
+    IS
+        FUNCTION is_req (p_item IN VARCHAR2, p_static IN VARCHAR2) RETURN BOOLEAN IS
+        BEGIN
+            RETURN ui_state(p_item, 'REQUIRED', p_static) = 'Y';
+        END is_req;
+    BEGIN
+        FOR i IN 1 .. c_req_items.COUNT LOOP
+            IF is_req(c_req_items(i), 'Y') AND v(c_req_items(i)) IS NULL THEN
+                -- Forms FRM-40202 "Field must be entered" - TODO: Arabic text of NIB.ON_ERROR
+                RETURN 'FRM-40202: ' || c_req_items(i);
+            END IF;
+        END LOOP;
+        FOR i IN 1 .. c_dyn_req_items.COUNT LOOP
+            IF is_req(c_dyn_req_items(i), 'N') AND v(c_dyn_req_items(i)) IS NULL THEN
+                RETURN 'FRM-40202: ' || c_dyn_req_items(i);
+            END IF;
+        END LOOP;
+        RETURN NULL;
+    END required_items;
 
     PROCEDURE page_dml (p_request IN VARCHAR2)
     IS
@@ -463,6 +704,7 @@ AS
         END IF;
         set_rec(r);
         keep_ui;
+        baseline_vals;
     EXCEPTION
         WHEN OTHERS THEN
             raise_application_error(-20000, err_text(v_op));

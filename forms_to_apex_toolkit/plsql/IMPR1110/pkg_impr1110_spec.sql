@@ -274,6 +274,13 @@ AS
     -- {"items":[{"item":"BUS_ID","prop":"ENTRABLE","value":false},...],
     --  "focus":"IMPR_NBR","messages":["..."],"funs":[{"fun":"IMPR1110F3","enabled":true}]}
     FUNCTION  ui_json RETURN CLOB;
+    -- Read access to the recorded entries (used by pkg_impr1110_apx to keep the item state
+    -- on the server, so REQUIRED / ENTRABLE can be enforced at SAVE)
+    FUNCTION  ui_count RETURN PLS_INTEGER;
+    PROCEDURE ui_entry (p_idx  IN  PLS_INTEGER,
+                        p_item OUT VARCHAR2,
+                        p_prop OUT VARCHAR2,
+                        p_val  OUT VARCHAR2);
 
 END pkg_impr1110;
 /

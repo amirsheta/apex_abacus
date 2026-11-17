@@ -12,9 +12,8 @@
 | `plsql/IMPR1110/pkg_impr1110_apx_*.sql` | حزمة الربط مع APEX: الوحيدة التي تقرأ وتكتب `P1110_*`، وتستدعي الحزمة بترتيب تريجرات Forms |
 | `scripts/expand_orig.py` | يُدرج كود Forms الأصلي فوق كل إجراء ويفحص النصوص العربية والـ built-ins وطول الأسماء |
 | `rollback/IMPR1110/*_v0.sql` | النسخة السابقة من الحزمة (المبنية من ملخص الجرد) |
-| `plsql/IMPR1110/impr1110_shared_lovs.sql` | استعلامات القوائم المشتركة (LOVs) |
-| `apex/IMPR1110/IMPR1110_page_spec.md` | مواصفات بناء الصفحة 1110: المناطق والحقول والتحققات والعمليات والأزرار و Dynamic Actions |
-| `registry/IMPR1110_registry.sql` | تسجيل الشاشة وخريطة كائناتها في جداول متابعة الترحيل |
+| `analysis/IMPR1110/IMPR1110_apex_page_spec.md` | الخطوة 3: مواصفات الصفحات 1110–1113 (المناطق والحقول بترتيب شاشة Forms، والقوائم من نماذج LOV الأصلية، والتحققات والعمليات والأزرار و Dynamic Actions)، ومصفوفة التتبع لكل كائنات الشاشة (668) |
+| `registry/IMPR1110_registry.sql` | تسجيل الشاشة و668 صفًا في خريطة الكائنات (مولّدة من XML)، لم يُنفّذ |
 | `tests/IMPR1110/test_pkg_impr1110.sql` | اختبارات utPLSQL للمنطق الذي لا يعدّل البيانات |
 | `tests/IMPR1110/uat_IMPR1110_ar.md` | قائمة اختبار القبول للمستخدمين (25 حالة) |
 
@@ -23,8 +22,8 @@
 2. `scripts/create_migration_registry.sql` ثم `registry/IMPR1110_registry.sql`.
 3. تأكد من وجود الحزم الخارجية وصلاحياتها في مخطط التطبيق: GNRL, STR_DB, HIJDATE_DB, ACTIVITY, DB_JOURNAL, IMPR, IMPR_CENTRAL، إضافة إلى المرادفات (synonyms) أو صلاحيات `EXECUTE`.
 4. `pkg_impr1110_spec.sql` ثم `pkg_impr1110_body.sql` ثم `pkg_impr1110_apx_spec.sql` ثم `pkg_impr1110_apx_body.sql`، ثم أصلح أخطاء الترجمة.
-5. أنشئ عناصر التطبيق `AI_*` والقوائم من `impr1110_shared_lovs.sql` ورسائل النص (Text Messages).
-6. ابنِ الصفحة 1110 حسب `IMPR1110_page_spec.md`.
+5. أنشئ عناصر التطبيق `AI_*` والقوائم (LOVs) وخطط الصلاحيات كما في القسمين 6 و13 من `IMPR1110_apex_page_spec.md`.
+6. ابنِ الصفحات 1110–1113 حسب `IMPR1110_apex_page_spec.md`.
 7. شغّل `test_pkg_impr1110`، ثم نفّذ قائمة UAT بالمقارنة مع Forms.
 
 ## 3. قرارات التصميم الأساسية

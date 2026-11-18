@@ -4,6 +4,7 @@
 -- Author      : Claude Code
 -- Created     : 2026-11-18
 -- Version     : 1.0.0
+-- Owner       : LIB_APX_USR (public synonym IMPR1110; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
 -- Status      : NOT COMPILED.
 -- Purpose     : Every page process, validation, computation and AJAX callback of pages
 --               1110 / 111001 / 111002 calls this package and nothing else
@@ -17,9 +18,30 @@
 -- =============================================================================
 SET DEFINE OFF
 
-CREATE OR REPLACE PACKAGE IMPR1110
-AUTHID DEFINER
-AS
+CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
+   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
+   V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
+   V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
+   FUNCTION PKG_VERSION
+      RETURN VARCHAR2;
+   V_PACKAGE_NAME      VARCHAR2 (50) := 'IMPR1110';
+   V_LAST_MODIFY_DT    VARCHAR2 (10) := '18-11-2026';
+   V_MODIFIED_BY       VARCHAR2 (50) := 'Claude Code';
+   V_INFO              VARCHAR2 (500)
+      :=    'PACKAGE NAME :  '
+         || V_PACKAGE_NAME
+         || CHR (10)
+         || CHR (13)
+         || V_PKG_VERSION
+         || CHR (10)
+         || CHR (13)
+         || 'MODIFIED DATE : '
+         || V_LAST_MODIFY_DT
+         || CHR (10)
+         || CHR (13)
+         || 'MODIFIED BY : '
+         || V_MODIFIED_BY;
+
     c_page        CONSTANT PLS_INTEGER := 1110;
     c_search_page CONSTANT PLS_INTEGER := 111001;
     c_mobile_page CONSTANT PLS_INTEGER := 111002;
@@ -106,3 +128,17 @@ AS
 END IMPR1110;
 /
 SHOW ERRORS
+
+-- -----------------------------------------------------------------------------
+-- Synonym and grants (run as a user allowed to create public synonyms / grant on LIB_APX_USR).
+-- CUSTOMS = parsing schema of the APEX application: APEX needs the direct grant.
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE PUBLIC SYNONYM IMPR1110 FOR LIB_APX_USR.IMPR1110;
+
+GRANT EXECUTE ON LIB_APX_USR.IMPR1110 TO LIB_USR;
+
+GRANT EXECUTE ON LIB_APX_USR.IMPR1110 TO SECURITY_DEFAULT;
+
+GRANT EXECUTE ON LIB_APX_USR.IMPR1110 TO SECURITY_PROD;
+
+GRANT EXECUTE ON LIB_APX_USR.IMPR1110 TO CUSTOMS;

@@ -5,6 +5,7 @@
 -- Author      : Claude Code
 -- Created     : 2026-11-18
 -- Version     : 1.1.0  (step 03: server-side item state + validation on submit + port scope)
+-- Owner       : LIB_APX_USR (public synonym pkg_impr1110_apx; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
 -- Purpose     : The ONLY code that reads/writes page items P1110_*. It builds t_rec / t_ctx,
 --               calls pkg_impr1110 in the Forms trigger order and writes the results back.
 --               pkg_impr1110 itself stays free of page items (testable without APEX).
@@ -26,9 +27,30 @@
 -- =============================================================================
 SET DEFINE OFF
 
-CREATE OR REPLACE PACKAGE pkg_impr1110_apx
-AUTHID DEFINER
-AS
+CREATE OR REPLACE PACKAGE LIB_APX_USR.pkg_impr1110_apx AS
+   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
+   V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
+   V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
+   FUNCTION PKG_VERSION
+      RETURN VARCHAR2;
+   V_PACKAGE_NAME      VARCHAR2 (50) := 'PKG_IMPR1110_APX';
+   V_LAST_MODIFY_DT    VARCHAR2 (10) := '18-11-2026';
+   V_MODIFIED_BY       VARCHAR2 (50) := 'Claude Code';
+   V_INFO              VARCHAR2 (500)
+      :=    'PACKAGE NAME :  '
+         || V_PACKAGE_NAME
+         || CHR (10)
+         || CHR (13)
+         || V_PKG_VERSION
+         || CHR (10)
+         || CHR (13)
+         || 'MODIFIED DATE : '
+         || V_LAST_MODIFY_DT
+         || CHR (10)
+         || CHR (13)
+         || 'MODIFIED BY : '
+         || V_MODIFIED_BY;
+
     c_page       CONSTANT PLS_INTEGER  := 1110;
     c_state_coll CONSTANT VARCHAR2(30) := 'COL_IMPR1110_STATE';
 
@@ -83,3 +105,17 @@ AS
 END pkg_impr1110_apx;
 /
 SHOW ERRORS
+
+-- -----------------------------------------------------------------------------
+-- Synonym and grants (run as a user allowed to create public synonyms / grant on LIB_APX_USR).
+-- CUSTOMS = parsing schema of the APEX application: APEX needs the direct grant.
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE PUBLIC SYNONYM pkg_impr1110_apx FOR LIB_APX_USR.pkg_impr1110_apx;
+
+GRANT EXECUTE ON LIB_APX_USR.pkg_impr1110_apx TO LIB_USR;
+
+GRANT EXECUTE ON LIB_APX_USR.pkg_impr1110_apx TO SECURITY_DEFAULT;
+
+GRANT EXECUTE ON LIB_APX_USR.pkg_impr1110_apx TO SECURITY_PROD;
+
+GRANT EXECUTE ON LIB_APX_USR.pkg_impr1110_apx TO CUSTOMS;

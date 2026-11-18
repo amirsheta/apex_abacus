@@ -14,14 +14,36 @@
 --               I_SSO_APP_USER => :SSO_APP_USER). Internal members use p_<name>.
 --               The package never reads page items itself, so it is testable without APEX.
 -- Rules       : every identifier <= 30 bytes (DB 12.1.0.2); no qualified expressions (18c).
+-- Owner       : LIB_APX_USR; public synonym <FORM> + EXECUTE grants at the end of this file.
+-- Version     : raise V_PKG_VERSION (and the _QC / _DEV copies per environment) and
+--               V_LAST_MODIFY_DT (DD-MM-YYYY) / V_MODIFIED_BY on every change.
 -- History     : <YYYY-MM-DD> <author> 1.0.0 Initial migration
 -- =============================================================================
 SET DEFINE OFF
 
-CREATE OR REPLACE PACKAGE <FORM>
-AUTHID DEFINER
-AS
-    c_version CONSTANT VARCHAR2(10) := '1.0.0';
+CREATE OR REPLACE PACKAGE LIB_APX_USR.<FORM> AS
+   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
+   V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
+   V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
+   FUNCTION PKG_VERSION
+      RETURN VARCHAR2;
+   V_PACKAGE_NAME      VARCHAR2 (50) := '<FORM>';
+   V_LAST_MODIFY_DT    VARCHAR2 (10) := '<DD-MM-YYYY>';
+   V_MODIFIED_BY       VARCHAR2 (50) := '-';
+   V_INFO              VARCHAR2 (500)
+      :=    'PACKAGE NAME :  '
+         || V_PACKAGE_NAME
+         || CHR (10)
+         || CHR (13)
+         || V_PKG_VERSION
+         || CHR (10)
+         || CHR (13)
+         || 'MODIFIED DATE : '
+         || V_LAST_MODIFY_DT
+         || CHR (10)
+         || CHR (13)
+         || 'MODIFIED BY : '
+         || V_MODIFIED_BY;
 
     -- =========================================================================
     -- f345 HELPERS                                 (every form package has these)
@@ -117,3 +139,17 @@ AS
 END <FORM>;
 /
 SHOW ERRORS
+
+-- -----------------------------------------------------------------------------
+-- Synonym and grants (run as a user allowed to create public synonyms / grant on LIB_APX_USR)
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE PUBLIC SYNONYM <FORM> FOR LIB_APX_USR.<FORM>;
+
+GRANT EXECUTE ON LIB_APX_USR.<FORM> TO LIB_USR;
+
+GRANT EXECUTE ON LIB_APX_USR.<FORM> TO SECURITY_DEFAULT;
+
+GRANT EXECUTE ON LIB_APX_USR.<FORM> TO SECURITY_PROD;
+
+-- CUSTOMS = parsing schema of the APEX application (APEX needs a direct grant, not a role)
+GRANT EXECUTE ON LIB_APX_USR.<FORM> TO CUSTOMS;

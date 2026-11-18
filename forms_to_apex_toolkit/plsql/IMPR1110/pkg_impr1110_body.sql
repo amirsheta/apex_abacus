@@ -5,6 +5,7 @@
 -- Author       : Claude Code
 -- Created      : 2026-11-18
 -- Version      : 1.0.1  (step 04: STR_DB.StrFormat flag 0/1 from CIC_LIB.pld; v1.0.0 in rollback/IMPR1110/pkg_impr1110_body_v1.sql)
+-- Owner       : LIB_APX_USR (public synonym pkg_impr1110; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
 -- Status       : NOT COMPILED - compile in DEV first.
 -- Conversions  : Str.DispArbMsg(s,n,..) + RAISE FTF   -> disp_arb_ftf(s,n)
 --                Str.DispArbMsg(s,n,..) (no raise)     -> disp_arb_info(s,n)
@@ -21,7 +22,7 @@
 -- =============================================================================
 SET DEFINE OFF
 
-CREATE OR REPLACE PACKAGE BODY pkg_impr1110
+CREATE OR REPLACE PACKAGE BODY LIB_APX_USR.pkg_impr1110
 AS
     -- ======================================================================= UI recorder state
     TYPE t_vc_tab IS TABLE OF VARCHAR2(4000) INDEX BY PLS_INTEGER;
@@ -6576,6 +6577,17 @@ AS
             END IF;
         END IF;
     END exec_funs;
+
+
+    -- =========================================================================
+    -- PACKAGE VERSION   (SELECT pkg_impr1110.PKG_VERSION FROM dual;)
+    -- =========================================================================
+    FUNCTION PKG_VERSION
+       RETURN VARCHAR2
+    IS
+    BEGIN
+       RETURN V_INFO;
+    END PKG_VERSION;
 
 END pkg_impr1110;
 /

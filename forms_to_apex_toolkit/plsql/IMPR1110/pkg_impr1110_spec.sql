@@ -6,6 +6,7 @@
 -- Author      : Claude Code
 -- Created     : 2026-11-18
 -- Version     : 1.0.0  (step 02 - logic extraction, re-done from the full trigger text)
+-- Owner       : LIB_APX_USR (public synonym pkg_impr1110; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
 -- Purpose     : Business logic of block IMPORTERS, organised like the form:
 --               FORM LEVEL -> BLOCK IMPORTERS (block triggers, item triggers in item order)
 --               -> PROGRAM UNITS (same names as in Forms) -> UI state recorder.
@@ -24,9 +25,30 @@
 -- =============================================================================
 SET DEFINE OFF
 
-CREATE OR REPLACE PACKAGE pkg_impr1110
-AUTHID DEFINER
-AS
+CREATE OR REPLACE PACKAGE LIB_APX_USR.pkg_impr1110 AS
+   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
+   V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
+   V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
+   FUNCTION PKG_VERSION
+      RETURN VARCHAR2;
+   V_PACKAGE_NAME      VARCHAR2 (50) := 'PKG_IMPR1110';
+   V_LAST_MODIFY_DT    VARCHAR2 (10) := '18-11-2026';
+   V_MODIFIED_BY       VARCHAR2 (50) := 'Claude Code';
+   V_INFO              VARCHAR2 (500)
+      :=    'PACKAGE NAME :  '
+         || V_PACKAGE_NAME
+         || CHR (10)
+         || CHR (13)
+         || V_PKG_VERSION
+         || CHR (10)
+         || CHR (13)
+         || 'MODIFIED DATE : '
+         || V_LAST_MODIFY_DT
+         || CHR (10)
+         || CHR (13)
+         || 'MODIFIED BY : '
+         || V_MODIFIED_BY;
+
     c_version CONSTANT VARCHAR2(10) := '1.0.0';
 
     -- Forms ALERT_BUTTON1 / ALERT_BUTTON2 answers passed back from a Confirm DA
@@ -285,3 +307,17 @@ AS
 END pkg_impr1110;
 /
 SHOW ERRORS
+
+-- -----------------------------------------------------------------------------
+-- Synonym and grants (run as a user allowed to create public synonyms / grant on LIB_APX_USR).
+-- CUSTOMS = parsing schema of the APEX application: APEX needs the direct grant.
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE PUBLIC SYNONYM pkg_impr1110 FOR LIB_APX_USR.pkg_impr1110;
+
+GRANT EXECUTE ON LIB_APX_USR.pkg_impr1110 TO LIB_USR;
+
+GRANT EXECUTE ON LIB_APX_USR.pkg_impr1110 TO SECURITY_DEFAULT;
+
+GRANT EXECUTE ON LIB_APX_USR.pkg_impr1110 TO SECURITY_PROD;
+
+GRANT EXECUTE ON LIB_APX_USR.pkg_impr1110 TO CUSTOMS;

@@ -3,13 +3,14 @@
 -- Author       : Claude Code
 -- Created      : 2026-11-18
 -- Version      : 1.0.0
+-- Owner       : LIB_APX_USR (public synonym IMPR1110; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
 -- Status       : NOT COMPILED.
 -- Note         : no business logic here - every member delegates to pkg_impr1110_apx /
 --                pkg_impr1110 (step 02). No COMMIT: APEX commits after page processing.
 -- =============================================================================
 SET DEFINE OFF
 
-CREATE OR REPLACE PACKAGE BODY IMPR1110
+CREATE OR REPLACE PACKAGE BODY LIB_APX_USR.IMPR1110
 AS
     c_err        CONSTANT PLS_INTEGER  := -20001;
     c_hero_title CONSTANT VARCHAR2(200) := 'إضافة وتعديل بيانات مستورد';
@@ -227,6 +228,17 @@ AS
         -- Source: LOV_UPDATE_IMPR_MOBILE.CTRL_BLK.PB_CANCEL (CANCEL_LOV_FORM)
         pkg_forms_compat.set_global('MOBILE_NO', NULL);
     END MOBILE_CANCEL;
+
+    -- =========================================================================
+    -- PACKAGE VERSION   (SELECT IMPR1110.PKG_VERSION FROM dual;)
+    -- =========================================================================
+    FUNCTION PKG_VERSION
+       RETURN VARCHAR2
+    IS
+    BEGIN
+       RETURN V_INFO;
+    END PKG_VERSION;
+
 END IMPR1110;
 /
 SHOW ERRORS

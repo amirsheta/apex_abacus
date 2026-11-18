@@ -55,6 +55,15 @@ FORM_TRIGGER_FAILURE, :SYSTEM.*, :GLOBAL.*, :PARAMETER.*.
 
 ## Step 4 — Generate the package {{FORM_NAME_UC}}
 Start from plsql_templates/pkg_template_spec.sql and pkg_template_body.sql.
+Package header and installation (CLAUDE.md §3.2), exactly as in the template:
+- Owner LIB_APX_USR: CREATE OR REPLACE PACKAGE LIB_APX_USR.{{FORM_NAME_UC}} AS ...
+- The spec starts with the version block (V_PKG_VERSION / _QC / _DEV = 'VERSION NO. IS:' || '001',
+  FUNCTION PKG_VERSION, V_PACKAGE_NAME = '{{FORM_NAME_UC}}', V_LAST_MODIFY_DT = today DD-MM-YYYY,
+  V_MODIFIED_BY, V_INFO). The body ends with PKG_VERSION returning V_INFO.
+- The spec file ends with the public synonym {{FORM_NAME_UC}} and GRANT EXECUTE to LIB_USR,
+  SECURITY_DEFAULT, SECURITY_PROD and CUSTOMS.
+- List in the extraction report every table / package the code uses: LIB_APX_USR needs a direct
+  grant on each (definer rights).
 Layout mirrors the form: FORM LEVEL section → one section per BLOCK (in Forms block order)
 → PROGRAM UNITS (same names as in Forms) → UI LOGIC comments.
 
@@ -145,6 +154,8 @@ analysis/{{FORM_NAME}}/{{FORM_NAME}}_logic_extraction.md containing:
   only allowed inside comments.
 - grep for `pkg_{{FORM_NAME}}` and `AI_` — no matches (f345 naming).
 - CHK and REQUIRED_VAL exist; every name ≤ 30 bytes.
+- Owner LIB_APX_USR in spec and body; version block and PKG_VERSION present; synonym and the
+  4 grants (LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS) at the end of the spec file.
 - Every trigger from the inventory appears in the classification table.
 - Print a summary: members created, triggers mapped, DA items, TODO count.
 ```

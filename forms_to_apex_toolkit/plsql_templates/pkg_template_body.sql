@@ -7,9 +7,20 @@
 -- =============================================================================
 SET DEFINE OFF
 
-CREATE OR REPLACE PACKAGE BODY <FORM>
+CREATE OR REPLACE PACKAGE BODY LIB_APX_USR.<FORM>
 AS
     c_err CONSTANT PLS_INTEGER := -20001;
+
+    -- =========================================================================
+    -- PACKAGE VERSION
+    -- =========================================================================
+    -- SELECT <FORM>.PKG_VERSION FROM dual;  -> package name, version, modified date / by
+    FUNCTION PKG_VERSION
+       RETURN VARCHAR2
+    IS
+    BEGIN
+       RETURN V_INFO;
+    END PKG_VERSION;
 
     -- =========================================================================
     -- f345 HELPERS

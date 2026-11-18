@@ -1,4 +1,5 @@
 -- =============================================================================
+-- Owner       : LIB_APX_USR (public synonym pkg_forms_compat; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
 -- Package     : pkg_forms_compat
 -- Purpose     : Forms-like server-side "built-ins" for migrated code, so converted
 --               trigger code reads like the original Forms code.
@@ -14,9 +15,30 @@
 -- =============================================================================
 SET DEFINE OFF
 
-CREATE OR REPLACE PACKAGE pkg_forms_compat
-AUTHID DEFINER
-AS
+CREATE OR REPLACE PACKAGE LIB_APX_USR.pkg_forms_compat AS
+   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
+   V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
+   V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
+   FUNCTION PKG_VERSION
+      RETURN VARCHAR2;
+   V_PACKAGE_NAME      VARCHAR2 (50) := 'PKG_FORMS_COMPAT';
+   V_LAST_MODIFY_DT    VARCHAR2 (10) := '18-11-2026';
+   V_MODIFIED_BY       VARCHAR2 (50) := 'Claude Code';
+   V_INFO              VARCHAR2 (500)
+      :=    'PACKAGE NAME :  '
+         || V_PACKAGE_NAME
+         || CHR (10)
+         || CHR (13)
+         || V_PKG_VERSION
+         || CHR (10)
+         || CHR (13)
+         || 'MODIFIED DATE : '
+         || V_LAST_MODIFY_DT
+         || CHR (10)
+         || CHR (13)
+         || 'MODIFIED BY : '
+         || V_MODIFIED_BY;
+
     c_err_ftf       CONSTANT PLS_INTEGER := -20000;   -- FORM_TRIGGER_FAILURE equivalent
     c_global_prefix CONSTANT VARCHAR2(3) := 'G_';     -- :GLOBAL.X -> application item G_X (f345 convention; was AI_)
 
@@ -73,7 +95,7 @@ END pkg_forms_compat;
 /
 SHOW ERRORS
 
-CREATE OR REPLACE PACKAGE BODY pkg_forms_compat
+CREATE OR REPLACE PACKAGE BODY LIB_APX_USR.pkg_forms_compat
 AS
     -- Fallback storage for globals when running outside APEX (unit tests, SQL*Plus)
     TYPE t_globals IS TABLE OF VARCHAR2(4000) INDEX BY VARCHAR2(30);
@@ -254,6 +276,31 @@ AS
         RETURN v_result;
     END apex_error_handler;
 
+
+    -- =========================================================================
+    -- PACKAGE VERSION   (SELECT pkg_forms_compat.PKG_VERSION FROM dual;)
+    -- =========================================================================
+    FUNCTION PKG_VERSION
+       RETURN VARCHAR2
+    IS
+    BEGIN
+       RETURN V_INFO;
+    END PKG_VERSION;
+
 END pkg_forms_compat;
 /
 SHOW ERRORS
+
+-- -----------------------------------------------------------------------------
+-- Synonym and grants (run as a user allowed to create public synonyms / grant on LIB_APX_USR).
+-- CUSTOMS = parsing schema of the APEX application: APEX needs the direct grant.
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE PUBLIC SYNONYM pkg_forms_compat FOR LIB_APX_USR.pkg_forms_compat;
+
+GRANT EXECUTE ON LIB_APX_USR.pkg_forms_compat TO LIB_USR;
+
+GRANT EXECUTE ON LIB_APX_USR.pkg_forms_compat TO SECURITY_DEFAULT;
+
+GRANT EXECUTE ON LIB_APX_USR.pkg_forms_compat TO SECURITY_PROD;
+
+GRANT EXECUTE ON LIB_APX_USR.pkg_forms_compat TO CUSTOMS;

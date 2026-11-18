@@ -76,7 +76,18 @@ database — keep this in mind before suggesting an APEX upgrade.
    - Use `SET DEFINE OFF` unless substitution variables are intentionally used.
    - Terminate every PL/SQL unit with `/` on its own line.
    - End DDL scripts with `SHOW ERRORS` for each compiled unit.
-2. **PL/SQL packages** — always two files: `<pkg>_spec.sql` and `<pkg>_body.sql`.
+2. **PL/SQL packages** — always two files: `<pkg>_spec.sql` and `<pkg>_body.sql`, built from
+   `plsql_templates/pkg_template_spec.sql` / `_body.sql`:
+   - Owner **`LIB_APX_USR`**: `CREATE OR REPLACE PACKAGE LIB_APX_USR.<FORM> AS` /
+     `CREATE OR REPLACE PACKAGE BODY LIB_APX_USR.<FORM>`.
+   - The spec starts with the version block: `V_PKG_VERSION`, `V_PKG_VERSION_QC`, `V_PKG_VERSION_DEV`
+     (`'VERSION NO. IS:' || '001'`), `FUNCTION PKG_VERSION RETURN VARCHAR2`, `V_PACKAGE_NAME`,
+     `V_LAST_MODIFY_DT` (`DD-MM-YYYY`), `V_MODIFIED_BY` and `V_INFO`. The body ends with
+     `PKG_VERSION` returning `V_INFO`. Raise the version and the date on every change.
+   - The spec file ends with `CREATE OR REPLACE PUBLIC SYNONYM <FORM> FOR LIB_APX_USR.<FORM>;` and
+     `GRANT EXECUTE ON LIB_APX_USR.<FORM> TO` `LIB_USR`, `SECURITY_DEFAULT`, `SECURITY_PROD` and
+     `CUSTOMS` (the APEX parsing schema needs a direct grant, not one through a role).
+   - `LIB_APX_USR` needs direct grants on every table and package the code uses (definer rights).
 3. **APEX exports** — `f<appid>_<formname>.sql` built with `wwv_flow_api` calls: a **component
    export** into the application built from f345, wrapped in `wwv_flow_api.component_begin` /
    `component_end`, using f345's ID offset and template IDs (§4b). Mark as `-- REVIEW BEFORE IMPORT`.

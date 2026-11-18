@@ -3,6 +3,7 @@
 -- Author       : Claude Code
 -- Created      : 2026-11-18
 -- Version      : 1.2.0  (2026-11-18: menu parameters read from f345 application items, see ai();
+-- Owner       : LIB_APX_USR (public synonym pkg_impr1110_apx; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
 --                        previous version rollback/IMPR1110/pkg_impr1110_apx_body_v1_1_0.sql)
 -- Status       : NOT COMPILED.
 -- Called by    : package IMPR1110 (APEX entry point, f345 standard). Pages never call this package directly.
@@ -13,7 +14,7 @@
 -- =============================================================================
 SET DEFINE OFF
 
-CREATE OR REPLACE PACKAGE BODY pkg_impr1110_apx
+CREATE OR REPLACE PACKAGE BODY LIB_APX_USR.pkg_impr1110_apx
 AS
     c_mask CONSTANT VARCHAR2(10) := 'MI-MM-YYYY';   -- Hijri date mask of the form (as in Forms)
 
@@ -720,6 +721,17 @@ AS
         WHEN OTHERS THEN
             raise_application_error(-20000, err_text(v_op));
     END page_dml;
+
+
+    -- =========================================================================
+    -- PACKAGE VERSION   (SELECT pkg_impr1110_apx.PKG_VERSION FROM dual;)
+    -- =========================================================================
+    FUNCTION PKG_VERSION
+       RETURN VARCHAR2
+    IS
+    BEGIN
+       RETURN V_INFO;
+    END PKG_VERSION;
 
 END pkg_impr1110_apx;
 /

@@ -950,7 +950,36 @@ def selfcheck(text):
         'create_flow_item', 'create_security_scheme', 'create_page_group']}
     return problems, counts, sorted(ph)
 
+def ready_copy(text, args):
+    """Write an import-ready copy with the 4 placeholders replaced (App Builder cannot read
+    the tokens: ORA-06502 character to number conversion error on upload)."""
+    vals = {}
+    for a in args:
+        k, _, v = a.lstrip('-').partition('=')
+        vals[k.replace('-', '_').lower()] = v.strip()
+    need = ['workspace_id', 'app_id', 'id_offset', 'schema']
+    missing = [k for k in need if not vals.get(k)]
+    if missing:
+        sys.exit('missing: ' + ', '.join('--%s=' % m.replace('_', '-') for m in missing))
+    for k in ('workspace_id', 'app_id', 'id_offset'):
+        if not re.fullmatch(r'-?\d+', vals[k]):
+            sys.exit('--%s must be a number, got %r' % (k.replace('_', '-'), vals[k]))
+    if not re.fullmatch(r'[A-Za-z][A-Za-z0-9_$#]{0,29}', vals['schema']):
+        sys.exit('--schema is not a valid schema name: %r' % vals['schema'])
+    out = (text.replace('__WORKSPACE_ID__', vals['workspace_id'])
+               .replace('__APP_ID__', vals['app_id'])
+               .replace('__ID_OFFSET__', vals['id_offset'])
+               .replace('__SCHEMA_NAME__', vals['schema'].upper()))
+    left = set(re.findall(r'__[A-Z_]+__', out))
+    if left:
+        sys.exit('placeholders left: %s' % sorted(left))
+    path = os.path.join(ROOT, 'apex', 'IMPR1110', 'f%s_impr1110_import.sql' % vals['app_id'])
+    with open(path, 'w', encoding='utf-8', newline='\n') as f:
+        f.write(out)
+    print('import-ready copy:', path)
+
 if __name__ == '__main__':
+    # optional: --workspace-id=N --app-id=N --id-offset=N --schema=NAME -> import-ready copy
     sys.stdout.reconfigure(encoding='utf-8')
     t = gen()
     probs, counts, ph = selfcheck(t)
@@ -959,4 +988,7 @@ if __name__ == '__main__':
         print('  %-28s %d' % (k, v))
     print('placeholders:', ', '.join(ph))
     print('problems:', probs or 'none')
-    sys.exit(1 if probs else 0)
+    if probs:
+        sys.exit(1)
+    if len(sys.argv) > 1:
+        ready_copy(t, sys.argv[1:])

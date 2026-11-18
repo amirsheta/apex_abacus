@@ -50,14 +50,21 @@ the *Page Functions* list are referenced as `wwv_flow_api.id(<f345 number>)`. Th
 
 Check: `grep -n '__[A-Z_]*__' f345_impr1110.sql` must print nothing.
 
-## 3. Prerequisites (in `__SCHEMA_NAME__`)
+## 3. Prerequisites
 
-1. Compile, in this order (none of them has been compiled yet):
+1. Compile **as `LIB_APX_USR`** (every package is created as `LIB_APX_USR.<name>`), in this order. Each
+   spec file ends with its public synonym and the EXECUTE grants to `LIB_USR`, `SECURITY_DEFAULT`,
+   `SECURITY_PROD` and `CUSTOMS` (the parsing schema: APEX needs a direct grant). Run those as a user
+   allowed to create public synonyms. `SELECT <package>.PKG_VERSION FROM dual` shows the version.
+   None of them has been compiled yet:
    1. `plsql_templates/pkg_forms_compat.sql`: **changed**, `:GLOBAL.X` is now application item `G_X` (was `AI_X`). Previous version: `rollback/COMMON/pkg_forms_compat_v0.sql`.
    2. `pkg_impr1110` spec + body 1.0.1 (unchanged).
    3. `pkg_impr1110_apx` spec + body **1.2.0**: the menu parameters are read from the f345 application items (`ai()`). Previous version: `rollback/IMPR1110/pkg_impr1110_apx_body_v1_1_0.sql`.
    4. **`IMPR1110`** spec + body 1.0.0 (new).
-2. Grants: SELECT on `IMPORTERS`, `IMPR_TYPES`, `IMPR_TYPE_ID_TYPES`, `BUS_ID_TYPES`, `CITIES`, `COUNTRIES`, `SD_PORTS`, `CG_REF_CODES`, `SC_SYSTEM_OBJECTS`; EXECUTE on `STR_DB`.
+2. Grants, given **directly** (not through a role) to `LIB_APX_USR`, because the packages are definer-rights:
+   SELECT, INSERT, UPDATE, DELETE on `IMPORTERS`; SELECT on `IMPR_TYPES`, `IMPR_TYPE_ID_TYPES`, `BUS_ID_TYPES`,
+   `CITIES`, `COUNTRIES`, `SD_PORTS`, `CG_REF_CODES`, `SC_SYSTEM_OBJECTS`; EXECUTE on `STR_DB` and the other
+   libraries the package calls. The LOVs and the search page run as `CUSTOMS`, which needs SELECT on the same tables.
 3. Upload `impr1110.js` (and a minified `impr1110.min.js`) as Static Application Files. The page references `#APP_FILES#impr1110#MIN#.js`.
 4. Nothing else is needed in the application. Error handling (`APP_ERROR_HANDLER`), RTL / Arabic, login, `After Auth` (fills `P_CURR_PORT_CD`, `SSO_APP_USER`, …) and the page 0 toolbar all come from f345.
 

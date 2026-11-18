@@ -63,7 +63,7 @@ Rules:
 ## 4. Items = Forms items (keep the name)
 - Page item = `P<page>_<FORMS_ITEM_NAME>`, e.g. `ORDERS.CUSTOMER_ID` → `P120_CUSTOMER_ID`.
 - IG column name = Forms item name, e.g. `LINES.QTY` → column `QTY` in IG `LINES`.
-- Two blocks on one page have the same item name → `P<page>_<BLOCK_ABBR>_<ITEM>` (e.g. `P120_HDR_STATUS`).
+- Two blocks on one page have the same item name → `P<page>_<BLOCK>_<ITEM>` (e.g. `P120_HEADER_STATUS`).
 - Forms parameter → `P<page>_P_<PARAM>`; when a caller passes it, also application item `P_<PARAM>`
   (copied by process `PARAMETERS ENTRY`).
 - Item **Label** = Forms prompt. **Sequence** = Forms item order (tab order) × 10. Label template
@@ -82,10 +82,10 @@ detail block, `<ITEM> <TRIGGER>` for item triggers.
 |---|---|---|
 | Form WHEN-NEW-FORM-INSTANCE | Process (Before Header) `WHEN-NEW-FORM-INSTANCE` | `INIT_FORM` |
 | Form PRE-FORM | Process (Before Header) `PRE-FORM` | `PRE_FORM` |
-| `ORDERS.CUSTOMER_ID` WHEN-VALIDATE-ITEM | Validation `CUSTOMER_ID VALIDATION` + DA `CUSTOMER_ID WHEN-VALIDATE-ITEM` (FOS: `ORDERS.CHK(ORDERS.CUSTOMER_ID_VAL(...))`) | `CUSTOMER_ID_VAL` (error text); `CUSTOMER_ID_WVI` when it derives values |
-| Required item | Validation `CUSTOMER_ID REQUIRED` | `REQUIRED_VAL` |
-| `LINES.QTY` WHEN-VALIDATE-ITEM (detail IG) | DA `LINES QTY WHEN-VALIDATE-ITEM` | `LINES_QTY_VAL` |
-| `ORDERS` WHEN-VALIDATE-RECORD | Validation `ORDERS WHEN-VALIDATE-RECORD` | `ORDERS_WVR` |
+| `ORDERS.CUSTOMER_ID` WHEN-VALIDATE-ITEM | Validation `CUSTOMER_ID VALIDATION` + DA `CUSTOMER_ID WHEN-VALIDATE-ITEM` (FOS: `ORDERS.CHECK_ERROR(ORDERS.CUSTOMER_ID_VALIDATION(...))`) | `CUSTOMER_ID_VALIDATION` (error text); `CUSTOMER_ID_WHEN_VALIDATE_ITEM` when it derives values |
+| Required item | Validation `CUSTOMER_ID REQUIRED` | `REQUIRED_VALIDATION` |
+| `LINES.QTY` WHEN-VALIDATE-ITEM (detail IG) | DA `LINES QTY WHEN-VALIDATE-ITEM` | `LINES_QTY_VALIDATION` |
+| `ORDERS` WHEN-VALIDATE-RECORD | Validation `ORDERS WHEN-VALIDATE-RECORD` | `ORDERS_WHEN_VALIDATE_RECORD` |
 | `ORDERS` WHEN-CREATE-RECORD | Item defaults / process `WHEN-CREATE-RECORD` | `WHEN_CREATE_RECORD` |
 | master PRE-INSERT / PRE-UPDATE / PRE-DELETE | Process `PRE-INSERT` … (request CREATE / SAVE / DELETE) | `PRE_INSERT` / `PRE_UPDATE` / `PRE_DELETE` |
 | master POST-INSERT / POST-UPDATE / POST-DELETE | Process `POST-INSERT` … | `POST_INSERT` / `POST_UPDATE` / `POST_DELETE` |
@@ -93,13 +93,13 @@ detail block, `<ITEM> <TRIGGER>` for item triggers.
 | `ORDERS` POST-QUERY | Column in region SQL or a view; else process `POST-QUERY` | `POST_QUERY` (only if needed) |
 | `ORDERS` PRE-QUERY | WHERE clause of region / search-page SQL | — |
 | Form PRE-COMMIT / POST-FORMS-COMMIT | Process `PRE-COMMIT` / `POST-FORMS-COMMIT` | `PRE_COMMIT` / `POST_FORMS_COMMIT` |
-| `ORDERS.BTN_POST` WHEN-BUTTON-PRESSED | Button `BTN_POST` + Process `BTN_POST WHEN-BUTTON-PRESSED` | `BTN_POST_WBP` |
-| `ORDERS.ORDER_TYPE` WHEN-LIST-CHANGED | Dynamic Action `ORDER_TYPE WHEN-LIST-CHANGED` | `ORDER_TYPE_WLC` (only if server logic) |
+| `ORDERS.BTN_POST` WHEN-BUTTON-PRESSED | Button `BTN_POST` + Process `BTN_POST WHEN-BUTTON-PRESSED` | `BTN_POST_WHEN_BUTTON_PRESSED` |
+| `ORDERS.ORDER_TYPE` WHEN-LIST-CHANGED | Dynamic Action `ORDER_TYPE WHEN-LIST-CHANGED` | `ORDER_TYPE_WHEN_LIST_CHANGED` (only if server logic) |
 | Toolbar KEY-COMMIT / KEY-DELREC / ENTER-QUERY / KEY-EXIT | page 0 buttons CREATE·SAVE / DELETE / SEARCH / BACK | — |
 | Function (TMPLT `EXECUTE_FUNCTION`) | DA on the custom event `<SYS_OS_FILE_NAME>` fired by the *Page Functions* list | `EXEC_FUNS` |
 | Program unit `CALC_TOTAL` | — | `CALC_TOTAL` (same name) |
 
-Always present: `CHK(I_ERR)` (raises the error text), `REQUIRED_VAL`, `P0_PAGE_PK_CHECK`,
+Always present: `CHECK_ERROR(I_ERR)` (raises the error text), `REQUIRED_VALIDATION`, `P0_PAGE_PK_CHECK`,
 `GET_MODULE_ID`, `HEADER_TITLE`.
 
 Parameters of members called by APEX: `I_` / `IO_` / `O_` + the bind name
@@ -119,7 +119,7 @@ Use `FORMS_COMPAT` (in `plsql_templates/`) inside the form package:
 | Forms code | Converted code |
 |---|---|
 | `MESSAGE('Saved');` | `FORMS_COMPAT.message('Saved');` |
-| `MESSAGE('Error'); RAISE FORM_TRIGGER_FAILURE;` | `FORMS_COMPAT.ftf('Error');` |
+| `MESSAGE('Error'); RAISE FORM_TRIGGER_FAILURE;` | `FORMS_COMPAT.FORM_TRIGGER_FAILURE('Error');` |
 | `SHOW_ALERT('AL_STOP')` (stop alert) | `FORMS_COMPAT.alert('AL_STOP');` (text from Text Messages) |
 | `:GLOBAL.company_id` | `FORMS_COMPAT.get_global('COMPANY_ID')` → application item `G_COMPANY_ID` |
 | `:GLOBAL.x := v;` | `FORMS_COMPAT.set_global('X', v);` |
@@ -139,7 +139,7 @@ Reuse what f345 already has; create only what is missing.
 | Forms | APEX Shared Component name |
 |---|---|
 | LOV `LOV_CUSTOMERS` + record group `RG_CUSTOMERS` | List of Values `LOV_CUSTOMERS` (SQL from the record group query) |
-| Record group populated at runtime | Collection `COL_<RG_NAME>` |
+| Record group populated at runtime | Collection `COLLECTION_<RG_NAME>` |
 | Alert `AL_CONFIRM_DEL` | Text Message `AL_CONFIRM_DEL` (text = alert message; use with `apex_lang.message`) |
 | `:GLOBAL.COMPANY_ID` | Application Item `G_COMPANY_ID` (Session State Protection: Restricted) |
 | Menu parameter `:PARAMETER.P_CURR_PORT_CD` … | f345 items `P_CURR_PORT_CD`, `P_CLASS_CD`, `P_PORT_TYPE`, `P_BRKR_NBR`, `SSO_APP_USER`, `V_USR_TYPE` (filled by f345 `After Auth`); new `P_<NAME>` otherwise |
@@ -166,7 +166,7 @@ Reuse what f345 already has; create only what is missing.
   `page_alias`, `package_name` = form name, `status`, `owner`, dates).
 - `MIG_OBJECT_MAP`: one row per Forms object (`form_name`, `forms_object_type`, `forms_object_name`
   e.g. `ORDERS.CUSTOMER_ID.WHEN-VALIDATE-ITEM`, `apex_comp_type`, `apex_comp_name` e.g.
-  `CUSTOMER_ID VALIDATION`, `page_id`, `plsql_member` e.g. `ORDERS.CUSTOMER_ID_VAL`, `status`, `notes`).
+  `CUSTOMER_ID VALIDATION`, `page_id`, `plsql_member` e.g. `ORDERS.CUSTOMER_ID_VALIDATION`, `status`, `notes`).
   Toolbar buttons map to page 0.
 - View `MIG_V_WHERE_IS`: search by Forms name → where it is in APEX and PL/SQL.
 

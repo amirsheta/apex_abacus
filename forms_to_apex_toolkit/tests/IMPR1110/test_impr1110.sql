@@ -1,7 +1,7 @@
 -- =============================================================================
 -- utPLSQL v3 tests for IMPR1110 (pure logic only - no DML).
 -- Run:  exec ut.run('test_impr1110');
--- Members that write globals (g_set -> FORMS_COMPAT.set_global) need an APEX
+-- Members that write globals (SET_GLOBAL -> FORMS_COMPAT.set_global) need an APEX
 -- session: the beforeall creates one when the app exists (app 2000 = placeholder).
 -- Expected check digits for check_idno were computed with the same algorithm
 -- (1000000008, 1234567897, 2100000005 valid).
@@ -61,9 +61,9 @@ END test_impr1110;
 CREATE OR REPLACE PACKAGE BODY test_impr1110
 AS
     FUNCTION ctx (p_class NUMBER DEFAULT 1, p_utype NUMBER DEFAULT 1, p_port NUMBER DEFAULT 1)
-        RETURN IMPR1110.t_ctx
+        RETURN IMPR1110.T_CONTEXT
     IS
-        c IMPR1110.t_ctx;
+        c IMPR1110.T_CONTEXT;
     BEGIN
         c.curr_port_cd := p_port;
         c.class_cd     := p_class;
@@ -103,79 +103,79 @@ AS
     END digit_cases;
 
     PROCEDURE iban_normalise IS
-        r IMPR1110.t_rec;
+        r IMPR1110.T_RECORD;
     BEGIN
         r.bank_iban := '80 0000 0000 6080 1016 7519';      -- 22 chars without SA
-        IMPR1110.bank_iban_wvi(r);
+        IMPR1110.BANK_IBAN_WHEN_VALIDATE_ITEM(r);
         ut.expect(r.bank_iban).to_equal('SA8000000000608010167519');
         r.bank_iban := 'sa8000000000608010167519';
-        IMPR1110.bank_iban_wvi(r);
+        IMPR1110.BANK_IBAN_WHEN_VALIDATE_ITEM(r);
         ut.expect(r.bank_iban).to_equal('SA8000000000608010167519');
     END iban_normalise;
 
     PROCEDURE iban_bad_length IS
-        r IMPR1110.t_rec;
+        r IMPR1110.T_RECORD;
     BEGIN
         r.bank_iban := 'SA80000';
-        IMPR1110.bank_iban_wvi(r);
+        IMPR1110.BANK_IBAN_WHEN_VALIDATE_ITEM(r);
     END iban_bad_length;
 
     PROCEDURE iban_empty IS
-        r IMPR1110.t_rec;
+        r IMPR1110.T_RECORD;
     BEGIN
-        IMPR1110.bank_iban_wvi(r);
+        IMPR1110.BANK_IBAN_WHEN_VALIDATE_ITEM(r);
         ut.expect(r.bank_iban).to_be_null();
         r.bank_iban := 'SA';
-        IMPR1110.bank_iban_wvi(r);
+        IMPR1110.BANK_IBAN_WHEN_VALIDATE_ITEM(r);
         ut.expect(r.bank_iban).to_equal('SA');
     END iban_empty;
 
     PROCEDURE eng_name_ok IS
-        r IMPR1110.t_rec;
+        r IMPR1110.T_RECORD;
     BEGIN
         r.eng_impr_name := 'ALSAFI TRADING CO 2';
-        IMPR1110.eng_impr_name_wvi(r);
+        IMPR1110.ENG_IMPR_NAME_VALIDATE_ITEM(r);
         ut.expect(r.eng_impr_name).to_equal('ALSAFI TRADING CO 2');
     END eng_name_ok;
 
     PROCEDURE eng_name_arabic IS
-        r IMPR1110.t_rec;
+        r IMPR1110.T_RECORD;
     BEGIN
         r.eng_impr_name := 'شركة';
-        IMPR1110.eng_impr_name_wvi(r);
+        IMPR1110.ENG_IMPR_NAME_VALIDATE_ITEM(r);
     END eng_name_arabic;
 
     PROCEDURE mobile_ok IS
-        r IMPR1110.t_rec;
+        r IMPR1110.T_RECORD;
     BEGIN
         r.b_mobile_no := '512345678';
-        IMPR1110.b_mobile_no_wvi(r, ctx);
+        IMPR1110.B_MOBILE_NO_WHEN_VALIDATE_ITEM(r, ctx);
         ut.expect(r.b_mobile_no).to_equal('512345678');
     END mobile_ok;
 
     PROCEDURE mobile_bad IS
-        r IMPR1110.t_rec;
+        r IMPR1110.T_RECORD;
     BEGIN
         r.b_mobile_no := '0512345678';
-        IMPR1110.b_mobile_no_wvi(r, ctx);
+        IMPR1110.B_MOBILE_NO_WHEN_VALIDATE_ITEM(r, ctx);
     END mobile_bad;
 
     PROCEDURE email_bad IS
-        r IMPR1110.t_rec;
+        r IMPR1110.T_RECORD;
     BEGIN
         r.b_email := 'abc.com';
-        IMPR1110.b_email_wvi(r);
+        IMPR1110.B_EMAIL_WHEN_VALIDATE_ITEM(r);
     END email_bad;
 
     PROCEDURE tel_bad IS
-        r IMPR1110.t_rec;
+        r IMPR1110.T_RECORD;
     BEGIN
         r.impr_tel_nbr := '12345';
-        IMPR1110.impr_tel_nbr_wvi(r);
+        IMPR1110.IMPR_TEL_NBR_VALIDATE_ITEM(r);
     END tel_bad;
 
     PROCEDURE fun_rules IS
-        r IMPR1110.t_rec;
+        r IMPR1110.T_RECORD;
     BEGIN
         ut.expect(IMPR1110.fun_allowed('IMPR1110F1', r, ctx)).to_be_false();   -- no record
         ut.expect(IMPR1110.fun_allowed('IMPR1110F2', r, ctx)).to_be_false();
@@ -190,7 +190,7 @@ AS
     END fun_rules;
 
     PROCEDURE ui_existing IS
-        r IMPR1110.t_rec;
+        r IMPR1110.T_RECORD;
         j CLOB;
     BEGIN
         r.impr_nbr := 10; r.impr_type_cd := 1; r.bus_id_type_cd := 2;
@@ -202,7 +202,7 @@ AS
     END ui_existing;
 
     PROCEDURE ui_new_cr IS
-        r IMPR1110.t_rec;
+        r IMPR1110.T_RECORD;
         j CLOB;
     BEGIN
         r.impr_type_cd := 3; r.bus_id_type_cd := 2;               -- commercial register

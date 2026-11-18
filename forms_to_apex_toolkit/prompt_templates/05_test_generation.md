@@ -40,13 +40,13 @@ Generate a utPLSQL v3 test package TEST_{{FORM_NAME_UC}} (spec + body in one fil
   * one test per validation rule / error code in the error-code table, using
     --%throws(-20xxx) for expected exceptions
   * boundary tests (NULL inputs, max length, zero/negative numbers, date boundaries)
-- PRE_INSERT / PRE_UPDATE (and <BLOCK_ABBR>_PRE_INSERT …) tests assert the IO_ values they
+- PRE_INSERT / PRE_UPDATE (and <BLOCK>_PRE_INSERT …) tests assert the IO_ values they
   return (sequence values, audit columns, defaults) with ut.expect(...).to_equal(...).
-- <ITEM>_VAL functions: one test returning NULL (valid) and one per error text; CHK raises
-  when given an error text (--%throws(-20001)); REQUIRED_VAL for NULL / blank / value.
-- <ITEM>_WVI procedures: assert every IO_ / O_ value they derive.
+- <ITEM>_VALIDATION functions: one test returning NULL (valid) and one per error text; CHECK_ERROR raises
+  when given an error text (--%throws(-20001)); REQUIRED_VALIDATION for NULL / blank / value.
+- <ITEM>_WHEN_VALIDATE_ITEM procedures: assert every IO_ / O_ value they derive.
 - POST-QUERY / lookup functions: assert returned descriptions for known and unknown keys.
-- FORMS_COMPAT.ftf / alert raise -20000 → use --%throws(-20000).
+- FORMS_COMPAT.FORM_TRIGGER_FAILURE / alert raise -20000 → use --%throws(-20000).
 - Tests must compile on DB 12.1.0.2 (no qualified expressions; identifiers ≤ 30 bytes).
   Check that the installed utPLSQL v3 release supports 12.1 before installing.
 - Tests must not depend on an APEX session: call the members with literal I_ values (e.g.

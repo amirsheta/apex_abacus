@@ -10,8 +10,8 @@
 -- Purpose     : Business logic of block IMPORTERS, organised like the form:
 --               FORM LEVEL -> BLOCK IMPORTERS (block triggers, item triggers in item order)
 --               -> PROGRAM UNITS (same names as in Forms) -> UI state recorder.
--- Rules       : - no reference to APEX page items: item values come in as t_rec,
---                 :PARAMETER.* as t_ctx; :GLOBAL.* through FORMS_COMPAT.get/set_global.
+-- Rules       : - no reference to APEX page items: item values come in as T_RECORD,
+--                 :PARAMETER.* as T_CONTEXT; :GLOBAL.* through FORMS_COMPAT.get/set_global.
 --               - INTRFACE.Make_Field_Entrable / SET_ITEM_PROPERTY / GO_ITEM are recorded
 --                 (ui_* below) at the exact place Forms executes them; the page reads
 --                 ui_json after each call and applies it with a Dynamic Action.
@@ -26,7 +26,7 @@
 SET DEFINE OFF
 
 CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
-   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
+   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '003';
    V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    FUNCTION PKG_VERSION
@@ -56,7 +56,7 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
     c_no      CONSTANT PLS_INTEGER := 2;
 
     -- :PARAMETER.* of the form (session context)
-    TYPE t_ctx IS RECORD (
+    TYPE T_CONTEXT IS RECORD (
         curr_port_cd  NUMBER,          -- :PARAMETER.P_CURR_PORT_CD
         user_id       VARCHAR2(30),    -- :PARAMETER.P_USER_ID
         ws_id         VARCHAR2(30),    -- :PARAMETER.P_WS_ID
@@ -71,7 +71,7 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
     );
 
     -- One record of block IMPORTERS (all base-table items + non-DB items used by the code)
-    TYPE t_rec IS RECORD (
+    TYPE T_RECORD IS RECORD (
         -- Forms record context
         row_id             VARCHAR2(18),    -- ROWID of the queried row (Forms key mode ROWID)
         rec_status         VARCHAR2(10),    -- NEW / INSERT / QUERY / CHANGED (:SYSTEM.RECORD_STATUS)
@@ -152,45 +152,45 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
     -- FORM LEVEL
     -- =========================================================================
     -- Source: IMPR1110.WHEN-NEW-FORM-INSTANCE (business part)  APEX: Before Header process
-    PROCEDURE wnfi (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
+    PROCEDURE WHEN_NEW_FORM_INSTANCE (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT);
 
     -- =========================================================================
     -- BLOCK IMPORTERS - block triggers
     -- =========================================================================
     -- Source: IMPORTERS.WHEN-CREATE-RECORD
-    PROCEDURE importers_wcr (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
+    PROCEDURE IMPORTERS_WHEN_CREATE_RECORD (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT);
     -- Source: IMPORTERS.WHEN-NEW-RECORD-INSTANCE (needs p_answer for IMPR1110F1/F5 Confirm)
-    PROCEDURE importers_wnri (p_rec    IN OUT NOCOPY t_rec,
-                              p_ctx    IN OUT NOCOPY t_ctx,
+    PROCEDURE IMPORTERS_NEW_RECORD_INSTANCE (p_rec    IN OUT NOCOPY T_RECORD,
+                              p_ctx    IN OUT NOCOPY T_CONTEXT,
                               p_answer IN PLS_INTEGER DEFAULT c_yes);
     -- IMPR1110F1/F5 Confirm text ("سيتم تعديل الإسم إلى ...") or NULL when no Confirm is shown
-    FUNCTION  wnri_confirm_text (p_rec IN t_rec, p_ctx IN t_ctx) RETURN VARCHAR2;
+    FUNCTION  NEW_RECORD_CONFIRM_TEXT (p_rec IN T_RECORD, p_ctx IN T_CONTEXT) RETURN VARCHAR2;
     -- Source: IMPORTERS.PRE-RECORD
-    PROCEDURE importers_pre_rec (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
+    PROCEDURE IMPORTERS_PRE_RECORD (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT);
     -- Source: IMPORTERS.WHEN-CLEAR-BLOCK
-    PROCEDURE importers_wcb;
+    PROCEDURE IMPORTERS_WHEN_CLEAR_BLOCK;
     -- Source: IMPORTERS.PRE-QUERY (p_rec = query criteria; PORT_NAME criterion -> region SQL)
-    PROCEDURE importers_pre_qry (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
+    PROCEDURE IMPORTERS_PRE_QUERY (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT);
     -- Source: IMPORTERS.POST-QUERY
-    PROCEDURE importers_post_qry (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
+    PROCEDURE IMPORTERS_POST_QUERY (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT);
     -- Source: IMPORTERS.PRE-INSERT (p_answer = answer to the class 1 / user type 3 Confirm)
-    PROCEDURE importers_pre_ins (p_rec    IN OUT NOCOPY t_rec,
-                                 p_ctx    IN t_ctx,
+    PROCEDURE IMPORTERS_PRE_INSERT (p_rec    IN OUT NOCOPY T_RECORD,
+                                 p_ctx    IN T_CONTEXT,
                                  p_answer IN PLS_INTEGER DEFAULT c_yes);
     -- Source: Forms default INSERT of block IMPORTERS (no ON-INSERT trigger exists)
-    PROCEDURE importers_ins (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE IMPORTERS_INSERT (p_rec IN OUT NOCOPY T_RECORD);
     -- Source: IMPORTERS.POST-INSERT
-    PROCEDURE importers_post_ins (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
+    PROCEDURE IMPORTERS_POST_INSERT (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT);
     -- Source: IMPORTERS.PRE-UPDATE
-    PROCEDURE importers_pre_upd (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
+    PROCEDURE IMPORTERS_PRE_UPDATE (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT);
     -- Source: Forms default UPDATE of block IMPORTERS (key = ROWID, no ON-UPDATE trigger)
-    PROCEDURE importers_upd (p_rec IN t_rec);
+    PROCEDURE IMPORTERS_UPDATE (p_rec IN T_RECORD);
     -- Source: IMPORTERS.POST-UPDATE
-    PROCEDURE importers_post_upd (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE IMPORTERS_POST_UPDATE (p_rec IN OUT NOCOPY T_RECORD);
     -- Source: IMPORTERS.PRE-DELETE
-    PROCEDURE importers_pre_del (p_rec IN t_rec);
+    PROCEDURE IMPORTERS_PRE_DELETE (p_rec IN T_RECORD, p_ctx IN T_CONTEXT);
     -- Source: IMPORTERS.KEY-DELREC (business part, after the Confirm DA answered "yes")
-    PROCEDURE importers_key_delrec (p_rec IN t_rec);
+    PROCEDURE importers_key_delrec (p_rec IN T_RECORD, p_ctx IN T_CONTEXT);
     -- Source: IMPORTERS.ON-ERROR + PU CGTE$CHECK_CONSTRAINT_VIO: Forms text for a DB error.
     -- p_op = 'I' / 'U' / 'D' (operation that failed: FRM-40508 / 40509 / 40510)
     FUNCTION  importers_on_error (p_op      IN VARCHAR2,
@@ -202,56 +202,56 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
     -- p_from_item = TRUE  when :SYSTEM.TRIGGER_ITEM = :SYSTEM.CURSOR_ITEM (user left the item)
     --             = FALSE when the item is validated during record/commit validation
     -- =========================================================================
-    PROCEDURE port_cd_wvi          (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE hq_impr_nbr_post_chg;
-    PROCEDURE impr_nbr_wvi         (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE impr_type_cd_wvi     (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
-    PROCEDURE impr_type_cd_post_chg(p_rec IN t_rec);
-    PROCEDURE impr_type_cd_wnii    (p_rec IN OUT NOCOPY t_rec);
+    PROCEDURE PORT_CD_WHEN_VALIDATE_ITEM          (p_rec IN OUT NOCOPY T_RECORD);
+    PROCEDURE HQ_IMPR_NBR_POST_CHANGE;
+    PROCEDURE IMPR_NBR_WHEN_VALIDATE_ITEM         (p_rec IN OUT NOCOPY T_RECORD);
+    PROCEDURE IMPR_TYPE_CD_VALIDATE_ITEM     (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT);
+    PROCEDURE IMPR_TYPE_CD_POST_CHANGE(p_rec IN T_RECORD);
+    PROCEDURE IMPR_TYPE_CD_NEW_ITEM_INSTANCE    (p_rec IN OUT NOCOPY T_RECORD);
     -- LOV LOV_IMPR_TYPE return (KEY-LISTVAL after CALL_FORM)
-    PROCEDURE impr_type_cd_lov_ret (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE bus_id_exprd_dt_wvi  (p_rec IN t_rec, p_from_item IN BOOLEAN DEFAULT TRUE);
-    PROCEDURE bus_id_type_post_chg (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE comm_rgstrtn_wlc     (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE ctry_cd_of_id_wvi    (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE city_code_of_id_wvi  (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE city_code_of_id_wnii (p_rec IN t_rec);
+    PROCEDURE IMPR_TYPE_CD_LOV_RETURN (p_rec IN OUT NOCOPY T_RECORD);
+    PROCEDURE BUS_ID_EXPRD_DT_VALIDATE_ITEM  (p_rec IN T_RECORD, p_from_item IN BOOLEAN DEFAULT TRUE);
+    PROCEDURE BUS_ID_TYPE_CD_POST_CHANGE (p_rec IN OUT NOCOPY T_RECORD);
+    PROCEDURE COMM_RGSTRTN_TYPE_LIST_CHANGED     (p_rec IN OUT NOCOPY T_RECORD);
+    PROCEDURE CTRY_CD_OF_ID_VALIDATE_ITEM    (p_rec IN OUT NOCOPY T_RECORD);
+    PROCEDURE CITY_CODE_OF_ID_VALIDATE_ITEM  (p_rec IN OUT NOCOPY T_RECORD);
+    PROCEDURE CITY_CODE_OF_ID_WHEN_NEW_ITEM (p_rec IN T_RECORD);
     -- p_cr_answer : answer to alert 9-120 (ALERT_BUTTON1 = take the prefixed number)
     -- p_susp_answer: answer to the "suspended importer with same BUS_ID" warning
-    PROCEDURE bus_id_wvi           (p_rec         IN OUT NOCOPY t_rec,
-                                    p_ctx         IN t_ctx,
+    PROCEDURE BUS_ID_WHEN_VALIDATE_ITEM           (p_rec         IN OUT NOCOPY T_RECORD,
+                                    p_ctx         IN T_CONTEXT,
                                     p_cr_answer   IN PLS_INTEGER DEFAULT c_yes,
                                     p_susp_answer IN PLS_INTEGER DEFAULT c_yes);
     -- Suspended importer number that triggers the BUS_ID warning (0 = no warning)
-    FUNCTION  bus_id_susp_impr     (p_rec IN t_rec) RETURN NUMBER;
-    PROCEDURE bus_id_post_chg;
-    PROCEDURE bus_id_wnii          (p_rec IN t_rec);
-    PROCEDURE brnh_city_cd_wvi     (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE brnh_city_cd_wnii;
-    PROCEDURE bus_id_brnch_wvi     (p_rec       IN OUT NOCOPY t_rec,
-                                    p_ctx       IN t_ctx,
+    FUNCTION  BUS_ID_SUSPENDED_IMPORTER     (p_rec IN T_RECORD) RETURN NUMBER;
+    PROCEDURE BUS_ID_POST_CHANGE;
+    PROCEDURE BUS_ID_WHEN_NEW_ITEM_INSTANCE          (p_rec IN T_RECORD);
+    PROCEDURE BRNH_CITY_CD_VALIDATE_ITEM     (p_rec IN OUT NOCOPY T_RECORD);
+    PROCEDURE BRNH_CITY_CD_NEW_ITEM_INSTANCE;
+    PROCEDURE BUS_ID_BRNCH_VALIDATE_ITEM     (p_rec       IN OUT NOCOPY T_RECORD,
+                                    p_ctx       IN T_CONTEXT,
                                     p_cr_answer IN PLS_INTEGER DEFAULT c_yes);
-    PROCEDURE bus_id_brnch_post_chg;
-    PROCEDURE bus_id_brnch_wnii    (p_rec IN t_rec);
-    PROCEDURE ctry_cd_wvi          (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE impr_expr_type_post_chg;
-    PROCEDURE arbc_impr_name_wvi   (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE arbc_impr_name_key_nxt (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE eng_impr_name_wvi    (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE bus_id_issue_dt_wvi  (p_rec IN t_rec, p_from_item IN BOOLEAN DEFAULT TRUE);
-    PROCEDURE impr_nbr_parent_wvi  (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE add_ctry_cd_wvi      (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE city_code_wvi        (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE impr_tel_nbr_wvi     (p_rec IN t_rec);
-    PROCEDURE b_email_wvi          (p_rec IN t_rec, p_from_item IN BOOLEAN DEFAULT TRUE);
-    PROCEDURE b_email_post_chg     (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
-    PROCEDURE email_wvi            (p_rec IN t_rec, p_from_item IN BOOLEAN DEFAULT TRUE);
-    PROCEDURE b_mobile_no_wvi      (p_rec IN t_rec, p_ctx IN t_ctx);
-    PROCEDURE b_mobile_no_post_chg (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
-    PROCEDURE bank_iban_wvi        (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE bank_iban_wnii       (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE b_id_nbr_wvi         (p_rec IN t_rec);
-    PROCEDURE b_id_nbr_post_chg    (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx);
+    PROCEDURE BUS_ID_BRNCH_POST_CHANGE;
+    PROCEDURE BUS_ID_BRNCH_NEW_ITEM_INSTANCE    (p_rec IN T_RECORD);
+    PROCEDURE CTRY_CD_WHEN_VALIDATE_ITEM          (p_rec IN OUT NOCOPY T_RECORD);
+    PROCEDURE IMPR_EXPR_TYPE_POST_CHANGE;
+    PROCEDURE ARBC_IMPR_NAME_VALIDATE_ITEM   (p_rec IN OUT NOCOPY T_RECORD);
+    PROCEDURE ARBC_IMPR_NAME_KEY_NEXT_ITEM (p_rec IN OUT NOCOPY T_RECORD);
+    PROCEDURE ENG_IMPR_NAME_VALIDATE_ITEM    (p_rec IN OUT NOCOPY T_RECORD);
+    PROCEDURE BUS_ID_ISSUE_DT_VALIDATE_ITEM  (p_rec IN T_RECORD, p_from_item IN BOOLEAN DEFAULT TRUE);
+    PROCEDURE IMPR_NBR_PARENT_VALIDATE_ITEM  (p_rec IN OUT NOCOPY T_RECORD);
+    PROCEDURE ADD_CTRY_CD_WHEN_VALIDATE_ITEM      (p_rec IN OUT NOCOPY T_RECORD);
+    PROCEDURE CITY_CODE_WHEN_VALIDATE_ITEM        (p_rec IN OUT NOCOPY T_RECORD);
+    PROCEDURE IMPR_TEL_NBR_VALIDATE_ITEM     (p_rec IN T_RECORD);
+    PROCEDURE B_EMAIL_WHEN_VALIDATE_ITEM          (p_rec IN T_RECORD, p_from_item IN BOOLEAN DEFAULT TRUE);
+    PROCEDURE B_EMAIL_POST_CHANGE     (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT);
+    PROCEDURE EMAIL_WHEN_VALIDATE_ITEM            (p_rec IN T_RECORD, p_from_item IN BOOLEAN DEFAULT TRUE);
+    PROCEDURE B_MOBILE_NO_WHEN_VALIDATE_ITEM      (p_rec IN T_RECORD, p_ctx IN T_CONTEXT);
+    PROCEDURE B_MOBILE_NO_POST_CHANGE (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT);
+    PROCEDURE BANK_IBAN_WHEN_VALIDATE_ITEM        (p_rec IN OUT NOCOPY T_RECORD);
+    PROCEDURE BANK_IBAN_NEW_ITEM_INSTANCE       (p_rec IN OUT NOCOPY T_RECORD);
+    PROCEDURE B_ID_NBR_WHEN_VALIDATE_ITEM         (p_rec IN T_RECORD);
+    PROCEDURE B_ID_NBR_POST_CHANGE    (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT);
 
     -- =========================================================================
     -- PROGRAM UNITS (same names as in Forms)
@@ -259,35 +259,35 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
     FUNCTION  check_idno (id_no IN VARCHAR2) RETURN BOOLEAN;
     FUNCTION  is_digit (txt_num IN VARCHAR2) RETURN BOOLEAN;
     PROCEDURE check_bus_id;
-    PROCEDURE chk_bus_id_brnch (p_rec IN t_rec);
-    PROCEDURE chk_impr_dupl (p_rec IN t_rec);
-    PROCEDURE chk_dupl_imp_brkr (p_rec IN t_rec, p_ctx IN t_ctx);
-    PROCEDURE chk_personal (p_rec          IN OUT NOCOPY t_rec,
-                            p_ctx          IN t_ctx,
+    PROCEDURE chk_bus_id_brnch (p_rec IN T_RECORD);
+    PROCEDURE chk_impr_dupl (p_rec IN T_RECORD);
+    PROCEDURE chk_dupl_imp_brkr (p_rec IN T_RECORD, p_ctx IN T_CONTEXT);
+    PROCEDURE chk_personal (p_rec          IN OUT NOCOPY T_RECORD,
+                            p_ctx          IN T_CONTEXT,
                             p_impr_type_cd IN NUMBER,
                             p_hq_impr_nbr  IN NUMBER,
                             p_stop         IN NUMBER DEFAULT 1);
-    PROCEDURE insert_audit_record (p_rec IN t_rec, p_ctx IN t_ctx, v_act_type IN VARCHAR2);
-    PROCEDURE update_basic_importer (p_rec IN t_rec);
-    PROCEDURE return_impr_id (p_rec IN t_rec, p_ctx IN t_ctx);
-    PROCEDURE broker_int (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE adj_funs (p_rec IN t_rec, p_ctx IN t_ctx);
+    PROCEDURE insert_audit_record (p_rec IN T_RECORD, p_ctx IN T_CONTEXT, v_act_type IN VARCHAR2);
+    PROCEDURE update_basic_importer (p_rec IN T_RECORD);
+    PROCEDURE return_impr_id (p_rec IN T_RECORD, p_ctx IN T_CONTEXT);
+    PROCEDURE broker_int (p_rec IN OUT NOCOPY T_RECORD);
+    PROCEDURE adj_funs (p_rec IN T_RECORD, p_ctx IN T_CONTEXT);
     -- Function-menu state after ADJ_FUNS: 'Y' enabled / 'N' disabled / NULL not touched
-    FUNCTION  fun_state (p_fun IN VARCHAR2) RETURN VARCHAR2;
-    PROCEDURE get_main_cr_data (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE get_branch_cr_data (p_rec IN OUT NOCOPY t_rec);
-    PROCEDURE get_cr_data (p_rec           IN OUT NOCOPY t_rec,
+    FUNCTION  FUNCTION_STATE (p_fun IN VARCHAR2) RETURN VARCHAR2;
+    PROCEDURE get_main_cr_data (p_rec IN OUT NOCOPY T_RECORD);
+    PROCEDURE get_branch_cr_data (p_rec IN OUT NOCOPY T_RECORD);
+    PROCEDURE get_cr_data (p_rec           IN OUT NOCOPY T_RECORD,
                            p_string_result IN VARCHAR2,
                            p_type          IN VARCHAR2);
     -- EXEC_FUNS(CD): server part of every function code; UI part -> see extraction report §5
-    PROCEDURE exec_funs (p_rec IN OUT NOCOPY t_rec, p_ctx IN OUT NOCOPY t_ctx, cd IN VARCHAR2);
-    PROCEDURE create_brkr_impr_auth (p_rec IN t_rec, p_ctx IN t_ctx);
+    PROCEDURE exec_funs (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN OUT NOCOPY T_CONTEXT, cd IN VARCHAR2);
+    PROCEDURE create_brkr_impr_auth (p_rec IN T_RECORD, p_ctx IN T_CONTEXT);
     -- UPDATE_IMPORTER: Confirm text, then the update itself after "yes"
-    FUNCTION  update_importer_msg (p_rec IN t_rec) RETURN VARCHAR2;
-    PROCEDURE update_importer (p_rec IN t_rec);
+    FUNCTION  update_importer_msg (p_rec IN T_RECORD) RETURN VARCHAR2;
+    PROCEDURE update_importer (p_rec IN T_RECORD);
     -- LOV_UPDATE_MOBLIE: part after the LOV_UPDATE_IMPR_MOBILE dialog returned :GLOBAL.MOBILE_NO
-    FUNCTION  central_mobile (p_rec IN t_rec, p_ctx IN t_ctx) RETURN NUMBER;
-    PROCEDURE lov_update_moblie (p_rec IN t_rec);
+    FUNCTION  central_mobile (p_rec IN T_RECORD, p_ctx IN T_CONTEXT) RETURN NUMBER;
+    PROCEDURE lov_update_moblie (p_rec IN T_RECORD);
 
     -- =========================================================================
     -- UI STATE RECORDER (INTRFACE.Make_Field_Entrable / SET_ITEM_PROPERTY / GO_ITEM / alerts)
@@ -315,10 +315,10 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
     c_mobile_page CONSTANT PLS_INTEGER := 111002;
 
     -- ------------------------------------------------------------- f345 helpers
-    -- Raises the error text (used by dynamic actions: IMPR1110.CHK(IMPR1110.<ITEM>_VAL(...)))
-    PROCEDURE CHK (I_ERR IN VARCHAR2);
+    -- Raises the error text (used by dynamic actions: IMPR1110.CHECK_ERROR(IMPR1110.<ITEM>_VALIDATION(...)))
+    PROCEDURE CHECK_ERROR (I_ERR IN VARCHAR2);
     -- Error text when a required value is empty, else NULL
-    FUNCTION  REQUIRED_VAL (I_VALUE IN VARCHAR2, I_LABEL IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION  REQUIRED_VALIDATION (I_VALUE IN VARCHAR2, I_LABEL IN VARCHAR2) RETURN VARCHAR2;
 
     -- ------------------------------------------------------------- Before Header
     -- Source: P0_PAGE_PK CHECK - forget a key that is not an importer of the current port
@@ -356,38 +356,38 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
 
     -- ------------------------------------------------------------- validations (on submit)
     -- Each returns the error text of the item's POST-CHANGE + WHEN-VALIDATE-ITEM, or NULL.
-    FUNCTION PORT_CD_VAL         (I_P1110_PORT_CD         IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION HQ_IMPR_NBR_VAL     (I_P1110_HQ_IMPR_NBR     IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION IMPR_NBR_VAL        (I_P1110_IMPR_NBR        IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION IMPR_TYPE_CD_VAL    (I_P1110_IMPR_TYPE_CD    IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION BUS_ID_EXPRD_DT_VAL (I_P1110_BUS_ID_EXPRD_DT IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION BUS_ID_TYPE_CD_VAL  (I_P1110_BUS_ID_TYPE_CD  IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION CITY_CODE_OF_ID_VAL (I_P1110_CITY_CODE_OF_ID IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION BUS_ID_VAL          (I_P1110_BUS_ID          IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION BRNH_CITY_CD_VAL    (I_P1110_BRNH_CITY_CD    IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION BUS_ID_BRNCH_VAL    (I_P1110_BUS_ID_BRNCH    IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION CTRY_CD_VAL         (I_P1110_CTRY_CD         IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION IMPR_EXPR_TYPE_VAL  (I_P1110_IMPR_EXPR_TYPE  IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION ARBC_IMPR_NAME_VAL  (I_P1110_ARBC_IMPR_NAME  IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION ENG_IMPR_NAME_VAL   (I_P1110_ENG_IMPR_NAME   IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION BUS_ID_ISSUE_DT_VAL (I_P1110_BUS_ID_ISSUE_DT IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION IMPR_NBR_PARENT_VAL (I_P1110_IMPR_NBR_PARENT IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION ADD_CTRY_CD_VAL     (I_P1110_ADD_CTRY_CD     IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION CITY_CODE_VAL       (I_P1110_CITY_CODE       IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION IMPR_TEL_NBR_VAL    (I_P1110_IMPR_TEL_NBR    IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION B_EMAIL_VAL         (I_P1110_B_EMAIL         IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION EMAIL_VAL           (I_P1110_EMAIL           IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION B_MOBILE_NO_VAL     (I_P1110_B_MOBILE_NO     IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION BANK_IBAN_VAL       (I_P1110_BANK_IBAN       IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION B_ID_NBR_VAL        (I_P1110_B_ID_NBR        IN VARCHAR2) RETURN VARCHAR2;
-    FUNCTION CTRY_CD_OF_ID_VAL   (I_P1110_CTRY_CD_OF_ID   IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION PORT_CD_VALIDATION         (I_P1110_PORT_CD         IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION HQ_IMPR_NBR_VALIDATION     (I_P1110_HQ_IMPR_NBR     IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION IMPR_NBR_VALIDATION        (I_P1110_IMPR_NBR        IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION IMPR_TYPE_CD_VALIDATION    (I_P1110_IMPR_TYPE_CD    IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION BUS_ID_EXPRD_DT_VALIDATION (I_P1110_BUS_ID_EXPRD_DT IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION BUS_ID_TYPE_CD_VALIDATION  (I_P1110_BUS_ID_TYPE_CD  IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION CITY_CODE_OF_ID_VALIDATION (I_P1110_CITY_CODE_OF_ID IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION BUS_ID_VALIDATION          (I_P1110_BUS_ID          IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION BRNH_CITY_CD_VALIDATION    (I_P1110_BRNH_CITY_CD    IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION BUS_ID_BRNCH_VALIDATION    (I_P1110_BUS_ID_BRNCH    IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION CTRY_CD_VALIDATION         (I_P1110_CTRY_CD         IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION IMPR_EXPR_TYPE_VALIDATION  (I_P1110_IMPR_EXPR_TYPE  IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION ARBC_IMPR_NAME_VALIDATION  (I_P1110_ARBC_IMPR_NAME  IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION ENG_IMPR_NAME_VALIDATION   (I_P1110_ENG_IMPR_NAME   IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION BUS_ID_ISSUE_DT_VALIDATION (I_P1110_BUS_ID_ISSUE_DT IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION IMPR_NBR_PARENT_VALIDATION (I_P1110_IMPR_NBR_PARENT IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION ADD_CTRY_CD_VALIDATION     (I_P1110_ADD_CTRY_CD     IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION CITY_CODE_VALIDATION       (I_P1110_CITY_CODE       IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION IMPR_TEL_NBR_VALIDATION    (I_P1110_IMPR_TEL_NBR    IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION B_EMAIL_VALIDATION         (I_P1110_B_EMAIL         IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION EMAIL_VALIDATION           (I_P1110_EMAIL           IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION B_MOBILE_NO_VALIDATION     (I_P1110_B_MOBILE_NO     IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION BANK_IBAN_VALIDATION       (I_P1110_BANK_IBAN       IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION B_ID_NBR_VALIDATION        (I_P1110_B_ID_NBR        IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION CTRY_CD_OF_ID_VALIDATION   (I_P1110_CTRY_CD_OF_ID   IN VARCHAR2) RETURN VARCHAR2;
     -- Source: FRM-40202 at commit (static Required + SET_ITEM_PROPERTY REQUIRED)
-    FUNCTION REQUIRED_ITEMS_VAL RETURN VARCHAR2;
+    FUNCTION REQUIRED_ITEMS_VALIDATION RETURN VARCHAR2;
 
     -- ------------------------------------------------------------- AJAX callbacks (impr1110.js)
     PROCEDURE AJAX_ITEM;        -- all item triggers (x01 item, x02 event)
     PROCEDURE AJAX_CONFIRM;     -- CONFIRM / WARNING alert texts
-    PROCEDURE AJAX_FUN;         -- PU EXEC_FUNS
+    PROCEDURE AJAX_FUNCTION;         -- PU EXEC_FUNS
 
     -- ------------------------------------------------------------- page 111002 (LOV_UPDATE_IMPR_MOBILE)
     FUNCTION  CENTRAL_MOBILE (I_P111002_IMPR_NBR IN VARCHAR2) RETURN NUMBER;

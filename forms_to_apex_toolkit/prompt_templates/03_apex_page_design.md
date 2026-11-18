@@ -43,7 +43,7 @@ Toolbar
 Names
 - Region Static ID = Forms block name; region order = Forms block order; title = block/frame title (Arabic).
 - Items keep the Forms item name: P<page>_<FORMS_ITEM>; IG column = Forms item name.
-  Duplicate names across blocks → P<page>_<BLOCK_ABBR>_<ITEM>. Item order = Forms tab order.
+  Duplicate names across blocks → P<page>_<BLOCK>_<ITEM>. Item order = Forms tab order.
   Forms parameters → P<page>_P_<PARAM> (+ application item P_<PARAM> when a caller passes it).
 - Processes `<TRIGGER>` (master block) / `<BLOCK> <TRIGGER>` (detail); validations
   `<ITEM> VALIDATION` / `<ITEM> REQUIRED`; DAs `<ITEM> WHEN-VALIDATE-ITEM` /
@@ -113,10 +113,10 @@ DA "Set Value" (SQL) on change — document the DA. Binds use f345 item names (:
 ## 7. Validations
 Map every WHEN-VALIDATE-ITEM and WHEN-VALIDATE-RECORD:
 | Validation name (`<ITEM> VALIDATION` / `<ITEM> REQUIRED`) | Level (item / page / IG row) | Type (PL/SQL Function Body returning Error Text / ...) |
-  Code (`return {{FORM_NAME_UC}}.<ITEM>_VAL(I_P<page>_<ITEM> => :P<page>_<ITEM>);`) | Associated item |
+  Code (`return {{FORM_NAME_UC}}.<ITEM>_VALIDATION(I_P<page>_<ITEM> => :P<page>_<ITEM>);`) | Associated item |
   Error display location | Condition (request CREATE / SAVE) | Source trigger |
 Plus the matching DA `<ITEM> WHEN-VALIDATE-ITEM` (change → FOS Execute PL/SQL Code:
-`{{FORM_NAME_UC}}.CHK({{FORM_NAME_UC}}.<ITEM>_VAL(...));`) so the user sees the error at once.
+`{{FORM_NAME_UC}}.CHECK_ERROR({{FORM_NAME_UC}}.<ITEM>_VALIDATION(...));`) so the user sees the error at once.
 For IG validations use :COLUMN bind syntax and "Editable Region" set to the IG.
 
 ## 8. Processes

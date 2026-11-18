@@ -103,8 +103,8 @@ database — keep this in mind before suggesting an APEX upgrade.
 |---|---|---|
 | Package per form | `<FORM>` — upper-case form name, no prefix (f345) | `AGR1100` |
 | Shared/library package | `LIB_<library_name>` | `LIB_COMMON` |
-| Standalone procedure | `prc_<name>` | `prc_recalc_totals` |
-| Standalone function | `fnc_<name>` | `fnc_get_discount` |
+| Standalone procedure | `<VERB>_<OBJECT>` in full words, no prefix | `RECALCULATE_TOTALS` |
+| Standalone function | `GET_<OBJECT>` / `<VERB>_<OBJECT>` in full words, no prefix | `GET_DISCOUNT` |
 | Local variables | `v_<name>` | `v_customer_id` |
 | Parameters of members called from APEX | `I_` / `IO_` / `O_` + bind name without `:` (f345) | `IO_P11100_AGRMNT_NO`, `I_MEMBER_ISN` |
 | Parameters of internal-only members | `p_<name>` | `p_order_id` |
@@ -113,15 +113,23 @@ database — keep this in mind before suggesting an APEX upgrade.
 | Cursors | `cur_<name>` | `cur_order_lines` |
 | Records / types | `t_<name>` / `tt_<name>` (collection) | `t_customer_rec` |
 | Exceptions | `e_<name>` | `e_credit_limit` |
-| Views for APEX | `v_<form>_<block>` (view objects only) | `v_orders_lines` |
+| Views for APEX | `<FORM>_<BLOCK>_VIEW` | `ORDERS_LINES_VIEW` |
 | APEX page items | `P<page>_<FORMS_ITEM_NAME>` (see §4a) | `P120_CUSTOMER_ID` |
 | APEX application items | Reuse the f345 item if one exists (`SSO_APP_USER`, `P_CURR_PORT_CD`, …); otherwise `:GLOBAL.X` → `G_X`, cross-page `:PARAMETER.X` → `P_X` (f345 convention). No `AI_` prefix | `G_LAST_PAGE`, `P_AGRMNT_NO` |
 | APEX LOVs (shared) | `LOV_<NAME>` | `LOV_COUNTRIES` |
-| APEX collections | `COL_<RECORD_GROUP>` | `COL_RG_PRICES` |
+| APEX collections | `COLLECTION_<RECORD_GROUP>` | `COLLECTION_RG_PRICES` |
 | Migration scripts | `NNN_<description>.sql` | `001_add_audit_columns.sql` |
 
 Form name = the `.fmb` file name in lower case without extension.
 All database identifiers ≤ 30 bytes (DB 12.1.0.2).
+
+**Never abbreviate** object, package, procedure, function, type or APEX component names: write the
+full words (`IMPORTERS_PRE_INSERT`, `BUS_ID_WHEN_VALIDATE_ITEM`, `CHECK_ERROR`, `<ITEM>_VALIDATION`,
+full block names). This also replaces the abbreviated names of the f345 reference app (`CHK`, `_VAL`).
+Only a name that would exceed 30 bytes is shortened: drop `WHEN_` first, then shorten the block part,
+and keep the full name in the comment. Original Forms names (program units, items, columns, Forms
+trigger names such as `KEY-DELREC`) stay exactly as in Forms; standard acronyms (`UI`, `DML`, `LOV`,
+`JSON`, `AJAX`, `APEX`) are allowed. Variable prefixes (`v_`, `p_`, `c_`, `g_`) are not affected.
 
 ---
 
@@ -136,23 +144,23 @@ Full rules: `docs/apex_structure_standard.md`. Summary:
 | Form module `ORDERS.fmb` | Main page ID from `MIG_FORM_REGISTRY`, name and alias `ORDERS`; search modal page `<main page>01`, name `ORDERS_SEARCH`, alias `ORDERS-SEARCH`; Page Group = Forms subsystem |
 | Block `ORDERS` | Region with Static ID `ORDERS`, title = block/canvas title (Arabic), same display order |
 | Item `ORDERS.CUSTOMER_ID` | Page item `P<page>_CUSTOMER_ID` (IG column `CUSTOMER_ID`) — keep the Forms item name |
-| Duplicate item names across blocks | `P<page>_<BLOCK_ABBR>_<ITEM>` |
-| Trigger `ORDERS.CUSTOMER_ID` WHEN-VALIDATE-ITEM | Dynamic Action `CUSTOMER_ID WHEN-VALIDATE-ITEM` (FOS plug-in: `ORDERS.CHK(ORDERS.CUSTOMER_ID_VAL(...))`) + validation `CUSTOMER_ID VALIDATION` (`return ORDERS.CUSTOMER_ID_VAL(...)`) |
+| Duplicate item names across blocks | `P<page>_<BLOCK>_<ITEM>` |
+| Trigger `ORDERS.CUSTOMER_ID` WHEN-VALIDATE-ITEM | Dynamic Action `CUSTOMER_ID WHEN-VALIDATE-ITEM` (FOS plug-in: `ORDERS.CHECK_ERROR(ORDERS.CUSTOMER_ID_VALIDATION(...))`) + validation `CUSTOMER_ID VALIDATION` (`return ORDERS.CUSTOMER_ID_VALIDATION(...)`) |
 | Trigger PRE-INSERT on the master block | Process `PRE-INSERT` calling `ORDERS.PRE_INSERT(...)` |
 | Trigger PRE-INSERT on detail block `ORDER_LINES` | Process `ORDER_LINES PRE-INSERT` calling `ORDERS.LINES_PRE_INSERT(...)` |
 | UI trigger (WHEN-LIST-CHANGED…) | Dynamic Action `ORDER_TYPE WHEN-LIST-CHANGED` (detail block: `<BLOCK> <ITEM> <TRIGGER>`) |
 | Program unit `CALC_TOTAL` | `<FORM>.CALC_TOTAL` (same name) |
-| LOV `LOV_CUSTOMERS` / record group `RG_X` | Shared LOV `LOV_CUSTOMERS` / collection `COL_RG_X` |
+| LOV `LOV_CUSTOMERS` / record group `RG_X` | Shared LOV `LOV_CUSTOMERS` / collection `COLLECTION_RG_X` |
 | Alert `AL_CONFIRM_DEL` | Text Message `AL_CONFIRM_DEL` (Shared Components) |
 | `:GLOBAL.X` / `:PARAMETER.X` | Application Item `G_X` (reuse f345's if it exists) / page item `P<page>_P_X` (+ app item `P_X` when passed between pages) |
 | Menu role `CLERK` | Application privileges (no Authorization Scheme generated, §8) |
 
 Rules:
 1. Every APEX component's **Comments** attribute = `Source: <FORM>.<BLOCK>.<ITEM>.<TRIGGER>`.
-2. Package member names follow f345: master-block trigger `PRE_INSERT`, detail block
-   `<BLOCK_ABBR>_PRE_INSERT`, validation function `<ITEM>_VAL` (returns error text), side-effect
-   procedure `<ITEM>_WVI`; all ≤ 30 bytes. Details: `docs/f345_reference_standard.md` §5.
-3. Use `FORMS_COMPAT` (Forms-like server built-ins: `message`, `ftf`, `alert`, `get_global`, …)
+2. Package member names (full words, see §4): master-block trigger `PRE_INSERT`, detail block
+   `<BLOCK>_PRE_INSERT`, validation function `<ITEM>_VALIDATION` (returns error text), side-effect
+   procedure `<ITEM>_WHEN_VALIDATE_ITEM`; all ≤ 30 bytes. Details: `docs/f345_reference_standard.md` §5.
+3. Use `FORMS_COMPAT` (Forms-like server built-ins: `message`, `FORM_TRIGGER_FAILURE`, `alert`, `get_global`, …)
    so converted code reads like the original trigger code.
 4. Register every form and every mapped object in `MIG_FORM_REGISTRY` / `MIG_OBJECT_MAP`
    (`scripts/create_migration_registry.sql`) — produce the INSERT script per form.

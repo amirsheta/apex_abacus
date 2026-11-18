@@ -26,20 +26,20 @@ AS
     -- =========================================================================
     -- f345 HELPERS
     -- =========================================================================
-    PROCEDURE CHK (I_ERR IN VARCHAR2)
+    PROCEDURE CHECK_ERROR (I_ERR IN VARCHAR2)
     IS
     BEGIN
         IF I_ERR IS NOT NULL THEN
             raise_application_error(c_err, I_ERR);
         END IF;
-    END CHK;
+    END CHECK_ERROR;
 
-    FUNCTION REQUIRED_VAL (I_VALUE IN VARCHAR2, I_LABEL IN VARCHAR2) RETURN VARCHAR2
+    FUNCTION REQUIRED_VALIDATION (I_VALUE IN VARCHAR2, I_LABEL IN VARCHAR2) RETURN VARCHAR2
     IS
     BEGIN
         -- Source: FRM-40202 "Field must be entered"
         RETURN CASE WHEN TRIM(I_VALUE) IS NULL THEN 'يجب إدخال ' || I_LABEL END;
-    END REQUIRED_VAL;
+    END REQUIRED_VALIDATION;
 
     PROCEDURE P0_PAGE_PK_CHECK (IO_P0_PAGE_PK IN OUT VARCHAR2)
     IS
@@ -105,21 +105,21 @@ AS
     --      MESSAGE('Value is required'); RAISE FORM_TRIGGER_FAILURE;
     --   END IF;
     -- Returns NULL when valid, otherwise the error text (APEX shows it next to the item).
-    FUNCTION <ITEM>_VAL (I_P<page>_<ITEM> IN VARCHAR2) RETURN VARCHAR2
+    FUNCTION <ITEM>_VALIDATION (I_P<page>_<ITEM> IN VARCHAR2) RETURN VARCHAR2
     IS
     BEGIN
         IF I_P<page>_<ITEM> IS NULL THEN
             RETURN 'Value is required';
         END IF;
         RETURN NULL;
-    END <ITEM>_VAL;
+    END <ITEM>_VALIDATION;
 
     -- Source: <BLOCK>.WHEN-VALIDATE-RECORD
     -- Original Forms code:
     --   IF :<BLOCK>.end_date < :<BLOCK>.start_date THEN
     --      SHOW_ALERT('AL_DATES'); RAISE FORM_TRIGGER_FAILURE;
     --   END IF;
-    FUNCTION <BLOCK>_WVR (I_P<page>_START_DATE IN DATE,
+    FUNCTION <BLOCK>_WHEN_VALIDATE_RECORD (I_P<page>_START_DATE IN DATE,
                           I_P<page>_END_DATE   IN DATE) RETURN VARCHAR2
     IS
     BEGIN
@@ -127,7 +127,7 @@ AS
             RETURN apex_lang.message('AL_DATES');          -- Text Message named after the alert
         END IF;
         RETURN NULL;
-    END <BLOCK>_WVR;
+    END <BLOCK>_WHEN_VALIDATE_RECORD;
 
     -- Source: <BLOCK>.PRE-INSERT
     -- Original Forms code:
@@ -160,7 +160,7 @@ AS
     BEGIN
         -- SELECT COUNT(*) INTO v_cnt FROM <child_table> WHERE <fk> = I_P<page>_<PK>;
         IF v_cnt > 0 THEN
-            FORMS_COMPAT.ftf('Child records exist');      -- MESSAGE + FORM_TRIGGER_FAILURE
+            FORMS_COMPAT.FORM_TRIGGER_FAILURE('Child records exist');      -- MESSAGE + FORM_TRIGGER_FAILURE
         END IF;
     END PRE_DELETE;
 
@@ -182,21 +182,21 @@ AS
     -- BLOCK <DETAIL_BLOCK>  (detail)
     -- =========================================================================
     -- Source: <DETAIL_BLOCK>.<COLUMN>.WHEN-VALIDATE-ITEM
-    FUNCTION <BLOCK_ABBR>_<COLUMN>_VAL (I_<COLUMN> IN VARCHAR2) RETURN VARCHAR2
+    FUNCTION <DETAIL_BLOCK>_<COLUMN>_VALIDATION (I_<COLUMN> IN VARCHAR2) RETURN VARCHAR2
     IS
     BEGIN
         RETURN NULL;
-    END <BLOCK_ABBR>_<COLUMN>_VAL;
+    END <DETAIL_BLOCK>_<COLUMN>_VALIDATION;
 
     -- Source: <DETAIL_BLOCK>.PRE-INSERT (master key copied to the new row, own key from a sequence)
-    PROCEDURE <BLOCK_ABBR>_PRE_INSERT (I_P<page>_<PK> IN VARCHAR2,
+    PROCEDURE <DETAIL_BLOCK>_PRE_INSERT (I_P<page>_<PK> IN VARCHAR2,
                                        IO_<FK>        IN OUT VARCHAR2,
                                        IO_<DETAIL_PK> IN OUT VARCHAR2)
     IS
     BEGIN
         IO_<FK> := I_P<page>_<PK>;
         -- IO_<DETAIL_PK> := <detail_seq>.NEXTVAL;
-    END <BLOCK_ABBR>_PRE_INSERT;
+    END <DETAIL_BLOCK>_PRE_INSERT;
 
     -- =========================================================================
     -- PROGRAM UNITS   (same names as in the Forms Program Units node)

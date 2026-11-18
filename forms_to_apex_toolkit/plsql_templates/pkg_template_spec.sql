@@ -1,6 +1,6 @@
 -- =============================================================================
 -- Package     : <FORM>              (upper-case form name, no prefix - f345 standard, e.g. AGR1100)
---               replace <FORM>, <page>, <BLOCK>, <BLOCK_ABBR>, <ITEM>, <PK> everywhere
+--               replace <FORM>, <page>, <BLOCK>, <DETAIL_BLOCK>, <ITEM>, <PK> everywhere
 -- Source form : <FORM>.fmb (Oracle Forms 12c)
 -- Target      : Oracle APEX 21.2 / Oracle Database 12.1.0.2, reference application f345
 -- Author      : <author>
@@ -48,12 +48,12 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.<FORM> AS
     -- =========================================================================
     -- f345 HELPERS                                 (every form package has these)
     -- =========================================================================
-    -- Raises the error text; used by dynamic actions: <FORM>.CHK(<FORM>.<ITEM>_VAL(...))
-    PROCEDURE CHK (I_ERR IN VARCHAR2);
+    -- Raises the error text; used by dynamic actions: <FORM>.CHECK_ERROR(<FORM>.<ITEM>_VALIDATION(...))
+    PROCEDURE CHECK_ERROR (I_ERR IN VARCHAR2);
 
     -- Error text when a required value is empty, else NULL
-    -- APEX  : Validation "<ITEM> REQUIRED": return <FORM>.REQUIRED_VAL(:P<page>_<ITEM>, '<label>');
-    FUNCTION  REQUIRED_VAL (I_VALUE IN VARCHAR2, I_LABEL IN VARCHAR2) RETURN VARCHAR2;
+    -- APEX  : Validation "<ITEM> REQUIRED": return <FORM>.REQUIRED_VALIDATION(:P<page>_<ITEM>, '<label>');
+    FUNCTION  REQUIRED_VALIDATION (I_VALUE IN VARCHAR2, I_LABEL IN VARCHAR2) RETURN VARCHAR2;
 
     -- APEX  : Process "P0_PAGE_PK CHECK" (Before Header) - drops a key that no longer exists
     PROCEDURE P0_PAGE_PK_CHECK (IO_P0_PAGE_PK IN OUT VARCHAR2);
@@ -83,17 +83,17 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.<FORM> AS
     -- =========================================================================
     -- Source: <BLOCK>.<ITEM>.WHEN-VALIDATE-ITEM
     -- APEX  : Validation "<ITEM> VALIDATION" (PL/SQL Function Body returning Error Text)
-    --           return <FORM>.<ITEM>_VAL(I_P<page>_<ITEM> => :P<page>_<ITEM>);
+    --           return <FORM>.<ITEM>_VALIDATION(I_P<page>_<ITEM> => :P<page>_<ITEM>);
     --         DA "<ITEM> WHEN-VALIDATE-ITEM" (change, FOS Execute PL/SQL Code)
-    --           <FORM>.CHK(<FORM>.<ITEM>_VAL(I_P<page>_<ITEM> => :P<page>_<ITEM>));
-    FUNCTION  <ITEM>_VAL (I_P<page>_<ITEM> IN VARCHAR2) RETURN VARCHAR2;
+    --           <FORM>.CHECK_ERROR(<FORM>.<ITEM>_VALIDATION(I_P<page>_<ITEM> => :P<page>_<ITEM>));
+    FUNCTION  <ITEM>_VALIDATION (I_P<page>_<ITEM> IN VARCHAR2) RETURN VARCHAR2;
 
     -- Source: <BLOCK>.<ITEM>.WHEN-VALIDATE-ITEM - the part that derives other item values
     -- APEX  : same DA, FOS "Items to Return" = the IO_ items
-    -- PROCEDURE <ITEM>_WVI (I_P<page>_<ITEM> IN VARCHAR2, IO_P<page>_<ITEM2> IN OUT VARCHAR2);
+    -- PROCEDURE <ITEM>_WHEN_VALIDATE_ITEM (I_P<page>_<ITEM> IN VARCHAR2, IO_P<page>_<ITEM2> IN OUT VARCHAR2);
 
     -- Source: <BLOCK>.WHEN-VALIDATE-RECORD     APEX: Validation "<BLOCK> WHEN-VALIDATE-RECORD"
-    FUNCTION  <BLOCK>_WVR (I_P<page>_START_DATE IN DATE,
+    FUNCTION  <BLOCK>_WHEN_VALIDATE_RECORD (I_P<page>_START_DATE IN DATE,
                            I_P<page>_END_DATE   IN DATE) RETURN VARCHAR2;
 
     -- Source: <BLOCK>.PRE-INSERT / PRE-UPDATE / PRE-DELETE
@@ -114,19 +114,19 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.<FORM> AS
 
     -- Source: <BLOCK>.<BUTTON>.WHEN-BUTTON-PRESSED
     -- APEX  : Button <BUTTON> + Process "<BUTTON> WHEN-BUTTON-PRESSED"
-    -- PROCEDURE <BUTTON>_WBP (I_P<page>_<PK> IN VARCHAR2);
+    -- PROCEDURE <BUTTON>_WHEN_BUTTON_PRESSED (I_P<page>_<PK> IN VARCHAR2);
 
     -- =========================================================================
-    -- BLOCK <DETAIL_BLOCK>  (detail, Interactive Grid)  members prefixed <BLOCK_ABBR>_
+    -- BLOCK <DETAIL_BLOCK>  (detail, Interactive Grid)  members prefixed <DETAIL_BLOCK>_
     -- =========================================================================
     -- Source: <DETAIL_BLOCK>.<COLUMN>.WHEN-VALIDATE-ITEM
     -- APEX  : DA "<DETAIL_BLOCK> <COLUMN> WHEN-VALIDATE-ITEM" (column change)
-    FUNCTION  <BLOCK_ABBR>_<COLUMN>_VAL (I_<COLUMN> IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION  <DETAIL_BLOCK>_<COLUMN>_VALIDATION (I_<COLUMN> IN VARCHAR2) RETURN VARCHAR2;
 
     -- Source: <DETAIL_BLOCK>.PRE-INSERT
     -- APEX  : Process "<DETAIL_BLOCK> PRE-INSERT" (Editable Region = IG, :APEX$ROW_STATUS = 'C'),
     --         before "<DETAIL_BLOCK> - Save Interactive Grid Data"
-    PROCEDURE <BLOCK_ABBR>_PRE_INSERT (I_P<page>_<PK> IN VARCHAR2,
+    PROCEDURE <DETAIL_BLOCK>_PRE_INSERT (I_P<page>_<PK> IN VARCHAR2,
                                        IO_<FK>        IN OUT VARCHAR2,
                                        IO_<DETAIL_PK> IN OUT VARCHAR2);
 

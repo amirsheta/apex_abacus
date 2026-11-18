@@ -7,14 +7,14 @@
 -- Version      : 1.0.1  (step 04: STR_DB.StrFormat flag 0/1 from CIC_LIB.pld; v1.0.0 in rollback/IMPR1110/pkg_impr1110_body_v1.sql)
 -- Owner       : LIB_APX_USR (public synonym IMPR1110; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
 -- Status       : NOT COMPILED - compile in DEV first.
--- Conversions  : Str.DispArbMsg(s,n,..) + RAISE FTF   -> disp_arb_ftf(s,n)
---                Str.DispArbMsg(s,n,..) (no raise)     -> disp_arb_info(s,n)
---                STR.DispAlert(t,'ERROR'|..) + FTF     -> FORMS_COMPAT.ftf(t)
+-- Conversions  : Str.DispArbMsg(s,n,..) + RAISE FORM_TRIGGER_FAILURE   -> DISPLAY_ARABIC_ERROR(s,n)
+--                Str.DispArbMsg(s,n,..) (no raise)     -> DISPLAY_ARABIC_INFO(s,n)
+--                STR.DispAlert(t,'ERROR'|..) + FORM_TRIGGER_FAILURE     -> FORMS_COMPAT.FORM_TRIGGER_FAILURE(t)
 --                STR.DispAlert(t,..) (no raise)        -> info(t)
 --                STR.DispAlert(t,'CONFIRM'|'WARNING')  -> Confirm DA on the page; answer -> p_answer
---                :GLOBAL.X                             -> g_get / g_set (FORMS_COMPAT)
+--                :GLOBAL.X                             -> GET_GLOBAL / SET_GLOBAL (FORMS_COMPAT)
 --                INTRFACE.Make_Field_Entrable / SET_ITEM_PROPERTY / GO_ITEM -> ui_* recorder
---                TMPLT.ENABLE_FUN / DISABLE_FUN        -> fun() recorder (function menu)
+--                TMPLT.ENABLE_FUN / DISABLE_FUN        -> SET_FUNCTION_ENABLED() recorder (function menu)
 --                COMMIT / FORMS_DDL('COMMIT') / STANDARD.COMMIT -> removed (APEX commits), flagged HIGH
 -- Original code: every "Original Forms code" block below is copied verbatim from the XML
 --                (comment-only and blank lines removed) by the build step described in
@@ -33,7 +33,7 @@ AS
     g_ui_item   t_vc_tab;     -- item name
     g_ui_prop   t_vc_tab;     -- ENTRABLE / ENABLED / REQUIRED / VISIBLE / VALID / OPEN_LOV / BLOCK_OPS / DO_COMMIT
     g_ui_val    t_vc_tab;     -- 'Y' / 'N' (or free text for BLOCK_OPS)
-    g_msgs      t_vc_tab;     -- non-blocking messages (alerts shown without RAISE FTF)
+    g_msgs      t_vc_tab;     -- non-blocking messages (alerts shown without RAISE FORM_TRIGGER_FAILURE)
     g_fun_cd    t_vc_tab;     -- function menu codes touched by ADJ_FUNS
     g_fun_on    t_vc_tab;     -- 'Y' / 'N'
     g_focus     VARCHAR2(61); -- last GO_ITEM target
@@ -70,15 +70,15 @@ AS
     END ui_focus;
 
     -- TMPLT.ENABLE_FUN / TMPLT.DISABLE_FUN  -- TODO: MISSING SOURCE TMPLT (LIB_APX_USR / OLB)
-    PROCEDURE fun (p_fun IN VARCHAR2, p_on IN BOOLEAN)
+    PROCEDURE SET_FUNCTION_ENABLED (p_fun IN VARCHAR2, p_on IN BOOLEAN)
     IS
         n PLS_INTEGER := g_fun_cd.COUNT + 1;
     BEGIN
         g_fun_cd(n) := p_fun;
         g_fun_on(n) := CASE WHEN p_on THEN 'Y' ELSE 'N' END;
-    END fun;
+    END SET_FUNCTION_ENABLED;
 
-    FUNCTION fun_state (p_fun IN VARCHAR2) RETURN VARCHAR2
+    FUNCTION FUNCTION_STATE (p_fun IN VARCHAR2) RETURN VARCHAR2
     IS
         v VARCHAR2(1);
     BEGIN
@@ -88,7 +88,7 @@ AS
             END IF;
         END LOOP;
         RETURN v;
-    END fun_state;
+    END FUNCTION_STATE;
 
     -- STR.DispAlert(text, 'INFORMATION'|'ERROR'|'WARNING') without RAISE FORM_TRIGGER_FAILURE
     PROCEDURE info (p_text IN VARCHAR2)
@@ -152,28 +152,28 @@ AS
 
     -- ======================================================================= private helpers
 
-    PROCEDURE ftf (p_text IN VARCHAR2 DEFAULT NULL)
+    PROCEDURE FORM_TRIGGER_FAILURE (p_text IN VARCHAR2 DEFAULT NULL)
     IS
     BEGIN
-        FORMS_COMPAT.ftf(p_text);
-    END ftf;
+        FORMS_COMPAT.FORM_TRIGGER_FAILURE(p_text);
+    END FORM_TRIGGER_FAILURE;
 
-    FUNCTION g_get (p_name IN VARCHAR2) RETURN VARCHAR2
+    FUNCTION GET_GLOBAL (p_name IN VARCHAR2) RETURN VARCHAR2
     IS
     BEGIN
         RETURN FORMS_COMPAT.get_global(p_name);
-    END g_get;
+    END GET_GLOBAL;
 
-    PROCEDURE g_set (p_name IN VARCHAR2, p_val IN VARCHAR2)
+    PROCEDURE SET_GLOBAL (p_name IN VARCHAR2, p_val IN VARCHAR2)
     IS
     BEGIN
         FORMS_COMPAT.set_global(p_name, p_val);
-    END g_set;
+    END SET_GLOBAL;
 
     -- Text of Str.DispArbMsg(sys, nbr). STR.pll is MISSING SOURCE; the format below is the one
     -- the form itself builds inline for message 9-120 (IMPORTERS.BUS_ID.WHEN-VALIDATE-ITEM).
     -- TODO: verify against STR.DispArbMsg once STR.pll is available.
-    FUNCTION arb_msg (p_sys IN NUMBER, p_nbr IN NUMBER) RETURN VARCHAR2
+    FUNCTION ARABIC_MESSAGE (p_sys IN NUMBER, p_nbr IN NUMBER) RETURN VARCHAR2
     IS
         v_txt VARCHAR2(4000);
     BEGIN
@@ -182,59 +182,85 @@ AS
             RETURN 'خطأ فى رقم الرسالة  ' || p_sys || '-' || p_nbr || 'إتصل بالمسانده الفنيه';
         END IF;
         RETURN p_sys || '-' || p_nbr || ' : ' || v_txt;
-    END arb_msg;
+    END ARABIC_MESSAGE;
 
     -- ret := Str.DispArbMsg(s, n, ...); RAISE FORM_TRIGGER_FAILURE;
-    PROCEDURE disp_arb_ftf (p_sys IN NUMBER, p_nbr IN NUMBER)
+    PROCEDURE DISPLAY_ARABIC_ERROR (p_sys IN NUMBER, p_nbr IN NUMBER)
     IS
     BEGIN
-        ftf(arb_msg(p_sys, p_nbr));
-    END disp_arb_ftf;
+        FORM_TRIGGER_FAILURE(ARABIC_MESSAGE(p_sys, p_nbr));
+    END DISPLAY_ARABIC_ERROR;
 
     -- ret := Str.DispArbMsg(s, n, ...);   (no raise)
-    PROCEDURE disp_arb_info (p_sys IN NUMBER, p_nbr IN NUMBER)
+    PROCEDURE DISPLAY_ARABIC_INFO (p_sys IN NUMBER, p_nbr IN NUMBER)
     IS
     BEGIN
-        info(arb_msg(p_sys, p_nbr));
-    END disp_arb_info;
+        info(ARABIC_MESSAGE(p_sys, p_nbr));
+    END DISPLAY_ARABIC_INFO;
 
     -- Des$Form_errors.MSGGETTEXT(n, '<p1> ...', p1)   -- TODO: MISSING SOURCE Des$Form_errors
     -- (CG library). English default text with <p1> replaced; verify the Arabic text it returns.
-    FUNCTION cg_msg (p_default IN VARCHAR2, p1 IN VARCHAR2) RETURN VARCHAR2
+    FUNCTION CG_MESSAGE (p_default IN VARCHAR2, p1 IN VARCHAR2) RETURN VARCHAR2
     IS
     BEGIN
         RETURN REPLACE(p_default, '<p1>', p1);
-    END cg_msg;
+    END CG_MESSAGE;
 
-    -- IF NOT ACTIVITY.ADD_ACTIVITY(9, 2, n, :IMPORTERS.Port_Cd||'!'||:IMPORTERS.Impr_Nbr) THEN
-    --     RAISE FORM_TRIGGER_FAILURE;
-    -- TODO: verify ACTIVITY is the DB package (not a client .pll) and its signature.
-    PROCEDURE add_activity (p_act IN NUMBER, p_rec IN t_rec)
+    -- Forms: IF NOT ACTIVITY.ADD_ACTIVITY(9, 2, n, :IMPORTERS.Port_Cd||'!'||:IMPORTERS.Impr_Nbr) THEN
+    --            RAISE FORM_TRIGGER_FAILURE;
+    -- ACTIVITY is the client library CIC_LIB.pld; its ADD_ACTIVITY calls the DB package
+    --   ACTIVITY_DB.ADD_ACTIVITY(SYSOBJ_ID, SUBJ_CODE, ACTVY_TYPE, ACTVY_SUBJ_ID,
+    --       :PARAMETER.P_Curr_Port_Cd, :PARAMETER.P_USER_ID, :PARAMETER.P_WS_ID, V_MSG_TXT)
+    -- and on 0 shows STR.DISPALERT(V_MSG_TXT, 'CFG_SYSTEM_ERROR') and returns FALSE.
+    -- Here: ACTIVITY_DB (LIB_USR, plsql/Shared/ACTIVITY_DB.pks), 8-parameter overload.
+    PROCEDURE add_activity (p_act IN NUMBER, p_rec IN T_RECORD, p_ctx IN T_CONTEXT)
     IS
+        v_msg VARCHAR2(2000);
     BEGIN
-        IF NOT activity.add_activity(9, 2, p_act, p_rec.port_cd || '!' || p_rec.impr_nbr) THEN
-            ftf;
+        IF activity_db.add_activity(9, 2, p_act, p_rec.port_cd || '!' || p_rec.impr_nbr,
+                                    p_ctx.curr_port_cd, p_ctx.user_id, p_ctx.ws_id, v_msg) = 0 THEN
+            FORM_TRIGGER_FAILURE(v_msg);                                -- DISPALERT(V_MSG_TXT) + FORM_TRIGGER_FAILURE
         END IF;
     END add_activity;
 
-    -- HIJDATE.Cur_Hij_Date (client library) -> HIJDATE_DB.Cur_Hij_Date (used by the form itself)
+    -- HIJDATE.Cur_Hij_Date (client library CIC_LIB.pld):
+    --   V_RET := HIJDATE_DB.Cur_Hij_Date(V_MSG); IF V_RET IS NULL THEN DISPALERT(V_MSG); RAISE FORM_TRIGGER_FAILURE;
     FUNCTION cur_hij_date RETURN DATE
     IS
+        v_msg VARCHAR2(2000);
+        v_ret DATE;
     BEGIN
-        RETURN hijdate_db.cur_hij_date;
+        v_ret := hijdate_db.cur_hij_date(v_msg);
+        IF v_ret IS NULL THEN
+            FORM_TRIGGER_FAILURE(v_msg);
+        END IF;
+        RETURN v_ret;
     END cur_hij_date;
 
-    -- HIJDATE.VALID_HIJ_DATE  -- TODO: MISSING SOURCE HIJDATE.pll. Assumed server twin in
-    -- HIJDATE_DB; compilation fails here if it does not exist (intended - do not guess).
+    -- HIJDATE.VALID_HIJ_DATE (client library CIC_LIB.pld):
+    --   IF HDATE IS NULL THEN RETURN NULL; END IF;
+    --   V_RET := HIJDATE_DB.VALID_HIJ_DATE(HDate, V_MSG);
+    --   IF V_RET = 0 THEN STR.DISPALERT(V_MSG, 'ERROR'); RETURN FALSE; ELSE RETURN TRUE; END IF;
+    -- Both callers raise FORM_TRIGGER_FAILURE right after FALSE, so the alert text is raised here
+    -- (otherwise the user would get the failure without the HIJDATE_DB message).
     FUNCTION valid_hij_date (p_dt IN DATE) RETURN BOOLEAN
     IS
+        v_msg VARCHAR2(2000);
+        v_ret NUMBER;
     BEGIN
-        RETURN hijdate_db.valid_hij_date(p_dt);
+        IF p_dt IS NULL THEN
+            RETURN NULL;
+        END IF;
+        v_ret := hijdate_db.valid_hij_date(p_dt, v_msg);
+        IF v_ret = 0 THEN
+            FORM_TRIGGER_FAILURE(v_msg);                                -- DISPALERT(V_MSG, 'ERROR') + caller's FORM_TRIGGER_FAILURE
+        END IF;
+        RETURN TRUE;
     END valid_hij_date;
 
     -- Repeated block: IMPR_TYPE_CD.WHEN-NEW-ITEM-INSTANCE, WHEN-NEW-RECORD-INSTANCE,
     -- WHEN-NEW-FORM-INSTANCE, IMPR_TYPE_CD.KEY-LISTVAL (identical text in all four)
-    PROCEDURE ctry_100_defaults (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE ctry_100_defaults (p_rec IN OUT NOCOPY T_RECORD)
     IS
     BEGIN
         IF p_rec.impr_type_cd = 4 AND p_rec.bus_id_type_cd = 3
@@ -252,13 +278,13 @@ AS
          WHERE ctry_cd = 100;
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
-            disp_arb_ftf(18, 15);
+            DISPLAY_ARABIC_ERROR(18, 15);
     END ctry_100_defaults;
 
     -- Repeated block of IMPR_TYPE_CD.WHEN-VALIDATE-ITEM and POST-QUERY:
     -- entrable state of CTRY/ADD_CTRY/CITY_CODE_OF_ID/BUS_ID_BRNCH/BUS_ID by importer type.
     -- (POST-QUERY has the same branches without value assignments; see callers.)
-    PROCEDURE type_entrable_qry (p_rec IN t_rec)
+    PROCEDURE TYPE_ENTRABLE_QUERY (p_rec IN T_RECORD)
     IS
     BEGIN
         IF p_rec.impr_type_cd = 1 THEN
@@ -300,7 +326,7 @@ AS
             entrable('BUS_ID', FALSE); entrable('BUS_ID_BRNCH', FALSE);
             entrable('CITY_CODE_OF_ID', FALSE); ui('CITY_CODE_OF_ID2', 'ENABLED', FALSE);
         END IF;
-    END type_entrable_qry;
+    END TYPE_ENTRABLE_QUERY;
 
     -- Identical list of Make_Field_Entrable(FALSE) after a successful insert/update
     -- (PRE-INSERT result=1, POST-INSERT, POST-UPDATE)
@@ -337,7 +363,7 @@ AS
     END cr_fields_entrable;
 
     -- CGSF$CLRLU_IMPORTERS_IMP_BUS_I : clear the BUS_ID city lookup items
-    PROCEDURE cgsf_clrlu_bus_i (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE CGSF$CLRLU_IMPORTERS_IMP_BUS_I (p_rec IN OUT NOCOPY T_RECORD)
     IS
     BEGIN
         p_rec.city_code_of_id   := NULL;
@@ -345,7 +371,7 @@ AS
         p_rec.l_ct_city_status2 := NULL;
         p_rec.id_city_name      := NULL;
         p_rec.id_mins_comm_cd   := NULL;
-    END cgsf_clrlu_bus_i;
+    END CGSF$CLRLU_IMPORTERS_IMP_BUS_I;
 
     -- CGTE$STRIP_CONSTRAINT  -- TODO: MISSING SOURCE (CG library). Re-implemented: constraint
     -- name between the brackets of the ORA- message, without the owner.
@@ -447,7 +473,7 @@ AS
     --   END;
     --   END ;
     -- <<<
-    PROCEDURE wnfi (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx)
+    PROCEDURE WHEN_NEW_FORM_INSTANCE (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)
     IS
         v_val VARCHAR2(200);
     BEGIN
@@ -457,47 +483,47 @@ AS
         IF p_ctx.class_cd = 1 AND p_ctx.user_type = 3 THEN
             broker_int(p_rec);
         END IF;
-        g_set('FLAGUPDATE', '0');
-        g_set('EXEC_QUERY_NOW', '0');
-        g_set('PORT_CD', NULL);
-        g_set('IMPR_NBR', NULL);
-        g_set('EXE_DETAIL_QUERY', '0');
-        g_set('LETTER_NBR', NULL);
-        g_set('CHK_DUP_BUSID', '0');
-        g_set('OLD_IMPR_TYPE_CD', '0');
+        SET_GLOBAL('FLAGUPDATE', '0');
+        SET_GLOBAL('EXEC_QUERY_NOW', '0');
+        SET_GLOBAL('PORT_CD', NULL);
+        SET_GLOBAL('IMPR_NBR', NULL);
+        SET_GLOBAL('EXE_DETAIL_QUERY', '0');
+        SET_GLOBAL('LETTER_NBR', NULL);
+        SET_GLOBAL('CHK_DUP_BUSID', '0');
+        SET_GLOBAL('OLD_IMPR_TYPE_CD', '0');
         IF p_ctx.letter_nbr IS NULL THEN
             ui_focus('IMPR_NBR');
         END IF;
         ui('PORT_CD', 'ENABLED', FALSE);
-        g_set('VALID', '0');
-        g_set('IMP0F4', '0');
-        g_set('STAT_QUE', '0');
-        g_set('STAT_CLR', '0');
-        g_set('FUNS_IMP', '0');
-        g_set('FUNS_BUSID', '0');
-        g_set('MINS_COMM_CD', NULL);
-        g_set('CHK_IMP_TYP', '0');
-        g_set('ALLOW_MCI', '0');
-        g_set('ALLOW_MOI', '0');
+        SET_GLOBAL('VALID', '0');
+        SET_GLOBAL('IMP0F4', '0');
+        SET_GLOBAL('STAT_QUE', '0');
+        SET_GLOBAL('STAT_CLR', '0');
+        SET_GLOBAL('FUNS_IMP', '0');
+        SET_GLOBAL('FUNS_BUSID', '0');
+        SET_GLOBAL('MINS_COMM_CD', NULL);
+        SET_GLOBAL('CHK_IMP_TYP', '0');
+        SET_GLOBAL('ALLOW_MCI', '0');
+        SET_GLOBAL('ALLOW_MOI', '0');
         BEGIN
             SELECT var_value INTO v_val
               FROM sc_port_setting
              WHERE sysobj_id = 24 AND var_name = 'ALLOW_MCI'
                AND port_cd = p_ctx.curr_port_cd;
-            g_set('ALLOW_MCI', v_val);
+            SET_GLOBAL('ALLOW_MCI', v_val);
             SELECT var_value INTO v_val
               FROM sc_port_setting
              WHERE sysobj_id = 24 AND var_name = 'ALLOW_MOI'
                AND port_cd = p_ctx.curr_port_cd;
-            g_set('ALLOW_MOI', v_val);
+            SET_GLOBAL('ALLOW_MOI', v_val);
         EXCEPTION
             WHEN OTHERS THEN
                 NULL;
         END;
-        g_set('ALLOW_MCI', NVL(g_get('ALLOW_MCI'), '0'));
-        g_set('ALLOW_MOI', NVL(g_get('ALLOW_MOI'), '0'));
+        SET_GLOBAL('ALLOW_MCI', NVL(GET_GLOBAL('ALLOW_MCI'), '0'));
+        SET_GLOBAL('ALLOW_MOI', NVL(GET_GLOBAL('ALLOW_MOI'), '0'));
         ctry_100_defaults(p_rec);
-    END wnfi;
+    END WHEN_NEW_FORM_INSTANCE;
 
     -- ======================================================================= BLOCK IMPORTERS
 
@@ -530,7 +556,7 @@ AS
     --       :Global.Ins := 0;
     --   END;
     -- <<<
-    PROCEDURE importers_wcr (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx)
+    PROCEDURE IMPORTERS_WHEN_CREATE_RECORD (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)
     IS
     BEGIN
         p_rec.port_cd := p_ctx.curr_port_cd;
@@ -554,11 +580,11 @@ AS
         END IF;
         entrable('CTRY_CD', TRUE);
         entrable('ADD_CTRY_CD', TRUE);
-        g_set('INS', '0');
-    END importers_wcr;
+        SET_GLOBAL('INS', '0');
+    END IMPORTERS_WHEN_CREATE_RECORD;
 
     -- Shared by IMPR1110F1 / IMPR1110F5: count + name from COMM_IMPR_RGSTR
-    PROCEDURE comm_name (p_rec IN t_rec, p_cnt OUT NUMBER, p_name OUT VARCHAR2)
+    PROCEDURE COMMERCIAL_REGISTER_NAME (p_rec IN T_RECORD, p_cnt OUT NUMBER, p_name OUT VARCHAR2)
     IS
     BEGIN
         p_name := NULL;
@@ -583,25 +609,25 @@ AS
         ELSE
             p_cnt := NULL;
         END IF;
-    END comm_name;
+    END COMMERCIAL_REGISTER_NAME;
 
-    FUNCTION wnri_confirm_text (p_rec IN t_rec, p_ctx IN t_ctx) RETURN VARCHAR2
+    FUNCTION NEW_RECORD_CONFIRM_TEXT (p_rec IN T_RECORD, p_ctx IN T_CONTEXT) RETURN VARCHAR2
     IS
         v_cnt  NUMBER;
         v_name VARCHAR2(500);
     BEGIN
         IF p_ctx.code IN ('IMPR1110F1', 'IMPR1110F5')
            AND p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
-            comm_name(p_rec, v_cnt, v_name);
+            COMMERCIAL_REGISTER_NAME(p_rec, v_cnt, v_name);
             IF v_cnt = 1 THEN
                 RETURN ' سيتم تعديل الإسم إلى ( ' || v_name || ' )';
             END IF;
         END IF;
         RETURN NULL;
-    END wnri_confirm_text;
+    END NEW_RECORD_CONFIRM_TEXT;
 
     -- Source: IMPORTERS.WHEN-NEW-RECORD-INSTANCE
-    -- p_answer: answer to the CONFIRM of IMPR1110F1 / IMPR1110F5 (see wnri_confirm_text)
+    -- p_answer: answer to the CONFIRM of IMPR1110F1 / IMPR1110F5 (see NEW_RECORD_CONFIRM_TEXT)
     --@ORIG IMPORTERS.WHEN-NEW-RECORD-INSTANCE
     -- >>> Original Forms code: IMPORTERS.WHEN-NEW-RECORD-INSTANCE
     --   DECLARE
@@ -831,8 +857,8 @@ AS
     --     RAISE FORM_TRIGGER_FAILURE;
     --   END;
     -- <<<
-    PROCEDURE importers_wnri (p_rec    IN OUT NOCOPY t_rec,
-                              p_ctx    IN OUT NOCOPY t_ctx,
+    PROCEDURE IMPORTERS_NEW_RECORD_INSTANCE (p_rec    IN OUT NOCOPY T_RECORD,
+                              p_ctx    IN OUT NOCOPY T_CONTEXT,
                               p_answer IN PLS_INTEGER DEFAULT c_yes)
     IS
         v_cnt       NUMBER;
@@ -842,9 +868,9 @@ AS
         entrable('COMM_RGSTRTN_TYPE', FALSE);
         entrable('BUS_ID_EXPRD_DT', FALSE);
         entrable('CITY_CODE_OF_ID', FALSE);
-        g_set('FUNS_BUSID', '0');
-        g_set('FUNS_IMP', '0');
-        g_set('CHK_IMP_TYP', '0');
+        SET_GLOBAL('FUNS_BUSID', '0');
+        SET_GLOBAL('FUNS_IMP', '0');
+        SET_GLOBAL('CHK_IMP_TYP', '0');
         IF p_rec.impr_nbr IS NULL THEN
             entrable('BUS_ID', TRUE);
             entrable('BUS_ID_EXPRD_DT', TRUE);
@@ -878,7 +904,7 @@ AS
         END IF;
 
         IF p_ctx.code = 'IMPR1110F2' THEN
-            g_set('FUNS_BUSID', '1');
+            SET_GLOBAL('FUNS_BUSID', '1');
             entrable('COMM_RGSTRTN_TYPE', TRUE);
             entrable('CITY_CODE_OF_ID', TRUE);
             entrable('BUS_ID', TRUE);
@@ -889,22 +915,22 @@ AS
         ELSIF p_ctx.code = 'IMPR1110F1' THEN
             IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
                 IF p_rec.comm_rgstrtn_type IN (1, 2) THEN
-                    comm_name(p_rec, v_cnt, v_impr_name);
+                    COMMERCIAL_REGISTER_NAME(p_rec, v_cnt, v_impr_name);
                     IF v_cnt > 1 THEN
                         p_ctx.code := NULL;
-                        ftf(c_no_rename);
+                        FORM_TRIGGER_FAILURE(c_no_rename);
                     ELSIF v_cnt = 1 THEN
-                        IF p_answer = c_yes THEN       -- CONFIRM: wnri_confirm_text
+                        IF p_answer = c_yes THEN       -- CONFIRM: NEW_RECORD_CONFIRM_TEXT
                             p_rec.arbc_impr_name := v_impr_name;
                         END IF;
                         p_ctx.code := NULL;
                     ELSE
                         p_ctx.code := NULL;
-                        ftf(c_no_rename);
+                        FORM_TRIGGER_FAILURE(c_no_rename);
                     END IF;
                 ELSE
                     p_ctx.code := NULL;
-                    ftf(c_no_rename);
+                    FORM_TRIGGER_FAILURE(c_no_rename);
                 END IF;
             ELSE
                 p_ctx.code := NULL;
@@ -915,12 +941,12 @@ AS
         ELSIF p_ctx.code = 'IMPR1110F5' THEN
             IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
                 IF p_rec.comm_rgstrtn_type IN (1, 2) THEN
-                    comm_name(p_rec, v_cnt, v_impr_name);
+                    COMMERCIAL_REGISTER_NAME(p_rec, v_cnt, v_impr_name);
                     IF v_cnt > 1 THEN
                         p_ctx.code := NULL;
-                        ftf(c_no_rename);
+                        FORM_TRIGGER_FAILURE(c_no_rename);
                     ELSIF v_cnt = 1 THEN
-                        IF p_answer = c_yes THEN       -- CONFIRM: wnri_confirm_text
+                        IF p_answer = c_yes THEN       -- CONFIRM: NEW_RECORD_CONFIRM_TEXT
                             p_rec.arbc_impr_name := v_impr_name;
                         ELSE
                             entrable('ARBC_IMPR_NAME', TRUE);
@@ -944,8 +970,8 @@ AS
             END IF;
             p_ctx.code := NULL;
         ELSIF p_ctx.code = 'IMPR1110F3' THEN
-            g_set('FUNS_IMP', '1');
-            g_set('CHK_IMP_TYP', '1');
+            SET_GLOBAL('FUNS_IMP', '1');
+            SET_GLOBAL('CHK_IMP_TYP', '1');
             entrable('IMPR_TYPE_CD', TRUE);
             ui_focus('IMPR_TYPE_CD');
             IF p_ctx.class_cd = 19 AND p_ctx.user_type = 1 THEN
@@ -976,7 +1002,7 @@ AS
         ui('CITY_CODE_OF_ID', 'REQUIRED', FALSE);
         ui('BRNH_CITY_CD', 'REQUIRED', FALSE);
         ctry_100_defaults(p_rec);
-    END importers_wnri;
+    END IMPORTERS_NEW_RECORD_INSTANCE;
 
     -- Source: IMPORTERS.PRE-RECORD
     --@ORIG IMPORTERS.PRE-RECORD
@@ -999,7 +1025,7 @@ AS
     --   END IF;
     --   END;
     -- <<<
-    PROCEDURE importers_pre_rec (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx)
+    PROCEDURE IMPORTERS_PRE_RECORD (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)
     IS
         CURSOR c_p_name IS
             SELECT arbc_impr_name
@@ -1011,18 +1037,18 @@ AS
             OPEN c_p_name;
             FETCH c_p_name INTO p_rec.impr_name_parent;
             IF c_p_name%NOTFOUND THEN
-                disp_arb_info(9, 150);
+                DISPLAY_ARABIC_INFO(9, 150);
             END IF;
             CLOSE c_p_name;
         END IF;
-    END importers_pre_rec;
+    END IMPORTERS_PRE_RECORD;
 
     -- Source: IMPORTERS.WHEN-CLEAR-BLOCK
-    PROCEDURE importers_wcb
+    PROCEDURE IMPORTERS_WHEN_CLEAR_BLOCK
     IS
     BEGIN
-        g_set('STAT_CLR', '1');
-    END importers_wcb;
+        SET_GLOBAL('STAT_CLR', '1');
+    END IMPORTERS_WHEN_CLEAR_BLOCK;
 
     -- Source: IMPORTERS.PRE-QUERY. p_rec holds the query criteria (Enter-Query values).
     -- The CGFK$DEFAULT_WHERE part (PORT_NAME criterion -> PORT_CD IN (SELECT ... SD_PORTS))
@@ -1093,27 +1119,27 @@ AS
     --     END;
     --   END;
     -- <<<
-    PROCEDURE importers_pre_qry (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx)
+    PROCEDURE IMPORTERS_PRE_QUERY (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)
     IS
     BEGIN
         IF p_ctx.prsnl_impr = 1 THEN
             p_rec.impr_type_cd := 4;
         END IF;
-        IF (g_get('EXEC_QUERY_NOW') = '1') THEN
-            IF (g_get('IMPR_NBR') IS NOT NULL) THEN
-                p_rec.port_cd  := g_get('PORT_CD');
-                p_rec.impr_nbr := g_get('IMPR_NBR');
+        IF (GET_GLOBAL('EXEC_QUERY_NOW') = '1') THEN
+            IF (GET_GLOBAL('IMPR_NBR') IS NOT NULL) THEN
+                p_rec.port_cd  := GET_GLOBAL('PORT_CD');
+                p_rec.impr_nbr := GET_GLOBAL('IMPR_NBR');
             END IF;
-            g_set('EXEC_QUERY_NOW', '0');
-            g_set('PORT_CD', NULL);
-            g_set('IMPR_NBR', NULL);
+            SET_GLOBAL('EXEC_QUERY_NOW', '0');
+            SET_GLOBAL('PORT_CD', NULL);
+            SET_GLOBAL('IMPR_NBR', NULL);
         ELSE
             -- STR.StrFormat(x, TRUE) = STR_DB.StrFormat(x, 1)
             -- (source: forms/COMMON/libraries/CIC_LIB.pld, package STR, FUNCTION StrFormat)
             p_rec.impr_name_std  := str_db.strformat(p_rec.arbc_impr_name, 1);
             p_rec.arbc_impr_name := '';
         END IF;
-    END importers_pre_qry;
+    END IMPORTERS_PRE_QUERY;
 
     -- Source: IMPORTERS.POST-QUERY
     --@ORIG IMPORTERS.POST-QUERY
@@ -1448,7 +1474,7 @@ AS
     --     END IF;
     --   END;
     -- <<<
-    PROCEDURE importers_post_qry (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx)
+    PROCEDURE IMPORTERS_POST_QUERY (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)
     IS
         v_count        NUMBER := 0;
         xdt            DATE;
@@ -1456,8 +1482,8 @@ AS
         v_expiry_date  DATE;
         v_dummy        NUMBER(1);
     BEGIN
-        g_set('OLD_IMPR_TYPE_CD', p_rec.impr_type_cd);
-        g_set('OLD_PORT_CD', p_rec.port_cd);
+        SET_GLOBAL('OLD_IMPR_TYPE_CD', p_rec.impr_type_cd);
+        SET_GLOBAL('OLD_PORT_CD', p_rec.port_cd);
         IF p_rec.impr_nbr IS NOT NULL THEN
             BEGIN
                 xdt := cur_hij_date;
@@ -1542,8 +1568,8 @@ AS
         p_rec.b_mobile_no := p_rec.mobile_no;
         p_rec.b_id_nbr    := p_rec.id_nbr;
         p_rec.b_email     := p_rec.email;
-        g_set('STAT_QUE', '1');
-        type_entrable_qry(p_rec);
+        SET_GLOBAL('STAT_QUE', '1');
+        TYPE_ENTRABLE_QUERY(p_rec);
         IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
             IF p_rec.bus_id_brnch IS NOT NULL THEN
                 BEGIN
@@ -1611,7 +1637,7 @@ AS
                  WHERE l_sdp.port_cd = p_rec.port_cd;
             EXCEPTION
                 WHEN NO_DATA_FOUND THEN
-                    info(cg_msg('This <p1> does not exist', 'رمز الجمــــــــــــــرك'));
+                    info(CG_MESSAGE('This <p1> does not exist', 'رمز الجمــــــــــــــرك'));
             END;
         END IF;
         IF p_rec.impr_type_cd IS NOT NULL AND p_rec.bus_id_type_cd IS NOT NULL THEN
@@ -1629,7 +1655,7 @@ AS
                     info('رمز النشاط التجاري غير صحيح - أعد إدخال البيانات');
             END;
         ELSE
-            ftf(cg_msg('<p1> must be entered', 'رمز النشاط التجارى'));
+            FORM_TRIGGER_FAILURE(CG_MESSAGE('<p1> must be entered', 'رمز النشاط التجارى'));
         END IF;
         IF p_rec.ctry_cd IS NOT NULL THEN
             BEGIN
@@ -1669,7 +1695,7 @@ AS
                     info('خطأ في رمز مدينة عنوان المستورد');
             END;
         ELSE
-            ftf(cg_msg('<p1> must be entered', 'دولــــــــة الإقامـــــة,المدينـة'));
+            FORM_TRIGGER_FAILURE(CG_MESSAGE('<p1> must be entered', 'دولــــــــة الإقامـــــة,المدينـة'));
         END IF;
 
         IF NVL(gnrl.get_customs_setting(p_ctx.curr_port_cd, 'CR-6730', 9), 0) = 1 THEN
@@ -1698,7 +1724,7 @@ AS
             ui('WASL_CITY_NAME', 'VISIBLE', FALSE);
         END IF;
         -- CGFK$RESET_BLOCK_WHERE_CLAUSE: not needed (no DEFAULT_WHERE manipulation in APEX)
-    END importers_post_qry;
+    END IMPORTERS_POST_QUERY;
 
     -- Source: IMPORTERS.PRE-INSERT
     -- p_answer: answer to the CONFIRM shown to class 1 / user type 3 (broker) before saving.
@@ -1900,8 +1926,8 @@ AS
     --     END IF;
     --   END;
     -- <<<
-    PROCEDURE importers_pre_ins (p_rec    IN OUT NOCOPY t_rec,
-                                 p_ctx    IN t_ctx,
+    PROCEDURE IMPORTERS_PRE_INSERT (p_rec    IN OUT NOCOPY T_RECORD,
+                                 p_ctx    IN T_CONTEXT,
                                  p_answer IN PLS_INTEGER DEFAULT c_yes)
     IS
         v_cnt             NUMBER;
@@ -1913,38 +1939,38 @@ AS
     BEGIN
         -- SET_BLOCK_PROPERTY('IMPORTERS',UPDATE_ALLOWED,PROPERTY_FALSE): UI only
         IF p_rec.b_mobile_no IS NULL THEN
-            ftf('يجب إدخال رقم المحمول');
+            FORM_TRIGGER_FAILURE('يجب إدخال رقم المحمول');
         END IF;
         IF p_rec.city_code IS NULL THEN
-            ftf('يجب إدخال المدينة');
+            FORM_TRIGGER_FAILURE('يجب إدخال المدينة');
         END IF;
 
         chk_dupl_imp_brkr(p_rec, p_ctx);
         IF p_rec.impr_tel_nbr IS NULL THEN
             entrable('IMPR_TEL_NBR', TRUE);
-            ftf('يجب ادخال رقم الهاتف');
+            FORM_TRIGGER_FAILURE('يجب ادخال رقم الهاتف');
         END IF;
         IF ((p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd IN (1, 3, 5, 6, 8, 12))
             OR (p_rec.bus_id_type_cd = 3 AND p_rec.impr_type_cd = 4)
             OR (p_rec.bus_id_type_cd = 4 AND p_rec.impr_type_cd = 4)) THEN
             IF p_rec.bus_id_exprd_dt IS NULL THEN
                 entrable('BUS_ID_EXPRD_DT', TRUE);
-                disp_arb_ftf(9, 220);
+                DISPLAY_ARABIC_ERROR(9, 220);
             END IF;
         END IF;
         chk_impr_dupl(p_rec);
         IF NVL(p_rec.activity_entr, 'N') = 'Y' AND p_rec.activity IS NULL THEN
-            ftf('يجب إدخال حقل نشاط المستورد');
+            FORM_TRIGGER_FAILURE('يجب إدخال حقل نشاط المستورد');
         END IF;
         IF p_ctx.class_cd = 1 AND p_ctx.user_type = 3 THEN
             -- CONFIRM 'يجب مراجعة البيانات والتأكد من صحتها قبل التخزين، لايمكن التعديل إلا من قبل شئون المستوردين! هل ترغب بالاستمرار؟'
             IF p_answer = c_yes THEN
                 NULL;
             ELSE
-                ftf;
+                FORM_TRIGGER_FAILURE;
             END IF;
         END IF;
-        add_activity(1, p_rec);
+        add_activity(1, p_rec, p_ctx);
 
         IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
             IF p_rec.comm_rgstrtn_type = 1 THEN
@@ -1956,7 +1982,7 @@ AS
                     IF v_cnt = 0 THEN
                         v_ret := lib_usr.gnrl.get_customs_setting(p_ctx.curr_port_cd, 'COMM_TABLE_UNCHECK', 9);
                         IF NVL(v_ret, 0) = 0 THEN
-                            disp_arb_ftf(9, 190);
+                            DISPLAY_ARABIC_ERROR(9, 190);
                         ELSE
                             v_customs_entered := 1;
                         END IF;
@@ -1964,7 +1990,7 @@ AS
                         v_customs_entered := 0;
                     END IF;
                 ELSE
-                    disp_arb_ftf(9, 250);
+                    DISPLAY_ARABIC_ERROR(9, 250);
                 END IF;
             ELSIF p_rec.comm_rgstrtn_type = 2 THEN
                 IF p_rec.bus_id IS NOT NULL AND p_rec.bus_id_brnch IS NOT NULL THEN
@@ -1975,7 +2001,7 @@ AS
                     IF v_cnt = 0 THEN
                         v_ret := lib_usr.gnrl.get_customs_setting(p_ctx.curr_port_cd, 'COMM_TABLE_UNCHECK', 9);
                         IF NVL(v_ret, 0) = 0 THEN
-                            disp_arb_ftf(9, 190);
+                            DISPLAY_ARABIC_ERROR(9, 190);
                         ELSE
                             v_customs_entered := 1;
                         END IF;
@@ -1983,17 +2009,17 @@ AS
                         v_customs_entered := 0;
                     END IF;
                 ELSE
-                    disp_arb_ftf(9, 230);
+                    DISPLAY_ARABIC_ERROR(9, 230);
                 END IF;
             ELSE
                 entrable('COMM_RGSTRTN_TYPE', TRUE);
-                disp_arb_ftf(9, 240);
+                DISPLAY_ARABIC_ERROR(9, 240);
             END IF;
         END IF;
-        IF g_get('CHK_DUP_BUSID') = '1' THEN
+        IF GET_GLOBAL('CHK_DUP_BUSID') = '1' THEN
             -- Note: only the unused PU VIEW_SAME_BUSID sets this global to 1 -> never true today.
-            add_activity(3, p_rec);
-            g_set('CHK_DUP_BUSID', '0');
+            add_activity(3, p_rec, p_ctx);
+            SET_GLOBAL('CHK_DUP_BUSID', '0');
         END IF;
 
         -- RECORD IMPORTER IN HQ AND PORT (Bassam Mansour 09/01/2019)
@@ -2043,20 +2069,20 @@ AS
         IF v_result = 1 THEN
             info(v_msg_txt);
             info('رقم المستورد' || ' = ' || v_impr_nbr);
-            g_set('SET', v_impr_nbr);
-            IF g_get('SET') IS NOT NULL THEN
-                p_rec.hq_impr_nbr := g_get('SET');
+            SET_GLOBAL('SET', v_impr_nbr);
+            IF GET_GLOBAL('SET') IS NOT NULL THEN
+                p_rec.hq_impr_nbr := GET_GLOBAL('SET');
                 lock_key_items;
             END IF;
         ELSE
-            ftf(v_msg_txt);
+            FORM_TRIGGER_FAILURE(v_msg_txt);
         END IF;
 
         -- CGFK$CLR_FK_ON_INS
         IF p_rec.city_code_of_id IS NULL AND p_rec.ctry_cd_of_id IS NULL THEN
-            cgsf_clrlu_bus_i(p_rec);
+            CGSF$CLRLU_IMPORTERS_IMP_BUS_I(p_rec);
         END IF;
-    END importers_pre_ins;
+    END IMPORTERS_PRE_INSERT;
 
     -- Source: Forms default INSERT (block IMPORTERS has no ON-INSERT trigger; all base-table
     -- items are inserted with their current values).
@@ -2065,7 +2091,7 @@ AS
     -- PRE-INSERT. Whether this INSERT really runs as written (view with INSTEAD OF trigger,
     -- DB trigger, or DML Returning inherited from CIC_OLB) must be confirmed with a Forms
     -- trace before go-live. Kept exactly as Forms would issue it.
-    PROCEDURE importers_ins (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE IMPORTERS_INSERT (p_rec IN OUT NOCOPY T_RECORD)
     IS
     BEGIN
         INSERT INTO importers (
@@ -2089,7 +2115,7 @@ AS
             p_rec.express_post, p_rec.ctry_cd_of_id, p_rec.expd_stmt_nbr, p_rec.wvr_entry_nbr,
             p_rec.activity, p_rec.customs_entered, p_rec.creation_flag)
         RETURNING ROWID INTO p_rec.row_id;
-    END importers_ins;
+    END IMPORTERS_INSERT;
 
     -- Source: IMPORTERS.POST-INSERT
     --@ORIG IMPORTERS.POST-INSERT
@@ -2124,10 +2150,10 @@ AS
     --   RETURN_IMPR_ID ;
     --   END;
     -- <<<
-    PROCEDURE importers_post_ins (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx)
+    PROCEDURE IMPORTERS_POST_INSERT (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)
     IS
     BEGIN
-        IF g_get('CHEK') = '1' THEN
+        IF GET_GLOBAL('CHEK') = '1' THEN
             -- SET_BLOCK_PROPERTY('IMPORTERS',UPDATE_ALLOWED,PROPERTY_TRUE): UI only
             -- (:GLOBAL.CHEK is never set in this form - set by another form or the OLB)
             NULL;
@@ -2137,14 +2163,14 @@ AS
         IF p_ctx.class_cd = 1 AND p_ctx.user_type = 3 THEN
             create_brkr_impr_auth(p_rec, p_ctx);
         END IF;
-        IF g_get('SET') IS NOT NULL THEN
-            p_rec.impr_nbr    := g_get('SET');
-            p_rec.hq_impr_nbr := g_get('SET');
+        IF GET_GLOBAL('SET') IS NOT NULL THEN
+            p_rec.impr_nbr    := GET_GLOBAL('SET');
+            p_rec.hq_impr_nbr := GET_GLOBAL('SET');
             lock_key_items;
             entrable('IMPR_TEL_NBR', FALSE);
         END IF;
         return_impr_id(p_rec, p_ctx);
-    END importers_post_ins;
+    END IMPORTERS_POST_INSERT;
 
     -- Source: IMPORTERS.PRE-UPDATE
     --@ORIG IMPORTERS.PRE-UPDATE
@@ -2275,7 +2301,7 @@ AS
     --    :MOBILE_NO:=:B_MOBILE_NO;
     --   END;
     -- <<<
-    PROCEDURE importers_pre_upd (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx)
+    PROCEDURE IMPORTERS_PRE_UPDATE (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)
     IS
         CURSOR c1_hq_nbr IS
             SELECT hq_impr_nbr
@@ -2295,7 +2321,7 @@ AS
     BEGIN
         chk_personal(p_rec, p_ctx, p_rec.impr_type_cd, p_rec.hq_impr_nbr);
         IF p_rec.b_mobile_no IS NULL THEN
-            ftf('يجب إدخال رقم المحمول');
+            FORM_TRIGGER_FAILURE('يجب إدخال رقم المحمول');
         END IF;
 
         chk_dupl_imp_brkr(p_rec, p_ctx);
@@ -2304,7 +2330,7 @@ AS
             OR (p_rec.bus_id_type_cd = 4 AND p_rec.impr_type_cd = 4)) THEN
             IF p_rec.bus_id_exprd_dt IS NULL THEN
                 entrable('BUS_ID_EXPRD_DT', TRUE);
-                disp_arb_ftf(9, 220);
+                DISPLAY_ARABIC_ERROR(9, 220);
             END IF;
         END IF;
         IF p_ctx.letter_nbr IS NOT NULL THEN
@@ -2324,10 +2350,10 @@ AS
             p_rec.hq_impr_nbr := v_hq_nbr;
             CLOSE c1_hq_nbr;
         END IF;
-        add_activity(2, p_rec);
-        IF g_get('LETTER_NBR') IS NOT NULL THEN
-            db_journal.journaling_on(g_get('PORT_CD'), g_get('SUPP_TITLE_CD'),
-                                     g_get('LETTER_NBR'), g_get('LETTER_DT'));
+        add_activity(2, p_rec, p_ctx);
+        IF GET_GLOBAL('LETTER_NBR') IS NOT NULL THEN
+            db_journal.journaling_on(GET_GLOBAL('PORT_CD'), GET_GLOBAL('SUPP_TITLE_CD'),
+                                     GET_GLOBAL('LETTER_NBR'), GET_GLOBAL('LETTER_DT'));
         END IF;
 
         p_rec.arbc_impr_name  := LTRIM(RTRIM(p_rec.arbc_impr_name));
@@ -2344,7 +2370,7 @@ AS
                     IF v_cnt = 0 THEN
                         v_ret := lib_usr.gnrl.get_customs_setting(p_ctx.curr_port_cd, 'COMM_TABLE_UNCHECK', 9);
                         IF NVL(v_ret, 0) = 0 THEN
-                            disp_arb_ftf(9, 190);
+                            DISPLAY_ARABIC_ERROR(9, 190);
                         ELSE
                             p_rec.customs_entered := 1;
                         END IF;
@@ -2352,7 +2378,7 @@ AS
                         p_rec.customs_entered := 0;
                     END IF;
                 ELSE
-                    disp_arb_ftf(9, 250);
+                    DISPLAY_ARABIC_ERROR(9, 250);
                 END IF;
             ELSIF p_rec.comm_rgstrtn_type = 2 THEN
                 IF p_rec.bus_id IS NOT NULL AND p_rec.bus_id_brnch IS NOT NULL THEN
@@ -2363,7 +2389,7 @@ AS
                     IF v_cnt = 0 THEN
                         v_ret := lib_usr.gnrl.get_customs_setting(p_ctx.curr_port_cd, 'COMM_TABLE_UNCHECK', 9);
                         IF NVL(v_ret, 0) = 0 THEN
-                            disp_arb_ftf(9, 190);
+                            DISPLAY_ARABIC_ERROR(9, 190);
                         ELSE
                             p_rec.customs_entered := 1;
                         END IF;
@@ -2371,21 +2397,21 @@ AS
                         p_rec.customs_entered := 0;
                     END IF;
                 ELSE
-                    disp_arb_ftf(9, 230);
+                    DISPLAY_ARABIC_ERROR(9, 230);
                 END IF;
             ELSE
                 entrable('COMM_RGSTRTN_TYPE', TRUE);
-                disp_arb_ftf(9, 240);
+                DISPLAY_ARABIC_ERROR(9, 240);
             END IF;
         END IF;
         p_rec.mobile_no := p_rec.b_mobile_no;
-    END importers_pre_upd;
+    END IMPORTERS_PRE_UPDATE;
 
     -- Source: Forms default UPDATE (key mode ROWID; all base-table items are written).
     -- The key is the ROWID of the queried row - NOT (PORT_CD, IMPR_NBR) - because PORT_CD
     -- itself can change (B_EMAIL / B_MOBILE_NO / B_ID_NBR POST-CHANGE set it to the
     -- current port).
-    PROCEDURE importers_upd (p_rec IN t_rec)
+    PROCEDURE IMPORTERS_UPDATE (p_rec IN T_RECORD)
     IS
     BEGIN
         UPDATE importers
@@ -2434,9 +2460,9 @@ AS
          WHERE ROWID = CHARTOROWID(p_rec.row_id);
         IF SQL%ROWCOUNT = 0 THEN
             -- Forms: FRM-40654 "Record has been updated by another user. Re-query..."
-            ftf('FRM-40654');   -- TODO: Arabic text of FRM-40654 used by NIB.ON_ERROR (MISSING SOURCE)
+            FORM_TRIGGER_FAILURE('FRM-40654');   -- TODO: Arabic text of FRM-40654 used by NIB.ON_ERROR (MISSING SOURCE)
         END IF;
-    END importers_upd;
+    END IMPORTERS_UPDATE;
 
     -- Source: IMPORTERS.POST-UPDATE
     --@ORIG IMPORTERS.POST-UPDATE
@@ -2462,18 +2488,18 @@ AS
     --   :GLOBAL.FLAGUPDATE := 0;
     --   END IF;
     -- <<<
-    PROCEDURE importers_post_upd (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE IMPORTERS_POST_UPDATE (p_rec IN OUT NOCOPY T_RECORD)
     IS
     BEGIN
         lock_key_items;
         IF db_journal.is_journaling_on THEN
             db_journal.journaling_off;
         END IF;
-        IF g_get('FLAGUPDATE') = '1' THEN
+        IF GET_GLOBAL('FLAGUPDATE') = '1' THEN
             update_basic_importer(p_rec);
-            g_set('FLAGUPDATE', '0');
+            SET_GLOBAL('FLAGUPDATE', '0');
         END IF;
-    END importers_post_upd;
+    END IMPORTERS_POST_UPDATE;
 
     -- Source: IMPORTERS.PRE-DELETE
     --@ORIG IMPORTERS.PRE-DELETE
@@ -2484,11 +2510,11 @@ AS
     --       END IF;
     --   END;
     -- <<<
-    PROCEDURE importers_pre_del (p_rec IN t_rec)
+    PROCEDURE IMPORTERS_PRE_DELETE (p_rec IN T_RECORD, p_ctx IN T_CONTEXT)
     IS
     BEGIN
-        add_activity(5, p_rec);
-    END importers_pre_del;
+        add_activity(5, p_rec, p_ctx);
+    END IMPORTERS_PRE_DELETE;
 
     -- Source: IMPORTERS.KEY-DELREC, branch "ALERT_BUTTON1" (Confirm DA 'هل أنت متأكد من عملية الحذف')
     -- The REMOVE button visible+enabled check -> Server-side Condition / Authorization of DELETE.
@@ -2526,7 +2552,7 @@ AS
     --   END IF;
     --   END;
     -- <<<
-    PROCEDURE importers_key_delrec (p_rec IN t_rec)
+    PROCEDURE importers_key_delrec (p_rec IN T_RECORD, p_ctx IN T_CONTEXT)
     IS
     BEGIN
         IF NVL(p_rec.rec_status, 'QUERY') != 'NEW' THEN
@@ -2534,7 +2560,7 @@ AS
              WHERE port_cd  = p_rec.port_cd
                AND impr_nbr = p_rec.impr_nbr;
             -- FORMS_DDL('COMMIT');   -- removed, see header
-            importers_pre_del(p_rec);              -- Delete_Record -> PRE-DELETE
+            IMPORTERS_PRE_DELETE(p_rec, p_ctx);       -- Delete_Record -> PRE-DELETE
             DELETE importers                        -- Forms default DELETE (key mode ROWID)
              WHERE ROWID = CHARTOROWID(p_rec.row_id);
             -- COMMIT;                -- removed, see header
@@ -2695,11 +2721,11 @@ AS
             IF constraint_name IN ('IMP_PK', 'IMP_BUSID_UK', 'ITIDT_PK', 'IT_PK', 'BIT_PK') THEN
                 RETURN 'هذا السجل مدخل سابقاً - أعد ادخال البيانات';
             ELSIF constraint_name = 'SDP_PK' THEN
-                RETURN cg_msg('Row exists already with same <p1>', 'رمز الجمرك');
+                RETURN CG_MESSAGE('Row exists already with same <p1>', 'رمز الجمرك');
             ELSIF constraint_name = 'CT_PK' THEN
-                RETURN cg_msg('Row exists already with same <p1>', 'City Cd,رمز الدولة');
+                RETURN CG_MESSAGE('Row exists already with same <p1>', 'City Cd,رمز الدولة');
             ELSIF constraint_name = 'CTRY_PK' THEN
-                RETURN cg_msg('Row exists already with same <p1>', 'رمز الدولة');
+                RETURN CG_MESSAGE('Row exists already with same <p1>', 'رمز الدولة');
             END IF;
             RETURN p_sqlerrm;
         ELSIF server_err = 2290 THEN
@@ -2708,13 +2734,13 @@ AS
         -- FK - parent key not found
         IF server_err = 2291 THEN
             IF constraint_name = 'IMP_SDP_FK' THEN
-                RETURN cg_msg('This <p1> does not exist', 'رمز الجمــــــــــــــرك');
+                RETURN CG_MESSAGE('This <p1> does not exist', 'رمز الجمــــــــــــــرك');
             ELSIF constraint_name = 'IMP_NATIONALITY_FK' THEN
-                RETURN cg_msg('This <p1> does not exist', 'NATIONALITY');
+                RETURN CG_MESSAGE('This <p1> does not exist', 'NATIONALITY');
             ELSIF constraint_name = 'IMP_ITIDT_FK' THEN
                 RETURN 'رمز النشاط التجاري غير صحيح - أعد إدخال البيانات';
             ELSIF constraint_name = 'IMP_IMP_FK' THEN
-                RETURN cg_msg('This <p1> does not exist', 'IMPR_NBR_PARENT,PORT_CD');
+                RETURN CG_MESSAGE('This <p1> does not exist', 'IMPR_NBR_PARENT,PORT_CD');
             ELSIF constraint_name = 'IMP_CTRY_FK' THEN
                 RETURN 'رمز الدولة غير صحيح - أعد ادخال البيانات';
             ELSIF constraint_name = 'IMP_BUS_ID_CITY_FK' THEN
@@ -2756,7 +2782,7 @@ AS
     --     END IF;
     --   END;
     -- <<<
-    PROCEDURE port_cd_wvi (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE PORT_CD_WHEN_VALIDATE_ITEM (p_rec IN OUT NOCOPY T_RECORD)
     IS
     BEGIN
         IF p_rec.port_cd IS NOT NULL THEN
@@ -2767,15 +2793,15 @@ AS
         END IF;
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
-            ftf(cg_msg('This <p1> does not exist', 'رمز الجمــــــــــــــرك'));
-    END port_cd_wvi;
+            FORM_TRIGGER_FAILURE(CG_MESSAGE('This <p1> does not exist', 'رمز الجمــــــــــــــرك'));
+    END PORT_CD_WHEN_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.HQ_IMPR_NBR.POST-CHANGE (same body: BUS_ID, BUS_ID_BRNCH, IMPR_EXPR_TYPE)
-    PROCEDURE hq_impr_nbr_post_chg
+    PROCEDURE HQ_IMPR_NBR_POST_CHANGE
     IS
     BEGIN
-        g_set('FLAGUPDATE', '1');
-    END hq_impr_nbr_post_chg;
+        SET_GLOBAL('FLAGUPDATE', '1');
+    END HQ_IMPR_NBR_POST_CHANGE;
 
     -- Source: IMPORTERS.IMPR_NBR.WHEN-VALIDATE-ITEM
     -- APEX: when an existing number is typed, the page re-queries that importer
@@ -2801,7 +2827,7 @@ AS
     --   END IF;
     --   END;
     -- <<<
-    PROCEDURE impr_nbr_wvi (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE IMPR_NBR_WHEN_VALIDATE_ITEM (p_rec IN OUT NOCOPY T_RECORD)
     IS
         rec_count NUMBER;
     BEGIN
@@ -2811,14 +2837,14 @@ AS
              WHERE port_cd  = p_rec.port_cd
                AND impr_nbr = p_rec.impr_nbr;
             IF rec_count <> 0 THEN
-                g_set('PORT_CD', p_rec.port_cd);
-                g_set('IMPR_NBR', p_rec.impr_nbr);
-                g_set('EXEC_QUERY_NOW', '1');
+                SET_GLOBAL('PORT_CD', p_rec.port_cd);
+                SET_GLOBAL('IMPR_NBR', p_rec.impr_nbr);
+                SET_GLOBAL('EXEC_QUERY_NOW', '1');
             ELSE
-                disp_arb_ftf(9, 150);
+                DISPLAY_ARABIC_ERROR(9, 150);
             END IF;
         END IF;
-    END impr_nbr_wvi;
+    END IMPR_NBR_WHEN_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.IMPR_TYPE_CD.WHEN-VALIDATE-ITEM
     --@ORIG IMPORTERS.IMPR_TYPE_CD.WHEN-VALIDATE-ITEM
@@ -3030,7 +3056,7 @@ AS
     --     END IF;
     --   END;
     -- <<<
-    PROCEDURE impr_type_cd_wvi (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx)
+    PROCEDURE IMPR_TYPE_CD_VALIDATE_ITEM (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)
     IS
         impr_seq             VARCHAR2(6);
         bus_id_count         NUMBER;
@@ -3040,11 +3066,11 @@ AS
         IF p_rec.impr_nbr IS NOT NULL THEN
             IF NVL(p_rec.impr_type_cd, 0) NOT IN (4, 9)
                AND p_rec.impr_nbr > TO_NUMBER(NVL(gnrl.get_customs_setting('CREATE_IMPR_NBR', 9), 5000000)) THEN
-                disp_arb_ftf(9, 332);
+                DISPLAY_ARABIC_ERROR(9, 332);
             END IF;
         ELSE
             IF NVL(p_rec.impr_type_cd, 0) NOT IN (4, 9) THEN
-                disp_arb_ftf(9, 332);
+                DISPLAY_ARABIC_ERROR(9, 332);
             END IF;
         END IF;
 
@@ -3055,11 +3081,11 @@ AS
                AND bus_id_type_cd = 2
                AND status         = 1;
             IF v_count_impr_type_cd > 0 THEN
-                disp_arb_ftf(9, 331);
+                DISPLAY_ARABIC_ERROR(9, 331);
             END IF;
         END IF;
 
-        IF g_get('VALID') = '0' THEN
+        IF GET_GLOBAL('VALID') = '0' THEN
             IF p_rec.impr_type_cd IS NOT NULL THEN
                 SELECT COUNT(*)
                   INTO bus_id_count
@@ -3077,11 +3103,11 @@ AS
                     ui('IMPR_TYPE_CD', 'OPEN_LOV', TRUE);      -- DO_KEY('LIST_VALUES')
                 ELSE
                     p_rec.impr_type_cd := NULL;
-                    disp_arb_ftf(2, 170);
+                    DISPLAY_ARABIC_ERROR(2, 170);
                 END IF;
             END IF;
         END IF;
-        g_set('VALID', '0');
+        SET_GLOBAL('VALID', '0');
         IF p_rec.impr_type_cd IS NOT NULL THEN
             SELECT impr_type_name
               INTO p_rec.impr_type_name
@@ -3089,7 +3115,7 @@ AS
              WHERE impr_type_cd = p_rec.impr_type_cd;
         END IF;
 
-        IF g_get('FUNS_IMP') = '0' THEN
+        IF GET_GLOBAL('FUNS_IMP') = '0' THEN
             IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
                 entrable('COMM_RGSTRTN_TYPE', TRUE);
                 ui('COMM_RGSTRTN_TYPE', 'REQUIRED', TRUE);
@@ -3118,7 +3144,7 @@ AS
                     p_rec.bus_id := 'ملكى' || impr_seq;
                 END IF;
             ELSIF p_rec.impr_type_cd = 12 THEN
-                type_entrable_qry(p_rec);   -- Forms sets these before the check below can fail
+                TYPE_ENTRABLE_QUERY(p_rec);   -- Forms sets these before the check below can fail
                 IF p_rec.ctry_cd IS NOT NULL THEN
                     SELECT COUNT(*)
                       INTO v_count
@@ -3127,7 +3153,7 @@ AS
                        AND ctry_grp_stat = 1
                        AND ctry_grp_nbr  = 1;
                     IF v_count = 0 THEN
-                        ftf('لابد أن تكون دولة المستورد الخليجي تابعة لدول مجلس التعاون');
+                        FORM_TRIGGER_FAILURE('لابد أن تكون دولة المستورد الخليجي تابعة لدول مجلس التعاون');
                     END IF;
                 END IF;
             ELSIF p_rec.impr_type_cd IN (13, 14, 16, 17, 18, 20) THEN
@@ -3147,7 +3173,7 @@ AS
                 entrable('BUS_ID', FALSE); entrable('BUS_ID_BRNCH', FALSE);
                 entrable('CITY_CODE_OF_ID', FALSE); ui('CITY_CODE_OF_ID2', 'ENABLED', FALSE);
             ELSE
-                type_entrable_qry(p_rec);
+                TYPE_ENTRABLE_QUERY(p_rec);
             END IF;
             IF p_rec.ctry_cd IS NOT NULL THEN
                 SELECT crty_arbc_name
@@ -3177,10 +3203,10 @@ AS
                    AND ROWNUM = 1;
             EXCEPTION
                 WHEN NO_DATA_FOUND THEN
-                    ftf('رمز النشاط التجاري غير صحيح - أعد إدخال البيانات');
+                    FORM_TRIGGER_FAILURE('رمز النشاط التجاري غير صحيح - أعد إدخال البيانات');
             END;
         END IF;
-    END impr_type_cd_wvi;
+    END IMPR_TYPE_CD_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.IMPR_TYPE_CD.POST-CHANGE
     --@ORIG IMPORTERS.IMPR_TYPE_CD.POST-CHANGE
@@ -3193,18 +3219,18 @@ AS
     --   END IF ;
     --   END;
     -- <<<
-    PROCEDURE impr_type_cd_post_chg (p_rec IN t_rec)
+    PROCEDURE IMPR_TYPE_CD_POST_CHANGE (p_rec IN T_RECORD)
     IS
     BEGIN
-        g_set('FLAGUPDATE', '1');
+        SET_GLOBAL('FLAGUPDATE', '1');
         IF p_rec.impr_type_cd IN (1, 3, 5, 6, 8, 19) THEN
             ui('CITY_CODE_OF_ID', 'REQUIRED', TRUE);
         END IF;
-    END impr_type_cd_post_chg;
+    END IMPR_TYPE_CD_POST_CHANGE;
 
     -- Source: IMPORTERS.IMPR_TYPE_CD.WHEN-NEW-ITEM-INSTANCE
     -- First block (EXEC_QUERY_NOW = 1 -> Clear_Block + EXECUTE_QUERY) is navigation: the page
-    -- re-queries when impr_nbr_wvi set EXEC_QUERY_NOW (see importers_pre_qry).
+    -- re-queries when IMPR_NBR_WHEN_VALIDATE_ITEM set EXEC_QUERY_NOW (see IMPORTERS_PRE_QUERY).
     --@ORIG IMPORTERS.IMPR_TYPE_CD.WHEN-NEW-ITEM-INSTANCE
     -- >>> Original Forms code: IMPORTERS.IMPR_TYPE_CD.WHEN-NEW-ITEM-INSTANCE
     --   BEGIN
@@ -3235,23 +3261,23 @@ AS
     --     RAISE FORM_TRIGGER_FAILURE;
     --   END;
     -- <<<
-    PROCEDURE impr_type_cd_wnii (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE IMPR_TYPE_CD_NEW_ITEM_INSTANCE (p_rec IN OUT NOCOPY T_RECORD)
     IS
     BEGIN
-        IF g_get('EXEC_QUERY_NOW') = '1' THEN
+        IF GET_GLOBAL('EXEC_QUERY_NOW') = '1' THEN
             ui('IMPORTERS', 'REQUERY', TRUE);
         END IF;
         ctry_100_defaults(p_rec);
-    END impr_type_cd_wnii;
+    END IMPR_TYPE_CD_NEW_ITEM_INSTANCE;
 
     -- Source: IMPORTERS.IMPR_TYPE_CD.KEY-LISTVAL, part after CALL_FORM('LOV_Impr_Type')
     -- (the LOV form returned :GLOBAL.IMPR_TYPE_CD/_NAME and BUS_ID_TYPE_CD/_NAME).
     -- p_rec already carries the returned values (NULL = nothing selected).
-    PROCEDURE impr_type_cd_lov_ret (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE IMPR_TYPE_CD_LOV_RETURN (p_rec IN OUT NOCOPY T_RECORD)
     IS
     BEGIN
         IF p_rec.impr_type_cd IS NOT NULL THEN
-            g_set('VALID', '1');
+            SET_GLOBAL('VALID', '1');
             ctry_100_defaults(p_rec);
         ELSE
             p_rec.impr_type_cd     := NULL;
@@ -3259,7 +3285,7 @@ AS
             p_rec.bus_id_type_cd   := NULL;
             p_rec.bus_id_type_name := NULL;
         END IF;
-    END impr_type_cd_lov_ret;
+    END IMPR_TYPE_CD_LOV_RETURN;
 
     -- Source: IMPORTERS.BUS_ID_EXPRD_DT.WHEN-VALIDATE-ITEM
     --@ORIG IMPORTERS.BUS_ID_EXPRD_DT.WHEN-VALIDATE-ITEM
@@ -3287,22 +3313,22 @@ AS
     --    END IF;
     --   END;
     -- <<<
-    PROCEDURE bus_id_exprd_dt_wvi (p_rec IN t_rec, p_from_item IN BOOLEAN DEFAULT TRUE)
+    PROCEDURE BUS_ID_EXPRD_DT_VALIDATE_ITEM (p_rec IN T_RECORD, p_from_item IN BOOLEAN DEFAULT TRUE)
     IS
     BEGIN
         IF p_from_item THEN
             IF p_rec.bus_id_exprd_dt IS NOT NULL THEN
                 IF NOT valid_hij_date(p_rec.bus_id_exprd_dt) THEN
-                    ftf;
+                    FORM_TRIGGER_FAILURE;
                 END IF;
             END IF;
         END IF;
         IF p_from_item THEN
             IF p_rec.bus_id_exprd_dt < cur_hij_date THEN
-                disp_arb_ftf(1, 10);
+                DISPLAY_ARABIC_ERROR(1, 10);
             END IF;
         END IF;
-    END bus_id_exprd_dt_wvi;
+    END BUS_ID_EXPRD_DT_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.BUS_ID_TYPE_CD.POST-CHANGE
     -- SUGGESTION: Forms assigns the name of country 100 to ADD_CRTY_ARBC_NAME inside the IF and
@@ -3334,10 +3360,10 @@ AS
     --   END;
     --   END;
     -- <<<
-    PROCEDURE bus_id_type_post_chg (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE BUS_ID_TYPE_CD_POST_CHANGE (p_rec IN OUT NOCOPY T_RECORD)
     IS
     BEGIN
-        g_set('FLAGUPDATE', '1');
+        SET_GLOBAL('FLAGUPDATE', '1');
         BEGIN
             IF p_rec.impr_type_cd = 4 AND p_rec.bus_id_type_cd = 3
                OR p_rec.impr_type_cd = 4 AND p_rec.bus_id_type_cd = 5 THEN
@@ -3354,9 +3380,9 @@ AS
              WHERE ctry_cd = 100;
         EXCEPTION
             WHEN NO_DATA_FOUND THEN
-                disp_arb_ftf(18, 15);
+                DISPLAY_ARABIC_ERROR(18, 15);
         END;
-    END bus_id_type_post_chg;
+    END BUS_ID_TYPE_CD_POST_CHANGE;
 
     -- Source: IMPORTERS.COMM_RGSTRTN_TYPE.WHEN-LIST-CHANGED
     --@ORIG IMPORTERS.COMM_RGSTRTN_TYPE.WHEN-LIST-CHANGED
@@ -3376,7 +3402,7 @@ AS
     --   END IF;
     --   END;
     -- <<<
-    PROCEDURE comm_rgstrtn_wlc (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE COMM_RGSTRTN_TYPE_LIST_CHANGED (p_rec IN OUT NOCOPY T_RECORD)
     IS
     BEGIN
         IF p_rec.comm_rgstrtn_type = 1 THEN
@@ -3391,7 +3417,7 @@ AS
             entrable('BUS_ID_BRNCH', TRUE);
             ui('BUS_ID_BRNCH', 'VALID', FALSE);
         END IF;
-    END comm_rgstrtn_wlc;
+    END COMM_RGSTRTN_TYPE_LIST_CHANGED;
 
     -- Source: IMPORTERS.CTRY_CD_OF_ID.WHEN-VALIDATE-ITEM (CGFK$WVI_CLR_DEPS_OVF)
     --@ORIG IMPORTERS.CTRY_CD_OF_ID.WHEN-VALIDATE-ITEM
@@ -3410,16 +3436,16 @@ AS
     --     END IF;
     --   END;
     -- <<<
-    PROCEDURE ctry_cd_of_id_wvi (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE CTRY_CD_OF_ID_VALIDATE_ITEM (p_rec IN OUT NOCOPY T_RECORD)
     IS
     BEGIN
         IF p_rec.city_code_of_id IS NULL AND p_rec.ctry_cd_of_id IS NULL THEN
             IF p_rec.rec_status = 'NEW' THEN
                 RETURN;
             END IF;
-            cgsf_clrlu_bus_i(p_rec);
+            CGSF$CLRLU_IMPORTERS_IMP_BUS_I(p_rec);
         END IF;
-    END ctry_cd_of_id_wvi;
+    END CTRY_CD_OF_ID_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.CITY_CODE_OF_ID.WHEN-VALIDATE-ITEM
     --@ORIG IMPORTERS.CITY_CODE_OF_ID.WHEN-VALIDATE-ITEM
@@ -3475,7 +3501,7 @@ AS
     --     END IF;
     --   END;
     -- <<<
-    PROCEDURE city_code_of_id_wvi (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE CITY_CODE_OF_ID_VALIDATE_ITEM (p_rec IN OUT NOCOPY T_RECORD)
     IS
     BEGIN
         BEGIN
@@ -3493,7 +3519,7 @@ AS
             IF p_rec.rec_status = 'NEW' THEN
                 RETURN;
             END IF;
-            cgsf_clrlu_bus_i(p_rec);
+            CGSF$CLRLU_IMPORTERS_IMP_BUS_I(p_rec);
         END IF;
         -- CGFK$VALDIDATE_FK_OVF (CGFK$CHK_IMPORTERS_IMP_BUS_ID_) - warning only ('W', no failure)
         IF p_rec.city_code_of_id IS NOT NULL AND p_rec.ctry_cd_of_id IS NOT NULL THEN
@@ -3510,20 +3536,20 @@ AS
                     info('خطأ في رمز مدينة مصدر الرقم الإستدلالي');
             END;
         END IF;
-    END city_code_of_id_wvi;
+    END CITY_CODE_OF_ID_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.CITY_CODE_OF_ID.WHEN-NEW-ITEM-INSTANCE
-    PROCEDURE city_code_of_id_wnii (p_rec IN t_rec)
+    PROCEDURE CITY_CODE_OF_ID_WHEN_NEW_ITEM (p_rec IN T_RECORD)
     IS
     BEGIN
         IF p_rec.comm_rgstrtn_type = 2 THEN
             ui('BRNH_CITY_CD', 'REQUIRED', TRUE);
             ui('BRNH_CITY_CD', 'VALID', FALSE);
         END IF;
-    END city_code_of_id_wnii;
+    END CITY_CODE_OF_ID_WHEN_NEW_ITEM;
 
-    -- Suspended importer with the same BUS_ID (the WARNING inside bus_id_wvi). 0 = no warning.
-    FUNCTION bus_id_susp_impr (p_rec IN t_rec) RETURN NUMBER
+    -- Suspended importer with the same BUS_ID (the WARNING inside BUS_ID_WHEN_VALIDATE_ITEM). 0 = no warning.
+    FUNCTION BUS_ID_SUSPENDED_IMPORTER (p_rec IN T_RECORD) RETURN NUMBER
     IS
         v_count    NUMBER;
         v_impr_nbr NUMBER;
@@ -3564,12 +3590,12 @@ AS
             END IF;
         END IF;
         RETURN 0;
-    END bus_id_susp_impr;
+    END BUS_ID_SUSPENDED_IMPORTER;
 
     -- Source: IMPORTERS.BUS_ID.WHEN-VALIDATE-ITEM
     -- p_cr_answer  : alert 9-120 ("prefix the city commercial code?") - ALERT_BUTTON1 = c_yes.
     --                Shown as an 'ERROR' alert (normally a single OK button) -> default c_yes.
-    -- p_susp_answer: WARNING "يوجد مستورد ... موقوف ..." (text: see bus_id_susp_impr) - c_no clears BUS_ID.
+    -- p_susp_answer: WARNING "يوجد مستورد ... موقوف ..." (text: see BUS_ID_SUSPENDED_IMPORTER) - c_no clears BUS_ID.
     --@ORIG IMPORTERS.BUS_ID.WHEN-VALIDATE-ITEM
     -- >>> Original Forms code: IMPORTERS.BUS_ID.WHEN-VALIDATE-ITEM
     --   BEGIN
@@ -3773,8 +3799,8 @@ AS
     --   chk_bus_id_brnch ;
     --   END;
     -- <<<
-    PROCEDURE bus_id_wvi (p_rec         IN OUT NOCOPY t_rec,
-                          p_ctx         IN t_ctx,
+    PROCEDURE BUS_ID_WHEN_VALIDATE_ITEM (p_rec         IN OUT NOCOPY T_RECORD,
+                          p_ctx         IN T_CONTEXT,
                           p_cr_answer   IN PLS_INTEGER DEFAULT c_yes,
                           p_susp_answer IN PLS_INTEGER DEFAULT c_yes)
     IS
@@ -3791,23 +3817,23 @@ AS
     BEGIN
         chk_impr_dupl(p_rec);
         IF (p_rec.impr_type_cd IN (1, 3, 5, 6, 8, 19) AND LENGTH(p_rec.bus_id) != 10) THEN
-            ftf(' يجب أن يكون الرقم الاستدلالي مكونا من عشرة ارقام ');
+            FORM_TRIGGER_FAILURE(' يجب أن يكون الرقم الاستدلالي مكونا من عشرة ارقام ');
         END IF;
         IF p_rec.bus_id_type_cd IN (5, 3) AND p_rec.impr_type_cd = 4 THEN
             p_rec.bus_id := LTRIM(RTRIM(p_rec.bus_id));
             IF LENGTH(p_rec.bus_id) != 10 THEN
-                ftf(' يجب أن يكون الرقم الاستدلالي مكونا من عشرة ارقام ');
+                FORM_TRIGGER_FAILURE(' يجب أن يكون الرقم الاستدلالي مكونا من عشرة ارقام ');
             END IF;
             IF is_digit(p_rec.bus_id) = FALSE THEN
-                disp_arb_ftf(9, 270);
+                DISPLAY_ARABIC_ERROR(9, 270);
             END IF;
         END IF;
         IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
             IF is_digit(p_rec.bus_id) = FALSE THEN
-                disp_arb_ftf(9, 270);
+                DISPLAY_ARABIC_ERROR(9, 270);
             END IF;
             IF NOT (LENGTH(p_rec.bus_id) <= 6 OR LENGTH(p_rec.bus_id) = 10) THEN
-                disp_arb_ftf(9, 260);
+                DISPLAY_ARABIC_ERROR(9, 260);
             END IF;
             IF p_rec.city_code_of_id IS NOT NULL THEN
                 IF LENGTH(p_rec.bus_id) <= 6 THEN
@@ -3829,13 +3855,13 @@ AS
                         IF p_cr_answer = c_yes THEN
                             p_rec.bus_id := v_all_bus_id;
                         ELSIF p_cr_answer = c_no THEN
-                            ftf;
+                            FORM_TRIGGER_FAILURE;
                         END IF;
                     END IF;
                 ELSIF LENGTH(p_rec.bus_id) = 10 THEN
                     v_user_bus_id := SUBSTR(p_rec.bus_id, 1, 4);
                     IF TO_NUMBER(v_user_bus_id) <> p_rec.id_mins_comm_cd THEN
-                        disp_arb_ftf(9, 130);
+                        DISPLAY_ARABIC_ERROR(9, 130);
                     END IF;
                 END IF;
             END IF;
@@ -3863,10 +3889,10 @@ AS
                    AND ((p_rec.impr_nbr IS NULL) OR (p_rec.impr_nbr IS NOT NULL AND impr_nbr <> p_rec.impr_nbr))
                    AND lib_usr.impr.impr_suspended(p_rec.port_cd, impr_nbr, v_hijdt) <> 1;
                 IF v_impr_nbr <> 0 THEN
-                    ftf(' لا يمكن تكرار الرقم الإستدلالي - الرقم الإستدلالي مستخدم لمستورد آخر مسلسله بالجمرك رقم : ' || v_impr_nbr);
+                    FORM_TRIGGER_FAILURE(' لا يمكن تكرار الرقم الإستدلالي - الرقم الإستدلالي مستخدم لمستورد آخر مسلسله بالجمرك رقم : ' || v_impr_nbr);
                 ELSE
                     -- WARNING 'يوجد مستورد'||V_IMPR_NBR||' موقوف له نفس الرقم الإستدلالي" هل تريد تعديل الرقم الاستدلالي بالرغم من ذلك ؟'
-                    -- -> Confirm DA before this call (number from bus_id_susp_impr)
+                    -- -> Confirm DA before this call (number from BUS_ID_SUSPENDED_IMPORTER)
                     IF p_susp_answer = c_yes THEN
                         NULL;
                     ELSE
@@ -3876,7 +3902,7 @@ AS
             END IF;
         END IF;
 
-        IF g_get('FUNS_BUSID') = '0' THEN
+        IF GET_GLOBAL('FUNS_BUSID') = '0' THEN
             IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
                 IF p_rec.comm_rgstrtn_type = 1 THEN
                     SELECT COUNT(bus_id) INTO v_cnt
@@ -3884,7 +3910,7 @@ AS
                      WHERE bus_id   = p_rec.bus_id
                        AND brnchreg = 0;
                     IF v_cnt > 1 THEN
-                        disp_arb_ftf(9, 290);
+                        DISPLAY_ARABIC_ERROR(9, 290);
                     ELSIF v_cnt = 1 THEN
                         SELECT arbc_impr_name, arbc_name_std, bus_id_exprd_dt, impr_tel_nbr, impr_pob_nbr,
                                impr_zip_cd, impr_fax_nbr, impr_telex_nbr, activity
@@ -3898,7 +3924,7 @@ AS
                     ELSE
                         v_ret := lib_usr.gnrl.get_customs_setting('COMM_TABLE_UNCHECK', 9);
                         IF NVL(v_ret, 0) = 0 THEN
-                            disp_arb_ftf(9, 190);
+                            DISPLAY_ARABIC_ERROR(9, 190);
                         ELSE
                             cr_fields_entrable(TRUE, TRUE);
                         END IF;
@@ -3922,13 +3948,13 @@ AS
         END IF;
         IF p_rec.impr_type_cd = 4 AND p_rec.bus_id_type_cd IN (5, 3) THEN
             IF NOT check_idno(p_rec.bus_id) THEN
-                ftf('رقم الهوية المدخل غير صحيح.. يجب إدخال رقم هوية صحيح');
+                FORM_TRIGGER_FAILURE('رقم الهوية المدخل غير صحيح.. يجب إدخال رقم هوية صحيح');
             END IF;
         END IF;
 
         IF p_rec.rec_status IN ('NEW', 'INSERT')
            AND p_rec.impr_type_cd IN (1, 3, 5, 6, 19) AND p_rec.bus_id_type_cd = 2
-           AND g_get('ALLOW_MCI') = '1' THEN
+           AND GET_GLOBAL('ALLOW_MCI') = '1' THEN
             IF p_rec.comm_rgstrtn_type = 1 AND p_rec.bus_id IS NOT NULL THEN
                 get_main_cr_data(p_rec);
             ELSIF p_rec.comm_rgstrtn_type = 2 AND p_rec.bus_id_brnch IS NOT NULL THEN
@@ -3937,14 +3963,14 @@ AS
         END IF;
 
         chk_bus_id_brnch(p_rec);
-    END bus_id_wvi;
+    END BUS_ID_WHEN_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.BUS_ID.POST-CHANGE
-    PROCEDURE bus_id_post_chg
+    PROCEDURE BUS_ID_POST_CHANGE
     IS
     BEGIN
-        g_set('FLAGUPDATE', '1');
-    END bus_id_post_chg;
+        SET_GLOBAL('FLAGUPDATE', '1');
+    END BUS_ID_POST_CHANGE;
 
     -- Source: IMPORTERS.BUS_ID.WHEN-NEW-ITEM-INSTANCE
     --@ORIG IMPORTERS.BUS_ID.WHEN-NEW-ITEM-INSTANCE
@@ -3970,13 +3996,13 @@ AS
     --       END IF;
     --   END;
     -- <<<
-    PROCEDURE bus_id_wnii (p_rec IN t_rec)
+    PROCEDURE BUS_ID_WHEN_NEW_ITEM_INSTANCE (p_rec IN T_RECORD)
     IS
     BEGIN
         IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
             IF p_rec.comm_rgstrtn_type IS NULL THEN
                 ui('BUS_ID', 'REQUIRED', FALSE);
-                disp_arb_info(9, 240);
+                DISPLAY_ARABIC_INFO(9, 240);
                 ui_focus('COMM_RGSTRTN_TYPE');
             END IF;
             IF p_rec.comm_rgstrtn_type = 2 THEN
@@ -3985,12 +4011,12 @@ AS
             END IF;
         END IF;
         IF p_rec.city_code_of_id IS NOT NULL
-           AND (g_get('MINS_COMM_CD') IS NOT NULL OR p_rec.id_mins_comm_cd IS NOT NULL)
+           AND (GET_GLOBAL('MINS_COMM_CD') IS NOT NULL OR p_rec.id_mins_comm_cd IS NOT NULL)
            AND p_rec.bus_id IS NULL THEN
-            info('الرمز التجاري للمدينة المحددة :  ' || NVL(g_get('MINS_COMM_CD'), p_rec.id_mins_comm_cd));
-            g_set('MINS_COMM_CD', NULL);
+            info('الرمز التجاري للمدينة المحددة :  ' || NVL(GET_GLOBAL('MINS_COMM_CD'), p_rec.id_mins_comm_cd));
+            SET_GLOBAL('MINS_COMM_CD', NULL);
         END IF;
-    END bus_id_wnii;
+    END BUS_ID_WHEN_NEW_ITEM_INSTANCE;
 
     -- Source: IMPORTERS.BRNH_CITY_CD.WHEN-VALIDATE-ITEM
     --@ORIG IMPORTERS.BRNH_CITY_CD.WHEN-VALIDATE-ITEM
@@ -4010,7 +4036,7 @@ AS
     --          RAISE FORM_TRIGGER_FAILURE;
     --   END;
     -- <<<
-    PROCEDURE brnh_city_cd_wvi (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE BRNH_CITY_CD_VALIDATE_ITEM (p_rec IN OUT NOCOPY T_RECORD)
     IS
     BEGIN
         IF p_rec.brnh_city_cd IS NOT NULL THEN
@@ -4021,17 +4047,17 @@ AS
         END IF;
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
-            disp_arb_ftf(1, 120);
-    END brnh_city_cd_wvi;
+            DISPLAY_ARABIC_ERROR(1, 120);
+    END BRNH_CITY_CD_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.BRNH_CITY_CD.WHEN-NEW-ITEM-INSTANCE
-    PROCEDURE brnh_city_cd_wnii
+    PROCEDURE BRNH_CITY_CD_NEW_ITEM_INSTANCE
     IS
     BEGIN
         ui('BRNH_CITY_CD', 'REQUIRED', FALSE);
         ui('BUS_ID_BRNCH', 'REQUIRED', TRUE);
         ui('BUS_ID_BRNCH', 'VALID', FALSE);
-    END brnh_city_cd_wnii;
+    END BRNH_CITY_CD_NEW_ITEM_INSTANCE;
 
     -- Source: IMPORTERS.BUS_ID_BRNCH.WHEN-VALIDATE-ITEM
     -- p_cr_answer: alert 9-120 ("سيتم تحويل الرقم الفرعي إلى الرقم ...") - ALERT_BUTTON1 = c_yes.
@@ -4176,8 +4202,8 @@ AS
     --   chk_bus_id_brnch ;
     --   END;
     -- <<<
-    PROCEDURE bus_id_brnch_wvi (p_rec       IN OUT NOCOPY t_rec,
-                                p_ctx       IN t_ctx,
+    PROCEDURE BUS_ID_BRNCH_VALIDATE_ITEM (p_rec       IN OUT NOCOPY T_RECORD,
+                                p_ctx       IN T_CONTEXT,
                                 p_cr_answer IN PLS_INTEGER DEFAULT c_yes)
     IS
         v_all_bus_id      VARCHAR2(10);
@@ -4189,14 +4215,14 @@ AS
     BEGIN
         IF NVL(p_rec.bus_id_brnch_entr, 'Y') = 'Y' THEN      -- GET_ITEM_PROPERTY(...,ENABLED) = 'TRUE'
             IF p_rec.bus_id_brnch = '0' THEN
-                disp_arb_ftf(1, 220);
+                DISPLAY_ARABIC_ERROR(1, 220);
             END IF;
             IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
                 IF is_digit(p_rec.bus_id_brnch) = FALSE THEN
-                    disp_arb_ftf(9, 270);
+                    DISPLAY_ARABIC_ERROR(9, 270);
                 END IF;
                 IF NOT (LENGTH(p_rec.bus_id_brnch) = 6 OR LENGTH(p_rec.bus_id_brnch) = 10) THEN
-                    disp_arb_ftf(9, 260);
+                    DISPLAY_ARABIC_ERROR(9, 260);
                 END IF;
                 IF p_rec.brnh_city_cd IS NOT NULL THEN
                     SELECT mins_comm_cd
@@ -4217,13 +4243,13 @@ AS
                             IF p_cr_answer = c_yes THEN
                                 p_rec.bus_id_brnch := v_all_bus_id;
                             ELSIF p_cr_answer = c_no THEN
-                                ftf;
+                                FORM_TRIGGER_FAILURE;
                             END IF;
                         END IF;
                     ELSIF LENGTH(p_rec.bus_id) = 10 THEN
                         v_user_bus_id := SUBSTR(p_rec.bus_id_brnch, 1, 4);
                         IF TO_NUMBER(v_user_bus_id) <> v_id_mins_comm_cd THEN
-                            disp_arb_ftf(9, 130);
+                            DISPLAY_ARABIC_ERROR(9, 130);
                         END IF;
                     END IF;
                 END IF;
@@ -4231,7 +4257,7 @@ AS
                 ui('BUS_ID_BRNCH', 'REQUIRED', FALSE);
             END IF;
             chk_impr_dupl(p_rec);
-            IF g_get('FUNS_BUSID') = '0' THEN
+            IF GET_GLOBAL('FUNS_BUSID') = '0' THEN
                 IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
                     IF p_rec.comm_rgstrtn_type = 2 THEN
                         IF p_rec.bus_id IS NOT NULL AND p_rec.bus_id_brnch IS NOT NULL THEN
@@ -4240,7 +4266,7 @@ AS
                              WHERE bus_id       = p_rec.bus_id
                                AND brnch_bus_id = p_rec.bus_id_brnch;
                             IF v_cnt > 1 THEN
-                                disp_arb_ftf(9, 290);
+                                DISPLAY_ARABIC_ERROR(9, 290);
                             ELSIF v_cnt = 1 THEN
                                 SELECT arbc_impr_name, arbc_name_std, bus_id_exprd_dt, impr_tel_nbr,
                                        impr_pob_nbr, impr_zip_cd, impr_fax_nbr, impr_telex_nbr
@@ -4254,7 +4280,7 @@ AS
                             ELSE
                                 v_ret := lib_usr.gnrl.get_customs_setting('COMM_TABLE_UNCHECK', 9);
                                 IF NVL(v_ret, 0) = 0 THEN
-                                    disp_arb_ftf(9, 190);
+                                    DISPLAY_ARABIC_ERROR(9, 190);
                                 ELSE
                                     cr_fields_entrable(TRUE, FALSE);
                                 END IF;
@@ -4267,7 +4293,7 @@ AS
 
         IF p_rec.rec_status IN ('NEW', 'INSERT')
            AND p_rec.impr_type_cd IN (1, 3, 5, 6, 19) AND p_rec.bus_id_type_cd = 2
-           AND g_get('ALLOW_MCI') = '1' THEN
+           AND GET_GLOBAL('ALLOW_MCI') = '1' THEN
             IF p_rec.comm_rgstrtn_type = 1 AND p_rec.bus_id IS NOT NULL THEN
                 get_main_cr_data(p_rec);
             ELSIF p_rec.comm_rgstrtn_type = 2 AND p_rec.bus_id_brnch IS NOT NULL THEN
@@ -4276,14 +4302,14 @@ AS
         END IF;
 
         chk_bus_id_brnch(p_rec);
-    END bus_id_brnch_wvi;
+    END BUS_ID_BRNCH_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.BUS_ID_BRNCH.POST-CHANGE
-    PROCEDURE bus_id_brnch_post_chg
+    PROCEDURE BUS_ID_BRNCH_POST_CHANGE
     IS
     BEGIN
-        g_set('FLAGUPDATE', '1');
-    END bus_id_brnch_post_chg;
+        SET_GLOBAL('FLAGUPDATE', '1');
+    END BUS_ID_BRNCH_POST_CHANGE;
 
     -- Source: IMPORTERS.BUS_ID_BRNCH.WHEN-NEW-ITEM-INSTANCE
     --@ORIG IMPORTERS.BUS_ID_BRNCH.WHEN-NEW-ITEM-INSTANCE
@@ -4318,7 +4344,7 @@ AS
     --   END IF;
     --   END;
     -- <<<
-    PROCEDURE bus_id_brnch_wnii (p_rec IN t_rec)
+    PROCEDURE BUS_ID_BRNCH_NEW_ITEM_INSTANCE (p_rec IN T_RECORD)
     IS
         v_mins_comm_cd NUMBER;
     BEGIN
@@ -4339,14 +4365,14 @@ AS
                     WHEN OTHERS THEN
                         NULL;
                 END;
-                IF (g_get('MINS_COMM_CD') IS NOT NULL OR v_mins_comm_cd IS NOT NULL)
+                IF (GET_GLOBAL('MINS_COMM_CD') IS NOT NULL OR v_mins_comm_cd IS NOT NULL)
                    AND p_rec.bus_id_brnch IS NULL THEN
-                    info('الرمز التجاري للمدينة المحددة :  ' || NVL(g_get('MINS_COMM_CD'), v_mins_comm_cd));
-                    g_set('MINS_COMM_CD', NULL);
+                    info('الرمز التجاري للمدينة المحددة :  ' || NVL(GET_GLOBAL('MINS_COMM_CD'), v_mins_comm_cd));
+                    SET_GLOBAL('MINS_COMM_CD', NULL);
                 END IF;
             END IF;
         END IF;
-    END bus_id_brnch_wnii;
+    END BUS_ID_BRNCH_NEW_ITEM_INSTANCE;
 
     -- Source: IMPORTERS.CTRY_CD.WHEN-VALIDATE-ITEM
     --@ORIG IMPORTERS.CTRY_CD.WHEN-VALIDATE-ITEM
@@ -4392,7 +4418,7 @@ AS
     --     END IF;
     --   END;
     -- <<<
-    PROCEDURE ctry_cd_wvi (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE CTRY_CD_WHEN_VALIDATE_ITEM (p_rec IN OUT NOCOPY T_RECORD)
     IS
         v_count NUMBER;
     BEGIN
@@ -4404,7 +4430,7 @@ AS
                AND ctry_grp_stat = 1
                AND ctry_grp_nbr  = 1;
             IF v_count = 0 THEN
-                ftf('لابد أن تكون دولة المستورد الخليجي تابعة لدول مجلس التعاون');
+                FORM_TRIGGER_FAILURE('لابد أن تكون دولة المستورد الخليجي تابعة لدول مجلس التعاون');
             END IF;
         END IF;
         IF p_rec.impr_type_cd = 3 AND p_rec.bus_id_type_cd = 2 THEN
@@ -4422,17 +4448,17 @@ AS
                    AND ctry.ctry_status = 1;
             EXCEPTION
                 WHEN NO_DATA_FOUND THEN
-                    ftf('رمز الدولة غير صحيح - أعد ادخال البيانات');
+                    FORM_TRIGGER_FAILURE('رمز الدولة غير صحيح - أعد ادخال البيانات');
             END;
         END IF;
-    END ctry_cd_wvi;
+    END CTRY_CD_WHEN_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.IMPR_EXPR_TYPE.POST-CHANGE
-    PROCEDURE impr_expr_type_post_chg
+    PROCEDURE IMPR_EXPR_TYPE_POST_CHANGE
     IS
     BEGIN
-        g_set('FLAGUPDATE', '1');
-    END impr_expr_type_post_chg;
+        SET_GLOBAL('FLAGUPDATE', '1');
+    END IMPR_EXPR_TYPE_POST_CHANGE;
 
     -- Source: IMPORTERS.ARBC_IMPR_NAME.WHEN-VALIDATE-ITEM
     --@ORIG IMPORTERS.ARBC_IMPR_NAME.WHEN-VALIDATE-ITEM
@@ -4442,12 +4468,12 @@ AS
     --   :IMPR_NAME_STD    := STR.STRFORMAT(:ARBC_IMPR_NAME);
     --   END;
     -- <<<
-    PROCEDURE arbc_impr_name_wvi (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE ARBC_IMPR_NAME_VALIDATE_ITEM (p_rec IN OUT NOCOPY T_RECORD)
     IS
     BEGIN
         p_rec.arbc_impr_name := str_db.removerepeat(p_rec.arbc_impr_name);
         p_rec.impr_name_std  := str_db.strformat(p_rec.arbc_impr_name, 0);  -- STR.STRFORMAT = STR_DB(x, 0)
-    END arbc_impr_name_wvi;
+    END ARBC_IMPR_NAME_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.ARBC_IMPR_NAME.KEY-NEXT-ITEM
     -- Net effect in Forms: temporary dummy values that are all reset before GO_ITEM -> the
@@ -4495,7 +4521,7 @@ AS
     --   END;
     --   END;
     -- <<<
-    PROCEDURE arbc_impr_name_key_nxt (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE ARBC_IMPR_NAME_KEY_NEXT_ITEM (p_rec IN OUT NOCOPY T_RECORD)
     IS
         city_dummy_value NUMBER := 1;
         ctry_dummy_value NUMBER := 1;
@@ -4532,7 +4558,7 @@ AS
             p_rec.add_crty_arbc_name := NULL;
         END IF;
         ui_focus('ENG_IMPR_NAME');
-    END arbc_impr_name_key_nxt;
+    END ARBC_IMPR_NAME_KEY_NEXT_ITEM;
 
     -- Source: IMPORTERS.ENG_IMPR_NAME.WHEN-VALIDATE-ITEM
     --@ORIG IMPORTERS.ENG_IMPR_NAME.WHEN-VALIDATE-ITEM
@@ -4559,7 +4585,7 @@ AS
     --   END IF;
     --   END;
     -- <<<
-    PROCEDURE eng_impr_name_wvi (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE ENG_IMPR_NAME_VALIDATE_ITEM (p_rec IN OUT NOCOPY T_RECORD)
     IS
         eng_impr_name_length NUMBER;
         v                    VARCHAR2(1);
@@ -4573,11 +4599,11 @@ AS
                    OR (v = ' ') THEN
                     NULL;
                 ELSE
-                    ftf('فضلا .. يجب إدخال اسم المستورد باللغة الانجليزية');
+                    FORM_TRIGGER_FAILURE('فضلا .. يجب إدخال اسم المستورد باللغة الانجليزية');
                 END IF;
             END LOOP;
         END IF;
-    END eng_impr_name_wvi;
+    END ENG_IMPR_NAME_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.BUS_ID_ISSUE_DT.WHEN-VALIDATE-ITEM
     --@ORIG IMPORTERS.BUS_ID_ISSUE_DT.WHEN-VALIDATE-ITEM
@@ -4595,17 +4621,17 @@ AS
     --       END IF;
     --   END;
     -- <<<
-    PROCEDURE bus_id_issue_dt_wvi (p_rec IN t_rec, p_from_item IN BOOLEAN DEFAULT TRUE)
+    PROCEDURE BUS_ID_ISSUE_DT_VALIDATE_ITEM (p_rec IN T_RECORD, p_from_item IN BOOLEAN DEFAULT TRUE)
     IS
     BEGIN
         IF p_from_item THEN
             IF p_rec.bus_id_issue_dt IS NOT NULL THEN
                 IF NOT valid_hij_date(p_rec.bus_id_issue_dt) THEN
-                    ftf;
+                    FORM_TRIGGER_FAILURE;
                 END IF;
             END IF;
         END IF;
-    END bus_id_issue_dt_wvi;
+    END BUS_ID_ISSUE_DT_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.IMPR_NBR_PARENT.WHEN-VALIDATE-ITEM (9-160 is shown, no failure)
     --@ORIG IMPORTERS.IMPR_NBR_PARENT.WHEN-VALIDATE-ITEM
@@ -4627,7 +4653,7 @@ AS
     --   END IF;
     --   END;
     -- <<<
-    PROCEDURE impr_nbr_parent_wvi (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE IMPR_NBR_PARENT_VALIDATE_ITEM (p_rec IN OUT NOCOPY T_RECORD)
     IS
         CURSOR c_p_name IS
             SELECT arbc_impr_name
@@ -4638,11 +4664,11 @@ AS
             OPEN c_p_name;
             FETCH c_p_name INTO p_rec.impr_name_parent;
             IF c_p_name%NOTFOUND THEN
-                disp_arb_info(9, 160);
+                DISPLAY_ARABIC_INFO(9, 160);
             END IF;
             CLOSE c_p_name;
         END IF;
-    END impr_nbr_parent_wvi;
+    END IMPR_NBR_PARENT_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.ADD_CTRY_CD.WHEN-VALIDATE-ITEM
     --@ORIG IMPORTERS.ADD_CTRY_CD.WHEN-VALIDATE-ITEM
@@ -4676,7 +4702,7 @@ AS
     --     END IF;
     --   END;
     -- <<<
-    PROCEDURE add_ctry_cd_wvi (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE ADD_CTRY_CD_WHEN_VALIDATE_ITEM (p_rec IN OUT NOCOPY T_RECORD)
     IS
     BEGIN
         BEGIN
@@ -4685,7 +4711,7 @@ AS
              WHERE ctry_cd = p_rec.add_ctry_cd;
         EXCEPTION
             WHEN NO_DATA_FOUND THEN
-                disp_arb_ftf(18, 15);
+                DISPLAY_ARABIC_ERROR(18, 15);
         END;
         -- CGFK$VALDIDATE_FK_OVF (CGFK$CHK_IMPORTERS_IMP_ADD_CIT) - warning only
         IF p_rec.add_ctry_cd IS NOT NULL AND p_rec.city_code IS NOT NULL THEN
@@ -4703,7 +4729,7 @@ AS
                     info('خطأ في رمز مدينة عنوان المستورد');
             END;
         END IF;
-    END add_ctry_cd_wvi;
+    END ADD_CTRY_CD_WHEN_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.CITY_CODE.WHEN-VALIDATE-ITEM
     --@ORIG IMPORTERS.CITY_CODE.WHEN-VALIDATE-ITEM
@@ -4742,12 +4768,12 @@ AS
     --     END IF;
     --   END;
     -- <<<
-    PROCEDURE city_code_wvi (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE CITY_CODE_WHEN_VALIDATE_ITEM (p_rec IN OUT NOCOPY T_RECORD)
     IS
     BEGIN
         BEGIN
             IF p_rec.city_code IS NULL THEN
-                ftf('يجب إدخال المدينة');
+                FORM_TRIGGER_FAILURE('يجب إدخال المدينة');
             END IF;
             SELECT city_arb_name INTO p_rec.city_name
               FROM cities
@@ -4755,7 +4781,7 @@ AS
                AND city_cd = p_rec.city_code;
         EXCEPTION
             WHEN NO_DATA_FOUND THEN
-                disp_arb_ftf(18, 282);
+                DISPLAY_ARABIC_ERROR(18, 282);
         END;
         -- CGFK$VALDIDATE_FK_OVF (CGFK$CHK_IMPORTERS_IMP_ADD_CIT) - warning only
         IF p_rec.add_ctry_cd IS NOT NULL AND p_rec.city_code IS NOT NULL THEN
@@ -4773,7 +4799,7 @@ AS
                     info('خطأ في رمز مدينة عنوان المستورد');
             END;
         END IF;
-    END city_code_wvi;
+    END CITY_CODE_WHEN_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.IMPR_TEL_NBR.WHEN-VALIDATE-ITEM
     -- (TO_NUMBER of a non-numeric value raises ORA-01722 in Forms too - kept)
@@ -4794,19 +4820,19 @@ AS
     --   END IF;
     --   END;
     -- <<<
-    PROCEDURE impr_tel_nbr_wvi (p_rec IN t_rec)
+    PROCEDURE IMPR_TEL_NBR_VALIDATE_ITEM (p_rec IN T_RECORD)
     IS
     BEGIN
         IF p_rec.impr_tel_nbr IS NULL THEN
-            ftf('يجب إدخال الهاتف');
+            FORM_TRIGGER_FAILURE('يجب إدخال الهاتف');
         END IF;
         IF LENGTH(p_rec.impr_tel_nbr) < 10 OR LENGTH(p_rec.impr_tel_nbr) > 10 THEN
-            ftf('رقم الهاتف يجب أن يتكون من 10 أرقام');
+            FORM_TRIGGER_FAILURE('رقم الهاتف يجب أن يتكون من 10 أرقام');
         END IF;
         IF TO_NUMBER(p_rec.impr_tel_nbr) = 0 THEN
-            ftf('يجب أن يكون رقم الهاتف المدخل أرقام');
+            FORM_TRIGGER_FAILURE('يجب أن يكون رقم الهاتف المدخل أرقام');
         END IF;
-    END impr_tel_nbr_wvi;
+    END IMPR_TEL_NBR_VALIDATE_ITEM;
 
     -- Shared body of B_EMAIL / EMAIL WHEN-VALIDATE-ITEM (identical text in both triggers)
     PROCEDURE check_email (p_email IN VARCHAR2, p_from_item IN BOOLEAN)
@@ -4817,7 +4843,7 @@ AS
             IF (LENGTH(p_email) > 0) THEN
                 at_pos := INSTR(p_email, '@');
                 IF (at_pos <= 0 OR at_pos = 1) THEN
-                    ftf('خطأ فى صيغة البريد الالكتروني');
+                    FORM_TRIGGER_FAILURE('خطأ فى صيغة البريد الالكتروني');
                 END IF;
             END IF;
         END IF;
@@ -4847,18 +4873,18 @@ AS
     --       END IF;
     --   End;
     -- <<<
-    PROCEDURE b_email_wvi (p_rec IN t_rec, p_from_item IN BOOLEAN DEFAULT TRUE)
+    PROCEDURE B_EMAIL_WHEN_VALIDATE_ITEM (p_rec IN T_RECORD, p_from_item IN BOOLEAN DEFAULT TRUE)
     IS
     BEGIN
         check_email(p_rec.b_email, p_from_item);
-    END b_email_wvi;
+    END B_EMAIL_WHEN_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.EMAIL.WHEN-VALIDATE-ITEM (EMAIL is hidden; only filled by POST-QUERY)
-    PROCEDURE email_wvi (p_rec IN t_rec, p_from_item IN BOOLEAN DEFAULT TRUE)
+    PROCEDURE EMAIL_WHEN_VALIDATE_ITEM (p_rec IN T_RECORD, p_from_item IN BOOLEAN DEFAULT TRUE)
     IS
     BEGIN
         check_email(p_rec.email, p_from_item);
-    END email_wvi;
+    END EMAIL_WHEN_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.B_EMAIL.POST-CHANGE (same body: B_MOBILE_NO, B_ID_NBR)
     -- Business rule: changing e-mail / mobile / ID moves the importer row to the current port.
@@ -4869,12 +4895,12 @@ AS
     --   :PORT_CD:=:PARAMETER.P_CURR_PORT_CD;
     --   END;
     -- <<<
-    PROCEDURE b_email_post_chg (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx)
+    PROCEDURE B_EMAIL_POST_CHANGE (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)
     IS
     BEGIN
-        g_set('FLAGUPDATE', '1');
+        SET_GLOBAL('FLAGUPDATE', '1');
         p_rec.port_cd := p_ctx.curr_port_cd;
-    END b_email_post_chg;
+    END B_EMAIL_POST_CHANGE;
 
     -- Source: IMPORTERS.B_MOBILE_NO.WHEN-VALIDATE-ITEM
     --@ORIG IMPORTERS.B_MOBILE_NO.WHEN-VALIDATE-ITEM
@@ -4908,14 +4934,14 @@ AS
     --       END IF;
     --   END;
     -- <<<
-    PROCEDURE b_mobile_no_wvi (p_rec IN t_rec, p_ctx IN t_ctx)
+    PROCEDURE B_MOBILE_NO_WHEN_VALIDATE_ITEM (p_rec IN T_RECORD, p_ctx IN T_CONTEXT)
     IS
         mobile_no_length NUMBER;
         v                VARCHAR2(1);
     BEGIN
         IF p_ctx.curr_port_cd = 99 THEN
-            IF g_get('OLD_PORT_CD') <> 99 AND p_rec.impr_nbr IS NOT NULL THEN
-                ftf('لا يمكن تعديل رقم الجوال, الرجاء استخدام الوظيفة الخاصة بتعديل رقم الجوال');
+            IF GET_GLOBAL('OLD_PORT_CD') <> 99 AND p_rec.impr_nbr IS NOT NULL THEN
+                FORM_TRIGGER_FAILURE('لا يمكن تعديل رقم الجوال, الرجاء استخدام الوظيفة الخاصة بتعديل رقم الجوال');
             END IF;
         END IF;
         mobile_no_length := LENGTH(p_rec.b_mobile_no);
@@ -4924,21 +4950,21 @@ AS
             IF (v BETWEEN '0' AND '9') THEN
                 NULL;
             ELSE
-                ftf('يجب أن يكون رقم الجوال المدخل أرقام');
+                FORM_TRIGGER_FAILURE('يجب أن يكون رقم الجوال المدخل أرقام');
             END IF;
         END LOOP;
         IF p_rec.b_mobile_no IS NOT NULL
            AND (LENGTH(p_rec.b_mobile_no) != 9 OR SUBSTR(p_rec.b_mobile_no, 1, 1) != 5) THEN
-            ftf('رقم الجوال المدخل غير صحيح .. الرجاء اعادة الادخال ');
+            FORM_TRIGGER_FAILURE('رقم الجوال المدخل غير صحيح .. الرجاء اعادة الادخال ');
         END IF;
-    END b_mobile_no_wvi;
+    END B_MOBILE_NO_WHEN_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.B_MOBILE_NO.POST-CHANGE
-    PROCEDURE b_mobile_no_post_chg (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx)
+    PROCEDURE B_MOBILE_NO_POST_CHANGE (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)
     IS
     BEGIN
-        b_email_post_chg(p_rec, p_ctx);
-    END b_mobile_no_post_chg;
+        B_EMAIL_POST_CHANGE(p_rec, p_ctx);
+    END B_MOBILE_NO_POST_CHANGE;
 
     -- Source: IMPORTERS.BANK_IBAN.WHEN-VALIDATE-ITEM
     --@ORIG IMPORTERS.BANK_IBAN.WHEN-VALIDATE-ITEM
@@ -4956,7 +4982,7 @@ AS
     --       END IF;
     --   END;
     -- <<<
-    PROCEDURE bank_iban_wvi (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE BANK_IBAN_WHEN_VALIDATE_ITEM (p_rec IN OUT NOCOPY T_RECORD)
     IS
     BEGIN
         p_rec.bank_iban := UPPER(p_rec.bank_iban);
@@ -4966,18 +4992,18 @@ AS
             p_rec.bank_iban := 'SA' || p_rec.bank_iban;
         END IF;
         IF p_rec.bank_iban IS NOT NULL AND LENGTH(p_rec.bank_iban) != 24 THEN
-            ftf(' رقم الآيبان المدخل غير صحيح..الرجاء إعادة الإدخال ');
+            FORM_TRIGGER_FAILURE(' رقم الآيبان المدخل غير صحيح..الرجاء إعادة الإدخال ');
         END IF;
-    END bank_iban_wvi;
+    END BANK_IBAN_WHEN_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.BANK_IBAN.WHEN-NEW-ITEM-INSTANCE
-    PROCEDURE bank_iban_wnii (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE BANK_IBAN_NEW_ITEM_INSTANCE (p_rec IN OUT NOCOPY T_RECORD)
     IS
     BEGIN
         IF p_rec.bank_iban IS NULL THEN
             p_rec.bank_iban := 'SA';
         END IF;
-    END bank_iban_wnii;
+    END BANK_IBAN_NEW_ITEM_INSTANCE;
 
     -- Source: IMPORTERS.B_ID_NBR.WHEN-VALIDATE-ITEM
     --@ORIG IMPORTERS.B_ID_NBR.WHEN-VALIDATE-ITEM
@@ -4999,7 +5025,7 @@ AS
     --           END IF;
     --       END IF;
     -- <<<
-    PROCEDURE b_id_nbr_wvi (p_rec IN t_rec)
+    PROCEDURE B_ID_NBR_WHEN_VALIDATE_ITEM (p_rec IN T_RECORD)
     IS
         x NUMBER;
     BEGIN
@@ -5009,21 +5035,21 @@ AS
             END IF;
         EXCEPTION
             WHEN OTHERS THEN
-                ftf('يجب إدخال رقم الهوية بشكل صحيح');
+                FORM_TRIGGER_FAILURE('يجب إدخال رقم الهوية بشكل صحيح');
         END;
         IF p_rec.b_id_nbr IS NOT NULL THEN
             IF NOT check_idno(p_rec.b_id_nbr) THEN
-                ftf('رقم الهوية المدخل غير صحيح.. يجب إدخال رقم هوية صحيح');
+                FORM_TRIGGER_FAILURE('رقم الهوية المدخل غير صحيح.. يجب إدخال رقم هوية صحيح');
             END IF;
         END IF;
-    END b_id_nbr_wvi;
+    END B_ID_NBR_WHEN_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.B_ID_NBR.POST-CHANGE
-    PROCEDURE b_id_nbr_post_chg (p_rec IN OUT NOCOPY t_rec, p_ctx IN t_ctx)
+    PROCEDURE B_ID_NBR_POST_CHANGE (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)
     IS
     BEGIN
-        b_email_post_chg(p_rec, p_ctx);
-    END b_id_nbr_post_chg;
+        B_EMAIL_POST_CHANGE(p_rec, p_ctx);
+    END B_ID_NBR_POST_CHANGE;
 
     -- ======================================================================= PROGRAM UNITS
 
@@ -5139,11 +5165,11 @@ AS
     --       END IF;
     --   END;
     -- <<<
-    PROCEDURE chk_bus_id_brnch (p_rec IN t_rec)
+    PROCEDURE chk_bus_id_brnch (p_rec IN T_RECORD)
     IS
     BEGIN
         IF p_rec.bus_id_brnch = p_rec.bus_id THEN
-            ftf('غير مسموح بادخال رقم السجل الرئيسي مساوي لرقم السجل الفرعي .. أعد الادخال');
+            FORM_TRIGGER_FAILURE('غير مسموح بادخال رقم السجل الرئيسي مساوي لرقم السجل الفرعي .. أعد الادخال');
         END IF;
     END chk_bus_id_brnch;
 
@@ -5184,7 +5210,7 @@ AS
     --         END IF;
     --   END;
     -- <<<
-    PROCEDURE chk_impr_dupl (p_rec IN t_rec)
+    PROCEDURE chk_impr_dupl (p_rec IN T_RECORD)
     IS
         v_count     NUMBER;
         v_impr_name VARCHAR2(200);
@@ -5211,7 +5237,7 @@ AS
                    AND bus_id_brnch   = p_rec.bus_id_brnch
                    AND ((p_rec.impr_nbr IS NULL) OR (p_rec.impr_nbr IS NOT NULL AND impr_nbr <> p_rec.impr_nbr))
                    AND ROWNUM <= 1;
-                ftf(' لايمكن الإدخال، يوجد مستورد مدخل بنفس نوع المستورد ونفس الرقم الإستدلالي الرئيسي والفرعي ورقمه:  '
+                FORM_TRIGGER_FAILURE(' لايمكن الإدخال، يوجد مستورد مدخل بنفس نوع المستورد ونفس الرقم الإستدلالي الرئيسي والفرعي ورقمه:  '
                     || v_impr_nbr || ' اسمه ' || v_impr_name);
             END IF;
         END IF;
@@ -5249,7 +5275,7 @@ AS
     --       END IF;
     --   END;
     -- <<<
-    PROCEDURE chk_dupl_imp_brkr (p_rec IN t_rec, p_ctx IN t_ctx)
+    PROCEDURE chk_dupl_imp_brkr (p_rec IN T_RECORD, p_ctx IN T_CONTEXT)
     IS
         v_var_value VARCHAR2(2) := 0;
         v_chk       NUMBER;
@@ -5272,7 +5298,7 @@ AS
                                                        p_rec.comm_rgstrtn_type, p_rec.bus_id,
                                                        p_rec.bus_id_brnch, v_msg);
                 IF v_chk = 1 THEN
-                    ftf(v_msg);
+                    FORM_TRIGGER_FAILURE(v_msg);
                 END IF;
             END IF;
         END IF;
@@ -5320,8 +5346,8 @@ AS
     --       END IF;
     --   END;
     -- <<<
-    PROCEDURE chk_personal (p_rec          IN OUT NOCOPY t_rec,
-                            p_ctx          IN t_ctx,
+    PROCEDURE chk_personal (p_rec          IN OUT NOCOPY T_RECORD,
+                            p_ctx          IN T_CONTEXT,
                             p_impr_type_cd IN NUMBER,
                             p_hq_impr_nbr  IN NUMBER,
                             p_stop         IN NUMBER DEFAULT 1)
@@ -5345,13 +5371,13 @@ AS
         END IF;
     EXCEPTION
         WHEN ex_personal_vs_others THEN
-            p_rec.impr_type_cd := g_get('OLD_IMPR_TYPE_CD');
+            p_rec.impr_type_cd := GET_GLOBAL('OLD_IMPR_TYPE_CD');
             SELECT impr_type_name
               INTO p_rec.impr_type_name
               FROM impr_types
              WHERE impr_type_cd = p_rec.impr_type_cd;
             IF p_stop = 1 THEN
-                ftf('لا يمكن تغيير نوع المستورد من شخصي الي نوع آخر أو العكس , يتم ذلك من خلال الدعم الفني التطبيقات فقط');
+                FORM_TRIGGER_FAILURE('لا يمكن تغيير نوع المستورد من شخصي الي نوع آخر أو العكس , يتم ذلك من خلال الدعم الفني التطبيقات فقط');
             ELSE
                 info('لا يمكن تغيير نوع المستورد من شخصي الي نوع آخر أو العكس , يتم ذلك من خلال الدعم الفني التطبيقات فقط');
             END IF;
@@ -5406,7 +5432,7 @@ AS
     --   END IF;
     --   END;
     -- <<<
-    PROCEDURE insert_audit_record (p_rec IN t_rec, p_ctx IN t_ctx, v_act_type IN VARCHAR2)
+    PROCEDURE insert_audit_record (p_rec IN T_RECORD, p_ctx IN T_CONTEXT, v_act_type IN VARCHAR2)
     IS
         v_act_dt            DATE;
         v_user_id           VARCHAR2(11);
@@ -5452,7 +5478,7 @@ AS
                 p_rec.express_post, p_rec.id_nbr, p_rec.bus_id_issue_dt, p_rec.bus_id_status,
                 p_rec.creation_flag, p_rec.impr_address, v_impr_master_nbr, v_act_status);
         ELSE
-            disp_arb_ftf(9, 140);
+            DISPLAY_ARABIC_ERROR(9, 140);
         END IF;
     END insert_audit_record;
 
@@ -5485,7 +5511,7 @@ AS
     --   STANDARD.COMMIT;
     --   END;
     -- <<<
-    PROCEDURE update_basic_importer (p_rec IN t_rec)
+    PROCEDURE update_basic_importer (p_rec IN T_RECORD)
     IS
         x NUMBER;
     BEGIN
@@ -5526,12 +5552,12 @@ AS
     --   END IF ;
     --   END;
     -- <<<
-    PROCEDURE return_impr_id (p_rec IN t_rec, p_ctx IN t_ctx)
+    PROCEDURE return_impr_id (p_rec IN T_RECORD, p_ctx IN T_CONTEXT)
     IS
     BEGIN
         IF p_ctx.user_type = 2 AND p_ctx.class_cd = 23 THEN
-            g_set('IMPR_NBR_B', p_rec.impr_nbr);
-            g_set('IMPR_NAME_B', p_rec.arbc_impr_name);
+            SET_GLOBAL('IMPR_NBR_B', p_rec.impr_nbr);
+            SET_GLOBAL('IMPR_NAME_B', p_rec.arbc_impr_name);
         END IF;
     END return_impr_id;
 
@@ -5546,7 +5572,7 @@ AS
     --   SET_ITEM_PROPERTY('EXPRESS_POST',ENABLED,PROPERTY_FALSE);
     --   END;
     -- <<<
-    PROCEDURE broker_int (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE broker_int (p_rec IN OUT NOCOPY T_RECORD)
     IS
     BEGIN
         p_rec.impr_expr_type := 1;
@@ -5555,7 +5581,7 @@ AS
         ui('EXPRESS_POST', 'ENABLED', FALSE);
     END broker_int;
 
-    -- Source: PU ADJ_FUNS (TMPLT function menu -> fun() recorder; APEX: button/menu conditions)
+    -- Source: PU ADJ_FUNS (TMPLT function menu -> SET_FUNCTION_ENABLED() recorder; APEX: button/menu conditions)
     --@ORIG PU ADJ_FUNS
     -- >>> Original Forms code: PU ADJ_FUNS
     --   PROCEDURE ADJ_FUNS IS
@@ -5593,14 +5619,14 @@ AS
     --       WHEN OTHERS THEN NULL;
     --   END;
     -- <<<
-    PROCEDURE adj_funs (p_rec IN t_rec, p_ctx IN t_ctx)
+    PROCEDURE adj_funs (p_rec IN T_RECORD, p_ctx IN T_CONTEXT)
     IS
         v_rol_cnt NUMBER;
     BEGIN
         IF p_ctx.class_cd = 1 AND p_ctx.user_type = 3 AND p_rec.impr_nbr IS NOT NULL THEN
             NULL;
         ELSE
-            fun('CREATE_BRKR_IMPR_AUTH', FALSE);
+            SET_FUNCTION_ENABLED('CREATE_BRKR_IMPR_AUTH', FALSE);
         END IF;
         IF p_ctx.class_cd = 19 AND p_ctx.user_type = 1 THEN
             SELECT COUNT(*) INTO v_rol_cnt
@@ -5609,20 +5635,20 @@ AS
                AND user_id = p_ctx.user_id
                AND role_id = 'IMPR_UPD';
             IF v_rol_cnt > 0 AND p_rec.impr_type_cd = 1 THEN
-                fun('IMPR1110F3', TRUE);
+                SET_FUNCTION_ENABLED('IMPR1110F3', TRUE);
             ELSE
-                fun('IMPR1110F3', FALSE);
+                SET_FUNCTION_ENABLED('IMPR1110F3', FALSE);
             END IF;
         END IF;
-        IF (NVL(p_rec.bus_id_type_cd, 0) = 2 AND g_get('ALLOW_MCI') = '1' AND p_rec.impr_type_cd <> 12)
-           OR (p_rec.impr_type_cd = 4 AND p_rec.bus_id_type_cd IN (3, 5) AND g_get('ALLOW_MOI') = '1') THEN
-            fun('IMPR_MCI_SERVICE', TRUE);
+        IF (NVL(p_rec.bus_id_type_cd, 0) = 2 AND GET_GLOBAL('ALLOW_MCI') = '1' AND p_rec.impr_type_cd <> 12)
+           OR (p_rec.impr_type_cd = 4 AND p_rec.bus_id_type_cd IN (3, 5) AND GET_GLOBAL('ALLOW_MOI') = '1') THEN
+            SET_FUNCTION_ENABLED('IMPR_MCI_SERVICE', TRUE);
         ELSE
-            fun('IMPR_MCI_SERVICE', FALSE);
+            SET_FUNCTION_ENABLED('IMPR_MCI_SERVICE', FALSE);
         END IF;
-        fun('IMPR1110F2', FALSE);
+        SET_FUNCTION_ENABLED('IMPR1110F2', FALSE);
         IF p_ctx.curr_port_cd <> 99 THEN
-            fun('IMPR1110_MOB', FALSE);
+            SET_FUNCTION_ENABLED('IMPR1110_MOB', FALSE);
         END IF;
     EXCEPTION
         WHEN OTHERS THEN
@@ -5996,7 +6022,7 @@ AS
     --      END IF;
     --   END;
     -- <<<
-    PROCEDURE get_cr_data (p_rec           IN OUT NOCOPY t_rec,
+    PROCEDURE get_cr_data (p_rec           IN OUT NOCOPY T_RECORD,
                            p_string_result IN VARCHAR2,
                            p_type          IN VARCHAR2)
     IS
@@ -6127,7 +6153,7 @@ AS
     --       WHEN OTHERS THEN NULL;
     --   END;
     -- <<<
-    PROCEDURE get_main_cr_data (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE get_main_cr_data (p_rec IN OUT NOCOPY T_RECORD)
     IS
         string_result VARCHAR2(5000);
     BEGIN
@@ -6154,7 +6180,7 @@ AS
     --       WHEN OTHERS THEN NULL;
     --   END;
     -- <<<
-    PROCEDURE get_branch_cr_data (p_rec IN OUT NOCOPY t_rec)
+    PROCEDURE get_branch_cr_data (p_rec IN OUT NOCOPY T_RECORD)
     IS
         string_result VARCHAR2(5000);
     BEGIN
@@ -6228,7 +6254,7 @@ AS
     --   END IF;
     --   END;
     -- <<<
-    PROCEDURE create_brkr_impr_auth (p_rec IN t_rec, p_ctx IN t_ctx)
+    PROCEDURE create_brkr_impr_auth (p_rec IN T_RECORD, p_ctx IN T_CONTEXT)
     IS
         v_athrztn_seq_nbr NUMBER;
     BEGIN
@@ -6244,20 +6270,20 @@ AS
                     p_rec.port_cd, v_athrztn_seq_nbr, p_rec.impr_nbr, p_ctx.brkr_port_cd, p_ctx.lic_type,
                     p_ctx.brkr_nbr, 1, 'تفويض الي ', hijdate_db.cur_hij_date, 1, NULL, NULL,
                     'تفويض بريد سريع', 0, hijdate_db.cur_hij_date, NULL);
-                add_activity(6, p_rec);
+                add_activity(6, p_rec, p_ctx);
             END IF;
             -- STANDARD.COMMIT;   -- removed, see header
             info('تم أنشاء التفويض');
-            g_set('IMPR_NBR_B', p_rec.impr_nbr);
-            g_set('IMPR_NAME_B', p_rec.arbc_impr_name);
-            g_set('BRKR_ATHRZTN_NBR_B', v_athrztn_seq_nbr);
+            SET_GLOBAL('IMPR_NBR_B', p_rec.impr_nbr);
+            SET_GLOBAL('IMPR_NAME_B', p_rec.arbc_impr_name);
+            SET_GLOBAL('BRKR_ATHRZTN_NBR_B', v_athrztn_seq_nbr);
         END IF;
     END create_brkr_impr_auth;
 
     -- Source: PU UPDATE_IMPORTER, part 1 = text of the CONFIRM alert (NULL when no alert)
     -- HIGH: Forms first runs FORMS_DDL('COMMIT') (saves pending changes). In APEX the page must
     -- be saved (SAVE) before this function is offered - see extraction report §5.
-    FUNCTION update_importer_msg (p_rec IN t_rec) RETURN VARCHAR2
+    FUNCTION update_importer_msg (p_rec IN T_RECORD) RETURN VARCHAR2
     IS
         v_msg VARCHAR2(500);
     BEGIN
@@ -6340,7 +6366,7 @@ AS
     --      END IF;
     --   END;
     -- <<<
-    PROCEDURE update_importer (p_rec IN t_rec)
+    PROCEDURE update_importer (p_rec IN T_RECORD)
     IS
         msg_cd NUMBER;
         v_msg  VARCHAR2(500);
@@ -6357,7 +6383,7 @@ AS
     END update_importer;
 
     -- Source: PU LOV_UPDATE_MOBLIE, part before CALL_FORM: P_CENTRAL_MOBILE parameter
-    FUNCTION central_mobile (p_rec IN t_rec, p_ctx IN t_ctx) RETURN NUMBER
+    FUNCTION central_mobile (p_rec IN T_RECORD, p_ctx IN T_CONTEXT) RETURN NUMBER
     IS
         v_central_mobile NUMBER;
     BEGIN
@@ -6430,18 +6456,18 @@ AS
     --     END IF;
     --   END;
     -- <<<
-    PROCEDURE lov_update_moblie (p_rec IN t_rec)
+    PROCEDURE lov_update_moblie (p_rec IN T_RECORD)
     IS
         v_result    NUMBER;
         p_result_cd NUMBER;
         p_msg       VARCHAR2(50);
     BEGIN
-        IF g_get('MOBILE_NO') IS NOT NULL THEN
-            impr.chk_mobile_format(g_get('MOBILE_NO'), v_result);
+        IF GET_GLOBAL('MOBILE_NO') IS NOT NULL THEN
+            impr.chk_mobile_format(GET_GLOBAL('MOBILE_NO'), v_result);
             IF v_result = 0 THEN
-                ftf('رقم الجوال المدخل غير صحيح');
+                FORM_TRIGGER_FAILURE('رقم الجوال المدخل غير صحيح');
             END IF;
-            impr_utilities.update_impr_mobile_no(p_rec.impr_nbr, g_get('MOBILE_NO'), p_result_cd, p_msg);
+            impr_utilities.update_impr_mobile_no(p_rec.impr_nbr, GET_GLOBAL('MOBILE_NO'), p_result_cd, p_msg);
             IF p_result_cd = 1 THEN
                 -- STANDARD.COMMIT;   -- removed, see header
                 info('تمت العملية بنجاح');
@@ -6530,7 +6556,7 @@ AS
     --   END IF;
     --   END;
     -- <<<
-    PROCEDURE exec_funs (p_rec IN OUT NOCOPY t_rec, p_ctx IN OUT NOCOPY t_ctx, cd IN VARCHAR2)
+    PROCEDURE exec_funs (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN OUT NOCOPY T_CONTEXT, cd IN VARCHAR2)
     IS
         p_result     NUMBER;
         p_result_msg VARCHAR2(100);
@@ -6542,9 +6568,9 @@ AS
         IF cd IN ('IMPR1110F2', 'IMPR1110F1', 'IMPR1110F3', 'IMPR1110F5') THEN
             -- APEX-DA: modal dialog SUPPORT_ENTRY (P_MODE=0, P_CURR_PORT_CD=PORT_CD) is opened by
             -- the page first; this part runs after the dialog closed and set :GLOBAL.LETTER_NBR.
-            IF g_get('LETTER_NBR') IS NOT NULL THEN
+            IF GET_GLOBAL('LETTER_NBR') IS NOT NULL THEN
                 p_ctx.code       := cd;
-                p_ctx.letter_nbr := g_get('LETTER_NBR');
+                p_ctx.letter_nbr := GET_GLOBAL('LETTER_NBR');
             END IF;
         END IF;
         IF cd IN ('IMPR_CAR_AGENT') THEN
@@ -6577,7 +6603,7 @@ AS
             IF p_rec.impr_nbr > 3000000 THEN
                 NULL;   -- APEX-DA: open dialog LOV_UPDATE_IMPR_MOBILE, then lov_update_moblie
             ELSE
-                ftf('رقم المستورد غير محدث ,, الرجاء مراجعة الدعم');
+                FORM_TRIGGER_FAILURE('رقم المستورد غير محدث ,, الرجاء مراجعة الدعم');
             END IF;
         END IF;
     END exec_funs;
@@ -6590,27 +6616,27 @@ AS
     -- merged into this package 2026-11-18 when the pkg_ prefix was dropped)
     -- =========================================================================
     -- validate one item on submit (Forms: POST-CHANGE + WHEN-VALIDATE-ITEM of changed items)
-    FUNCTION val (p_item IN VARCHAR2) RETURN VARCHAR2
+    FUNCTION VALIDATE_ON_SUBMIT (p_item IN VARCHAR2) RETURN VARCHAR2
     IS
     BEGIN
         RETURN IMPR1110_APX.validate_on_submit(p_item);
-    END val;
+    END VALIDATE_ON_SUBMIT;
 
     -- ------------------------------------------------------------- f345 helpers
-    PROCEDURE CHK (I_ERR IN VARCHAR2)
+    PROCEDURE CHECK_ERROR (I_ERR IN VARCHAR2)
     IS
     BEGIN
         IF I_ERR IS NOT NULL THEN
             raise_application_error(c_err, I_ERR);
         END IF;
-    END CHK;
+    END CHECK_ERROR;
 
-    FUNCTION REQUIRED_VAL (I_VALUE IN VARCHAR2, I_LABEL IN VARCHAR2) RETURN VARCHAR2
+    FUNCTION REQUIRED_VALIDATION (I_VALUE IN VARCHAR2, I_LABEL IN VARCHAR2) RETURN VARCHAR2
     IS
     BEGIN
         -- Source: FRM-40202 "Field must be entered" - TODO-VERIFY Arabic text used by f345
         RETURN CASE WHEN TRIM(I_VALUE) IS NULL THEN 'يجب إدخال ' || I_LABEL END;
-    END REQUIRED_VAL;
+    END REQUIRED_VALIDATION;
 
     -- ------------------------------------------------------------- Before Header
     PROCEDURE P0_PAGE_PK_CHECK (IO_P0_PAGE_PK IN OUT VARCHAR2)
@@ -6663,7 +6689,7 @@ AS
     PROCEDURE WHEN_NEW_FORM_INSTANCE
     IS
     BEGIN
-        IMPR1110_APX.page_wnfi;
+        IMPR1110_APX.PAGE_WHEN_NEW_FORM_INSTANCE;
     END WHEN_NEW_FORM_INSTANCE;
 
     PROCEDURE SET_PAGE_PK (I_P0_PAGE_PK IN VARCHAR2)
@@ -6745,42 +6771,42 @@ AS
     END EXECUTE_QUERY;
 
     -- ------------------------------------------------------------- validations
-    FUNCTION PORT_CD_VAL         (I_P1110_PORT_CD         IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('PORT_CD');         END;
-    FUNCTION HQ_IMPR_NBR_VAL     (I_P1110_HQ_IMPR_NBR     IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('HQ_IMPR_NBR');     END;
-    FUNCTION IMPR_NBR_VAL        (I_P1110_IMPR_NBR        IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('IMPR_NBR');        END;
-    FUNCTION IMPR_TYPE_CD_VAL    (I_P1110_IMPR_TYPE_CD    IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('IMPR_TYPE_CD');    END;
-    FUNCTION BUS_ID_EXPRD_DT_VAL (I_P1110_BUS_ID_EXPRD_DT IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('BUS_ID_EXPRD_DT'); END;
-    FUNCTION BUS_ID_TYPE_CD_VAL  (I_P1110_BUS_ID_TYPE_CD  IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('BUS_ID_TYPE_CD');  END;
-    FUNCTION CITY_CODE_OF_ID_VAL (I_P1110_CITY_CODE_OF_ID IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('CITY_CODE_OF_ID'); END;
-    FUNCTION BUS_ID_VAL          (I_P1110_BUS_ID          IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('BUS_ID');          END;
-    FUNCTION BRNH_CITY_CD_VAL    (I_P1110_BRNH_CITY_CD    IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('BRNH_CITY_CD');    END;
-    FUNCTION BUS_ID_BRNCH_VAL    (I_P1110_BUS_ID_BRNCH    IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('BUS_ID_BRNCH');    END;
-    FUNCTION CTRY_CD_VAL         (I_P1110_CTRY_CD         IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('CTRY_CD');         END;
-    FUNCTION IMPR_EXPR_TYPE_VAL  (I_P1110_IMPR_EXPR_TYPE  IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('IMPR_EXPR_TYPE');  END;
-    FUNCTION ARBC_IMPR_NAME_VAL  (I_P1110_ARBC_IMPR_NAME  IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('ARBC_IMPR_NAME');  END;
-    FUNCTION ENG_IMPR_NAME_VAL   (I_P1110_ENG_IMPR_NAME   IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('ENG_IMPR_NAME');   END;
-    FUNCTION BUS_ID_ISSUE_DT_VAL (I_P1110_BUS_ID_ISSUE_DT IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('BUS_ID_ISSUE_DT'); END;
-    FUNCTION IMPR_NBR_PARENT_VAL (I_P1110_IMPR_NBR_PARENT IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('IMPR_NBR_PARENT'); END;
-    FUNCTION ADD_CTRY_CD_VAL     (I_P1110_ADD_CTRY_CD     IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('ADD_CTRY_CD');     END;
-    FUNCTION CITY_CODE_VAL       (I_P1110_CITY_CODE       IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('CITY_CODE');       END;
-    FUNCTION IMPR_TEL_NBR_VAL    (I_P1110_IMPR_TEL_NBR    IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('IMPR_TEL_NBR');    END;
-    FUNCTION B_EMAIL_VAL         (I_P1110_B_EMAIL         IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('B_EMAIL');         END;
-    FUNCTION EMAIL_VAL           (I_P1110_EMAIL           IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('EMAIL');           END;
-    FUNCTION B_MOBILE_NO_VAL     (I_P1110_B_MOBILE_NO     IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('B_MOBILE_NO');     END;
-    FUNCTION BANK_IBAN_VAL       (I_P1110_BANK_IBAN       IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('BANK_IBAN');       END;
-    FUNCTION B_ID_NBR_VAL        (I_P1110_B_ID_NBR        IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('B_ID_NBR');        END;
-    FUNCTION CTRY_CD_OF_ID_VAL   (I_P1110_CTRY_CD_OF_ID   IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN val('CTRY_CD_OF_ID');   END;
+    FUNCTION PORT_CD_VALIDATION         (I_P1110_PORT_CD         IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('PORT_CD');         END;
+    FUNCTION HQ_IMPR_NBR_VALIDATION     (I_P1110_HQ_IMPR_NBR     IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('HQ_IMPR_NBR');     END;
+    FUNCTION IMPR_NBR_VALIDATION        (I_P1110_IMPR_NBR        IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('IMPR_NBR');        END;
+    FUNCTION IMPR_TYPE_CD_VALIDATION    (I_P1110_IMPR_TYPE_CD    IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('IMPR_TYPE_CD');    END;
+    FUNCTION BUS_ID_EXPRD_DT_VALIDATION (I_P1110_BUS_ID_EXPRD_DT IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('BUS_ID_EXPRD_DT'); END;
+    FUNCTION BUS_ID_TYPE_CD_VALIDATION  (I_P1110_BUS_ID_TYPE_CD  IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('BUS_ID_TYPE_CD');  END;
+    FUNCTION CITY_CODE_OF_ID_VALIDATION (I_P1110_CITY_CODE_OF_ID IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('CITY_CODE_OF_ID'); END;
+    FUNCTION BUS_ID_VALIDATION          (I_P1110_BUS_ID          IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('BUS_ID');          END;
+    FUNCTION BRNH_CITY_CD_VALIDATION    (I_P1110_BRNH_CITY_CD    IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('BRNH_CITY_CD');    END;
+    FUNCTION BUS_ID_BRNCH_VALIDATION    (I_P1110_BUS_ID_BRNCH    IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('BUS_ID_BRNCH');    END;
+    FUNCTION CTRY_CD_VALIDATION         (I_P1110_CTRY_CD         IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('CTRY_CD');         END;
+    FUNCTION IMPR_EXPR_TYPE_VALIDATION  (I_P1110_IMPR_EXPR_TYPE  IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('IMPR_EXPR_TYPE');  END;
+    FUNCTION ARBC_IMPR_NAME_VALIDATION  (I_P1110_ARBC_IMPR_NAME  IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('ARBC_IMPR_NAME');  END;
+    FUNCTION ENG_IMPR_NAME_VALIDATION   (I_P1110_ENG_IMPR_NAME   IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('ENG_IMPR_NAME');   END;
+    FUNCTION BUS_ID_ISSUE_DT_VALIDATION (I_P1110_BUS_ID_ISSUE_DT IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('BUS_ID_ISSUE_DT'); END;
+    FUNCTION IMPR_NBR_PARENT_VALIDATION (I_P1110_IMPR_NBR_PARENT IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('IMPR_NBR_PARENT'); END;
+    FUNCTION ADD_CTRY_CD_VALIDATION     (I_P1110_ADD_CTRY_CD     IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('ADD_CTRY_CD');     END;
+    FUNCTION CITY_CODE_VALIDATION       (I_P1110_CITY_CODE       IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('CITY_CODE');       END;
+    FUNCTION IMPR_TEL_NBR_VALIDATION    (I_P1110_IMPR_TEL_NBR    IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('IMPR_TEL_NBR');    END;
+    FUNCTION B_EMAIL_VALIDATION         (I_P1110_B_EMAIL         IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('B_EMAIL');         END;
+    FUNCTION EMAIL_VALIDATION           (I_P1110_EMAIL           IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('EMAIL');           END;
+    FUNCTION B_MOBILE_NO_VALIDATION     (I_P1110_B_MOBILE_NO     IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('B_MOBILE_NO');     END;
+    FUNCTION BANK_IBAN_VALIDATION       (I_P1110_BANK_IBAN       IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('BANK_IBAN');       END;
+    FUNCTION B_ID_NBR_VALIDATION        (I_P1110_B_ID_NBR        IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('B_ID_NBR');        END;
+    FUNCTION CTRY_CD_OF_ID_VALIDATION   (I_P1110_CTRY_CD_OF_ID   IN VARCHAR2) RETURN VARCHAR2 IS BEGIN RETURN VALIDATE_ON_SUBMIT('CTRY_CD_OF_ID');   END;
 
-    FUNCTION REQUIRED_ITEMS_VAL RETURN VARCHAR2
+    FUNCTION REQUIRED_ITEMS_VALIDATION RETURN VARCHAR2
     IS
     BEGIN
         RETURN IMPR1110_APX.required_items;
-    END REQUIRED_ITEMS_VAL;
+    END REQUIRED_ITEMS_VALIDATION;
 
     -- ------------------------------------------------------------- AJAX callbacks
     PROCEDURE AJAX_ITEM    IS BEGIN IMPR1110_APX.ajax_item;    END AJAX_ITEM;
     PROCEDURE AJAX_CONFIRM IS BEGIN IMPR1110_APX.ajax_confirm; END AJAX_CONFIRM;
-    PROCEDURE AJAX_FUN     IS BEGIN IMPR1110_APX.ajax_fun;     END AJAX_FUN;
+    PROCEDURE AJAX_FUNCTION     IS BEGIN IMPR1110_APX.AJAX_FUNCTION;     END AJAX_FUNCTION;
 
     -- ------------------------------------------------------------- page 111002
     FUNCTION CENTRAL_MOBILE (I_P111002_IMPR_NBR IN VARCHAR2) RETURN NUMBER

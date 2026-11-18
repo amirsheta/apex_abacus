@@ -141,11 +141,11 @@ four tokens, and '{{' must not appear at all.
      ('AGRMNT_MEMBERS PRE-UPDATE'); native ones 'Initialize form', 'Process form',
      'Process form - DELETE', '<BLOCK> - Save Interactive Grid Data'
    - validations: '<ITEM> VALIDATION' (FUNC_BODY_RETURNING_ERR_TEXT,
-     'return {{FORM_NAME_UC}}.<ITEM>_VAL(I_P<page>_<ITEM> => :P<page>_<ITEM>);') and
-     '<ITEM> REQUIRED' ('return {{FORM_NAME_UC}}.REQUIRED_VAL(:P<page>_<ITEM>, unistr(''<label>''));')
+     'return {{FORM_NAME_UC}}.<ITEM>_VALIDATION(I_P<page>_<ITEM> => :P<page>_<ITEM>);') and
+     '<ITEM> REQUIRED' ('return {{FORM_NAME_UC}}.REQUIRED_VALIDATION(:P<page>_<ITEM>, unistr(''<label>''));')
    - DAs: '<ITEM> WHEN-VALIDATE-ITEM' (change) / '<BLOCK> <COLUMN> WHEN-VALIDATE-ITEM' (IG column),
      action PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE with
-     '{{FORM_NAME_UC}}.CHK({{FORM_NAME_UC}}.<ITEM>_VAL(I_... => :...));'
+     '{{FORM_NAME_UC}}.CHECK_ERROR({{FORM_NAME_UC}}.<ITEM>_VALIDATION(I_... => :...));'
    - every PL/SQL body is ONE line calling package {{FORM_NAME_UC}} with named parameters
      I_<bind>, IO_<bind>, O_<bind> (e.g. IO_P11100_AGRMNT_NO => :P11100_AGRMNT_NO,
      I_SSO_APP_USER => :SSO_APP_USER). The only exceptions are key copies (':P0_PAGE_PK := ...').
@@ -166,7 +166,7 @@ four tokens, and '{{' must not appear at all.
 - Placeholder list (the four tokens) with how to get each value, including the __ID_OFFSET__
   query, and a note that template IDs resolve only if the offset matches the installed app
 - Pre-requisites: target app installed from f345; package {{FORM_NAME_UC}} compiled in
-  __SCHEMA_NAME__ with CHK and REQUIRED_VAL; new LOVs / auth schemes
+  __SCHEMA_NAME__ with CHECK_ERROR and REQUIRED_VALIDATION; new LOVs / auth schemes
 - Import command:
     sql __SCHEMA_NAME__@<tns> @apex/{{FORM_NAME}}/f{{APP_ID}}_{{FORM_NAME}}.sql
   or App Builder → Import (File Type: "Page or Component Export")

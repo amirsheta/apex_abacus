@@ -6,10 +6,10 @@
 -- Created     : 2026-11-18
 -- Version     : 1.1.0  (step 03: server-side item state + validation on submit + port scope)
 -- Owner       : LIB_APX_USR (public synonym IMPR1110_APX; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
--- Purpose     : The ONLY code that reads/writes page items P1110_*. It builds t_rec / t_ctx,
+-- Purpose     : The ONLY code that reads/writes page items P1110_*. It builds T_RECORD / T_CONTEXT,
 --               calls IMPR1110 in the Forms trigger order and writes the results back.
 --               IMPR1110 itself stays free of page items (testable without APEX).
--- Server state: APEX collection COL_IMPR1110_STATE (per session)
+-- Server state: APEX collection COLLECTION_IMPR1110_STATE (per session)
 --                 c001 = 'UI'  : c002 item, c003 property (ENTRABLE/ENABLED/REQUIRED/VISIBLE), c004 Y/N
 --                 c001 = 'VAL' : c002 item, c003 last value the server validated (Forms "item valid")
 --               Used to enforce at SAVE what Forms enforces at commit:
@@ -17,7 +17,7 @@
 --                   several validations consume sequences)
 --                 - required items (static Forms Required + dynamic SET_ITEM_PROPERTY REQUIRED)
 --                 - GET_ITEM_PROPERTY(..., ENABLED) read by the package
--- Page items  : P1110_<FORMS_ITEM_NAME> for every field of t_rec, plus
+-- Page items  : P1110_<FORMS_ITEM_NAME> for every field of T_RECORD, plus
 --               P1110_ROW_ID, P1110_REC_STATUS, P1110_FORM_OPEN, P1110_NEED_FETCH (server-only),
 --               P1110_PRSNL_IMPR, P1110_LETTER_NBR, P1110_CODE, P1110_UI_STATE (JSON for the DA).
 -- App items   : P_CURR_PORT_CD, SSO_APP_USER, P_GLOBAL_V_WS_ID, P_CLASS_CD, V_USR_TYPE (f345),
@@ -28,7 +28,7 @@
 SET DEFINE OFF
 
 CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110_APX AS
-   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
+   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '003';
    V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    FUNCTION PKG_VERSION
@@ -52,18 +52,18 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110_APX AS
          || V_MODIFIED_BY;
 
     c_page       CONSTANT PLS_INTEGER  := 1110;
-    c_state_coll CONSTANT VARCHAR2(30) := 'COL_IMPR1110_STATE';
+    c_state_coll CONSTANT VARCHAR2(30) := 'COLLECTION_IMPR1110_STATE';
 
     -- Forms fires POST-CHANGE for non-NULL values fetched by a query (documented legacy
     -- behaviour). TRUE = do the same on page load. TODO-VERIFY with a Forms trace (HIGH).
     c_post_chg_on_fetch CONSTANT BOOLEAN := TRUE;
 
-    FUNCTION  get_ctx RETURN IMPR1110.t_ctx;
-    FUNCTION  get_rec RETURN IMPR1110.t_rec;
-    PROCEDURE set_rec (p_rec IN IMPR1110.t_rec);
+    FUNCTION  GET_CONTEXT RETURN IMPR1110.T_CONTEXT;
+    FUNCTION  GET_RECORD RETURN IMPR1110.T_RECORD;
+    PROCEDURE SET_RECORD (p_rec IN IMPR1110.T_RECORD);
 
     -- Before Header process "WHEN-NEW-FORM-INSTANCE" (condition: P1110_FORM_OPEN is null)
-    PROCEDURE page_wnfi;
+    PROCEDURE PAGE_WHEN_NEW_FORM_INSTANCE;
     -- Before Header process "IMPORTERS.POST-QUERY": loads P1110_ROW_ID, or
     -- P1110_PORT_CD + P1110_IMPR_NBR (URL with checksum), or :GLOBAL.PORT_CD/IMPR_NBR
     -- (EXEC_QUERY_NOW) - always within PORT_CD = P_CURR_PORT_CD (block WHERE clause)
@@ -79,7 +79,7 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110_APX AS
     -- AJAX Callback "IMPR1110_CONFIRM": x01 = WNRI | SUSP | UPD_IMPR -> {"text":"..."} ("" = none)
     PROCEDURE ajax_confirm;
     -- AJAX Callback "IMPR1110_FUN": x01 = function code (EXEC_FUNS), x02 = answer
-    PROCEDURE ajax_fun;
+    PROCEDURE AJAX_FUNCTION;
 
     -- Validation "IMPORTERS.<ITEM>.WHEN-VALIDATE-ITEM" (request SAVE):
     --   RETURN IMPR1110_APX.validate_on_submit('<ITEM>');

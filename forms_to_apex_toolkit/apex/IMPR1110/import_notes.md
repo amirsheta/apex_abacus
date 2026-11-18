@@ -67,7 +67,8 @@ Check: `grep -n '__[A-Z_]*__' f345_impr1110.sql` must print nothing.
    Previous versions: `rollback/IMPR1110/*_before_rename.sql`, `rollback/COMMON/pkg_forms_compat_before_rename.sql`.
 2. Grants, given **directly** (not through a role) to `LIB_APX_USR`, because the packages are definer-rights:
    SELECT, INSERT, UPDATE, DELETE on `IMPORTERS`; SELECT on `IMPR_TYPES`, `IMPR_TYPE_ID_TYPES`, `BUS_ID_TYPES`,
-   `CITIES`, `COUNTRIES`, `SD_PORTS`, `CG_REF_CODES`, `SC_SYSTEM_OBJECTS`; EXECUTE on `STR_DB` and the other
+   `CITIES`, `COUNTRIES`, `SD_PORTS`, `CG_REF_CODES`, `SC_SYSTEM_OBJECTS`; EXECUTE on `LIB_USR.ACTIVITY_DB` and
+   `LIB_USR.HIJDATE_DB` (sources in `plsql/Shared/`; `ACTIVITY_DB` is not yet granted to `LIB_APX_USR`), `STR_DB` and the other
    libraries the package calls. The LOVs and the search page run as `CUSTOMS`, which needs SELECT on the same tables.
 3. Upload `impr1110.js` (and a minified `impr1110.min.js`) as Static Application Files. The page references `#APP_FILES#impr1110#MIN#.js`.
 4. Nothing else is needed in the application. Error handling (`APP_ERROR_HANDLER`), RTL / Arabic, login, `After Auth` (fills `P_CURR_PORT_CD`, `SSO_APP_USER`, …) and the page 0 toolbar all come from f345.
@@ -89,7 +90,7 @@ component with the same name but another id makes the import fail: delete or ren
 | 2 | Master block `IMPORTERS` is a Static region (template *Interactive Report*, classes `zatca-forms cg-form cg-card`), not `NATIVE_FORM` | DML is done in the package (`ON-INSERT` / `ON-UPDATE` / `KEY-DELREC` → `page_dml`), with the Forms PRE/POST logic in between |
 | 3 | DML processes are named `ON-INSERT` / `ON-UPDATE` instead of separate `PRE-INSERT` / `Process form` / `POST-INSERT` | one call runs PRE → DML → POST in the order of the Forms commit (`IMPR1110_APX.page_dml`) |
 | 4 | Forms parameters keep the item names `P1110_PRSNL_IMPR` / `P1110_LETTER_NBR` (standard: `P1110_P_<PARAM>`) | `IMPR1110_APX` reads these names; renaming is a step-02 change |
-| 5 | `IMPR1110.<ITEM>_VAL` ignores its `I_` parameter | the adapter reads the whole record from session state; the parameter documents the item |
+| 5 | `IMPR1110.<ITEM>_VALIDATION` ignores its `I_` parameter | the adapter reads the whole record from session state; the parameter documents the item |
 | 6 | Page 111002 sets `:G_LAST_PAGE := 1110` (process `G_LAST_PAGE KEEP`, After Header) | f345 `SCREEN ENTRY RESET` keeps the record only for `<page>` and `<page>01`. Without it, the next load of page 1110 after the mobile dialog would clear `P0_PAGE_PK` and the record |
 | 7 | No `P1110_ADJ_FUNS` item | the *Page Functions* list then shows every function the user's roles allow. Functions that the form switches off (TMPLT.DISABLE_FUN) are refused at click time by `impr1110.js` (`funOff`) |
 
@@ -120,7 +121,7 @@ component with the same name but another id makes the import fail: delete or ren
 3. Utilities → Advisor on the three pages.
 4. Shared Components: 13 LOVs return rows for a sample port; 32 new application items are *Restricted*; none duplicates an f345 item.
 5. UAT paths:
-   1. open the page (WNFI, PORT_CD disabled);
+   1. open the page (WHEN_NEW_FORM_INSTANCE, PORT_CD disabled);
    2. `SEARCH` → 111001 → search by name / number → click the number → page 1110 shows the importer, toolbar switches to SAVE / DELETE;
    3. change each validated item (AJAX error inline, focus stays);
    4. `CLEAR` → new record → `CREATE` (PRE-INSERT confirm for class 1 / user type 3, number message, toolbar switches to SAVE);

@@ -2,7 +2,7 @@
 -- Package body : IMPR1110_APX  (APEX glue for IMPR1110, page 1110)
 -- Author       : Claude Code
 -- Created      : 2026-11-18
--- Version      : 1.2.0  (2026-11-18: menu parameters read from f345 application items, see ai();
+-- Version      : 1.2.0  (2026-11-18: menu parameters read from f345 application items, see APPLICATION_ITEM();
 -- Owner       : LIB_APX_USR (public synonym IMPR1110_APX; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
 --                        previous version rollback/IMPR1110/pkg_impr1110_apx_body_v1_1_0.sql)
 -- Status       : NOT COMPILED.
@@ -35,34 +35,34 @@ AS
         'COMM_RGSTRTN_TYPE', 'CITY_CODE_OF_ID', 'BRNH_CITY_CD', 'BUS_ID_BRNCH');
 
     -- ----------------------------------------------------------------- session state helpers
-    FUNCTION v (p_item IN VARCHAR2) RETURN VARCHAR2
+    FUNCTION ITEM_VALUE (p_item IN VARCHAR2) RETURN VARCHAR2
     IS
     BEGIN
         RETURN FORMS_COMPAT.name_in('P1110_' || p_item);
-    END v;
+    END ITEM_VALUE;
 
-    FUNCTION n (p_item IN VARCHAR2) RETURN NUMBER
+    FUNCTION NUMBER_ITEM (p_item IN VARCHAR2) RETURN NUMBER
     IS
     BEGIN
-        RETURN TO_NUMBER(v(p_item));
-    END n;
+        RETURN TO_NUMBER(ITEM_VALUE(p_item));
+    END NUMBER_ITEM;
 
-    FUNCTION d (p_item IN VARCHAR2) RETURN DATE
+    FUNCTION DATE_ITEM (p_item IN VARCHAR2) RETURN DATE
     IS
     BEGIN
-        RETURN TO_DATE(v(p_item), c_mask);
-    END d;
+        RETURN TO_DATE(ITEM_VALUE(p_item), c_mask);
+    END DATE_ITEM;
 
-    PROCEDURE s (p_item IN VARCHAR2, p_val IN VARCHAR2)
+    PROCEDURE SET_ITEM (p_item IN VARCHAR2, p_val IN VARCHAR2)
     IS
     BEGIN
         FORMS_COMPAT.copy(p_val, 'P1110_' || p_item);
-    END s;
+    END SET_ITEM;
 
     -- Menu parameters (:PARAMETER.P_*) -> application items of the f345 reference application.
     -- 1.2.0: names follow f345 (CLAUDE.md §4b) instead of AI_P_*. Items f345 already fills
     -- (app process "After Auth") are reused; the others are new f345-style P_* items.
-    FUNCTION ai (p_name IN VARCHAR2) RETURN VARCHAR2
+    FUNCTION APPLICATION_ITEM (p_name IN VARCHAR2) RETURN VARCHAR2
     IS
     BEGIN
         RETURN FORMS_COMPAT.name_in(
@@ -72,7 +72,7 @@ AS
                        WHEN 'P_WS_ID'     THEN 'P_GLOBAL_V_WS_ID'  -- TODO-VERIFY
                        ELSE UPPER(p_name)                          -- P_CURR_PORT_CD, P_CLASS_CD, P_BRKR_NBR,
                    END);                                           -- P_PORT_TYPE (f345); P_BRKR_PORT_CD, P_LIC_TYPE (new)
-    END ai;
+    END APPLICATION_ITEM;
 
     FUNCTION answer (p_val IN VARCHAR2) RETURN PLS_INTEGER
     IS
@@ -87,7 +87,7 @@ AS
         apex_collection.create_or_truncate_collection(c_state_coll);
     END state_reset;
 
-    FUNCTION state_seq (p_kind IN VARCHAR2, p_item IN VARCHAR2, p_prop IN VARCHAR2) RETURN NUMBER
+    FUNCTION STATE_SEQUENCE (p_kind IN VARCHAR2, p_item IN VARCHAR2, p_prop IN VARCHAR2) RETURN NUMBER
     IS
         v_seq NUMBER;
     BEGIN
@@ -96,7 +96,7 @@ AS
          WHERE collection_name = c_state_coll
            AND c001 = p_kind AND c002 = p_item AND c003 = p_prop;
         RETURN v_seq;
-    END state_seq;
+    END STATE_SEQUENCE;
 
     PROCEDURE state_put (p_kind IN VARCHAR2, p_item IN VARCHAR2, p_prop IN VARCHAR2, p_val IN VARCHAR2)
     IS
@@ -105,7 +105,7 @@ AS
         IF NOT apex_collection.collection_exists(c_state_coll) THEN
             state_reset;
         END IF;
-        v_seq := state_seq(p_kind, p_item, p_prop);
+        v_seq := STATE_SEQUENCE(p_kind, p_item, p_prop);
         IF v_seq IS NULL THEN
             apex_collection.add_member(p_collection_name => c_state_coll,
                                        p_c001 => p_kind, p_c002 => p_item, p_c003 => p_prop, p_c004 => p_val);
@@ -157,125 +157,125 @@ AS
     END save_ui;
 
     -- Current value of every validated item = "valid" (Forms: queried / created record)
-    PROCEDURE baseline_vals
+    PROCEDURE BASELINE_VALUES
     IS
     BEGIN
         FOR i IN 1 .. c_val_items.COUNT LOOP
-            state_put('VAL', c_val_items(i), '-', v(c_val_items(i)));
+            state_put('VAL', c_val_items(i), '-', ITEM_VALUE(c_val_items(i)));
         END LOOP;
-    END baseline_vals;
+    END BASELINE_VALUES;
 
     -- ----------------------------------------------------------------- record / context
-    FUNCTION get_ctx RETURN IMPR1110.t_ctx
+    FUNCTION GET_CONTEXT RETURN IMPR1110.T_CONTEXT
     IS
-        c IMPR1110.t_ctx;
+        c IMPR1110.T_CONTEXT;
     BEGIN
-        c.curr_port_cd := TO_NUMBER(ai('P_CURR_PORT_CD'));
-        c.user_id      := ai('P_USER_ID');
-        c.ws_id        := ai('P_WS_ID');
-        c.class_cd     := TO_NUMBER(ai('P_CLASS_CD'));
-        c.user_type    := TO_NUMBER(ai('P_USER_TYPE'));
-        c.brkr_port_cd := TO_NUMBER(ai('P_BRKR_PORT_CD'));
-        c.lic_type     := TO_NUMBER(ai('P_LIC_TYPE'));
-        c.brkr_nbr     := TO_NUMBER(ai('P_BRKR_NBR'));
-        c.prsnl_impr   := NVL(n('PRSNL_IMPR'), 0);      -- module parameter PRSNL_IMPR default 0
-        c.letter_nbr   := v('LETTER_NBR');
-        c.code         := v('CODE');
+        c.curr_port_cd := TO_NUMBER(APPLICATION_ITEM('P_CURR_PORT_CD'));
+        c.user_id      := APPLICATION_ITEM('P_USER_ID');
+        c.ws_id        := APPLICATION_ITEM('P_WS_ID');
+        c.class_cd     := TO_NUMBER(APPLICATION_ITEM('P_CLASS_CD'));
+        c.user_type    := TO_NUMBER(APPLICATION_ITEM('P_USER_TYPE'));
+        c.brkr_port_cd := TO_NUMBER(APPLICATION_ITEM('P_BRKR_PORT_CD'));
+        c.lic_type     := TO_NUMBER(APPLICATION_ITEM('P_LIC_TYPE'));
+        c.brkr_nbr     := TO_NUMBER(APPLICATION_ITEM('P_BRKR_NBR'));
+        c.prsnl_impr   := NVL(NUMBER_ITEM('PRSNL_IMPR'), 0);      -- module parameter PRSNL_IMPR default 0
+        c.letter_nbr   := ITEM_VALUE('LETTER_NBR');
+        c.code         := ITEM_VALUE('CODE');
         RETURN c;
-    END get_ctx;
+    END GET_CONTEXT;
 
-    PROCEDURE set_ctx (p_ctx IN IMPR1110.t_ctx)
+    PROCEDURE SET_CONTEXT (p_ctx IN IMPR1110.T_CONTEXT)
     IS
     BEGIN
-        s('LETTER_NBR', p_ctx.letter_nbr);
-        s('CODE', p_ctx.code);
-    END set_ctx;
+        SET_ITEM('LETTER_NBR', p_ctx.letter_nbr);
+        SET_ITEM('CODE', p_ctx.code);
+    END SET_CONTEXT;
 
-    FUNCTION get_rec RETURN IMPR1110.t_rec
+    FUNCTION GET_RECORD RETURN IMPR1110.T_RECORD
     IS
-        r IMPR1110.t_rec;
+        r IMPR1110.T_RECORD;
     BEGIN
-        r.row_id            := v('ROW_ID');
-        r.rec_status        := NVL(v('REC_STATUS'), CASE WHEN v('ROW_ID') IS NULL THEN 'NEW' ELSE 'QUERY' END);
+        r.row_id            := ITEM_VALUE('ROW_ID');
+        r.rec_status        := NVL(ITEM_VALUE('REC_STATUS'), CASE WHEN ITEM_VALUE('ROW_ID') IS NULL THEN 'NEW' ELSE 'QUERY' END);
         -- GET_ITEM_PROPERTY(..., ENABLED): from the server state, never from the browser
         r.activity_entr     := ui_state('ACTIVITY', 'ENTRABLE', 'Y');
         r.bus_id_brnch_entr := ui_state('BUS_ID_BRNCH', 'ENTRABLE', 'Y');
-        r.port_cd           := n('PORT_CD');           r.hq_impr_nbr       := n('HQ_IMPR_NBR');
-        r.impr_nbr          := n('IMPR_NBR');          r.bus_id_status     := v('BUS_ID_STATUS');
-        r.impr_type_cd      := n('IMPR_TYPE_CD');      r.bus_id_exprd_dt   := d('BUS_ID_EXPRD_DT');
-        r.bus_id_type_cd    := n('BUS_ID_TYPE_CD');    r.comm_rgstrtn_type := n('COMM_RGSTRTN_TYPE');
-        r.city_code_of_id   := n('CITY_CODE_OF_ID');   r.bus_id            := v('BUS_ID');
-        r.bus_id_brnch      := v('BUS_ID_BRNCH');      r.ctry_cd           := n('CTRY_CD');
-        r.impr_expr_type    := n('IMPR_EXPR_TYPE');    r.arbc_impr_name    := v('ARBC_IMPR_NAME');
-        r.impr_name_std     := v('IMPR_NAME_STD');     r.lst_tran_dt       := TO_DATE(v('LST_TRAN_DT'), 'YYYY/MM/DD HH24:MI:SS');
-        r.impd_stmt_nbr     := v('IMPD_STMT_NBR');     r.impr_data_srce    := v('IMPR_DATA_SRCE');
-        r.eng_impr_name     := v('ENG_IMPR_NAME');     r.impr_cntct_name   := v('IMPR_CNTCT_NAME');
-        r.impr_address      := v('IMPR_ADDRESS');      r.bus_id_issue_dt   := d('BUS_ID_ISSUE_DT');
-        r.impr_nbr_parent   := n('IMPR_NBR_PARENT');   r.add_ctry_cd       := n('ADD_CTRY_CD');
-        r.city_code         := n('CITY_CODE');         r.impr_pob_nbr      := v('IMPR_POB_NBR');
-        r.impr_zip_cd       := v('IMPR_ZIP_CD');       r.impr_tel_nbr      := v('IMPR_TEL_NBR');
-        r.impr_fax_nbr      := v('IMPR_FAX_NBR');      r.impr_telex_nbr    := v('IMPR_TELEX_NBR');
-        r.email             := v('EMAIL');             r.mobile_no         := v('MOBILE_NO');
-        r.bank_iban         := v('BANK_IBAN');         r.id_nbr            := v('ID_NBR');
-        r.car_agent_flag    := n('CAR_AGENT_FLAG');    r.express_post      := v('EXPRESS_POST');
-        r.ctry_cd_of_id     := v('CTRY_CD_OF_ID');     r.expd_stmt_nbr     := v('EXPD_STMT_NBR');
-        r.wvr_entry_nbr     := v('WVR_ENTRY_NBR');     r.activity          := v('ACTIVITY');
-        r.customs_entered   := v('CUSTOMS_ENTERED');   r.creation_flag     := v('CREATION_FLAG');
-        r.port_name         := v('PORT_NAME');         r.sdp_port_status   := n('SDP_PORT_STATUS');
-        r.suspn_status      := v('SUSPN_STATUS');      r.status_desc       := v('STATUS_DESC');
-        r.impr_type_name    := v('IMPR_TYPE_NAME');    r.bus_id_type_name  := v('BUS_ID_TYPE_NAME');
-        r.id_city_name      := v('ID_CITY_NAME');      r.id_mins_comm_cd   := n('ID_MINS_COMM_CD');
-        r.l_ct_city_status2 := n('L_CT_CITY_STATUS2'); r.brnh_id_mins_comm_cd := n('BRNH_ID_MINS_COMM_CD');
-        r.brnh_city_cd      := n('BRNH_CITY_CD');      r.brnh_city_name    := v('BRNH_CITY_NAME');
-        r.crty_arbc_name    := v('CRTY_ARBC_NAME');    r.ctry_ctry_status  := n('CTRY_CTRY_STATUS');
-        r.itidt_note        := v('ITIDT_NOTE');        r.status            := n('STATUS');
-        r.impr_name_parent  := v('IMPR_NAME_PARENT');  r.wasl_city_name    := v('WASL_CITY_NAME');
-        r.add_crty_arbc_name := v('ADD_CRTY_ARBC_NAME'); r.city_name       := v('CITY_NAME');
-        r.l_ct_city_status  := n('L_CT_CITY_STATUS');  r.b_email           := v('B_EMAIL');
-        r.b_mobile_no       := v('B_MOBILE_NO');       r.b_id_nbr          := v('B_ID_NBR');
-        r.impr_id_type      := v('IMPR_ID_TYPE');
+        r.port_cd           := NUMBER_ITEM('PORT_CD');           r.hq_impr_nbr       := NUMBER_ITEM('HQ_IMPR_NBR');
+        r.impr_nbr          := NUMBER_ITEM('IMPR_NBR');          r.bus_id_status     := ITEM_VALUE('BUS_ID_STATUS');
+        r.impr_type_cd      := NUMBER_ITEM('IMPR_TYPE_CD');      r.bus_id_exprd_dt   := DATE_ITEM('BUS_ID_EXPRD_DT');
+        r.bus_id_type_cd    := NUMBER_ITEM('BUS_ID_TYPE_CD');    r.comm_rgstrtn_type := NUMBER_ITEM('COMM_RGSTRTN_TYPE');
+        r.city_code_of_id   := NUMBER_ITEM('CITY_CODE_OF_ID');   r.bus_id            := ITEM_VALUE('BUS_ID');
+        r.bus_id_brnch      := ITEM_VALUE('BUS_ID_BRNCH');      r.ctry_cd           := NUMBER_ITEM('CTRY_CD');
+        r.impr_expr_type    := NUMBER_ITEM('IMPR_EXPR_TYPE');    r.arbc_impr_name    := ITEM_VALUE('ARBC_IMPR_NAME');
+        r.impr_name_std     := ITEM_VALUE('IMPR_NAME_STD');     r.lst_tran_dt       := TO_DATE(ITEM_VALUE('LST_TRAN_DT'), 'YYYY/MM/DD HH24:MI:SS');
+        r.impd_stmt_nbr     := ITEM_VALUE('IMPD_STMT_NBR');     r.impr_data_srce    := ITEM_VALUE('IMPR_DATA_SRCE');
+        r.eng_impr_name     := ITEM_VALUE('ENG_IMPR_NAME');     r.impr_cntct_name   := ITEM_VALUE('IMPR_CNTCT_NAME');
+        r.impr_address      := ITEM_VALUE('IMPR_ADDRESS');      r.bus_id_issue_dt   := DATE_ITEM('BUS_ID_ISSUE_DT');
+        r.impr_nbr_parent   := NUMBER_ITEM('IMPR_NBR_PARENT');   r.add_ctry_cd       := NUMBER_ITEM('ADD_CTRY_CD');
+        r.city_code         := NUMBER_ITEM('CITY_CODE');         r.impr_pob_nbr      := ITEM_VALUE('IMPR_POB_NBR');
+        r.impr_zip_cd       := ITEM_VALUE('IMPR_ZIP_CD');       r.impr_tel_nbr      := ITEM_VALUE('IMPR_TEL_NBR');
+        r.impr_fax_nbr      := ITEM_VALUE('IMPR_FAX_NBR');      r.impr_telex_nbr    := ITEM_VALUE('IMPR_TELEX_NBR');
+        r.email             := ITEM_VALUE('EMAIL');             r.mobile_no         := ITEM_VALUE('MOBILE_NO');
+        r.bank_iban         := ITEM_VALUE('BANK_IBAN');         r.id_nbr            := ITEM_VALUE('ID_NBR');
+        r.car_agent_flag    := NUMBER_ITEM('CAR_AGENT_FLAG');    r.express_post      := ITEM_VALUE('EXPRESS_POST');
+        r.ctry_cd_of_id     := ITEM_VALUE('CTRY_CD_OF_ID');     r.expd_stmt_nbr     := ITEM_VALUE('EXPD_STMT_NBR');
+        r.wvr_entry_nbr     := ITEM_VALUE('WVR_ENTRY_NBR');     r.activity          := ITEM_VALUE('ACTIVITY');
+        r.customs_entered   := ITEM_VALUE('CUSTOMS_ENTERED');   r.creation_flag     := ITEM_VALUE('CREATION_FLAG');
+        r.port_name         := ITEM_VALUE('PORT_NAME');         r.sdp_port_status   := NUMBER_ITEM('SDP_PORT_STATUS');
+        r.suspn_status      := ITEM_VALUE('SUSPN_STATUS');      r.status_desc       := ITEM_VALUE('STATUS_DESC');
+        r.impr_type_name    := ITEM_VALUE('IMPR_TYPE_NAME');    r.bus_id_type_name  := ITEM_VALUE('BUS_ID_TYPE_NAME');
+        r.id_city_name      := ITEM_VALUE('ID_CITY_NAME');      r.id_mins_comm_cd   := NUMBER_ITEM('ID_MINS_COMM_CD');
+        r.l_ct_city_status2 := NUMBER_ITEM('L_CT_CITY_STATUS2'); r.brnh_id_mins_comm_cd := NUMBER_ITEM('BRNH_ID_MINS_COMM_CD');
+        r.brnh_city_cd      := NUMBER_ITEM('BRNH_CITY_CD');      r.brnh_city_name    := ITEM_VALUE('BRNH_CITY_NAME');
+        r.crty_arbc_name    := ITEM_VALUE('CRTY_ARBC_NAME');    r.ctry_ctry_status  := NUMBER_ITEM('CTRY_CTRY_STATUS');
+        r.itidt_note        := ITEM_VALUE('ITIDT_NOTE');        r.status            := NUMBER_ITEM('STATUS');
+        r.impr_name_parent  := ITEM_VALUE('IMPR_NAME_PARENT');  r.wasl_city_name    := ITEM_VALUE('WASL_CITY_NAME');
+        r.add_crty_arbc_name := ITEM_VALUE('ADD_CRTY_ARBC_NAME'); r.city_name       := ITEM_VALUE('CITY_NAME');
+        r.l_ct_city_status  := NUMBER_ITEM('L_CT_CITY_STATUS');  r.b_email           := ITEM_VALUE('B_EMAIL');
+        r.b_mobile_no       := ITEM_VALUE('B_MOBILE_NO');       r.b_id_nbr          := ITEM_VALUE('B_ID_NBR');
+        r.impr_id_type      := ITEM_VALUE('IMPR_ID_TYPE');
         RETURN r;
-    END get_rec;
+    END GET_RECORD;
 
-    PROCEDURE set_rec (p_rec IN IMPR1110.t_rec)
+    PROCEDURE SET_RECORD (p_rec IN IMPR1110.T_RECORD)
     IS
     BEGIN
-        s('ROW_ID', p_rec.row_id);                 s('REC_STATUS', p_rec.rec_status);
-        s('PORT_CD', p_rec.port_cd);               s('HQ_IMPR_NBR', p_rec.hq_impr_nbr);
-        s('IMPR_NBR', p_rec.impr_nbr);             s('BUS_ID_STATUS', p_rec.bus_id_status);
-        s('IMPR_TYPE_CD', p_rec.impr_type_cd);     s('BUS_ID_EXPRD_DT', TO_CHAR(p_rec.bus_id_exprd_dt, c_mask));
-        s('BUS_ID_TYPE_CD', p_rec.bus_id_type_cd); s('COMM_RGSTRTN_TYPE', p_rec.comm_rgstrtn_type);
-        s('CITY_CODE_OF_ID', p_rec.city_code_of_id); s('BUS_ID', p_rec.bus_id);
-        s('BUS_ID_BRNCH', p_rec.bus_id_brnch);     s('CTRY_CD', p_rec.ctry_cd);
-        s('IMPR_EXPR_TYPE', p_rec.impr_expr_type); s('ARBC_IMPR_NAME', p_rec.arbc_impr_name);
-        s('IMPR_NAME_STD', p_rec.impr_name_std);   s('LST_TRAN_DT', TO_CHAR(p_rec.lst_tran_dt, 'YYYY/MM/DD HH24:MI:SS'));
-        s('IMPD_STMT_NBR', p_rec.impd_stmt_nbr);   s('IMPR_DATA_SRCE', p_rec.impr_data_srce);
-        s('ENG_IMPR_NAME', p_rec.eng_impr_name);   s('IMPR_CNTCT_NAME', p_rec.impr_cntct_name);
-        s('IMPR_ADDRESS', p_rec.impr_address);     s('BUS_ID_ISSUE_DT', TO_CHAR(p_rec.bus_id_issue_dt, c_mask));
-        s('IMPR_NBR_PARENT', p_rec.impr_nbr_parent); s('ADD_CTRY_CD', p_rec.add_ctry_cd);
-        s('CITY_CODE', p_rec.city_code);           s('IMPR_POB_NBR', p_rec.impr_pob_nbr);
-        s('IMPR_ZIP_CD', p_rec.impr_zip_cd);       s('IMPR_TEL_NBR', p_rec.impr_tel_nbr);
-        s('IMPR_FAX_NBR', p_rec.impr_fax_nbr);     s('IMPR_TELEX_NBR', p_rec.impr_telex_nbr);
-        s('EMAIL', p_rec.email);                   s('MOBILE_NO', p_rec.mobile_no);
-        s('BANK_IBAN', p_rec.bank_iban);           s('ID_NBR', p_rec.id_nbr);
-        s('CAR_AGENT_FLAG', p_rec.car_agent_flag); s('EXPRESS_POST', p_rec.express_post);
-        s('CTRY_CD_OF_ID', p_rec.ctry_cd_of_id);   s('EXPD_STMT_NBR', p_rec.expd_stmt_nbr);
-        s('WVR_ENTRY_NBR', p_rec.wvr_entry_nbr);   s('ACTIVITY', p_rec.activity);
-        s('CUSTOMS_ENTERED', p_rec.customs_entered); s('CREATION_FLAG', p_rec.creation_flag);
-        s('PORT_NAME', p_rec.port_name);           s('SDP_PORT_STATUS', p_rec.sdp_port_status);
-        s('SUSPN_STATUS', p_rec.suspn_status);     s('STATUS_DESC', p_rec.status_desc);
-        s('IMPR_TYPE_NAME', p_rec.impr_type_name); s('BUS_ID_TYPE_NAME', p_rec.bus_id_type_name);
-        s('ID_CITY_NAME', p_rec.id_city_name);     s('ID_MINS_COMM_CD', p_rec.id_mins_comm_cd);
-        s('L_CT_CITY_STATUS2', p_rec.l_ct_city_status2); s('BRNH_ID_MINS_COMM_CD', p_rec.brnh_id_mins_comm_cd);
-        s('BRNH_CITY_CD', p_rec.brnh_city_cd);     s('BRNH_CITY_NAME', p_rec.brnh_city_name);
-        s('CRTY_ARBC_NAME', p_rec.crty_arbc_name); s('CTRY_CTRY_STATUS', p_rec.ctry_ctry_status);
-        s('ITIDT_NOTE', p_rec.itidt_note);         s('STATUS', p_rec.status);
-        s('IMPR_NAME_PARENT', p_rec.impr_name_parent); s('WASL_CITY_NAME', p_rec.wasl_city_name);
-        s('ADD_CRTY_ARBC_NAME', p_rec.add_crty_arbc_name); s('CITY_NAME', p_rec.city_name);
-        s('L_CT_CITY_STATUS', p_rec.l_ct_city_status); s('B_EMAIL', p_rec.b_email);
-        s('B_MOBILE_NO', p_rec.b_mobile_no);       s('B_ID_NBR', p_rec.b_id_nbr);
-        s('IMPR_ID_TYPE', p_rec.impr_id_type);
-    END set_rec;
+        SET_ITEM('ROW_ID', p_rec.row_id);                 SET_ITEM('REC_STATUS', p_rec.rec_status);
+        SET_ITEM('PORT_CD', p_rec.port_cd);               SET_ITEM('HQ_IMPR_NBR', p_rec.hq_impr_nbr);
+        SET_ITEM('IMPR_NBR', p_rec.impr_nbr);             SET_ITEM('BUS_ID_STATUS', p_rec.bus_id_status);
+        SET_ITEM('IMPR_TYPE_CD', p_rec.impr_type_cd);     SET_ITEM('BUS_ID_EXPRD_DT', TO_CHAR(p_rec.bus_id_exprd_dt, c_mask));
+        SET_ITEM('BUS_ID_TYPE_CD', p_rec.bus_id_type_cd); SET_ITEM('COMM_RGSTRTN_TYPE', p_rec.comm_rgstrtn_type);
+        SET_ITEM('CITY_CODE_OF_ID', p_rec.city_code_of_id); SET_ITEM('BUS_ID', p_rec.bus_id);
+        SET_ITEM('BUS_ID_BRNCH', p_rec.bus_id_brnch);     SET_ITEM('CTRY_CD', p_rec.ctry_cd);
+        SET_ITEM('IMPR_EXPR_TYPE', p_rec.impr_expr_type); SET_ITEM('ARBC_IMPR_NAME', p_rec.arbc_impr_name);
+        SET_ITEM('IMPR_NAME_STD', p_rec.impr_name_std);   SET_ITEM('LST_TRAN_DT', TO_CHAR(p_rec.lst_tran_dt, 'YYYY/MM/DD HH24:MI:SS'));
+        SET_ITEM('IMPD_STMT_NBR', p_rec.impd_stmt_nbr);   SET_ITEM('IMPR_DATA_SRCE', p_rec.impr_data_srce);
+        SET_ITEM('ENG_IMPR_NAME', p_rec.eng_impr_name);   SET_ITEM('IMPR_CNTCT_NAME', p_rec.impr_cntct_name);
+        SET_ITEM('IMPR_ADDRESS', p_rec.impr_address);     SET_ITEM('BUS_ID_ISSUE_DT', TO_CHAR(p_rec.bus_id_issue_dt, c_mask));
+        SET_ITEM('IMPR_NBR_PARENT', p_rec.impr_nbr_parent); SET_ITEM('ADD_CTRY_CD', p_rec.add_ctry_cd);
+        SET_ITEM('CITY_CODE', p_rec.city_code);           SET_ITEM('IMPR_POB_NBR', p_rec.impr_pob_nbr);
+        SET_ITEM('IMPR_ZIP_CD', p_rec.impr_zip_cd);       SET_ITEM('IMPR_TEL_NBR', p_rec.impr_tel_nbr);
+        SET_ITEM('IMPR_FAX_NBR', p_rec.impr_fax_nbr);     SET_ITEM('IMPR_TELEX_NBR', p_rec.impr_telex_nbr);
+        SET_ITEM('EMAIL', p_rec.email);                   SET_ITEM('MOBILE_NO', p_rec.mobile_no);
+        SET_ITEM('BANK_IBAN', p_rec.bank_iban);           SET_ITEM('ID_NBR', p_rec.id_nbr);
+        SET_ITEM('CAR_AGENT_FLAG', p_rec.car_agent_flag); SET_ITEM('EXPRESS_POST', p_rec.express_post);
+        SET_ITEM('CTRY_CD_OF_ID', p_rec.ctry_cd_of_id);   SET_ITEM('EXPD_STMT_NBR', p_rec.expd_stmt_nbr);
+        SET_ITEM('WVR_ENTRY_NBR', p_rec.wvr_entry_nbr);   SET_ITEM('ACTIVITY', p_rec.activity);
+        SET_ITEM('CUSTOMS_ENTERED', p_rec.customs_entered); SET_ITEM('CREATION_FLAG', p_rec.creation_flag);
+        SET_ITEM('PORT_NAME', p_rec.port_name);           SET_ITEM('SDP_PORT_STATUS', p_rec.sdp_port_status);
+        SET_ITEM('SUSPN_STATUS', p_rec.suspn_status);     SET_ITEM('STATUS_DESC', p_rec.status_desc);
+        SET_ITEM('IMPR_TYPE_NAME', p_rec.impr_type_name); SET_ITEM('BUS_ID_TYPE_NAME', p_rec.bus_id_type_name);
+        SET_ITEM('ID_CITY_NAME', p_rec.id_city_name);     SET_ITEM('ID_MINS_COMM_CD', p_rec.id_mins_comm_cd);
+        SET_ITEM('L_CT_CITY_STATUS2', p_rec.l_ct_city_status2); SET_ITEM('BRNH_ID_MINS_COMM_CD', p_rec.brnh_id_mins_comm_cd);
+        SET_ITEM('BRNH_CITY_CD', p_rec.brnh_city_cd);     SET_ITEM('BRNH_CITY_NAME', p_rec.brnh_city_name);
+        SET_ITEM('CRTY_ARBC_NAME', p_rec.crty_arbc_name); SET_ITEM('CTRY_CTRY_STATUS', p_rec.ctry_ctry_status);
+        SET_ITEM('ITIDT_NOTE', p_rec.itidt_note);         SET_ITEM('STATUS', p_rec.status);
+        SET_ITEM('IMPR_NAME_PARENT', p_rec.impr_name_parent); SET_ITEM('WASL_CITY_NAME', p_rec.wasl_city_name);
+        SET_ITEM('ADD_CRTY_ARBC_NAME', p_rec.add_crty_arbc_name); SET_ITEM('CITY_NAME', p_rec.city_name);
+        SET_ITEM('L_CT_CITY_STATUS', p_rec.l_ct_city_status); SET_ITEM('B_EMAIL', p_rec.b_email);
+        SET_ITEM('B_MOBILE_NO', p_rec.b_mobile_no);       SET_ITEM('B_ID_NBR', p_rec.b_id_nbr);
+        SET_ITEM('IMPR_ID_TYPE', p_rec.impr_id_type);
+    END SET_RECORD;
 
     -- Writes ui_json into P1110_UI_STATE (applied by the page-load Dynamic Action) and keeps
     -- the item state on the server
@@ -283,21 +283,21 @@ AS
     IS
     BEGIN
         save_ui;
-        s('UI_STATE', dbms_lob.substr(IMPR1110.ui_json, 32000, 1));
+        SET_ITEM('UI_STATE', dbms_lob.substr(IMPR1110.ui_json, 32000, 1));
     END keep_ui;
 
     -- Text Forms would show for an error (business errors pass through unchanged)
-    FUNCTION err_text (p_op IN VARCHAR2) RETURN VARCHAR2
+    FUNCTION ERROR_TEXT (p_op IN VARCHAR2) RETURN VARCHAR2
     IS
     BEGIN
         IF SQLCODE BETWEEN -20999 AND -20000 THEN
             RETURN REGEXP_REPLACE(SQLERRM, '^ORA-[0-9]+: ');
         END IF;
         RETURN IMPR1110.importers_on_error(p_op, SQLCODE, SQLERRM);
-    END err_text;
+    END ERROR_TEXT;
 
     -- Block WHERE clause of IMPORTERS: PORT_CD = :PARAMETER.P_CURR_PORT_CD (always applied)
-    PROCEDURE load_row (p_rec IN OUT NOCOPY IMPR1110.t_rec, p_where_rowid IN VARCHAR2,
+    PROCEDURE load_row (p_rec IN OUT NOCOPY IMPR1110.T_RECORD, p_where_rowid IN VARCHAR2,
                         p_port_cd IN NUMBER, p_impr_nbr IN NUMBER, p_curr_port IN NUMBER)
     IS
     BEGIN
@@ -328,48 +328,48 @@ AS
     END load_row;
 
     -- ----------------------------------------------------------------- dispatch (Forms order)
-    PROCEDURE run_validate (p_item IN VARCHAR2, r IN OUT NOCOPY IMPR1110.t_rec,
-                            c IN IMPR1110.t_ctx, a1 IN PLS_INTEGER, a2 IN PLS_INTEGER,
+    PROCEDURE run_validate (p_item IN VARCHAR2, r IN OUT NOCOPY IMPR1110.T_RECORD,
+                            c IN IMPR1110.T_CONTEXT, a1 IN PLS_INTEGER, a2 IN PLS_INTEGER,
                             p_from_item IN BOOLEAN)
     IS
     BEGIN
         -- 1) POST-CHANGE
         CASE p_item
-            WHEN 'HQ_IMPR_NBR'    THEN IMPR1110.hq_impr_nbr_post_chg;
-            WHEN 'IMPR_TYPE_CD'   THEN IMPR1110.impr_type_cd_post_chg(r);
-            WHEN 'BUS_ID_TYPE_CD' THEN IMPR1110.bus_id_type_post_chg(r);
-            WHEN 'BUS_ID'         THEN IMPR1110.bus_id_post_chg;
-            WHEN 'BUS_ID_BRNCH'   THEN IMPR1110.bus_id_brnch_post_chg;
-            WHEN 'IMPR_EXPR_TYPE' THEN IMPR1110.impr_expr_type_post_chg;
-            WHEN 'B_EMAIL'        THEN IMPR1110.b_email_post_chg(r, c);
-            WHEN 'B_MOBILE_NO'    THEN IMPR1110.b_mobile_no_post_chg(r, c);
-            WHEN 'B_ID_NBR'       THEN IMPR1110.b_id_nbr_post_chg(r, c);
+            WHEN 'HQ_IMPR_NBR'    THEN IMPR1110.HQ_IMPR_NBR_POST_CHANGE;
+            WHEN 'IMPR_TYPE_CD'   THEN IMPR1110.IMPR_TYPE_CD_POST_CHANGE(r);
+            WHEN 'BUS_ID_TYPE_CD' THEN IMPR1110.BUS_ID_TYPE_CD_POST_CHANGE(r);
+            WHEN 'BUS_ID'         THEN IMPR1110.BUS_ID_POST_CHANGE;
+            WHEN 'BUS_ID_BRNCH'   THEN IMPR1110.BUS_ID_BRNCH_POST_CHANGE;
+            WHEN 'IMPR_EXPR_TYPE' THEN IMPR1110.IMPR_EXPR_TYPE_POST_CHANGE;
+            WHEN 'B_EMAIL'        THEN IMPR1110.B_EMAIL_POST_CHANGE(r, c);
+            WHEN 'B_MOBILE_NO'    THEN IMPR1110.B_MOBILE_NO_POST_CHANGE(r, c);
+            WHEN 'B_ID_NBR'       THEN IMPR1110.B_ID_NBR_POST_CHANGE(r, c);
             ELSE NULL;
         END CASE;
         -- 2) WHEN-VALIDATE-ITEM
         CASE p_item
-            WHEN 'PORT_CD'         THEN IMPR1110.port_cd_wvi(r);
-            WHEN 'IMPR_NBR'        THEN IMPR1110.impr_nbr_wvi(r);
-            WHEN 'IMPR_TYPE_CD'    THEN IMPR1110.impr_type_cd_wvi(r, c);
-            WHEN 'BUS_ID_EXPRD_DT' THEN IMPR1110.bus_id_exprd_dt_wvi(r, p_from_item);
-            WHEN 'CTRY_CD_OF_ID'   THEN IMPR1110.ctry_cd_of_id_wvi(r);
-            WHEN 'CITY_CODE_OF_ID' THEN IMPR1110.city_code_of_id_wvi(r);
-            WHEN 'BUS_ID'          THEN IMPR1110.bus_id_wvi(r, c, a1, a2);
-            WHEN 'BRNH_CITY_CD'    THEN IMPR1110.brnh_city_cd_wvi(r);
-            WHEN 'BUS_ID_BRNCH'    THEN IMPR1110.bus_id_brnch_wvi(r, c, a1);
-            WHEN 'CTRY_CD'         THEN IMPR1110.ctry_cd_wvi(r);
-            WHEN 'ARBC_IMPR_NAME'  THEN IMPR1110.arbc_impr_name_wvi(r);
-            WHEN 'ENG_IMPR_NAME'   THEN IMPR1110.eng_impr_name_wvi(r);
-            WHEN 'BUS_ID_ISSUE_DT' THEN IMPR1110.bus_id_issue_dt_wvi(r, p_from_item);
-            WHEN 'IMPR_NBR_PARENT' THEN IMPR1110.impr_nbr_parent_wvi(r);
-            WHEN 'ADD_CTRY_CD'     THEN IMPR1110.add_ctry_cd_wvi(r);
-            WHEN 'CITY_CODE'       THEN IMPR1110.city_code_wvi(r);
-            WHEN 'IMPR_TEL_NBR'    THEN IMPR1110.impr_tel_nbr_wvi(r);
-            WHEN 'B_EMAIL'         THEN IMPR1110.b_email_wvi(r, p_from_item);
-            WHEN 'EMAIL'           THEN IMPR1110.email_wvi(r, p_from_item);
-            WHEN 'B_MOBILE_NO'     THEN IMPR1110.b_mobile_no_wvi(r, c);
-            WHEN 'BANK_IBAN'       THEN IMPR1110.bank_iban_wvi(r);
-            WHEN 'B_ID_NBR'        THEN IMPR1110.b_id_nbr_wvi(r);
+            WHEN 'PORT_CD'         THEN IMPR1110.PORT_CD_WHEN_VALIDATE_ITEM(r);
+            WHEN 'IMPR_NBR'        THEN IMPR1110.IMPR_NBR_WHEN_VALIDATE_ITEM(r);
+            WHEN 'IMPR_TYPE_CD'    THEN IMPR1110.IMPR_TYPE_CD_VALIDATE_ITEM(r, c);
+            WHEN 'BUS_ID_EXPRD_DT' THEN IMPR1110.BUS_ID_EXPRD_DT_VALIDATE_ITEM(r, p_from_item);
+            WHEN 'CTRY_CD_OF_ID'   THEN IMPR1110.CTRY_CD_OF_ID_VALIDATE_ITEM(r);
+            WHEN 'CITY_CODE_OF_ID' THEN IMPR1110.CITY_CODE_OF_ID_VALIDATE_ITEM(r);
+            WHEN 'BUS_ID'          THEN IMPR1110.BUS_ID_WHEN_VALIDATE_ITEM(r, c, a1, a2);
+            WHEN 'BRNH_CITY_CD'    THEN IMPR1110.BRNH_CITY_CD_VALIDATE_ITEM(r);
+            WHEN 'BUS_ID_BRNCH'    THEN IMPR1110.BUS_ID_BRNCH_VALIDATE_ITEM(r, c, a1);
+            WHEN 'CTRY_CD'         THEN IMPR1110.CTRY_CD_WHEN_VALIDATE_ITEM(r);
+            WHEN 'ARBC_IMPR_NAME'  THEN IMPR1110.ARBC_IMPR_NAME_VALIDATE_ITEM(r);
+            WHEN 'ENG_IMPR_NAME'   THEN IMPR1110.ENG_IMPR_NAME_VALIDATE_ITEM(r);
+            WHEN 'BUS_ID_ISSUE_DT' THEN IMPR1110.BUS_ID_ISSUE_DT_VALIDATE_ITEM(r, p_from_item);
+            WHEN 'IMPR_NBR_PARENT' THEN IMPR1110.IMPR_NBR_PARENT_VALIDATE_ITEM(r);
+            WHEN 'ADD_CTRY_CD'     THEN IMPR1110.ADD_CTRY_CD_WHEN_VALIDATE_ITEM(r);
+            WHEN 'CITY_CODE'       THEN IMPR1110.CITY_CODE_WHEN_VALIDATE_ITEM(r);
+            WHEN 'IMPR_TEL_NBR'    THEN IMPR1110.IMPR_TEL_NBR_VALIDATE_ITEM(r);
+            WHEN 'B_EMAIL'         THEN IMPR1110.B_EMAIL_WHEN_VALIDATE_ITEM(r, p_from_item);
+            WHEN 'EMAIL'           THEN IMPR1110.EMAIL_WHEN_VALIDATE_ITEM(r, p_from_item);
+            WHEN 'B_MOBILE_NO'     THEN IMPR1110.B_MOBILE_NO_WHEN_VALIDATE_ITEM(r, c);
+            WHEN 'BANK_IBAN'       THEN IMPR1110.BANK_IBAN_WHEN_VALIDATE_ITEM(r);
+            WHEN 'B_ID_NBR'        THEN IMPR1110.B_ID_NBR_WHEN_VALIDATE_ITEM(r);
             ELSE NULL;
         END CASE;
         IF r.rec_status = 'QUERY' THEN
@@ -380,47 +380,47 @@ AS
     END run_validate;
 
     -- ----------------------------------------------------------------- page processes
-    PROCEDURE page_wnfi
+    PROCEDURE PAGE_WHEN_NEW_FORM_INSTANCE
     IS
-        r IMPR1110.t_rec := get_rec;
+        r IMPR1110.T_RECORD := GET_RECORD;
     BEGIN
         state_reset;
         IMPR1110.ui_reset;
-        IMPR1110.wnfi(r, get_ctx);
-        set_rec(r);
-        s('FORM_OPEN', 'Y');
+        IMPR1110.WHEN_NEW_FORM_INSTANCE(r, GET_CONTEXT);
+        SET_RECORD(r);
+        SET_ITEM('FORM_OPEN', 'Y');
         keep_ui;
-    END page_wnfi;
+    END PAGE_WHEN_NEW_FORM_INSTANCE;
 
     PROCEDURE page_fetch
     IS
-        r   IMPR1110.t_rec;
-        c   IMPR1110.t_ctx := get_ctx;
-        q   IMPR1110.t_rec := get_rec;      -- query criteria / key
+        r   IMPR1110.T_RECORD;
+        c   IMPR1110.T_CONTEXT := GET_CONTEXT;
+        q   IMPR1110.T_RECORD := GET_RECORD;      -- query criteria / key
     BEGIN
-        s('NEED_FETCH', NULL);
+        SET_ITEM('NEED_FETCH', NULL);
         IMPR1110.ui_reset;
-        IMPR1110.importers_pre_qry(q, c);   -- consumes :GLOBAL.EXEC_QUERY_NOW
+        IMPR1110.IMPORTERS_PRE_QUERY(q, c);   -- consumes :GLOBAL.EXEC_QUERY_NOW
         q.port_cd := NVL(q.port_cd, c.curr_port_cd);
         IF q.row_id IS NULL AND q.impr_nbr IS NULL THEN
             RETURN;
         END IF;
         load_row(r, q.row_id, q.port_cd, q.impr_nbr, c.curr_port_cd);
         IF c_post_chg_on_fetch THEN
-            IF r.hq_impr_nbr IS NOT NULL THEN IMPR1110.hq_impr_nbr_post_chg; END IF;
-            IF r.impr_type_cd IS NOT NULL THEN IMPR1110.impr_type_cd_post_chg(r); END IF;
-            IF r.bus_id_type_cd IS NOT NULL THEN IMPR1110.bus_id_type_post_chg(r); END IF;
-            IF r.bus_id IS NOT NULL THEN IMPR1110.bus_id_post_chg; END IF;
-            IF r.bus_id_brnch IS NOT NULL THEN IMPR1110.bus_id_brnch_post_chg; END IF;
-            IF r.impr_expr_type IS NOT NULL THEN IMPR1110.impr_expr_type_post_chg; END IF;
+            IF r.hq_impr_nbr IS NOT NULL THEN IMPR1110.HQ_IMPR_NBR_POST_CHANGE; END IF;
+            IF r.impr_type_cd IS NOT NULL THEN IMPR1110.IMPR_TYPE_CD_POST_CHANGE(r); END IF;
+            IF r.bus_id_type_cd IS NOT NULL THEN IMPR1110.BUS_ID_TYPE_CD_POST_CHANGE(r); END IF;
+            IF r.bus_id IS NOT NULL THEN IMPR1110.BUS_ID_POST_CHANGE; END IF;
+            IF r.bus_id_brnch IS NOT NULL THEN IMPR1110.BUS_ID_BRNCH_POST_CHANGE; END IF;
+            IF r.impr_expr_type IS NOT NULL THEN IMPR1110.IMPR_EXPR_TYPE_POST_CHANGE; END IF;
         END IF;
-        IMPR1110.importers_post_qry(r, c);
+        IMPR1110.IMPORTERS_POST_QUERY(r, c);
         r.rec_status := 'QUERY';
-        IMPR1110.importers_pre_rec(r, c);
-        IMPR1110.importers_wnri(r, c);
-        set_rec(r);
-        set_ctx(c);
-        baseline_vals;
+        IMPR1110.IMPORTERS_PRE_RECORD(r, c);
+        IMPR1110.IMPORTERS_NEW_RECORD_INSTANCE(r, c);
+        SET_RECORD(r);
+        SET_CONTEXT(c);
+        BASELINE_VALUES;
         keep_ui;
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
@@ -432,30 +432,30 @@ AS
 
     PROCEDURE page_new_record
     IS
-        r IMPR1110.t_rec := get_rec;
-        c IMPR1110.t_ctx := get_ctx;
+        r IMPR1110.T_RECORD := GET_RECORD;
+        c IMPR1110.T_CONTEXT := GET_CONTEXT;
     BEGIN
         IF r.row_id IS NOT NULL THEN
             RETURN;
         END IF;
         IMPR1110.ui_reset;
         r.rec_status := 'NEW';
-        IMPR1110.importers_wcr(r, c);
-        IMPR1110.importers_pre_rec(r, c);
-        IMPR1110.importers_wnri(r, c);
-        set_rec(r);
-        set_ctx(c);
-        baseline_vals;
+        IMPR1110.IMPORTERS_WHEN_CREATE_RECORD(r, c);
+        IMPR1110.IMPORTERS_PRE_RECORD(r, c);
+        IMPR1110.IMPORTERS_NEW_RECORD_INSTANCE(r, c);
+        SET_RECORD(r);
+        SET_CONTEXT(c);
+        BASELINE_VALUES;
         keep_ui;
     END page_new_record;
 
     -- ----------------------------------------------------------------- AJAX
-    PROCEDURE reply (p_rec IN IMPR1110.t_rec, p_ctx IN IMPR1110.t_ctx)
+    PROCEDURE reply (p_rec IN IMPR1110.T_RECORD, p_ctx IN IMPR1110.T_CONTEXT)
     IS
         v_items CLOB;
     BEGIN
-        set_rec(p_rec);
-        set_ctx(p_ctx);
+        SET_RECORD(p_rec);
+        SET_CONTEXT(p_ctx);
         save_ui;
         apex_json.initialize_clob_output;
         apex_json.open_object;
@@ -476,12 +476,12 @@ AS
         htp.prn('}');
     END reply;
 
-    PROCEDURE reply_error (p_rec IN IMPR1110.t_rec, p_ctx IN IMPR1110.t_ctx, p_op IN VARCHAR2)
+    PROCEDURE reply_error (p_rec IN IMPR1110.T_RECORD, p_ctx IN IMPR1110.T_CONTEXT, p_op IN VARCHAR2)
     IS
-        v_text VARCHAR2(4000) := err_text(p_op);
+        v_text VARCHAR2(4000) := ERROR_TEXT(p_op);
     BEGIN
-        set_rec(p_rec);                       -- Forms keeps item changes made before the failure
-        set_ctx(p_ctx);
+        SET_RECORD(p_rec);                       -- Forms keeps item changes made before the failure
+        SET_CONTEXT(p_ctx);
         save_ui;
         apex_json.open_object;
         apex_json.write('error', v_text);
@@ -494,8 +494,8 @@ AS
         v_evt  VARCHAR2(30) := UPPER(apex_application.g_x02);
         a1     PLS_INTEGER  := answer(apex_application.g_x03);
         a2     PLS_INTEGER  := answer(apex_application.g_x04);
-        r      IMPR1110.t_rec := get_rec;
-        c      IMPR1110.t_ctx := get_ctx;
+        r      IMPR1110.T_RECORD := GET_RECORD;
+        c      IMPR1110.T_CONTEXT := GET_CONTEXT;
     BEGIN
         IMPR1110.ui_reset;
         IF v_evt = 'VALIDATE' THEN
@@ -514,20 +514,20 @@ AS
             -- prefix). Other items changed by the trigger keep their previous "validated" value
             -- and are validated again at SAVE (Forms validates programmatically changed items
             -- when the record is validated).
-            set_rec(r);
-            state_put('VAL', v_item, '-', v(v_item));
+            SET_RECORD(r);
+            state_put('VAL', v_item, '-', ITEM_VALUE(v_item));
         ELSIF v_evt = 'WNII' THEN
             CASE v_item
-                WHEN 'IMPR_TYPE_CD'    THEN IMPR1110.impr_type_cd_wnii(r);
-                WHEN 'CITY_CODE_OF_ID' THEN IMPR1110.city_code_of_id_wnii(r);
-                WHEN 'BUS_ID'          THEN IMPR1110.bus_id_wnii(r);
-                WHEN 'BRNH_CITY_CD'    THEN IMPR1110.brnh_city_cd_wnii;
-                WHEN 'BUS_ID_BRNCH'    THEN IMPR1110.bus_id_brnch_wnii(r);
-                WHEN 'BANK_IBAN'       THEN IMPR1110.bank_iban_wnii(r);
+                WHEN 'IMPR_TYPE_CD'    THEN IMPR1110.IMPR_TYPE_CD_NEW_ITEM_INSTANCE(r);
+                WHEN 'CITY_CODE_OF_ID' THEN IMPR1110.CITY_CODE_OF_ID_WHEN_NEW_ITEM(r);
+                WHEN 'BUS_ID'          THEN IMPR1110.BUS_ID_WHEN_NEW_ITEM_INSTANCE(r);
+                WHEN 'BRNH_CITY_CD'    THEN IMPR1110.BRNH_CITY_CD_NEW_ITEM_INSTANCE;
+                WHEN 'BUS_ID_BRNCH'    THEN IMPR1110.BUS_ID_BRNCH_NEW_ITEM_INSTANCE(r);
+                WHEN 'BANK_IBAN'       THEN IMPR1110.BANK_IBAN_NEW_ITEM_INSTANCE(r);
                 ELSE NULL;
             END CASE;
         ELSIF v_evt = 'WLC' AND v_item = 'COMM_RGSTRTN_TYPE' THEN
-            IMPR1110.comm_rgstrtn_wlc(r);
+            IMPR1110.COMM_RGSTRTN_TYPE_LIST_CHANGED(r);
         ELSIF v_evt = 'LOV_RET' AND v_item = 'BUS_ID_TYPE_CD' THEN
             -- LOV_IMPR_TYPE returned the pair IMPR_TYPE_CD / BUS_ID_TYPE_CD and both names
             FOR t IN (SELECT it.impr_type_name, bit.bus_id_type_name
@@ -537,13 +537,13 @@ AS
                 r.impr_type_name   := t.impr_type_name;
                 r.bus_id_type_name := t.bus_id_type_name;
             END LOOP;
-            IMPR1110.impr_type_cd_lov_ret(r);
-            IMPR1110.bus_id_type_post_chg(r);            -- value changed -> POST-CHANGE
-            state_put('VAL', 'BUS_ID_TYPE_CD', '-', v('BUS_ID_TYPE_CD'));
+            IMPR1110.IMPR_TYPE_CD_LOV_RETURN(r);
+            IMPR1110.BUS_ID_TYPE_CD_POST_CHANGE(r);            -- value changed -> POST-CHANGE
+            state_put('VAL', 'BUS_ID_TYPE_CD', '-', ITEM_VALUE('BUS_ID_TYPE_CD'));
         ELSIF v_evt = 'KEY_NXT' AND v_item = 'ARBC_IMPR_NAME' THEN
-            IMPR1110.arbc_impr_name_key_nxt(r);
+            IMPR1110.ARBC_IMPR_NAME_KEY_NEXT_ITEM(r);
         ELSIF v_evt = 'WNRI' THEN
-            IMPR1110.importers_wnri(r, c, a1);
+            IMPR1110.IMPORTERS_NEW_RECORD_INSTANCE(r, c, a1);
         END IF;
         reply(r, c);
     EXCEPTION
@@ -553,16 +553,16 @@ AS
 
     PROCEDURE ajax_confirm
     IS
-        r      IMPR1110.t_rec := get_rec;
-        c      IMPR1110.t_ctx := get_ctx;
+        r      IMPR1110.T_RECORD := GET_RECORD;
+        c      IMPR1110.T_CONTEXT := GET_CONTEXT;
         v_text VARCHAR2(4000);
         v_nbr  NUMBER;
     BEGIN
         CASE UPPER(apex_application.g_x01)
             WHEN 'WNRI' THEN
-                v_text := IMPR1110.wnri_confirm_text(r, c);
+                v_text := IMPR1110.NEW_RECORD_CONFIRM_TEXT(r, c);
             WHEN 'SUSP' THEN
-                v_nbr := IMPR1110.bus_id_susp_impr(r);
+                v_nbr := IMPR1110.BUS_ID_SUSPENDED_IMPORTER(r);
                 IF v_nbr <> 0 THEN
                     v_text := 'يوجد مستورد' || v_nbr
                               || ' موقوف له نفس الرقم الإستدلالي" هل تريد تعديل الرقم الاستدلالي بالرغم من ذلك ؟';
@@ -577,11 +577,11 @@ AS
         apex_json.close_object;
     END ajax_confirm;
 
-    PROCEDURE ajax_fun
+    PROCEDURE AJAX_FUNCTION
     IS
         v_cd VARCHAR2(30) := UPPER(apex_application.g_x01);
-        r    IMPR1110.t_rec := get_rec;
-        c    IMPR1110.t_ctx := get_ctx;
+        r    IMPR1110.T_RECORD := GET_RECORD;
+        c    IMPR1110.T_CONTEXT := GET_CONTEXT;
     BEGIN
         IMPR1110.ui_reset;
         IF v_cd = 'IMPR_MCI_SERVICE' THEN
@@ -601,18 +601,18 @@ AS
     EXCEPTION
         WHEN OTHERS THEN
             reply_error(r, c, 'U');
-    END ajax_fun;
+    END AJAX_FUNCTION;
 
     -- ----------------------------------------------------------------- clear / query / dialogs
     PROCEDURE page_clear
     IS
-        v_empty IMPR1110.t_rec;
+        v_empty IMPR1110.T_RECORD;
     BEGIN
         IMPR1110.ui_reset;
-        IMPR1110.importers_wcb;
-        set_rec(v_empty);
-        s('REC_STATUS', NULL);
-        s('NEED_FETCH', NULL);
+        IMPR1110.IMPORTERS_WHEN_CLEAR_BLOCK;
+        SET_RECORD(v_empty);
+        SET_ITEM('REC_STATUS', NULL);
+        SET_ITEM('NEED_FETCH', NULL);
         IF apex_collection.collection_exists(c_state_coll) THEN
             FOR m IN (SELECT seq_id FROM apex_collections
                        WHERE collection_name = c_state_coll AND c001 = 'VAL') LOOP
@@ -625,59 +625,59 @@ AS
     IS
     BEGIN
         page_clear;
-        s('PORT_CD', ai('P_CURR_PORT_CD'));
-        s('IMPR_NBR', p_impr_nbr);
-        s('NEED_FETCH', 'Y');
+        SET_ITEM('PORT_CD', APPLICATION_ITEM('P_CURR_PORT_CD'));
+        SET_ITEM('IMPR_NBR', p_impr_nbr);
+        SET_ITEM('NEED_FETCH', 'Y');
     END page_query;
 
     FUNCTION central_mobile (p_impr_nbr IN NUMBER) RETURN NUMBER
     IS
-        r IMPR1110.t_rec;
+        r IMPR1110.T_RECORD;
     BEGIN
         r.impr_nbr := p_impr_nbr;
-        RETURN IMPR1110.central_mobile(r, get_ctx);
+        RETURN IMPR1110.central_mobile(r, GET_CONTEXT);
     END central_mobile;
 
     -- ----------------------------------------------------------------- validations on SAVE
     FUNCTION validate_on_submit (p_item IN VARCHAR2) RETURN VARCHAR2
     IS
-        r       IMPR1110.t_rec := get_rec;
-        c       IMPR1110.t_ctx := get_ctx;
+        r       IMPR1110.T_RECORD := GET_RECORD;
+        c       IMPR1110.T_CONTEXT := GET_CONTEXT;
         v_found BOOLEAN;
         v_last  VARCHAR2(4000) := state_get('VAL', UPPER(p_item), '-', v_found);
-        v_now   VARCHAR2(4000) := v(UPPER(p_item));
+        v_now   VARCHAR2(4000) := ITEM_VALUE(UPPER(p_item));
     BEGIN
         IF v_found AND (v_last = v_now OR (v_last IS NULL AND v_now IS NULL)) THEN
             RETURN NULL;                               -- item is valid (Forms: not changed)
         END IF;
         IMPR1110.ui_reset;
         run_validate(UPPER(p_item), r, c, IMPR1110.c_yes, IMPR1110.c_yes, FALSE);
-        set_rec(r);
+        SET_RECORD(r);
         save_ui;
-        state_put('VAL', UPPER(p_item), '-', v(UPPER(p_item)));
+        state_put('VAL', UPPER(p_item), '-', ITEM_VALUE(UPPER(p_item)));
         RETURN NULL;
     EXCEPTION
         WHEN OTHERS THEN
-            set_rec(r);
+            SET_RECORD(r);
             save_ui;
-            RETURN err_text(CASE WHEN r.row_id IS NULL THEN 'I' ELSE 'U' END);
+            RETURN ERROR_TEXT(CASE WHEN r.row_id IS NULL THEN 'I' ELSE 'U' END);
     END validate_on_submit;
 
     FUNCTION required_items RETURN VARCHAR2
     IS
-        FUNCTION is_req (p_item IN VARCHAR2, p_static IN VARCHAR2) RETURN BOOLEAN IS
+        FUNCTION IS_REQUIRED (p_item IN VARCHAR2, p_static IN VARCHAR2) RETURN BOOLEAN IS
         BEGIN
             RETURN ui_state(p_item, 'REQUIRED', p_static) = 'Y';
-        END is_req;
+        END IS_REQUIRED;
     BEGIN
         FOR i IN 1 .. c_req_items.COUNT LOOP
-            IF is_req(c_req_items(i), 'Y') AND v(c_req_items(i)) IS NULL THEN
+            IF IS_REQUIRED(c_req_items(i), 'Y') AND ITEM_VALUE(c_req_items(i)) IS NULL THEN
                 -- Forms FRM-40202 "Field must be entered" - TODO: Arabic text of NIB.ON_ERROR
                 RETURN 'FRM-40202: ' || c_req_items(i);
             END IF;
         END LOOP;
         FOR i IN 1 .. c_dyn_req_items.COUNT LOOP
-            IF is_req(c_dyn_req_items(i), 'N') AND v(c_dyn_req_items(i)) IS NULL THEN
+            IF IS_REQUIRED(c_dyn_req_items(i), 'N') AND ITEM_VALUE(c_dyn_req_items(i)) IS NULL THEN
                 RETURN 'FRM-40202: ' || c_dyn_req_items(i);
             END IF;
         END LOOP;
@@ -686,9 +686,9 @@ AS
 
     PROCEDURE page_dml (p_request IN VARCHAR2)
     IS
-        r       IMPR1110.t_rec := get_rec;
-        c       IMPR1110.t_ctx := get_ctx;
-        v_empty IMPR1110.t_rec;
+        r       IMPR1110.T_RECORD := GET_RECORD;
+        c       IMPR1110.T_CONTEXT := GET_CONTEXT;
+        v_empty IMPR1110.T_RECORD;
         v_op    VARCHAR2(1);
     BEGIN
         IMPR1110.ui_reset;
@@ -698,28 +698,28 @@ AS
                     RETURN;                                -- nothing entered: Forms inserts nothing
                 END IF;
                 v_op := 'I';
-                IMPR1110.importers_pre_ins(r, c);      -- Confirm (class 1 / type 3) done by DA
-                IMPR1110.importers_ins(r);
-                IMPR1110.importers_post_ins(r, c);
+                IMPR1110.IMPORTERS_PRE_INSERT(r, c);      -- Confirm (class 1 / type 3) done by DA
+                IMPR1110.IMPORTERS_INSERT(r);
+                IMPR1110.IMPORTERS_POST_INSERT(r, c);
             ELSIF r.rec_status = 'CHANGED' THEN
                 v_op := 'U';
-                IMPR1110.importers_pre_upd(r, c);
-                IMPR1110.importers_upd(r);
-                IMPR1110.importers_post_upd(r);
+                IMPR1110.IMPORTERS_PRE_UPDATE(r, c);
+                IMPR1110.IMPORTERS_UPDATE(r);
+                IMPR1110.IMPORTERS_POST_UPDATE(r);
             END IF;
             r.rec_status := 'QUERY';
         ELSIF p_request = 'DELETE' THEN
             v_op := 'D';
-            IMPR1110.importers_key_delrec(r);          -- Confirm 'هل أنت متأكد من عملية الحذف' done by DA
+            IMPR1110.importers_key_delrec(r, c);          -- Confirm 'هل أنت متأكد من عملية الحذف' done by DA
             r := v_empty;
             r.rec_status := 'NEW';
         END IF;
-        set_rec(r);
+        SET_RECORD(r);
         keep_ui;
-        baseline_vals;
+        BASELINE_VALUES;
     EXCEPTION
         WHEN OTHERS THEN
-            raise_application_error(-20000, err_text(v_op));
+            raise_application_error(-20000, ERROR_TEXT(v_op));
     END page_dml;
 
 

@@ -16,7 +16,7 @@
 SET DEFINE OFF
 
 CREATE OR REPLACE PACKAGE LIB_APX_USR.FORMS_COMPAT AS
-   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
+   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '002';
    V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    FUNCTION PKG_VERSION
@@ -49,7 +49,7 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.FORMS_COMPAT AS
     PROCEDURE message (p_text IN VARCHAR2);
 
     -- MESSAGE('text'); RAISE FORM_TRIGGER_FAILURE;
-    PROCEDURE ftf (p_text IN VARCHAR2 DEFAULT NULL);
+    PROCEDURE FORM_TRIGGER_FAILURE (p_text IN VARCHAR2 DEFAULT NULL);
 
     -- Text of an alert (Text Message with the same name as the Forms alert).
     -- %0..%2 placeholders are replaced by p0..p2.
@@ -125,11 +125,11 @@ AS
     END message;
 
     -- Source: MESSAGE + RAISE FORM_TRIGGER_FAILURE
-    PROCEDURE ftf (p_text IN VARCHAR2 DEFAULT NULL)
+    PROCEDURE FORM_TRIGGER_FAILURE (p_text IN VARCHAR2 DEFAULT NULL)
     IS
     BEGIN
         raise_application_error(c_err_ftf, NVL(p_text, 'FORM_TRIGGER_FAILURE'));
-    END ftf;
+    END FORM_TRIGGER_FAILURE;
 
     FUNCTION alert_text (
         p_alert_name IN VARCHAR2,
@@ -158,7 +158,7 @@ AS
     )
     IS
     BEGIN
-        ftf(alert_text(p_alert_name, p0, p1, p2));
+        FORM_TRIGGER_FAILURE(alert_text(p_alert_name, p0, p1, p2));
     END alert;
 
     -- Source: :GLOBAL.<name>
@@ -255,7 +255,7 @@ AS
         v_result := apex_error.init_error_result(p_error => p_error);
 
         IF NOT p_error.is_internal_error THEN
-            -- Business errors from ftf / alert / raise_application_error: clean text
+            -- Business errors from FORM_TRIGGER_FAILURE / alert / raise_application_error: clean text
             IF p_error.ora_sqlcode BETWEEN -20999 AND -20000 THEN
                 v_result.message         := apex_error.get_first_ora_error_text(p_error => p_error);
                 v_result.additional_info := NULL;

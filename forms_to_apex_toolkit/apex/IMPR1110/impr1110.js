@@ -327,7 +327,7 @@ window.impr1110 = (function ($) {
     }
 
     function runFun(code, answer) {
-        return ajax("IMPR1110_FUN", { x01: code, x02: answer || "" }, null).then(function (r) {
+        return ajax("IMPR1110_FUNCTION", { x01: code, x02: answer || "" }, null).then(function (r) {
             if (r.ok && r.data.items && r.data.items.P1110_CODE) {
                 return wnri().then(function () { return r; });
             }

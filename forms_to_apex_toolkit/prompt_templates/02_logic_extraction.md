@@ -37,10 +37,10 @@ Put each trigger in exactly one group (split a trigger if it mixes concerns and 
 
 | Group | Typical triggers | Target |
 |---|---|---|
-| VALIDATION | WHEN-VALIDATE-ITEM, WHEN-VALIDATE-RECORD, KEY-COMMIT checks | `<ITEM>_VAL` function returning error text; APEX validation `<ITEM> VALIDATION` + DA `<ITEM> WHEN-VALIDATE-ITEM` |
-| PRE/POST DML | PRE-INSERT, PRE-UPDATE, PRE-DELETE, POST-INSERT, POST-UPDATE, POST-DELETE, ON-INSERT/UPDATE/DELETE, PRE-COMMIT, POST-FORMS-COMMIT | `PRE_INSERT` … (master) / `<BLOCK_ABBR>_PRE_INSERT` … (detail); APEX processes `PRE-INSERT` / `<BLOCK> PRE-INSERT` |
+| VALIDATION | WHEN-VALIDATE-ITEM, WHEN-VALIDATE-RECORD, KEY-COMMIT checks | `<ITEM>_VALIDATION` function returning error text; APEX validation `<ITEM> VALIDATION` + DA `<ITEM> WHEN-VALIDATE-ITEM` |
+| PRE/POST DML | PRE-INSERT, PRE-UPDATE, PRE-DELETE, POST-INSERT, POST-UPDATE, POST-DELETE, ON-INSERT/UPDATE/DELETE, PRE-COMMIT, POST-FORMS-COMMIT | `PRE_INSERT` … (master) / `<BLOCK>_PRE_INSERT` … (detail); APEX processes `PRE-INSERT` / `<BLOCK> PRE-INSERT` |
 | QUERY | PRE-QUERY, POST-QUERY, ON-SELECT, ON-FETCH | View / SQL function / package function |
-| INITIALISATION | WHEN-NEW-FORM-INSTANCE, PRE-FORM, WHEN-CREATE-RECORD | `INIT_FORM` / `PRE_FORM` / `<BLOCK_ABBR>_WCR`; Before Header processes |
+| INITIALISATION | WHEN-NEW-FORM-INSTANCE, PRE-FORM, WHEN-CREATE-RECORD | `INIT_FORM` / `PRE_FORM` / `<BLOCK>_WHEN_CREATE_RECORD`; Before Header processes |
 | NAVIGATION | WHEN-NEW-BLOCK-INSTANCE, WHEN-NEW-RECORD-INSTANCE, WHEN-NEW-ITEM-INSTANCE, KEY-NEXT-ITEM, KEY-* | APEX-DA comments |
 | UI-ONLY | SET_ITEM_PROPERTY, SET_WINDOW_PROPERTY, SHOW_VIEW, visual attributes, MESSAGE | APEX-DA comments |
 | BUTTON ACTIONS | WHEN-BUTTON-PRESSED | Split: business part → procedure; UI part → APEX-DA. Toolbar buttons (SAVE, REMOVE, ENTER-QUERY, EXIT …) map to the **page 0 toolbar** of f345, not to page buttons |
@@ -71,14 +71,17 @@ Member names (f345 standard §5; every name ≤ 30 bytes, DB 12.1.0.2; upper cas
 | Forms source | Member | Example |
 |---|---|---|
 | master-block DML trigger | `<TRIGGER>` with `_` for `-` | `PRE_INSERT`, `POST_UPDATE`, `PRE_DELETE` |
-| detail-block DML trigger | `<BLOCK_ABBR>_<TRIGGER>` | `MEMBERS_PRE_INSERT` |
-| WHEN-VALIDATE-ITEM check | FUNCTION `<ITEM>_VAL` (detail: `<BLOCK_ABBR>_<ITEM>_VAL`) returning error text or NULL | `CTRY_CD_VAL`, `MEMBERS_CTRY_CD_VAL` |
-| WHEN-VALIDATE-ITEM side effects (derived values) | PROCEDURE `<ITEM>_WVI` with IO_ parameters | `AGRMNT_NO_WVI` |
-| WHEN-VALIDATE-RECORD | FUNCTION `<BLOCK_ABBR>_WVR` returning error text | `MEMBERS_WVR` |
+| detail-block DML trigger | `<BLOCK>_<TRIGGER>` | `AGRMNT_MEMBERS_PRE_INSERT` |
+| WHEN-VALIDATE-ITEM check | FUNCTION `<ITEM>_VALIDATION` (detail: `<BLOCK>_<ITEM>_VALIDATION`) returning error text or NULL | `CTRY_CD_VALIDATION`, `MEMBERS_CTRY_CD_VALIDATION` |
+| WHEN-VALIDATE-ITEM side effects (derived values) | PROCEDURE `<ITEM>_WHEN_VALIDATE_ITEM` with IO_ parameters | `AGRMNT_NO_WHEN_VALIDATE_ITEM` |
+| WHEN-VALIDATE-RECORD | FUNCTION `<BLOCK>_WHEN_VALIDATE_RECORD` returning error text | `AGRMNT_MEMBERS_VALIDATE_RECORD` |
 | WHEN-NEW-FORM-INSTANCE / PRE-FORM | `INIT_FORM` / `PRE_FORM` | |
 | program unit | same name as in Forms | `CALC_TOTAL` |
-| f345 helpers (always generate) | `CHK(I_ERR)` raises when not null; `REQUIRED_VAL(I_VALUE, I_LABEL)`; `P0_PAGE_PK_CHECK(IO_P0_PAGE_PK)`; `GET_MODULE_ID`; `HEADER_TITLE` | |
-`<BLOCK_ABBR>` = block name without the form's common prefix (AGRMNT_MEMBERS → MEMBERS).
+| f345 helpers (always generate) | `CHECK_ERROR(I_ERR)` raises when not null; `REQUIRED_VALIDATION(I_VALUE, I_LABEL)`; `P0_PAGE_PK_CHECK(IO_P0_PAGE_PK)`; `GET_MODULE_ID`; `HEADER_TITLE` | |
+`<BLOCK>` = the FULL block name. Never abbreviate names (CLAUDE.md §4): no _wvi, _pre_ins, _post_chg,
+CHK, _VAL, block short forms. Only a name longer than 30 bytes is shortened (drop WHEN_, then the
+block part), and its full name goes in the member's comment. Forms program-unit and item names stay
+exactly as in Forms.
 
 Parameter names:
 - Members called by APEX: `I_` (IN), `IO_` (IN OUT), `O_` (OUT) + the bind name without `:`.
@@ -97,10 +100,10 @@ Rules:
    to page items inside the package. The package must be testable without an APEX session.
    Exception: FORMS_COMPAT.app_user / get_global may be used anywhere (they also work
    outside APEX, so tests still run).
-2. Validations: `<ITEM>_VAL` returns NULL if OK or the error message (APEX "PL/SQL Function
-   Body returning Error Text", and `{{FORM_NAME_UC}}.CHK({{FORM_NAME_UC}}.<ITEM>_VAL(...))` in
-   the FOS dynamic action). Values the trigger derives go into `<ITEM>_WVI` with IO_ params.
-3. MESSAGE + RAISE FORM_TRIGGER_FAILURE → FORMS_COMPAT.ftf('<text>');
+2. Validations: `<ITEM>_VALIDATION` returns NULL if OK or the error message (APEX "PL/SQL Function
+   Body returning Error Text", and `{{FORM_NAME_UC}}.CHECK_ERROR({{FORM_NAME_UC}}.<ITEM>_VALIDATION(...))` in
+   the FOS dynamic action). Values the trigger derives go into `<ITEM>_WHEN_VALIDATE_ITEM` with IO_ params.
+3. MESSAGE + RAISE FORM_TRIGGER_FAILURE → FORMS_COMPAT.FORM_TRIGGER_FAILURE('<text>');
    SHOW_ALERT (stop) + FTF → FORMS_COMPAT.alert('<ALERT_NAME>') and list the alert as a
    Text Message to create (name = alert name, text = alert message).
 4. SHOW_ALERT whose result drives logic (e.g. "Are you sure?") → split: the question
@@ -109,8 +112,8 @@ Rules:
    Item **G_X** (f345). :PARAMETER.P_X of the menu → reuse the f345 item when it exists
    (P_CURR_PORT_CD, P_CLASS_CD, P_PORT_TYPE, P_BRKR_NBR, SSO_APP_USER, V_USR_TYPE …), otherwise
    a new P_X. Never AI_. Record the mapping in the extraction doc.
-6. POST-QUERY lookups → prefer a function usable in SQL (fnc_ / package function marked
-   for use in the region query or a view v_<form>_<block>). Flag N+1 patterns.
+6. POST-QUERY lookups → prefer a function usable in SQL (package function marked
+   for use in the region query, or a view <FORM>_<BLOCK>_VIEW). Flag N+1 patterns.
 7. Sequences in PRE-INSERT → keep in PRE_INSERT (IO_ key := seq.NEXTVAL is valid on 12.1),
    or note "use identity / DEFAULT seq.NEXTVAL — confirm with DBA". Do not change the table.
 8. Every procedure has a header comment: purpose, `-- Source: <LEVEL.OWNER.TRIGGER>`,
@@ -153,7 +156,7 @@ analysis/{{FORM_NAME}}/{{FORM_NAME}}_logic_extraction.md containing:
   EXECUTE_QUERY|FORM_TRIGGER_FAILURE|:SYSTEM\.|:GLOBAL\.|NAME_IN|COPY\( — matches are
   only allowed inside comments.
 - grep for `pkg_{{FORM_NAME}}` and `AI_` — no matches (f345 naming).
-- CHK and REQUIRED_VAL exist; every name ≤ 30 bytes.
+- CHECK_ERROR and REQUIRED_VALIDATION exist; every name ≤ 30 bytes.
 - Owner LIB_APX_USR in spec and body; version block and PKG_VERSION present; synonym and the
   4 grants (LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS) at the end of the spec file.
 - Every trigger from the inventory appears in the classification table.

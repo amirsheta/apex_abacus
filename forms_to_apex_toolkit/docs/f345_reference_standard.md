@@ -123,15 +123,17 @@ this in import_notes.md whenever you generate such a page.
 | Member | Pattern | Example |
 |---|---|---|
 | Master-block trigger | `<TRIGGER>` with `_` for `-` | `AGR1100.PRE_INSERT`, `AGR1100.POST_UPDATE` |
-| Detail-block trigger | `<BLOCK_ABBR>_<TRIGGER>` | `AGR1100.MEMBERS_PRE_INSERT`, `AGR1100.ITEMS_PRE_DELETE` |
-| Validation function (returns error text, NULL = OK) | `<ITEM>_VAL` / `<BLOCK_ABBR>_<ITEM>_VAL` | `AGR1100.CTRY_CD_VAL`, `AGR1100.MEMBERS_CTRY_CD_VAL` |
-| WHEN-VALIDATE-ITEM side effects (procedure) | `<ITEM>_WVI` | `AGR1100.AGRMNT_NO_WVI` |
-| Error raiser | `<FORM>.CHK(p_err)` raises when `p_err` is not null | `AGR1100.CHK(AGR1100.CTRY_CD_VAL(...))` |
-| Required check | `<FORM>.REQUIRED_VAL(p_value, p_label)` | |
+| Detail-block trigger | `<BLOCK>_<TRIGGER>` | `AGR1100.AGRMNT_MEMBERS_PRE_INSERT`, `AGR1100.AGRMNT_ITEMS_PRE_DELETE` |
+| Validation function (returns error text, NULL = OK) | `<ITEM>_VALIDATION` / `<BLOCK>_<ITEM>_VALIDATION` | `AGR1100.CTRY_CD_VALIDATION`, `AGR1100.MEMBERS_CTRY_CD_VALIDATION` (shortened: 33 bytes in full) |
+| WHEN-VALIDATE-ITEM side effects (procedure) | `<ITEM>_WHEN_VALIDATE_ITEM` | `AGR1100.AGRMNT_NO_WHEN_VALIDATE_ITEM` |
+| Error raiser | `<FORM>.CHECK_ERROR(p_err)` raises when `p_err` is not null | `AGR1100.CHECK_ERROR(AGR1100.CTRY_CD_VALIDATION(...))` |
+| Required check | `<FORM>.REQUIRED_VALIDATION(p_value, p_label)` | |
 | Form init / helpers | `INIT_FORM`, `P0_PAGE_PK_CHECK`, `HEADER_TITLE`, `GET_MODULE_ID`, `INFO_SAVE`, `INFO_LOAD`, `ADJ_FUNS`, `EXEC_FUNS` | |
 | Parameters | `I_<bind name>` (IN), `IO_<bind name>` (IN OUT), `O_<bind name>` (OUT); bind name without `:` | `IO_P11100_AGRMNT_NO => :P11100_AGRMNT_NO`, `I_MEMBER_ISN => :MEMBER_ISN`, `I_SSO_APP_USER => :SSO_APP_USER` |
 
-`<BLOCK_ABBR>` = the block name minus the form's common prefix (`AGRMNT_MEMBERS` → `MEMBERS`).
+`<BLOCK>` = the **full** block name. Names are never abbreviated (CLAUDE.md §4); only when a name
+would exceed 30 bytes is it shortened (drop `WHEN_`, then shorten the block part), with the full
+name in the member's comment. Example: `AGRMNT_MEMBERS_CTRY_CD_VALIDATION` (33 bytes) → `MEMBERS_CTRY_CD_VALIDATION`.
 Every name stays ≤ 30 bytes (DB 12.1.0.2).
 
 ### Component names (Forms trigger notation, space-separated)
@@ -204,4 +206,4 @@ equivalent on page 0 gets the Text with Icon template, the same options, and a `
 search grids use `p_is_editable=>false`. Always set `p_add_row_if_empty=>false`, `p_submit_checked_rows=>false`,
 `p_lazy_loading=>false`, `p_toolbar_buttons=>'SEARCH_COLUMN:SEARCH_FIELD:ACTIONS_MENU:RESET'`,
 and `p_enable_save_public_report=>false`. Server calls from IG column DAs use
-`PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE` with `<FORM>.CHK(<FORM>.<BLOCK_ABBR>_<COL>_VAL(I_<COL> => :<COL>))`.
+`PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE` with `<FORM>.CHECK_ERROR(<FORM>.<BLOCK>_<COL>_VALIDATION(I_<COL> => :<COL>))`.

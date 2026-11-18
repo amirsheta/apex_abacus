@@ -599,7 +599,7 @@ end;
         A(call('create_page_validation', [
             ('p_id', ref(key)), ('p_validation_name', q('%s VALIDATION' % itm)),
             ('p_validation_sequence', str((i + 1) * 10)),
-            ('p_validation', q('return IMPR1110.%s_VAL(I_%s => :%s);' % (itm, iname, iname))),
+            ('p_validation', q('return IMPR1110.%s_VALIDATION(I_%s => :%s);' % (itm, iname, iname))),
             ('p_validation2', q('PLSQL')), ('p_validation_type', q('FUNC_BODY_RETURNING_ERR_TEXT')),
             ('p_validation_condition', q('CREATE,SAVE')), ('p_validation_condition_type', q('REQUEST_IN_CONDITION')),
             ('p_associated_item', 'wwv_flow_api.id(%s)' % _ids['1110:item:' + iname]),
@@ -608,7 +608,7 @@ end;
     nid('1110:val:REQUIRED', 6)
     A(call('create_page_validation', [
         ('p_id', ref('1110:val:REQUIRED')), ('p_validation_name', q('IMPORTERS REQUIRED')),
-        ('p_validation_sequence', '1000'), ('p_validation', q('return IMPR1110.REQUIRED_ITEMS_VAL;')),
+        ('p_validation_sequence', '1000'), ('p_validation', q('return IMPR1110.REQUIRED_ITEMS_VALIDATION;')),
         ('p_validation2', q('PLSQL')), ('p_validation_type', q('FUNC_BODY_RETURNING_ERR_TEXT')),
         ('p_validation_condition', q('CREATE,SAVE')), ('p_validation_condition_type', q('REQUEST_IN_CONDITION')),
         ('p_error_display_location', q('INLINE_IN_NOTIFICATION')),
@@ -656,7 +656,7 @@ end;
          ('QUERY,QUERY_NBR', 'REQUEST_IN_CONDITION'), 'IMPORTERS.IMPR_NBR.WHEN-VALIDATE-ITEM + WNII re-query'),
         (OD, 10, 'IMPR1110_ITEM', 'IMPR1110.AJAX_ITEM;', None, 'all item triggers (spec 10), called by impr1110.js'),
         (OD, 20, 'IMPR1110_CONFIRM', 'IMPR1110.AJAX_CONFIRM;', None, 'CONFIRM / WARNING alerts, called by impr1110.js'),
-        (OD, 30, 'IMPR1110_FUN', 'IMPR1110.AJAX_FUN;', None, 'PU EXEC_FUNS, called by impr1110.js'),
+        (OD, 30, 'IMPR1110_FUNCTION', 'IMPR1110.AJAX_FUNCTION;', None, 'PU EXEC_FUNS, called by impr1110.js'),
     ]
     for pt, seq, name, code, cond, s in procs:
         A(proc_call(PG, '1110:proc:' + name, seq, pt, name, code, cond, 'IMPR1110.' + s + ' / spec 8'))

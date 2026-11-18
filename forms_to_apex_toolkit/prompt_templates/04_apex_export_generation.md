@@ -79,7 +79,8 @@ four tokens, and '{{' must not appear at all.
    - wwv_flow_api.create_list_of_values (name per CLAUDE.md §4)
    - wwv_flow_api.create_flow_item. Never duplicate an f345 item (SSO_APP_USER,
      P_CURR_PORT_CD, PORT_NAME, P_GLOBAL_PORT_TYPE, …). New ones use Forms names, no AI_ prefix.
-   - wwv_flow_api.create_security_scheme, if listed in the spec.
+   - No wwv_flow_api.create_security_scheme and no p_required_role / p_security_scheme on pages,
+     buttons or list entries: access comes from the application's privileges (CLAUDE.md §8).
    Never emit theme, templates, page 0, login page, plug-ins or app processes.
 5. Pages, in this order: main page {{PAGE_ID}}, then search page {{PAGE_ID}}01, then any other
    modal child pages. For each one:

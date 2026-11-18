@@ -1,9 +1,9 @@
 -- =============================================================================
--- Package body : pkg_impr1110_apx  (APEX glue for pkg_impr1110, page 1110)
+-- Package body : IMPR1110_APX  (APEX glue for IMPR1110, page 1110)
 -- Author       : Claude Code
 -- Created      : 2026-11-18
 -- Version      : 1.2.0  (2026-11-18: menu parameters read from f345 application items, see ai();
--- Owner       : LIB_APX_USR (public synonym pkg_impr1110_apx; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
+-- Owner       : LIB_APX_USR (public synonym IMPR1110_APX; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
 --                        previous version rollback/IMPR1110/pkg_impr1110_apx_body_v1_1_0.sql)
 -- Status       : NOT COMPILED.
 -- Called by    : package IMPR1110 (APEX entry point, f345 standard). Pages never call this package directly.
@@ -14,7 +14,7 @@
 -- =============================================================================
 SET DEFINE OFF
 
-CREATE OR REPLACE PACKAGE BODY LIB_APX_USR.pkg_impr1110_apx
+CREATE OR REPLACE PACKAGE BODY LIB_APX_USR.IMPR1110_APX
 AS
     c_mask CONSTANT VARCHAR2(10) := 'MI-MM-YYYY';   -- Hijri date mask of the form (as in Forms)
 
@@ -38,7 +38,7 @@ AS
     FUNCTION v (p_item IN VARCHAR2) RETURN VARCHAR2
     IS
     BEGIN
-        RETURN pkg_forms_compat.name_in('P1110_' || p_item);
+        RETURN FORMS_COMPAT.name_in('P1110_' || p_item);
     END v;
 
     FUNCTION n (p_item IN VARCHAR2) RETURN NUMBER
@@ -56,7 +56,7 @@ AS
     PROCEDURE s (p_item IN VARCHAR2, p_val IN VARCHAR2)
     IS
     BEGIN
-        pkg_forms_compat.copy(p_val, 'P1110_' || p_item);
+        FORMS_COMPAT.copy(p_val, 'P1110_' || p_item);
     END s;
 
     -- Menu parameters (:PARAMETER.P_*) -> application items of the f345 reference application.
@@ -65,7 +65,7 @@ AS
     FUNCTION ai (p_name IN VARCHAR2) RETURN VARCHAR2
     IS
     BEGIN
-        RETURN pkg_forms_compat.name_in(
+        RETURN FORMS_COMPAT.name_in(
                    CASE UPPER(p_name)
                        WHEN 'P_USER_ID'   THEN 'SSO_APP_USER'      -- TODO-VERIFY: Forms P_USER_ID = SSO user id?
                        WHEN 'P_USER_TYPE' THEN 'V_USR_TYPE'        -- SC_USERS.USR_TYPE_CD (f345)
@@ -77,7 +77,7 @@ AS
     FUNCTION answer (p_val IN VARCHAR2) RETURN PLS_INTEGER
     IS
     BEGIN
-        RETURN NVL(TO_NUMBER(p_val), pkg_impr1110.c_yes);
+        RETURN NVL(TO_NUMBER(p_val), IMPR1110.c_yes);
     END answer;
 
     -- ----------------------------------------------------------------- server item state
@@ -141,15 +141,15 @@ AS
         RETURN CASE WHEN v_found THEN v_val ELSE p_default END;
     END ui_state;
 
-    -- Keep the UI entries recorded by the last pkg_impr1110 call (last one per item/prop wins)
+    -- Keep the UI entries recorded by the last IMPR1110 call (last one per item/prop wins)
     PROCEDURE save_ui
     IS
         v_item VARCHAR2(61);
         v_prop VARCHAR2(30);
         v_val  VARCHAR2(10);
     BEGIN
-        FOR i IN 1 .. pkg_impr1110.ui_count LOOP
-            pkg_impr1110.ui_entry(i, v_item, v_prop, v_val);
+        FOR i IN 1 .. IMPR1110.ui_count LOOP
+            IMPR1110.ui_entry(i, v_item, v_prop, v_val);
             IF v_prop IN ('ENTRABLE', 'ENABLED', 'REQUIRED', 'VISIBLE') THEN
                 state_put('UI', v_item, v_prop, v_val);
             END IF;
@@ -166,9 +166,9 @@ AS
     END baseline_vals;
 
     -- ----------------------------------------------------------------- record / context
-    FUNCTION get_ctx RETURN pkg_impr1110.t_ctx
+    FUNCTION get_ctx RETURN IMPR1110.t_ctx
     IS
-        c pkg_impr1110.t_ctx;
+        c IMPR1110.t_ctx;
     BEGIN
         c.curr_port_cd := TO_NUMBER(ai('P_CURR_PORT_CD'));
         c.user_id      := ai('P_USER_ID');
@@ -184,16 +184,16 @@ AS
         RETURN c;
     END get_ctx;
 
-    PROCEDURE set_ctx (p_ctx IN pkg_impr1110.t_ctx)
+    PROCEDURE set_ctx (p_ctx IN IMPR1110.t_ctx)
     IS
     BEGIN
         s('LETTER_NBR', p_ctx.letter_nbr);
         s('CODE', p_ctx.code);
     END set_ctx;
 
-    FUNCTION get_rec RETURN pkg_impr1110.t_rec
+    FUNCTION get_rec RETURN IMPR1110.t_rec
     IS
-        r pkg_impr1110.t_rec;
+        r IMPR1110.t_rec;
     BEGIN
         r.row_id            := v('ROW_ID');
         r.rec_status        := NVL(v('REC_STATUS'), CASE WHEN v('ROW_ID') IS NULL THEN 'NEW' ELSE 'QUERY' END);
@@ -237,7 +237,7 @@ AS
         RETURN r;
     END get_rec;
 
-    PROCEDURE set_rec (p_rec IN pkg_impr1110.t_rec)
+    PROCEDURE set_rec (p_rec IN IMPR1110.t_rec)
     IS
     BEGIN
         s('ROW_ID', p_rec.row_id);                 s('REC_STATUS', p_rec.rec_status);
@@ -283,7 +283,7 @@ AS
     IS
     BEGIN
         save_ui;
-        s('UI_STATE', dbms_lob.substr(pkg_impr1110.ui_json, 32000, 1));
+        s('UI_STATE', dbms_lob.substr(IMPR1110.ui_json, 32000, 1));
     END keep_ui;
 
     -- Text Forms would show for an error (business errors pass through unchanged)
@@ -293,11 +293,11 @@ AS
         IF SQLCODE BETWEEN -20999 AND -20000 THEN
             RETURN REGEXP_REPLACE(SQLERRM, '^ORA-[0-9]+: ');
         END IF;
-        RETURN pkg_impr1110.importers_on_error(p_op, SQLCODE, SQLERRM);
+        RETURN IMPR1110.importers_on_error(p_op, SQLCODE, SQLERRM);
     END err_text;
 
     -- Block WHERE clause of IMPORTERS: PORT_CD = :PARAMETER.P_CURR_PORT_CD (always applied)
-    PROCEDURE load_row (p_rec IN OUT NOCOPY pkg_impr1110.t_rec, p_where_rowid IN VARCHAR2,
+    PROCEDURE load_row (p_rec IN OUT NOCOPY IMPR1110.t_rec, p_where_rowid IN VARCHAR2,
                         p_port_cd IN NUMBER, p_impr_nbr IN NUMBER, p_curr_port IN NUMBER)
     IS
     BEGIN
@@ -328,48 +328,48 @@ AS
     END load_row;
 
     -- ----------------------------------------------------------------- dispatch (Forms order)
-    PROCEDURE run_validate (p_item IN VARCHAR2, r IN OUT NOCOPY pkg_impr1110.t_rec,
-                            c IN pkg_impr1110.t_ctx, a1 IN PLS_INTEGER, a2 IN PLS_INTEGER,
+    PROCEDURE run_validate (p_item IN VARCHAR2, r IN OUT NOCOPY IMPR1110.t_rec,
+                            c IN IMPR1110.t_ctx, a1 IN PLS_INTEGER, a2 IN PLS_INTEGER,
                             p_from_item IN BOOLEAN)
     IS
     BEGIN
         -- 1) POST-CHANGE
         CASE p_item
-            WHEN 'HQ_IMPR_NBR'    THEN pkg_impr1110.hq_impr_nbr_post_chg;
-            WHEN 'IMPR_TYPE_CD'   THEN pkg_impr1110.impr_type_cd_post_chg(r);
-            WHEN 'BUS_ID_TYPE_CD' THEN pkg_impr1110.bus_id_type_post_chg(r);
-            WHEN 'BUS_ID'         THEN pkg_impr1110.bus_id_post_chg;
-            WHEN 'BUS_ID_BRNCH'   THEN pkg_impr1110.bus_id_brnch_post_chg;
-            WHEN 'IMPR_EXPR_TYPE' THEN pkg_impr1110.impr_expr_type_post_chg;
-            WHEN 'B_EMAIL'        THEN pkg_impr1110.b_email_post_chg(r, c);
-            WHEN 'B_MOBILE_NO'    THEN pkg_impr1110.b_mobile_no_post_chg(r, c);
-            WHEN 'B_ID_NBR'       THEN pkg_impr1110.b_id_nbr_post_chg(r, c);
+            WHEN 'HQ_IMPR_NBR'    THEN IMPR1110.hq_impr_nbr_post_chg;
+            WHEN 'IMPR_TYPE_CD'   THEN IMPR1110.impr_type_cd_post_chg(r);
+            WHEN 'BUS_ID_TYPE_CD' THEN IMPR1110.bus_id_type_post_chg(r);
+            WHEN 'BUS_ID'         THEN IMPR1110.bus_id_post_chg;
+            WHEN 'BUS_ID_BRNCH'   THEN IMPR1110.bus_id_brnch_post_chg;
+            WHEN 'IMPR_EXPR_TYPE' THEN IMPR1110.impr_expr_type_post_chg;
+            WHEN 'B_EMAIL'        THEN IMPR1110.b_email_post_chg(r, c);
+            WHEN 'B_MOBILE_NO'    THEN IMPR1110.b_mobile_no_post_chg(r, c);
+            WHEN 'B_ID_NBR'       THEN IMPR1110.b_id_nbr_post_chg(r, c);
             ELSE NULL;
         END CASE;
         -- 2) WHEN-VALIDATE-ITEM
         CASE p_item
-            WHEN 'PORT_CD'         THEN pkg_impr1110.port_cd_wvi(r);
-            WHEN 'IMPR_NBR'        THEN pkg_impr1110.impr_nbr_wvi(r);
-            WHEN 'IMPR_TYPE_CD'    THEN pkg_impr1110.impr_type_cd_wvi(r, c);
-            WHEN 'BUS_ID_EXPRD_DT' THEN pkg_impr1110.bus_id_exprd_dt_wvi(r, p_from_item);
-            WHEN 'CTRY_CD_OF_ID'   THEN pkg_impr1110.ctry_cd_of_id_wvi(r);
-            WHEN 'CITY_CODE_OF_ID' THEN pkg_impr1110.city_code_of_id_wvi(r);
-            WHEN 'BUS_ID'          THEN pkg_impr1110.bus_id_wvi(r, c, a1, a2);
-            WHEN 'BRNH_CITY_CD'    THEN pkg_impr1110.brnh_city_cd_wvi(r);
-            WHEN 'BUS_ID_BRNCH'    THEN pkg_impr1110.bus_id_brnch_wvi(r, c, a1);
-            WHEN 'CTRY_CD'         THEN pkg_impr1110.ctry_cd_wvi(r);
-            WHEN 'ARBC_IMPR_NAME'  THEN pkg_impr1110.arbc_impr_name_wvi(r);
-            WHEN 'ENG_IMPR_NAME'   THEN pkg_impr1110.eng_impr_name_wvi(r);
-            WHEN 'BUS_ID_ISSUE_DT' THEN pkg_impr1110.bus_id_issue_dt_wvi(r, p_from_item);
-            WHEN 'IMPR_NBR_PARENT' THEN pkg_impr1110.impr_nbr_parent_wvi(r);
-            WHEN 'ADD_CTRY_CD'     THEN pkg_impr1110.add_ctry_cd_wvi(r);
-            WHEN 'CITY_CODE'       THEN pkg_impr1110.city_code_wvi(r);
-            WHEN 'IMPR_TEL_NBR'    THEN pkg_impr1110.impr_tel_nbr_wvi(r);
-            WHEN 'B_EMAIL'         THEN pkg_impr1110.b_email_wvi(r, p_from_item);
-            WHEN 'EMAIL'           THEN pkg_impr1110.email_wvi(r, p_from_item);
-            WHEN 'B_MOBILE_NO'     THEN pkg_impr1110.b_mobile_no_wvi(r, c);
-            WHEN 'BANK_IBAN'       THEN pkg_impr1110.bank_iban_wvi(r);
-            WHEN 'B_ID_NBR'        THEN pkg_impr1110.b_id_nbr_wvi(r);
+            WHEN 'PORT_CD'         THEN IMPR1110.port_cd_wvi(r);
+            WHEN 'IMPR_NBR'        THEN IMPR1110.impr_nbr_wvi(r);
+            WHEN 'IMPR_TYPE_CD'    THEN IMPR1110.impr_type_cd_wvi(r, c);
+            WHEN 'BUS_ID_EXPRD_DT' THEN IMPR1110.bus_id_exprd_dt_wvi(r, p_from_item);
+            WHEN 'CTRY_CD_OF_ID'   THEN IMPR1110.ctry_cd_of_id_wvi(r);
+            WHEN 'CITY_CODE_OF_ID' THEN IMPR1110.city_code_of_id_wvi(r);
+            WHEN 'BUS_ID'          THEN IMPR1110.bus_id_wvi(r, c, a1, a2);
+            WHEN 'BRNH_CITY_CD'    THEN IMPR1110.brnh_city_cd_wvi(r);
+            WHEN 'BUS_ID_BRNCH'    THEN IMPR1110.bus_id_brnch_wvi(r, c, a1);
+            WHEN 'CTRY_CD'         THEN IMPR1110.ctry_cd_wvi(r);
+            WHEN 'ARBC_IMPR_NAME'  THEN IMPR1110.arbc_impr_name_wvi(r);
+            WHEN 'ENG_IMPR_NAME'   THEN IMPR1110.eng_impr_name_wvi(r);
+            WHEN 'BUS_ID_ISSUE_DT' THEN IMPR1110.bus_id_issue_dt_wvi(r, p_from_item);
+            WHEN 'IMPR_NBR_PARENT' THEN IMPR1110.impr_nbr_parent_wvi(r);
+            WHEN 'ADD_CTRY_CD'     THEN IMPR1110.add_ctry_cd_wvi(r);
+            WHEN 'CITY_CODE'       THEN IMPR1110.city_code_wvi(r);
+            WHEN 'IMPR_TEL_NBR'    THEN IMPR1110.impr_tel_nbr_wvi(r);
+            WHEN 'B_EMAIL'         THEN IMPR1110.b_email_wvi(r, p_from_item);
+            WHEN 'EMAIL'           THEN IMPR1110.email_wvi(r, p_from_item);
+            WHEN 'B_MOBILE_NO'     THEN IMPR1110.b_mobile_no_wvi(r, c);
+            WHEN 'BANK_IBAN'       THEN IMPR1110.bank_iban_wvi(r);
+            WHEN 'B_ID_NBR'        THEN IMPR1110.b_id_nbr_wvi(r);
             ELSE NULL;
         END CASE;
         IF r.rec_status = 'QUERY' THEN
@@ -382,11 +382,11 @@ AS
     -- ----------------------------------------------------------------- page processes
     PROCEDURE page_wnfi
     IS
-        r pkg_impr1110.t_rec := get_rec;
+        r IMPR1110.t_rec := get_rec;
     BEGIN
         state_reset;
-        pkg_impr1110.ui_reset;
-        pkg_impr1110.wnfi(r, get_ctx);
+        IMPR1110.ui_reset;
+        IMPR1110.wnfi(r, get_ctx);
         set_rec(r);
         s('FORM_OPEN', 'Y');
         keep_ui;
@@ -394,30 +394,30 @@ AS
 
     PROCEDURE page_fetch
     IS
-        r   pkg_impr1110.t_rec;
-        c   pkg_impr1110.t_ctx := get_ctx;
-        q   pkg_impr1110.t_rec := get_rec;      -- query criteria / key
+        r   IMPR1110.t_rec;
+        c   IMPR1110.t_ctx := get_ctx;
+        q   IMPR1110.t_rec := get_rec;      -- query criteria / key
     BEGIN
         s('NEED_FETCH', NULL);
-        pkg_impr1110.ui_reset;
-        pkg_impr1110.importers_pre_qry(q, c);   -- consumes :GLOBAL.EXEC_QUERY_NOW
+        IMPR1110.ui_reset;
+        IMPR1110.importers_pre_qry(q, c);   -- consumes :GLOBAL.EXEC_QUERY_NOW
         q.port_cd := NVL(q.port_cd, c.curr_port_cd);
         IF q.row_id IS NULL AND q.impr_nbr IS NULL THEN
             RETURN;
         END IF;
         load_row(r, q.row_id, q.port_cd, q.impr_nbr, c.curr_port_cd);
         IF c_post_chg_on_fetch THEN
-            IF r.hq_impr_nbr IS NOT NULL THEN pkg_impr1110.hq_impr_nbr_post_chg; END IF;
-            IF r.impr_type_cd IS NOT NULL THEN pkg_impr1110.impr_type_cd_post_chg(r); END IF;
-            IF r.bus_id_type_cd IS NOT NULL THEN pkg_impr1110.bus_id_type_post_chg(r); END IF;
-            IF r.bus_id IS NOT NULL THEN pkg_impr1110.bus_id_post_chg; END IF;
-            IF r.bus_id_brnch IS NOT NULL THEN pkg_impr1110.bus_id_brnch_post_chg; END IF;
-            IF r.impr_expr_type IS NOT NULL THEN pkg_impr1110.impr_expr_type_post_chg; END IF;
+            IF r.hq_impr_nbr IS NOT NULL THEN IMPR1110.hq_impr_nbr_post_chg; END IF;
+            IF r.impr_type_cd IS NOT NULL THEN IMPR1110.impr_type_cd_post_chg(r); END IF;
+            IF r.bus_id_type_cd IS NOT NULL THEN IMPR1110.bus_id_type_post_chg(r); END IF;
+            IF r.bus_id IS NOT NULL THEN IMPR1110.bus_id_post_chg; END IF;
+            IF r.bus_id_brnch IS NOT NULL THEN IMPR1110.bus_id_brnch_post_chg; END IF;
+            IF r.impr_expr_type IS NOT NULL THEN IMPR1110.impr_expr_type_post_chg; END IF;
         END IF;
-        pkg_impr1110.importers_post_qry(r, c);
+        IMPR1110.importers_post_qry(r, c);
         r.rec_status := 'QUERY';
-        pkg_impr1110.importers_pre_rec(r, c);
-        pkg_impr1110.importers_wnri(r, c);
+        IMPR1110.importers_pre_rec(r, c);
+        IMPR1110.importers_wnri(r, c);
         set_rec(r);
         set_ctx(c);
         baseline_vals;
@@ -432,17 +432,17 @@ AS
 
     PROCEDURE page_new_record
     IS
-        r pkg_impr1110.t_rec := get_rec;
-        c pkg_impr1110.t_ctx := get_ctx;
+        r IMPR1110.t_rec := get_rec;
+        c IMPR1110.t_ctx := get_ctx;
     BEGIN
         IF r.row_id IS NOT NULL THEN
             RETURN;
         END IF;
-        pkg_impr1110.ui_reset;
+        IMPR1110.ui_reset;
         r.rec_status := 'NEW';
-        pkg_impr1110.importers_wcr(r, c);
-        pkg_impr1110.importers_pre_rec(r, c);
-        pkg_impr1110.importers_wnri(r, c);
+        IMPR1110.importers_wcr(r, c);
+        IMPR1110.importers_pre_rec(r, c);
+        IMPR1110.importers_wnri(r, c);
         set_rec(r);
         set_ctx(c);
         baseline_vals;
@@ -450,7 +450,7 @@ AS
     END page_new_record;
 
     -- ----------------------------------------------------------------- AJAX
-    PROCEDURE reply (p_rec IN pkg_impr1110.t_rec, p_ctx IN pkg_impr1110.t_ctx)
+    PROCEDURE reply (p_rec IN IMPR1110.t_rec, p_ctx IN IMPR1110.t_ctx)
     IS
         v_items CLOB;
     BEGIN
@@ -461,10 +461,10 @@ AS
         apex_json.open_object;
         FOR i IN (SELECT item_name
                     FROM apex_application_page_items
-                   WHERE application_id = TO_NUMBER(pkg_forms_compat.name_in('APP_ID'))
+                   WHERE application_id = TO_NUMBER(FORMS_COMPAT.name_in('APP_ID'))
                      AND page_id = c_page
                      AND item_name NOT IN ('P1110_ROW_ID', 'P1110_UI_STATE', 'P1110_FORM_OPEN', 'P1110_NEED_FETCH')) LOOP
-            apex_json.write(i.item_name, pkg_forms_compat.name_in(i.item_name), TRUE);
+            apex_json.write(i.item_name, FORMS_COMPAT.name_in(i.item_name), TRUE);
         END LOOP;
         apex_json.close_object;
         v_items := apex_json.get_clob_output;
@@ -472,11 +472,11 @@ AS
         htp.prn('{"items":');
         htp.prn(v_items);
         htp.prn(',"ui":');
-        htp.prn(pkg_impr1110.ui_json);
+        htp.prn(IMPR1110.ui_json);
         htp.prn('}');
     END reply;
 
-    PROCEDURE reply_error (p_rec IN pkg_impr1110.t_rec, p_ctx IN pkg_impr1110.t_ctx, p_op IN VARCHAR2)
+    PROCEDURE reply_error (p_rec IN IMPR1110.t_rec, p_ctx IN IMPR1110.t_ctx, p_op IN VARCHAR2)
     IS
         v_text VARCHAR2(4000) := err_text(p_op);
     BEGIN
@@ -494,10 +494,10 @@ AS
         v_evt  VARCHAR2(30) := UPPER(apex_application.g_x02);
         a1     PLS_INTEGER  := answer(apex_application.g_x03);
         a2     PLS_INTEGER  := answer(apex_application.g_x04);
-        r      pkg_impr1110.t_rec := get_rec;
-        c      pkg_impr1110.t_ctx := get_ctx;
+        r      IMPR1110.t_rec := get_rec;
+        c      IMPR1110.t_ctx := get_ctx;
     BEGIN
-        pkg_impr1110.ui_reset;
+        IMPR1110.ui_reset;
         IF v_evt = 'VALIDATE' THEN
             -- City chosen from LOV_CITIES_IMP: COPY_SELECTED_VALUES set :GLOBAL.MINS_COMM_CD
             IF v_item IN ('CITY_CODE_OF_ID', 'BRNH_CITY_CD') AND apex_application.g_x05 = 'LOV' THEN
@@ -506,7 +506,7 @@ AS
                                                        ELSE r.brnh_city_cd END
                              AND ctry_cd = NVL(r.ctry_cd_of_id, ctry_cd)
                              AND ROWNUM = 1) LOOP
-                    pkg_forms_compat.set_global('MINS_COMM_CD', m.mins_comm_cd);
+                    FORMS_COMPAT.set_global('MINS_COMM_CD', m.mins_comm_cd);
                 END LOOP;
             END IF;
             run_validate(v_item, r, c, a1, a2, TRUE);
@@ -518,16 +518,16 @@ AS
             state_put('VAL', v_item, '-', v(v_item));
         ELSIF v_evt = 'WNII' THEN
             CASE v_item
-                WHEN 'IMPR_TYPE_CD'    THEN pkg_impr1110.impr_type_cd_wnii(r);
-                WHEN 'CITY_CODE_OF_ID' THEN pkg_impr1110.city_code_of_id_wnii(r);
-                WHEN 'BUS_ID'          THEN pkg_impr1110.bus_id_wnii(r);
-                WHEN 'BRNH_CITY_CD'    THEN pkg_impr1110.brnh_city_cd_wnii;
-                WHEN 'BUS_ID_BRNCH'    THEN pkg_impr1110.bus_id_brnch_wnii(r);
-                WHEN 'BANK_IBAN'       THEN pkg_impr1110.bank_iban_wnii(r);
+                WHEN 'IMPR_TYPE_CD'    THEN IMPR1110.impr_type_cd_wnii(r);
+                WHEN 'CITY_CODE_OF_ID' THEN IMPR1110.city_code_of_id_wnii(r);
+                WHEN 'BUS_ID'          THEN IMPR1110.bus_id_wnii(r);
+                WHEN 'BRNH_CITY_CD'    THEN IMPR1110.brnh_city_cd_wnii;
+                WHEN 'BUS_ID_BRNCH'    THEN IMPR1110.bus_id_brnch_wnii(r);
+                WHEN 'BANK_IBAN'       THEN IMPR1110.bank_iban_wnii(r);
                 ELSE NULL;
             END CASE;
         ELSIF v_evt = 'WLC' AND v_item = 'COMM_RGSTRTN_TYPE' THEN
-            pkg_impr1110.comm_rgstrtn_wlc(r);
+            IMPR1110.comm_rgstrtn_wlc(r);
         ELSIF v_evt = 'LOV_RET' AND v_item = 'BUS_ID_TYPE_CD' THEN
             -- LOV_IMPR_TYPE returned the pair IMPR_TYPE_CD / BUS_ID_TYPE_CD and both names
             FOR t IN (SELECT it.impr_type_name, bit.bus_id_type_name
@@ -537,13 +537,13 @@ AS
                 r.impr_type_name   := t.impr_type_name;
                 r.bus_id_type_name := t.bus_id_type_name;
             END LOOP;
-            pkg_impr1110.impr_type_cd_lov_ret(r);
-            pkg_impr1110.bus_id_type_post_chg(r);            -- value changed -> POST-CHANGE
+            IMPR1110.impr_type_cd_lov_ret(r);
+            IMPR1110.bus_id_type_post_chg(r);            -- value changed -> POST-CHANGE
             state_put('VAL', 'BUS_ID_TYPE_CD', '-', v('BUS_ID_TYPE_CD'));
         ELSIF v_evt = 'KEY_NXT' AND v_item = 'ARBC_IMPR_NAME' THEN
-            pkg_impr1110.arbc_impr_name_key_nxt(r);
+            IMPR1110.arbc_impr_name_key_nxt(r);
         ELSIF v_evt = 'WNRI' THEN
-            pkg_impr1110.importers_wnri(r, c, a1);
+            IMPR1110.importers_wnri(r, c, a1);
         END IF;
         reply(r, c);
     EXCEPTION
@@ -553,22 +553,22 @@ AS
 
     PROCEDURE ajax_confirm
     IS
-        r      pkg_impr1110.t_rec := get_rec;
-        c      pkg_impr1110.t_ctx := get_ctx;
+        r      IMPR1110.t_rec := get_rec;
+        c      IMPR1110.t_ctx := get_ctx;
         v_text VARCHAR2(4000);
         v_nbr  NUMBER;
     BEGIN
         CASE UPPER(apex_application.g_x01)
             WHEN 'WNRI' THEN
-                v_text := pkg_impr1110.wnri_confirm_text(r, c);
+                v_text := IMPR1110.wnri_confirm_text(r, c);
             WHEN 'SUSP' THEN
-                v_nbr := pkg_impr1110.bus_id_susp_impr(r);
+                v_nbr := IMPR1110.bus_id_susp_impr(r);
                 IF v_nbr <> 0 THEN
                     v_text := 'يوجد مستورد' || v_nbr
                               || ' موقوف له نفس الرقم الإستدلالي" هل تريد تعديل الرقم الاستدلالي بالرغم من ذلك ؟';
                 END IF;
             WHEN 'UPD_IMPR' THEN
-                v_text := pkg_impr1110.update_importer_msg(r);
+                v_text := IMPR1110.update_importer_msg(r);
             ELSE
                 NULL;
         END CASE;
@@ -580,22 +580,22 @@ AS
     PROCEDURE ajax_fun
     IS
         v_cd VARCHAR2(30) := UPPER(apex_application.g_x01);
-        r    pkg_impr1110.t_rec := get_rec;
-        c    pkg_impr1110.t_ctx := get_ctx;
+        r    IMPR1110.t_rec := get_rec;
+        c    IMPR1110.t_ctx := get_ctx;
     BEGIN
-        pkg_impr1110.ui_reset;
+        IMPR1110.ui_reset;
         IF v_cd = 'IMPR_MCI_SERVICE' THEN
-            IF answer(apex_application.g_x02) = pkg_impr1110.c_yes
-               AND (pkg_forms_compat.get_global('ALLOW_MCI') = '1'
-                    OR pkg_forms_compat.get_global('ALLOW_MOI') = '1') THEN
-                pkg_impr1110.update_importer(r);
+            IF answer(apex_application.g_x02) = IMPR1110.c_yes
+               AND (FORMS_COMPAT.get_global('ALLOW_MCI') = '1'
+                    OR FORMS_COMPAT.get_global('ALLOW_MOI') = '1') THEN
+                IMPR1110.update_importer(r);
             END IF;
         ELSIF v_cd = 'IMPR1110_MOB_RET' THEN          -- after dialog LOV_UPDATE_IMPR_MOBILE closed
-            pkg_impr1110.lov_update_moblie(r);
+            IMPR1110.lov_update_moblie(r);
         ELSE
             -- EXEC_FUNS may set :PARAMETER.CODE (reply item P1110_CODE). The page then runs
             -- WHEN-NEW-RECORD-INSTANCE: IMPR1110_CONFIRM('WNRI') -> Confirm -> IMPR1110_ITEM('WNRI')
-            pkg_impr1110.exec_funs(r, c, v_cd);
+            IMPR1110.exec_funs(r, c, v_cd);
         END IF;
         reply(r, c);
     EXCEPTION
@@ -606,10 +606,10 @@ AS
     -- ----------------------------------------------------------------- clear / query / dialogs
     PROCEDURE page_clear
     IS
-        v_empty pkg_impr1110.t_rec;
+        v_empty IMPR1110.t_rec;
     BEGIN
-        pkg_impr1110.ui_reset;
-        pkg_impr1110.importers_wcb;
+        IMPR1110.ui_reset;
+        IMPR1110.importers_wcb;
         set_rec(v_empty);
         s('REC_STATUS', NULL);
         s('NEED_FETCH', NULL);
@@ -632,17 +632,17 @@ AS
 
     FUNCTION central_mobile (p_impr_nbr IN NUMBER) RETURN NUMBER
     IS
-        r pkg_impr1110.t_rec;
+        r IMPR1110.t_rec;
     BEGIN
         r.impr_nbr := p_impr_nbr;
-        RETURN pkg_impr1110.central_mobile(r, get_ctx);
+        RETURN IMPR1110.central_mobile(r, get_ctx);
     END central_mobile;
 
     -- ----------------------------------------------------------------- validations on SAVE
     FUNCTION validate_on_submit (p_item IN VARCHAR2) RETURN VARCHAR2
     IS
-        r       pkg_impr1110.t_rec := get_rec;
-        c       pkg_impr1110.t_ctx := get_ctx;
+        r       IMPR1110.t_rec := get_rec;
+        c       IMPR1110.t_ctx := get_ctx;
         v_found BOOLEAN;
         v_last  VARCHAR2(4000) := state_get('VAL', UPPER(p_item), '-', v_found);
         v_now   VARCHAR2(4000) := v(UPPER(p_item));
@@ -650,8 +650,8 @@ AS
         IF v_found AND (v_last = v_now OR (v_last IS NULL AND v_now IS NULL)) THEN
             RETURN NULL;                               -- item is valid (Forms: not changed)
         END IF;
-        pkg_impr1110.ui_reset;
-        run_validate(UPPER(p_item), r, c, pkg_impr1110.c_yes, pkg_impr1110.c_yes, FALSE);
+        IMPR1110.ui_reset;
+        run_validate(UPPER(p_item), r, c, IMPR1110.c_yes, IMPR1110.c_yes, FALSE);
         set_rec(r);
         save_ui;
         state_put('VAL', UPPER(p_item), '-', v(UPPER(p_item)));
@@ -686,31 +686,31 @@ AS
 
     PROCEDURE page_dml (p_request IN VARCHAR2)
     IS
-        r       pkg_impr1110.t_rec := get_rec;
-        c       pkg_impr1110.t_ctx := get_ctx;
-        v_empty pkg_impr1110.t_rec;
+        r       IMPR1110.t_rec := get_rec;
+        c       IMPR1110.t_ctx := get_ctx;
+        v_empty IMPR1110.t_rec;
         v_op    VARCHAR2(1);
     BEGIN
-        pkg_impr1110.ui_reset;
+        IMPR1110.ui_reset;
         IF p_request = 'SAVE' THEN
             IF r.row_id IS NULL THEN
                 IF r.rec_status = 'NEW' THEN
                     RETURN;                                -- nothing entered: Forms inserts nothing
                 END IF;
                 v_op := 'I';
-                pkg_impr1110.importers_pre_ins(r, c);      -- Confirm (class 1 / type 3) done by DA
-                pkg_impr1110.importers_ins(r);
-                pkg_impr1110.importers_post_ins(r, c);
+                IMPR1110.importers_pre_ins(r, c);      -- Confirm (class 1 / type 3) done by DA
+                IMPR1110.importers_ins(r);
+                IMPR1110.importers_post_ins(r, c);
             ELSIF r.rec_status = 'CHANGED' THEN
                 v_op := 'U';
-                pkg_impr1110.importers_pre_upd(r, c);
-                pkg_impr1110.importers_upd(r);
-                pkg_impr1110.importers_post_upd(r);
+                IMPR1110.importers_pre_upd(r, c);
+                IMPR1110.importers_upd(r);
+                IMPR1110.importers_post_upd(r);
             END IF;
             r.rec_status := 'QUERY';
         ELSIF p_request = 'DELETE' THEN
             v_op := 'D';
-            pkg_impr1110.importers_key_delrec(r);          -- Confirm 'هل أنت متأكد من عملية الحذف' done by DA
+            IMPR1110.importers_key_delrec(r);          -- Confirm 'هل أنت متأكد من عملية الحذف' done by DA
             r := v_empty;
             r.rec_status := 'NEW';
         END IF;
@@ -724,7 +724,7 @@ AS
 
 
     -- =========================================================================
-    -- PACKAGE VERSION   (SELECT pkg_impr1110_apx.PKG_VERSION FROM dual;)
+    -- PACKAGE VERSION   (SELECT IMPR1110_APX.PKG_VERSION FROM dual;)
     -- =========================================================================
     FUNCTION PKG_VERSION
        RETURN VARCHAR2
@@ -733,6 +733,6 @@ AS
        RETURN V_INFO;
     END PKG_VERSION;
 
-END pkg_impr1110_apx;
+END IMPR1110_APX;
 /
 SHOW ERRORS

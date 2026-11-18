@@ -59,7 +59,7 @@ SELECT city_name AS display_value,
 --     Items to Submit: P10_CUSTOMER_ID
 --     Items to Return: P10_CUSTOMER_NAME,P10_CREDIT_LIMIT
 BEGIN
-    pkg_orders.get_customer_info(
+    ORDERS.get_customer_info(
         p_customer_id   => :P10_CUSTOMER_ID,
         p_customer_name => :P10_CUSTOMER_NAME,
         p_credit_limit  => :P10_CREDIT_LIMIT);
@@ -87,7 +87,7 @@ END;
 -- Server process "ORDERS.PRE-DELETE" (Processing, condition request = DELETE),
 -- before Automatic Row Processing:
 BEGIN
-    pkg_orders.orders_pre_del(p_rec => pkg_orders.get_order(:P10_ORDER_ID));
+    ORDERS.orders_pre_del(p_rec => ORDERS.get_order(:P10_ORDER_ID));
 END;
 -- Confirm text taken from the Forms alert (Text Message AL_CONFIRM_DEL), JS:
 --   apex.message.confirm(apex.lang.getMessage('AL_CONFIRM_DEL'), function (ok) { ... });

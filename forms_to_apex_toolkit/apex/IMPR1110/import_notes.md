@@ -26,10 +26,10 @@
 | Record key | `P1110_IMPR_NBR` only | `P0_PAGE_PK` (= `IMPR_NBR`) drives the toolbar; processes `P0_PAGE_PK CHECK`, `P0_PAGE_PK`, `P0_PAGE_PK AFTER INSERT/DELETE` |
 | Search | IR dialog, closed with `{IMPR_NBR}` | IG page 111001 (opened by page 0 `SEARCH`), link column → `f?p=…:1110:…:P0_PAGE_PK:&PK.` (as AGR1100) |
 | Functions | list `LIST_IMPR1110_FUNS` + 11 `FUN_*` schemes (all FALSE) | inline dialog `FUNCS` with the f345 list **Page Functions** (rights from `SC_SYSOBJ_ROLE_PRIVS`); one custom-event DA per function code |
-| PL/SQL called by the pages | `pkg_impr1110_apx.*` | **`IMPR1110.*` only** (new package, delegates to `pkg_impr1110_apx` / `pkg_impr1110`) |
+| PL/SQL called by the pages | `pkg_impr1110_apx.*` | **`IMPR1110.*` only**: package `IMPR1110` holds the logic and the APEX entry points; it uses the session-state adapter `IMPR1110_APX` |
 | Component names | `IMPORTERS.BUS_ID.WHEN-VALIDATE-ITEM` | `BUS_ID VALIDATION`, `BUS_ID WHEN-VALIDATE-ITEM`, `ON-INSERT`, `WHEN-NEW-FORM-INSTANCE` |
 | Application items | 37 `AI_*` | f345 items reused (`P_CURR_PORT_CD`, `P_CLASS_CD`, `P_PORT_TYPE`, `P_BRKR_NBR`, `SSO_APP_USER`, `V_USR_TYPE`, `P_GLOBAL_V_WS_ID`); new: 28 × `G_<GLOBAL>` + `P_BRKR_PORT_CD`, `P_LIC_TYPE`, `P_PRSNL_IMPR`, `P_LETTER_NBR` |
-| Authorization | 13 schemes | `IMPR1110_ACCESS` only (still fails closed, §6) |
+| Authorization | 13 schemes | **none**: page access comes from the application's own privileges (§6) |
 
 ## 2. Placeholders
 
@@ -57,10 +57,14 @@ Check: `grep -n '__[A-Z_]*__' f345_impr1110.sql` must print nothing.
    `SECURITY_PROD` and `CUSTOMS` (the parsing schema: APEX needs a direct grant). Run those as a user
    allowed to create public synonyms. `SELECT <package>.PKG_VERSION FROM dual` shows the version.
    None of them has been compiled yet:
-   1. `plsql_templates/pkg_forms_compat.sql`: **changed**, `:GLOBAL.X` is now application item `G_X` (was `AI_X`). Previous version: `rollback/COMMON/pkg_forms_compat_v0.sql`.
-   2. `pkg_impr1110` spec + body 1.0.1 (unchanged).
-   3. `pkg_impr1110_apx` spec + body **1.2.0**: the menu parameters are read from the f345 application items (`ai()`). Previous version: `rollback/IMPR1110/pkg_impr1110_apx_body_v1_1_0.sql`.
-   4. **`IMPR1110`** spec + body 1.0.0 (new).
+   1. `plsql_templates/forms_compat.sql` (package `FORMS_COMPAT`, was `pkg_forms_compat`): `:GLOBAL.X` is application item `G_X`.
+   2. `plsql/IMPR1110/impr1110_spec.sql` (package `IMPR1110`: the logic, formerly `pkg_impr1110`, plus the
+      APEX entry points, formerly the separate package `IMPR1110`).
+   3. `plsql/IMPR1110/impr1110_apx_spec.sql` (package `IMPR1110_APX`, was `pkg_impr1110_apx`). Its spec uses
+      the record types of `IMPR1110`, so it comes after step 2.
+   4. `plsql/IMPR1110/impr1110_body.sql`, then `impr1110_apx_body.sql`. Each body calls the other package, so
+      both specs must exist first.
+   Previous versions: `rollback/IMPR1110/*_before_rename.sql`, `rollback/COMMON/pkg_forms_compat_before_rename.sql`.
 2. Grants, given **directly** (not through a role) to `LIB_APX_USR`, because the packages are definer-rights:
    SELECT, INSERT, UPDATE, DELETE on `IMPORTERS`; SELECT on `IMPR_TYPES`, `IMPR_TYPE_ID_TYPES`, `BUS_ID_TYPES`,
    `CITIES`, `COUNTRIES`, `SD_PORTS`, `CG_REF_CODES`, `SC_SYSTEM_OBJECTS`; EXECUTE on `STR_DB` and the other
@@ -83,15 +87,15 @@ component with the same name but another id makes the import fail: delete or ren
 |---|---|---|
 | 1 | Item triggers run through `impr1110.js` + the AJAX callbacks `IMPR1110_ITEM / _CONFIRM / _FUN`, not through the FOS *Execute PL/SQL* plug-in | the Forms triggers ask Confirm questions (alert 9-120, WNRI, UPD_IMPR) between server calls and change enable/required state of many items; the FOS plug-in cannot do that. The DA **names** follow f345 (`<ITEM> WHEN-VALIDATE-ITEM`) |
 | 2 | Master block `IMPORTERS` is a Static region (template *Interactive Report*, classes `zatca-forms cg-form cg-card`), not `NATIVE_FORM` | DML is done in the package (`ON-INSERT` / `ON-UPDATE` / `KEY-DELREC` → `page_dml`), with the Forms PRE/POST logic in between |
-| 3 | DML processes are named `ON-INSERT` / `ON-UPDATE` instead of separate `PRE-INSERT` / `Process form` / `POST-INSERT` | one call runs PRE → DML → POST in the order of the Forms commit (`pkg_impr1110_apx.page_dml`) |
-| 4 | Forms parameters keep the item names `P1110_PRSNL_IMPR` / `P1110_LETTER_NBR` (standard: `P1110_P_<PARAM>`) | `pkg_impr1110_apx` reads these names; renaming is a step-02 change |
+| 3 | DML processes are named `ON-INSERT` / `ON-UPDATE` instead of separate `PRE-INSERT` / `Process form` / `POST-INSERT` | one call runs PRE → DML → POST in the order of the Forms commit (`IMPR1110_APX.page_dml`) |
+| 4 | Forms parameters keep the item names `P1110_PRSNL_IMPR` / `P1110_LETTER_NBR` (standard: `P1110_P_<PARAM>`) | `IMPR1110_APX` reads these names; renaming is a step-02 change |
 | 5 | `IMPR1110.<ITEM>_VAL` ignores its `I_` parameter | the adapter reads the whole record from session state; the parameter documents the item |
 | 6 | Page 111002 sets `:G_LAST_PAGE := 1110` (process `G_LAST_PAGE KEEP`, After Header) | f345 `SCREEN ENTRY RESET` keeps the record only for `<page>` and `<page>01`. Without it, the next load of page 1110 after the mobile dialog would clear `P0_PAGE_PK` and the record |
 | 7 | No `P1110_ADJ_FUNS` item | the *Page Functions* list then shows every function the user's roles allow. Functions that the form switches off (TMPLT.DISABLE_FUN) are refused at click time by `impr1110.js` (`funOff`) |
 
 ## 6. Security (must be done before any user test)
 
-* `IMPR1110_ACCESS` **returns FALSE** (`-- TODO: MISSING SOURCE`), so nobody can open pages 1110 / 111001 / 111002 until the rule from `CIC_MENU` / `SEC_LIB` is written. For a DEV smoke test only, change it to `RETURN TRUE;`. **Never import that into TEST/PROD.**
+* No authorization scheme is generated (decision 2026-11-18): who may open pages 1110 / 111001 / 111002 is controlled by the application's existing privileges. If `IMPR1110_ACCESS` is still in app 202530 from an earlier import, re-import the pages (they no longer reference it) and delete it in Shared Components → Authorization Schemes.
 * Function rights now come from f345 *Page Functions* (`SC_SYSOBJ_ROLE_PRIVS`, `SC_USER_ROLES`, `SC_GROUP_ROLES`, `SC_USER_EXCLUDED_ROLES`).
 * Session State Protection: pages `C`; server items `I`; `P111002_IMPR_NBR` `S`; all new application items *Restricted*.
 
@@ -100,7 +104,7 @@ component with the same name but another id makes the import fail: delete or ren
 | # | Point | Effect | Next step |
 |---|---|---|---|
 | 1 | Function custom-event names = function codes (`IMPR1110F1` … `IMPR1110_MOB`). The list fires `SC_SYSTEM_OBJECTS.SYS_OS_FILE_NAME` | if the file names differ (for example `IMPR1110F1.fmx`), the click shows nothing | `SELECT sys_os_file_name FROM sc_system_objects WHERE mainsysobj_id = <IMPR1110 id>` and rename the DAs |
-| 2 | Menu-parameter mapping in `pkg_impr1110_apx.ai()`: `P_USER_ID` → `SSO_APP_USER`, `P_WS_ID` → `P_GLOBAL_V_WS_ID` | wrong user id / workstation in the Forms logic | confirm with the Forms menu `CIC_MENU` |
+| 2 | Menu-parameter mapping in `IMPR1110_APX.ai()`: `P_USER_ID` → `SSO_APP_USER`, `P_WS_ID` → `P_GLOBAL_V_WS_ID` | wrong user id / workstation in the Forms logic | confirm with the Forms menu `CIC_MENU` |
 | 3 | `P_BRKR_PORT_CD`, `P_LIC_TYPE` are new and **nobody fills them** (f345 `After Auth` does not) | broker logic sees NULL | add them to f345 `After Auth` |
 | 4 | Callers must set `P_PRSNL_IMPR` / `P_LETTER_NBR` (server side) before opening page 1110 | otherwise the page opens without them, like Forms without parameters | change the callers when they are converted |
 | 5 | `&SYS_ANAME.` (page title) is not set by this export | browser tab title is empty if no other code sets it | check how f345 fills `SYS_ANAME` |

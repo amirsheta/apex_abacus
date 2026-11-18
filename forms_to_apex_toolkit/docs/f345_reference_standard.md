@@ -113,7 +113,7 @@ this in import_notes.md whenever you generate such a page.
 | Page item | `P<page>_<FORMS_ITEM>` | `P11100_AGRMNT_NO` |
 | Forms parameter → page item | `P<page>_P_<PARAM>` | `P11100_P_AGRMNT_NO` |
 | Forms parameter passed between pages → application item | `P_<PARAM>` (no `AI_`) | `P_AGRMNT_NO`, `P_DISPLAY_ONLY` |
-| `:GLOBAL.X` → application item | `G_<X>` (`pkg_forms_compat.global_item`) | `G_LAST_PAGE`, `G_UP_MAIN` |
+| `:GLOBAL.X` → application item | `G_<X>` (`FORMS_COMPAT.global_item`) | `G_LAST_PAGE`, `G_UP_MAIN` |
 | Menu parameter `:PARAMETER.P_X` | reuse the f345 item (`P_CURR_PORT_CD`, `P_CLASS_CD`, `P_PORT_TYPE`, `P_BRKR_NBR`, `SSO_APP_USER`, `V_USR_TYPE`); otherwise new `P_X` | |
 | IG column | Forms item name | `MEMBER_ISN` |
 | Report flag item (shows REPORT_SHOW/REPORT_PRINT) | `P<page>_REPORT` | — |

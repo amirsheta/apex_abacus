@@ -241,21 +241,6 @@ wwv_flow_api.create_flow_item(
 end;
 /
 
-prompt --application/shared_components/security/authorizations/impr1110_access
-begin
-wwv_flow_api.create_security_scheme(
- p_id=>wwv_flow_api.id(900003000340)
-,p_name=>'IMPR1110_ACCESS'
-,p_scheme_type=>'NATIVE_FUNCTION_BODY'
-,p_attribute_01=>'-- Source: IMPR1110_ACCESS - spec 13.3. user may open module IMPR1110 (module security of CIC_MENU / SEC_LIB)
--- TODO: MISSING SOURCE - real rule unknown; fails closed (no access) until replaced.
-RETURN FALSE;'
-,p_error_message=>unistr('\0644\064A\0633 \0644\062F\064A\0643 \0635\0644\0627\062D\064A\0629')
-,p_caching=>'BY_USER_BY_PAGE_VIEW'
-);
-end;
-/
-
 prompt --application/shared_components/user_interface/lovs/lov_sd_ports
 begin
 -- Source: LOV form LOV_SD_PORTS / CGFK$IMPORTERS_PORT_CD / spec 6
@@ -595,7 +580,6 @@ wwv_flow_api.create_page(
 ,p_step_template=>wwv_flow_api.id(11622270914969205733)
 ,p_page_css_classes=>'zf'
 ,p_page_template_options=>'#DEFAULT#'
-,p_required_role=>wwv_flow_api.id(900003000340)
 ,p_protection_level=>'C'
 ,p_page_comment=>'Source: IMPR1110.fmb (window CGSO$WINDOW_1, canvas CG$PAGE_1) / spec 2'
 ,p_last_upd_yyyymmddhh24miss=>'20261118000000'
@@ -1979,7 +1963,7 @@ wwv_flow_api.create_page_item(
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_protection_level=>'N'
 ,p_attribute_01=>'N'
-,p_item_comment=>'Source: IMPR1110 (JSON of pkg_impr1110.ui_json for the page-load DA)'
+,p_item_comment=>'Source: IMPR1110 (JSON of IMPR1110.ui_json for the page-load DA)'
 );
 wwv_flow_api.create_page_item(
  p_id=>wwv_flow_api.id(111004000770)
@@ -3516,7 +3500,6 @@ wwv_flow_api.create_page(
 ,p_page_template_options=>'#DEFAULT#'
 ,p_dialog_height=>'800'
 ,p_dialog_width=>'1800'
-,p_required_role=>wwv_flow_api.id(900003000340)
 ,p_protection_level=>'C'
 ,p_page_comment=>'Source: IMPR1110 Enter-Query / Execute-Query of block IMPORTERS (TOOLBAR.RE_ENTER_QUERY) / spec 2, 3'
 ,p_last_upd_yyyymmddhh24miss=>'20261118000000'
@@ -3947,7 +3930,6 @@ wwv_flow_api.create_page(
 ,p_page_css_classes=>'zf'
 ,p_page_template_options=>'#DEFAULT#'
 ,p_dialog_width=>'480'
-,p_required_role=>wwv_flow_api.id(900003000340)
 ,p_protection_level=>'C'
 ,p_page_comment=>'Source: LOV_UPDATE_IMPR_MOBILE.fmb (called by IMPR1110 function IMPR1110_MOB) / spec 2, 3'
 ,p_last_upd_yyyymmddhh24miss=>'20261118000000'

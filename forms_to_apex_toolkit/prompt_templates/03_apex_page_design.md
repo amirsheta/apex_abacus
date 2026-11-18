@@ -21,7 +21,6 @@ REFERENCE:       apex/Reference/f345.sql + docs/f345_reference_standard.md
 APPLICATION ID:  {{APP_ID}}                (the application installed from f345)
 MAIN PAGE NO.:   {{PAGE_ID}}               (from MIG_FORM_REGISTRY, e.g. AGR1100 → 11100)
 PAGE GROUP:      {{SUBSYSTEM}}             (Forms subsystem / menu group)
-AUTH SCHEME:     {{AUTHORIZATION_SCHEME_NAME}}
 OUTPUT:          analysis/{{FORM_NAME}}/{{FORM_NAME}}_apex_page_spec.md
                  registry/{{FORM_NAME}}_registry.sql
 
@@ -54,7 +53,8 @@ Names
 - Every component's Comments = "Source: {{FORM_NAME}}.<BLOCK>.<ITEM>.<TRIGGER>".
 - LOVs keep Forms LOV names (do not re-create LOVs that f345 has); alerts → Text Messages with
   the alert name; :GLOBAL.X → application item G_X; menu parameters → the f345 items
-  (P_CURR_PORT_CD, SSO_APP_USER …); menu roles → Authorization Schemes ROLE_<ROLE>.
+  (P_CURR_PORT_CD, SSO_APP_USER …); menu roles → documented only: page access comes from the
+  application's privileges, so NO Authorization Schemes (CLAUDE.md §8).
   Never re-create an application item, LOV, plug-in or template that f345 already has.
 
 ## 1. Page type decision per block
@@ -76,7 +76,7 @@ Add a hero region (Blank with Attributes, class `cg-hero`) with the screen title
 
 ## 2. Pages
 For every page:
-| Page No | Name / alias | Page mode (Normal / Modal Dialog) | Page template | Source Forms canvas/window | Authorization | Navigation menu entry |
+| Page No | Name / alias | Page mode (Normal / Modal Dialog) | Page template | Source Forms canvas/window | Forms menu role (documentation only) | Navigation menu entry |
 
 ## 3. Regions (per page)
 | Region | Static ID | Type (Form / Interactive Grid / Interactive Report / Classic Report / Static Content) |
@@ -97,7 +97,7 @@ RESET keeps it.
 ## 5. Buttons
 Only buttons that the page 0 toolbar does not cover (form-specific WHEN-BUTTON-PRESSED):
 | Button | Region | Position (NEXT) | Action (Submit Page / Redirect / Defined by DA) | Server-side condition |
-  Authorization | Confirm message | CSS class (cg-b-*) + icon | Source (WHEN-BUTTON-PRESSED / KEY-*) |
+  Confirm message | CSS class (cg-b-*) + icon | Source (WHEN-BUTTON-PRESSED / KEY-*) |
 Template Text with Icon, `#DEFAULT#:t-Button--iconLeft`. Map every Forms toolbar button to its
 page 0 equivalent in the traceability matrix instead of designing it.
 
@@ -152,7 +152,7 @@ apex.event.gCancelFlag and re-submits after the answer.
 | Forms alert | Usage | APEX equivalent | Text |
 Rules:
 - Informational (Note) after success → process Success Message.
-- Stop alert + FORM_TRIGGER_FAILURE → pkg_forms_compat.alert('<ALERT>') (Text Message with the alert name).
+- Stop alert + FORM_TRIGGER_FAILURE → FORMS_COMPAT.alert('<ALERT>') (Text Message with the alert name).
 - Caution with Yes/No deciding an action → DA "Confirm" action / apex.message.confirm (or the
   page 0 ASK_DLG dialog), followed by the server action.
 - Text messages → Shared Components > Text Messages (for translation) where reused.
@@ -163,7 +163,7 @@ CALL_FORM with parameters → the caller sets application items P_<PARAM> (serve
 to the page; PARAMETERS ENTRY copies them. Modal dialog → "Dialog Closed" DA to refresh.
 
 ## 13. Shared components required
-Only what f345 does not have: new application items (G_ / P_), authorization schemes, LOVs,
+Only what f345 does not have: new application items (G_ / P_), LOVs,
 static application files, text messages. List the f345 components that are reused.
 
 ## 14. Traceability matrix

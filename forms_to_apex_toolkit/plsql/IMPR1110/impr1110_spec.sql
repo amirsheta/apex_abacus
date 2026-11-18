@@ -1,22 +1,22 @@
 -- =============================================================================
--- Package     : pkg_impr1110
+-- Package     : IMPR1110
 -- Source form : IMPR1110.fmb (module IMPR1110_PROD_CENTRL) - "إضافة وتعديل بيانات مستورد"
 --               XML: forms/IMPR/IMPR1110_fmb.xml
 -- Target      : Oracle APEX 21.2 / Oracle Database 12.1.0.2
 -- Author      : Claude Code
 -- Created     : 2026-11-18
 -- Version     : 1.0.0  (step 02 - logic extraction, re-done from the full trigger text)
--- Owner       : LIB_APX_USR (public synonym pkg_impr1110; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
+-- Owner       : LIB_APX_USR (public synonym IMPR1110; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
 -- Purpose     : Business logic of block IMPORTERS, organised like the form:
 --               FORM LEVEL -> BLOCK IMPORTERS (block triggers, item triggers in item order)
 --               -> PROGRAM UNITS (same names as in Forms) -> UI state recorder.
 -- Rules       : - no reference to APEX page items: item values come in as t_rec,
---                 :PARAMETER.* as t_ctx; :GLOBAL.* through pkg_forms_compat.get/set_global.
+--                 :PARAMETER.* as t_ctx; :GLOBAL.* through FORMS_COMPAT.get/set_global.
 --               - INTRFACE.Make_Field_Entrable / SET_ITEM_PROPERTY / GO_ITEM are recorded
 --                 (ui_* below) at the exact place Forms executes them; the page reads
 --                 ui_json after each call and applies it with a Dynamic Action.
 --               - every identifier <= 30 bytes; no 12.2+/18c+ syntax.
--- Depends on  : pkg_forms_compat, and DB code called by the form (see extraction report §7):
+-- Depends on  : FORMS_COMPAT, and DB code called by the form (see extraction report §7):
 --               GNRL, STR_DB, HIJDATE_DB, ACTIVITY, DB_JOURNAL, IMPR, IMPR_CENTRAL,
 --               IMPR_UTILITIES, MCISERVICE, WEB_SERVICES_GAZT (LIB_USR schema).
 -- Status      : NOT COMPILED - no 12.1.0.2 / APEX 21.2 instance was available.
@@ -25,13 +25,13 @@
 -- =============================================================================
 SET DEFINE OFF
 
-CREATE OR REPLACE PACKAGE LIB_APX_USR.pkg_impr1110 AS
+CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
    V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    FUNCTION PKG_VERSION
       RETURN VARCHAR2;
-   V_PACKAGE_NAME      VARCHAR2 (50) := 'PKG_IMPR1110';
+   V_PACKAGE_NAME      VARCHAR2 (50) := 'IMPR1110';
    V_LAST_MODIFY_DT    VARCHAR2 (10) := '18-11-2026';
    V_MODIFIED_BY       VARCHAR2 (50) := 'Claude Code';
    V_INFO              VARCHAR2 (500)
@@ -296,7 +296,7 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.pkg_impr1110 AS
     -- {"items":[{"item":"BUS_ID","prop":"ENTRABLE","value":false},...],
     --  "focus":"IMPR_NBR","messages":["..."],"funs":[{"fun":"IMPR1110F3","enabled":true}]}
     FUNCTION  ui_json RETURN CLOB;
-    -- Read access to the recorded entries (used by pkg_impr1110_apx to keep the item state
+    -- Read access to the recorded entries (used by IMPR1110_APX to keep the item state
     -- on the server, so REQUIRED / ENTRABLE can be enforced at SAVE)
     FUNCTION  ui_count RETURN PLS_INTEGER;
     PROCEDURE ui_entry (p_idx  IN  PLS_INTEGER,
@@ -304,7 +304,97 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.pkg_impr1110 AS
                         p_prop OUT VARCHAR2,
                         p_val  OUT VARCHAR2);
 
-END pkg_impr1110;
+
+    -- =========================================================================
+    -- APEX ENTRY POINTS (f345)  - every page process / validation / DA / AJAX callback
+    -- of pages 1110 / 111001 / 111002 calls these members (formerly package IMPR1110 1.0.0,
+    -- merged into this package 2026-11-18 when the pkg_ prefix was dropped)
+    -- =========================================================================
+    c_page        CONSTANT PLS_INTEGER := 1110;
+    c_search_page CONSTANT PLS_INTEGER := 111001;
+    c_mobile_page CONSTANT PLS_INTEGER := 111002;
+
+    -- ------------------------------------------------------------- f345 helpers
+    -- Raises the error text (used by dynamic actions: IMPR1110.CHK(IMPR1110.<ITEM>_VAL(...)))
+    PROCEDURE CHK (I_ERR IN VARCHAR2);
+    -- Error text when a required value is empty, else NULL
+    FUNCTION  REQUIRED_VAL (I_VALUE IN VARCHAR2, I_LABEL IN VARCHAR2) RETURN VARCHAR2;
+
+    -- ------------------------------------------------------------- Before Header
+    -- Source: P0_PAGE_PK CHECK - forget a key that is not an importer of the current port
+    PROCEDURE P0_PAGE_PK_CHECK (IO_P0_PAGE_PK IN OUT VARCHAR2);
+    -- Source: PARAMETERS - module id of IMPR1110 in SC_SYSTEM_OBJECTS
+    FUNCTION  GET_MODULE_ID (I_P1110_MODULE_ID IN VARCHAR2) RETURN VARCHAR2;
+    -- Source: :PARAMETER.PRSNL_IMPR / :PARAMETER.LETTER_NBR passed by the caller
+    PROCEDURE PARAMETERS_ENTRY (IO_P_PRSNL_IMPR      IN OUT VARCHAR2,
+                                IO_P_LETTER_NBR      IN OUT VARCHAR2,
+                                IO_P1110_PRSNL_IMPR  IN OUT VARCHAR2,
+                                IO_P1110_LETTER_NBR  IN OUT VARCHAR2);
+    -- Source: FORM.WHEN-NEW-FORM-INSTANCE
+    PROCEDURE WHEN_NEW_FORM_INSTANCE;
+    -- Source: P0_PAGE_PK (record chosen on the search page / kept by the toolbar)
+    PROCEDURE SET_PAGE_PK (I_P0_PAGE_PK IN VARCHAR2);
+    -- Source: IMPORTERS.PRE-QUERY, POST-QUERY, PRE-RECORD, WHEN-NEW-RECORD-INSTANCE
+    PROCEDURE POST_QUERY;
+    -- Source: IMPORTERS.WHEN-CREATE-RECORD, PRE-RECORD, WHEN-NEW-RECORD-INSTANCE
+    PROCEDURE WHEN_CREATE_RECORD;
+    -- Source: hero region title (f345 HEADER TITLE)
+    PROCEDURE HEADER_TITLE (I_P1110_MODULE_ID   IN VARCHAR2,
+                            IO_P1110_HERO_TITLE IN OUT VARCHAR2);
+    -- Source: PU LOV_UPDATE_MOBLIE - URL of page 111002 with checksum
+    FUNCTION  MOBILE_URL (I_P1110_IMPR_NBR IN VARCHAR2) RETURN VARCHAR2;
+
+    -- ------------------------------------------------------------- After Submit
+    -- Source: IMPORTERS.PRE-INSERT, INSERT, POST-INSERT (request CREATE)
+    PROCEDURE ON_INSERT;
+    -- Source: IMPORTERS.PRE-UPDATE, UPDATE, POST-UPDATE (request SAVE)
+    PROCEDURE ON_UPDATE;
+    -- Source: IMPORTERS.KEY-DELREC, PRE-DELETE (request DELETE)
+    PROCEDURE KEY_DELREC;
+    -- Source: IMPORTERS.IMPR_NBR re-query (QUERY / QUERY_NBR)
+    PROCEDURE EXECUTE_QUERY (I_REQUEST IN VARCHAR2, I_P1110_IMPR_NBR IN VARCHAR2);
+
+    -- ------------------------------------------------------------- validations (on submit)
+    -- Each returns the error text of the item's POST-CHANGE + WHEN-VALIDATE-ITEM, or NULL.
+    FUNCTION PORT_CD_VAL         (I_P1110_PORT_CD         IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION HQ_IMPR_NBR_VAL     (I_P1110_HQ_IMPR_NBR     IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION IMPR_NBR_VAL        (I_P1110_IMPR_NBR        IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION IMPR_TYPE_CD_VAL    (I_P1110_IMPR_TYPE_CD    IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION BUS_ID_EXPRD_DT_VAL (I_P1110_BUS_ID_EXPRD_DT IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION BUS_ID_TYPE_CD_VAL  (I_P1110_BUS_ID_TYPE_CD  IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION CITY_CODE_OF_ID_VAL (I_P1110_CITY_CODE_OF_ID IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION BUS_ID_VAL          (I_P1110_BUS_ID          IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION BRNH_CITY_CD_VAL    (I_P1110_BRNH_CITY_CD    IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION BUS_ID_BRNCH_VAL    (I_P1110_BUS_ID_BRNCH    IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION CTRY_CD_VAL         (I_P1110_CTRY_CD         IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION IMPR_EXPR_TYPE_VAL  (I_P1110_IMPR_EXPR_TYPE  IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION ARBC_IMPR_NAME_VAL  (I_P1110_ARBC_IMPR_NAME  IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION ENG_IMPR_NAME_VAL   (I_P1110_ENG_IMPR_NAME   IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION BUS_ID_ISSUE_DT_VAL (I_P1110_BUS_ID_ISSUE_DT IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION IMPR_NBR_PARENT_VAL (I_P1110_IMPR_NBR_PARENT IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION ADD_CTRY_CD_VAL     (I_P1110_ADD_CTRY_CD     IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION CITY_CODE_VAL       (I_P1110_CITY_CODE       IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION IMPR_TEL_NBR_VAL    (I_P1110_IMPR_TEL_NBR    IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION B_EMAIL_VAL         (I_P1110_B_EMAIL         IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION EMAIL_VAL           (I_P1110_EMAIL           IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION B_MOBILE_NO_VAL     (I_P1110_B_MOBILE_NO     IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION BANK_IBAN_VAL       (I_P1110_BANK_IBAN       IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION B_ID_NBR_VAL        (I_P1110_B_ID_NBR        IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION CTRY_CD_OF_ID_VAL   (I_P1110_CTRY_CD_OF_ID   IN VARCHAR2) RETURN VARCHAR2;
+    -- Source: FRM-40202 at commit (static Required + SET_ITEM_PROPERTY REQUIRED)
+    FUNCTION REQUIRED_ITEMS_VAL RETURN VARCHAR2;
+
+    -- ------------------------------------------------------------- AJAX callbacks (impr1110.js)
+    PROCEDURE AJAX_ITEM;        -- all item triggers (x01 item, x02 event)
+    PROCEDURE AJAX_CONFIRM;     -- CONFIRM / WARNING alert texts
+    PROCEDURE AJAX_FUN;         -- PU EXEC_FUNS
+
+    -- ------------------------------------------------------------- page 111002 (LOV_UPDATE_IMPR_MOBILE)
+    FUNCTION  CENTRAL_MOBILE (I_P111002_IMPR_NBR IN VARCHAR2) RETURN NUMBER;
+    PROCEDURE MOBILE_OK      (I_P111002_MOBILE_NO IN VARCHAR2);
+    PROCEDURE MOBILE_CANCEL;
+
+END IMPR1110;
 /
 SHOW ERRORS
 
@@ -312,12 +402,12 @@ SHOW ERRORS
 -- Synonym and grants (run as a user allowed to create public synonyms / grant on LIB_APX_USR).
 -- CUSTOMS = parsing schema of the APEX application: APEX needs the direct grant.
 -- -----------------------------------------------------------------------------
-CREATE OR REPLACE PUBLIC SYNONYM pkg_impr1110 FOR LIB_APX_USR.pkg_impr1110;
+CREATE OR REPLACE PUBLIC SYNONYM IMPR1110 FOR LIB_APX_USR.IMPR1110;
 
-GRANT EXECUTE ON LIB_APX_USR.pkg_impr1110 TO LIB_USR;
+GRANT EXECUTE ON LIB_APX_USR.IMPR1110 TO LIB_USR;
 
-GRANT EXECUTE ON LIB_APX_USR.pkg_impr1110 TO SECURITY_DEFAULT;
+GRANT EXECUTE ON LIB_APX_USR.IMPR1110 TO SECURITY_DEFAULT;
 
-GRANT EXECUTE ON LIB_APX_USR.pkg_impr1110 TO SECURITY_PROD;
+GRANT EXECUTE ON LIB_APX_USR.IMPR1110 TO SECURITY_PROD;
 
-GRANT EXECUTE ON LIB_APX_USR.pkg_impr1110 TO CUSTOMS;
+GRANT EXECUTE ON LIB_APX_USR.IMPR1110 TO CUSTOMS;

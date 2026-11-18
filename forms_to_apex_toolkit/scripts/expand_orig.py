@@ -19,7 +19,7 @@ Checks (printed; exit code 1 if any fails), run on every .sql file given:
   1. every --@ORIG unit exists in the XML
   2. every Arabic string literal in code or comments occurs verbatim in the original code
   3. no Forms built-in outside comments (CLAUDE.md step-02 self-check list);
-     pkg_forms_compat.<name> wrappers are allowed
+     FORMS_COMPAT.<name> wrappers are allowed
   4. no identifier longer than 30 bytes
 """
 import html
@@ -31,10 +31,10 @@ NS = {'f': 'http://xmlns.oracle.com/Forms'}
 BEGIN = '-- >>> Original Forms code: '
 END = '-- <<<'
 FORBIDDEN = re.compile(
-    r"(?<!pkg_forms_compat\.)\b(GO_BLOCK|GO_ITEM|SET_ITEM_PROPERTY|SHOW_ALERT|EXECUTE_QUERY|"
+    r"(?<!FORMS_COMPAT\.)\b(GO_BLOCK|GO_ITEM|SET_ITEM_PROPERTY|SHOW_ALERT|EXECUTE_QUERY|"
     r"FORM_TRIGGER_FAILURE|NAME_IN|SET_BLOCK_PROPERTY|GET_ITEM_PROPERTY|CALL_FORM|OPEN_FORM|"
     r"NEW_FORM|DO_KEY|CLEAR_BLOCK|CLEAR_FORM|COMMIT_FORM|FORMS_DDL)\b"
-    r"|:SYSTEM\.|:GLOBAL\.|:PARAMETER\.|(?<!pkg_forms_compat\.)\bCOPY\(",
+    r"|:SYSTEM\.|:GLOBAL\.|:PARAMETER\.|(?<!FORMS_COMPAT\.)\bCOPY\(",
     re.I)
 ARABIC = re.compile(r'[؀-ۿ]')
 

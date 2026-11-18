@@ -102,7 +102,7 @@ database — keep this in mind before suggesting an APEX upgrade.
 | Object | Pattern | Example |
 |---|---|---|
 | Package per form | `<FORM>` — upper-case form name, no prefix (f345) | `AGR1100` |
-| Shared/library package | `pkg_lib_<library_name>` | `pkg_lib_common` |
+| Shared/library package | `LIB_<library_name>` | `LIB_COMMON` |
 | Standalone procedure | `prc_<name>` | `prc_recalc_totals` |
 | Standalone function | `fnc_<name>` | `fnc_get_discount` |
 | Local variables | `v_<name>` | `v_customer_id` |
@@ -145,14 +145,14 @@ Full rules: `docs/apex_structure_standard.md`. Summary:
 | LOV `LOV_CUSTOMERS` / record group `RG_X` | Shared LOV `LOV_CUSTOMERS` / collection `COL_RG_X` |
 | Alert `AL_CONFIRM_DEL` | Text Message `AL_CONFIRM_DEL` (Shared Components) |
 | `:GLOBAL.X` / `:PARAMETER.X` | Application Item `G_X` (reuse f345's if it exists) / page item `P<page>_P_X` (+ app item `P_X` when passed between pages) |
-| Menu role `CLERK` | Authorization Scheme `ROLE_CLERK` |
+| Menu role `CLERK` | Application privileges (no Authorization Scheme generated, §8) |
 
 Rules:
 1. Every APEX component's **Comments** attribute = `Source: <FORM>.<BLOCK>.<ITEM>.<TRIGGER>`.
 2. Package member names follow f345: master-block trigger `PRE_INSERT`, detail block
    `<BLOCK_ABBR>_PRE_INSERT`, validation function `<ITEM>_VAL` (returns error text), side-effect
    procedure `<ITEM>_WVI`; all ≤ 30 bytes. Details: `docs/f345_reference_standard.md` §5.
-3. Use `pkg_forms_compat` (Forms-like server built-ins: `message`, `ftf`, `alert`, `get_global`, …)
+3. Use `FORMS_COMPAT` (Forms-like server built-ins: `message`, `ftf`, `alert`, `get_global`, …)
    so converted code reads like the original trigger code.
 4. Register every form and every mapped object in `MIG_FORM_REGISTRY` / `MIG_OBJECT_MAP`
    (`scripts/create_migration_registry.sql`) — produce the INSERT script per form.
@@ -195,7 +195,7 @@ Full reference: `docs/forms_to_apex_mapping.md`.
 | Oracle Forms | APEX 21.2 equivalent |
 |---|---|
 | Form module | Application page(s) (one main page + modal dialogs) |
-| Menu module (`.mmb`) | Navigation Menu (list) + Authorization Schemes |
+| Menu module (`.mmb`) | Navigation Menu (list); roles → application privileges (§8) |
 | Data block (single record) | Form region (native Form, 19.1+) |
 | Data block (multi record, editable) | Interactive Grid |
 | Data block (multi record, read-only) | Interactive / Classic Report |
@@ -210,7 +210,7 @@ Full reference: `docs/forms_to_apex_mapping.md`.
 | Parameter list / `:PARAMETER` | Page items set via URL (`apex_page.get_url`) |
 | `:GLOBAL.*` | Application Items |
 | Program unit | Package procedure/function in `<FORM>` |
-| PL/SQL library (`.pll`) | Shared database package `pkg_lib_<name>` |
+| PL/SQL library (`.pll`) | Shared database package `LIB_<name>` |
 | Object library (`.olb`) | Theme templates, Shared Components, Template Options |
 | Visual attributes | Template Options / CSS classes |
 | WHEN-VALIDATE-ITEM | Validation (item-level) |
@@ -289,8 +289,11 @@ Forms built-ins **must not appear** in generated PL/SQL (they do not exist in th
   (`&password`), Web Credentials, or DBA-managed wallets.
 - Authentication: APEX Authentication Schemes (DB accounts / LDAP / SSO). Never port
   custom Forms login screens that compare plaintext passwords.
-- Authorization: every page and every DML button must reference an Authorization Scheme
-  derived from Forms menu roles / `SET_MENU_ITEM_PROPERTY` logic.
+- Authorization: **do not generate Authorization Schemes** for pages, buttons or menu entries.
+  Who may open a page is controlled by the application's existing privileges (f345 login /
+  user privileges, decision 2026-11-18); function rights come from the f345 *Page Functions*
+  list. Record the Forms menu roles / `SET_MENU_ITEM_PROPERTY` logic in the page spec so the
+  privilege administrators can grant them. Add a scheme only if the user asks for one.
 - Use `:APP_USER` for auditing, not `USER` (the parsing schema).
 - Escape output: keep "Escape special characters" = Yes on report columns; use
   `apex_escape.html` in PL/SQL-generated HTML.

@@ -72,7 +72,7 @@ SELECT arbc_impr_name || ' (' || impr_nbr || ')' AS d, impr_nbr AS r
 --   فرعي  ; 2      (the form also has value 0 labelled فرعي - legacy rows; TODO-VERIFY)
 
 -- -----------------------------------------------------------------------------
--- Optional: Text Messages for constraint names (pkg_forms_compat.apex_error_handler)
+-- Optional: Text Messages for constraint names (FORMS_COMPAT.apex_error_handler)
 -- Run as the APEX parsing schema inside an APEX session (apex_util.set_workspace)
 -- or create them in Shared Components > Text Messages.
 -- -----------------------------------------------------------------------------

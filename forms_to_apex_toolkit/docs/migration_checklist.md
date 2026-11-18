@@ -6,7 +6,7 @@
 - [ ] ORDS configured; Universal Theme 42 available
 - [ ] `scripts/setup_apex_workspace.sql` run by DBA (schema `FORMS_MIGRATION`, workspace)
 - [ ] Database version confirmed 12.1.0.2 (`select version from v$instance`)
-- [ ] `scripts/create_migration_registry.sql` and `plsql_templates/pkg_forms_compat.sql` installed; error handling function set
+- [ ] `scripts/create_migration_registry.sql` and `plsql_templates/forms_compat.sql` installed; error handling function set
 - [ ] Forms-mirror standard (`docs/apex_structure_standard.md`) agreed by the team; page ranges allocated in `MIG_FORM_REGISTRY`
 - [ ] utPLSQL v3 installed in DEV/TEST (version that supports DB 12.1)
 - [ ] Git repository created from this toolkit; Claude Code installed; `CLAUDE.md` reviewed
@@ -16,7 +16,7 @@
 - [ ] `scripts/convert_forms_to_xml.sh input/fmb ./output` — 0 failures
 - [ ] `.pll` converted to text (`frmcmp_batch module=X.pll module_type=LIBRARY script=YES`)
 - [ ] Prompt 01 run per form; complexity + risk list consolidated into a master spreadsheet
-- [ ] Shared libraries migrated first as `pkg_lib_<name>`
+- [ ] Shared libraries migrated first as `LIB_<name>`
 - [ ] Reports (`.rdf`) dependencies identified and target reporting tool decided
 ### Stakeholder sign-off
 - [ ] Scope, form priority order and wave plan approved

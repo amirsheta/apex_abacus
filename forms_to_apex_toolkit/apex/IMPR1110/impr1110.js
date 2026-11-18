@@ -10,10 +10,10 @@
  *               mobile page 111002; previous version rollback/IMPR1110/impr1110_js_v1.js)
  * Purpose     : ONE place for the behaviour the Dynamic Actions of page 1110 call, like a Forms
  *               library. No business rules here: every rule runs on the server in
- *               IMPR1110 (-> pkg_impr1110_apx / pkg_impr1110). This file only
+ *               IMPR1110 (logic + APEX entry points, adapter IMPR1110_APX). This file only
  *                 - calls the AJAX processes IMPR1110_ITEM / IMPR1110_CONFIRM / IMPR1110_FUN,
  *                 - writes the returned item values into the page,
- *                 - applies the UI state (pkg_impr1110.ui_json): enable/disable, required,
+ *                 - applies the UI state (IMPR1110.ui_json): enable/disable, required,
  *                   show/hide, focus, messages, function menu,
  *                 - asks the Confirm questions and sends the answers back.
  *               The server re-checks everything at SAVE (validations "<ITEM> VALIDATION"), so nothing

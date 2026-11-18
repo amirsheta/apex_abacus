@@ -46,13 +46,13 @@ Generate a utPLSQL v3 test package TEST_{{FORM_NAME_UC}} (spec + body in one fil
   when given an error text (--%throws(-20001)); REQUIRED_VAL for NULL / blank / value.
 - <ITEM>_WVI procedures: assert every IO_ / O_ value they derive.
 - POST-QUERY / lookup functions: assert returned descriptions for known and unknown keys.
-- pkg_forms_compat.ftf / alert raise -20000 → use --%throws(-20000).
+- FORMS_COMPAT.ftf / alert raise -20000 → use --%throws(-20000).
 - Tests must compile on DB 12.1.0.2 (no qualified expressions; identifiers ≤ 30 bytes).
   Check that the installed utPLSQL v3 release supports 12.1 before installing.
 - Tests must not depend on an APEX session: call the members with literal I_ values (e.g.
   I_SSO_APP_USER => 'TEST_USER', I_P_CURR_PORT_CD => 1); use apex_session.create_session only
   in a clearly marked optional test. Globals (G_<NAME>) work outside APEX through
-  pkg_forms_compat.get_global / set_global.
+  FORMS_COMPAT.get_global / set_global.
 - Name each test with --%test(<description referencing the original Forms trigger>).
 - Finish the file with:
     -- Run: exec ut.run('test_{{FORM_NAME}}');

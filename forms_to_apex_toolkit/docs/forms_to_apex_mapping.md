@@ -4,8 +4,8 @@
 | Forms object | APEX 21.2 equivalent |
 |---|---|
 | Form module (.fmb) | Page(s) in an application |
-| Menu module (.mmb) | Navigation Menu list + Authorization Schemes |
-| PL/SQL library (.pll) | Database package `pkg_lib_<name>` |
+| Menu module (.mmb) | Navigation Menu list; roles → application privileges (no Authorization Schemes) |
+| PL/SQL library (.pll) | Database package `LIB_<name>` |
 | Object library (.olb) / Property class | Theme, Template Options, Shared Components |
 | Data block – single record | Form region (NATIVE_FORM) + Form Initialization / Automatic Row Processing |
 | Data block – multi record editable | Interactive Grid (editable) |
@@ -108,7 +108,7 @@ Collections are per APEX session; for multi-user shared data use a real table.
 ## 6. Global variables → Application Items
 | Forms | APEX |
 |---|---|
-| `:GLOBAL.company_id := 10;` | Shared Components → Application Items → `G_COMPANY_ID` (Session State Protection: Restricted); set in the f345 Application Process "After Auth" or `pkg_forms_compat.set_global('COMPANY_ID', 10)` |
-| `x := :GLOBAL.company_id;` | `:G_COMPANY_ID` in SQL/PLSQL; `pkg_forms_compat.get_global('COMPANY_ID')` in packages |
-| `ERASE('GLOBAL.x')` | `pkg_forms_compat.erase_global('X')` (application item `G_X`) |
+| `:GLOBAL.company_id := 10;` | Shared Components → Application Items → `G_COMPANY_ID` (Session State Protection: Restricted); set in the f345 Application Process "After Auth" or `FORMS_COMPAT.set_global('COMPANY_ID', 10)` |
+| `x := :GLOBAL.company_id;` | `:G_COMPANY_ID` in SQL/PLSQL; `FORMS_COMPAT.get_global('COMPANY_ID')` in packages |
+| `ERASE('GLOBAL.x')` | `FORMS_COMPAT.erase_global('X')` (application item `G_X`) |
 | `DEFAULT_VALUE('x','GLOBAL.y')` | Application computation (On New Instance) |

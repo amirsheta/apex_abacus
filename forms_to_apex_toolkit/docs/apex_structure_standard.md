@@ -16,7 +16,7 @@ This document explains the structure; where the two differ, the f345 standard wi
 |---|---|
 | One Forms application (main `.mmb` + its forms) | One APEX application **installed from f345**: theme 42 (style *ZATCA Forms*, RTL, `ar-sa`), page 0 toolbar, login, plug-ins, application items and app processes come with it |
 | Several Forms applications | One workspace with one application per Forms application, each installed from f345, sharing one parsing schema |
-| Shared `.pll` / `.olb` | DB packages `pkg_lib_<name>`; the `.olb` look is already in f345 (templates, CSS classes `zf`, `cg-*`, `zatca-forms`) |
+| Shared `.pll` / `.olb` | DB packages `LIB_<name>`; the `.olb` look is already in f345 (templates, CSS classes `zf`, `cg-*`, `zatca-forms`) |
 
 Generated exports are **component exports into that application** (`wwv_flow_api.component_begin`
 with the application's ID offset). They never re-create f345's shared components.
@@ -114,18 +114,18 @@ has a header comment with the same `Source:` line and the original trigger code 
 the logic changed during conversion.
 
 ## 6. Converted code should read like the original code
-Use `pkg_forms_compat` (in `plsql_templates/`) inside the form package:
+Use `FORMS_COMPAT` (in `plsql_templates/`) inside the form package:
 
 | Forms code | Converted code |
 |---|---|
-| `MESSAGE('Saved');` | `pkg_forms_compat.message('Saved');` |
-| `MESSAGE('Error'); RAISE FORM_TRIGGER_FAILURE;` | `pkg_forms_compat.ftf('Error');` |
-| `SHOW_ALERT('AL_STOP')` (stop alert) | `pkg_forms_compat.alert('AL_STOP');` (text from Text Messages) |
-| `:GLOBAL.company_id` | `pkg_forms_compat.get_global('COMPANY_ID')` → application item `G_COMPANY_ID` |
-| `:GLOBAL.x := v;` | `pkg_forms_compat.set_global('X', v);` |
-| `NAME_IN('ORDERS.STATUS')` / `COPY(v,'ORDERS.STATUS')` | `pkg_forms_compat.name_in('P120_STATUS')` / `pkg_forms_compat.copy(v, 'P120_STATUS')` (page processes only) |
-| `USER` / `GET_APPLICATION_PROPERTY(USERNAME)` | `pkg_forms_compat.app_user` (or the f345 item `SSO_APP_USER`) |
-| `:SYSTEM.CURRENT_FORM` | `pkg_forms_compat.current_form` (page alias) |
+| `MESSAGE('Saved');` | `FORMS_COMPAT.message('Saved');` |
+| `MESSAGE('Error'); RAISE FORM_TRIGGER_FAILURE;` | `FORMS_COMPAT.ftf('Error');` |
+| `SHOW_ALERT('AL_STOP')` (stop alert) | `FORMS_COMPAT.alert('AL_STOP');` (text from Text Messages) |
+| `:GLOBAL.company_id` | `FORMS_COMPAT.get_global('COMPANY_ID')` → application item `G_COMPANY_ID` |
+| `:GLOBAL.x := v;` | `FORMS_COMPAT.set_global('X', v);` |
+| `NAME_IN('ORDERS.STATUS')` / `COPY(v,'ORDERS.STATUS')` | `FORMS_COMPAT.name_in('P120_STATUS')` / `FORMS_COMPAT.copy(v, 'P120_STATUS')` (page processes only) |
+| `USER` / `GET_APPLICATION_PROPERTY(USERNAME)` | `FORMS_COMPAT.app_user` (or the f345 item `SSO_APP_USER`) |
+| `:SYSTEM.CURRENT_FORM` | `FORMS_COMPAT.current_form` (page alias) |
 
 Inside the package prefer **parameters** for item values (testable code). Use `name_in`/`copy` only in thin
 page-level code.
@@ -144,10 +144,10 @@ Reuse what f345 already has; create only what is missing.
 | `:GLOBAL.COMPANY_ID` | Application Item `G_COMPANY_ID` (Session State Protection: Restricted) |
 | Menu parameter `:PARAMETER.P_CURR_PORT_CD` … | f345 items `P_CURR_PORT_CD`, `P_CLASS_CD`, `P_PORT_TYPE`, `P_BRKR_NBR`, `SSO_APP_USER`, `V_USR_TYPE` (filled by f345 `After Auth`); new `P_<NAME>` otherwise |
 | Menu `.mmb` | Navigation Menu list. Same hierarchy, labels and order. Each entry → page alias |
-| Menu item role / `SET_MENU_ITEM_PROPERTY` | Authorization Scheme `ROLE_<ROLE>` on menu entry + page + buttons |
+| Menu item role / `SET_MENU_ITEM_PROPERTY` | Application privileges - no Authorization Scheme is generated; the role is documented in the page spec |
 | Function rights (TMPLT) | f345 list *Page Functions* (`SC_SYSOBJ_ROLE_PRIVS`), no per-function schemes |
 | Visual attribute / property class | f345 CSS classes and Template Options (`docs/f345_reference_standard.md` §3) |
-| Forms `.pll` `COMMON_LIB` | Package `pkg_lib_common_lib` |
+| Forms `.pll` `COMMON_LIB` | Package `LIB_COMMON_LIB` |
 | ON-ERROR / error display | f345 error handling function `APP_ERROR_HANDLER` (already set) |
 
 ## 8. Standard page layout (Forms toolbar feel)

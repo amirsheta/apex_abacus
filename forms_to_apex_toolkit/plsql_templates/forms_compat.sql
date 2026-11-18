@@ -1,6 +1,6 @@
 -- =============================================================================
--- Owner       : LIB_APX_USR (public synonym pkg_forms_compat; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
--- Package     : pkg_forms_compat
+-- Owner       : LIB_APX_USR (public synonym FORMS_COMPAT; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
+-- Package     : FORMS_COMPAT
 -- Purpose     : Forms-like server-side "built-ins" for migrated code, so converted
 --               trigger code reads like the original Forms code.
 --               (MESSAGE, RAISE FORM_TRIGGER_FAILURE, SHOW_ALERT, :GLOBAL, NAME_IN,
@@ -9,19 +9,19 @@
 -- Install     : once per parsing schema (FORMS_MIGRATION). Not form-specific.
 -- Notes       : Works inside an APEX session AND outside (SQL*Plus / utPLSQL):
 --               outside APEX, globals are kept in package memory and messages go to
---               DBMS_OUTPUT, so pkg_<form> packages stay unit-testable.
+--               DBMS_OUTPUT, so the <FORM> packages stay unit-testable.
 --               UI built-ins (GO_BLOCK, SET_ITEM_PROPERTY ...) are NOT here -> Dynamic Actions.
 -- Status      : NOT YET COMPILED against a real 12.1.0.2 / APEX 21.2 instance - compile in DEV first.
 -- =============================================================================
 SET DEFINE OFF
 
-CREATE OR REPLACE PACKAGE LIB_APX_USR.pkg_forms_compat AS
+CREATE OR REPLACE PACKAGE LIB_APX_USR.FORMS_COMPAT AS
    V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    FUNCTION PKG_VERSION
       RETURN VARCHAR2;
-   V_PACKAGE_NAME      VARCHAR2 (50) := 'PKG_FORMS_COMPAT';
+   V_PACKAGE_NAME      VARCHAR2 (50) := 'FORMS_COMPAT';
    V_LAST_MODIFY_DT    VARCHAR2 (10) := '18-11-2026';
    V_MODIFIED_BY       VARCHAR2 (50) := 'Claude Code';
    V_INFO              VARCHAR2 (500)
@@ -85,17 +85,17 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.pkg_forms_compat AS
     FUNCTION current_form RETURN VARCHAR2;
 
     -- Application error handling function (Application > Edit Application Properties >
-    -- Error Handling > Error Handling Function = pkg_forms_compat.apex_error_handler).
+    -- Error Handling > Error Handling Function = FORMS_COMPAT.apex_error_handler).
     -- Shows business errors (-20000..-20999) without the "ORA-200xx:" prefix and
     -- translates constraint violations via Text Messages named after the constraint.
     FUNCTION apex_error_handler (p_error IN apex_error.t_error)
         RETURN apex_error.t_error_result;
 
-END pkg_forms_compat;
+END FORMS_COMPAT;
 /
 SHOW ERRORS
 
-CREATE OR REPLACE PACKAGE BODY LIB_APX_USR.pkg_forms_compat
+CREATE OR REPLACE PACKAGE BODY LIB_APX_USR.FORMS_COMPAT
 AS
     -- Fallback storage for globals when running outside APEX (unit tests, SQL*Plus)
     TYPE t_globals IS TABLE OF VARCHAR2(4000) INDEX BY VARCHAR2(30);
@@ -278,7 +278,7 @@ AS
 
 
     -- =========================================================================
-    -- PACKAGE VERSION   (SELECT pkg_forms_compat.PKG_VERSION FROM dual;)
+    -- PACKAGE VERSION   (SELECT FORMS_COMPAT.PKG_VERSION FROM dual;)
     -- =========================================================================
     FUNCTION PKG_VERSION
        RETURN VARCHAR2
@@ -287,7 +287,7 @@ AS
        RETURN V_INFO;
     END PKG_VERSION;
 
-END pkg_forms_compat;
+END FORMS_COMPAT;
 /
 SHOW ERRORS
 
@@ -295,12 +295,12 @@ SHOW ERRORS
 -- Synonym and grants (run as a user allowed to create public synonyms / grant on LIB_APX_USR).
 -- CUSTOMS = parsing schema of the APEX application: APEX needs the direct grant.
 -- -----------------------------------------------------------------------------
-CREATE OR REPLACE PUBLIC SYNONYM pkg_forms_compat FOR LIB_APX_USR.pkg_forms_compat;
+CREATE OR REPLACE PUBLIC SYNONYM FORMS_COMPAT FOR LIB_APX_USR.FORMS_COMPAT;
 
-GRANT EXECUTE ON LIB_APX_USR.pkg_forms_compat TO LIB_USR;
+GRANT EXECUTE ON LIB_APX_USR.FORMS_COMPAT TO LIB_USR;
 
-GRANT EXECUTE ON LIB_APX_USR.pkg_forms_compat TO SECURITY_DEFAULT;
+GRANT EXECUTE ON LIB_APX_USR.FORMS_COMPAT TO SECURITY_DEFAULT;
 
-GRANT EXECUTE ON LIB_APX_USR.pkg_forms_compat TO SECURITY_PROD;
+GRANT EXECUTE ON LIB_APX_USR.FORMS_COMPAT TO SECURITY_PROD;
 
-GRANT EXECUTE ON LIB_APX_USR.pkg_forms_compat TO CUSTOMS;
+GRANT EXECUTE ON LIB_APX_USR.FORMS_COMPAT TO CUSTOMS;

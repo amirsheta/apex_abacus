@@ -82,12 +82,12 @@ SELECT r.form_name,
 -- -----------------------------------------------------------------------------
 -- INSERT INTO mig_form_registry (form_name, forms_app, subsystem, app_id, page_from, page_to,
 --                                page_alias, package_name, complexity, status, owner)
--- VALUES ('ORDERS', 'SALES', 'Sales', 1000, 120, 129, 'ORDERS', 'PKG_ORDERS', 'MEDIUM', 'DESIGN', 'AMIR');
+-- VALUES ('ORDERS', 'SALES', 'Sales', 1000, 120, 129, 'ORDERS', 'ORDERS', 'MEDIUM', 'DESIGN', 'AMIR');
 --
 -- INSERT INTO mig_object_map (form_name, forms_object_type, forms_object_name,
 --                             apex_comp_type, apex_comp_name, page_id, plsql_member)
 -- VALUES ('ORDERS', 'TRIGGER', 'ORDERS.CUSTOMER_ID.WHEN-VALIDATE-ITEM',
---         'VALIDATION', 'ORDERS.CUSTOMER_ID.WHEN-VALIDATE-ITEM', 120, 'PKG_ORDERS.CUSTOMER_ID_WVI');
+--         'VALIDATION', 'ORDERS.CUSTOMER_ID.WHEN-VALIDATE-ITEM', 120, 'ORDERS.CUSTOMER_ID_WVI');
 -- COMMIT;
 --
 -- Find:  SELECT * FROM mig_v_where_is WHERE form_name = 'ORDERS' AND forms_object_name LIKE '%CUSTOMER_ID%';

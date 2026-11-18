@@ -130,13 +130,13 @@ def read_items():
     return rows
 
 # ----------------------------------------------------------------------------- shared data
-# :GLOBAL.X -> application item G_X (f345 convention, pkg_forms_compat.global_item)
+# :GLOBAL.X -> application item G_X (f345 convention, FORMS_COMPAT.global_item)
 GLOBALS = ['FLAGUPDATE', 'EXEC_QUERY_NOW', 'PORT_CD', 'IMPR_NBR', 'VALID', 'FUNS_IMP', 'FUNS_BUSID',
            'CHK_IMP_TYP', 'CHK_DUP_BUSID', 'OLD_IMPR_TYPE_CD', 'OLD_PORT_CD', 'ALLOW_MCI', 'ALLOW_MOI',
            'SET', 'MINS_COMM_CD', 'LETTER_NBR', 'SUPP_TITLE_CD', 'LETTER_DT', 'MOBILE_NO', 'IMPR_NBR_B',
            'IMPR_NAME_B', 'BRKR_ATHRZTN_NBR_B', 'CHEK', 'STAT_QUE', 'STAT_CLR', 'IMP0F4',
            'EXE_DETAIL_QUERY', 'INS']
-# menu parameters the f345 application does not have yet (pkg_impr1110_apx.ai), and the two
+# menu parameters the f345 application does not have yet (IMPR1110_APX.ai), and the two
 # Forms parameters callers hand to the page (PARAMETERS ENTRY)
 NEW_PARAMS = [('P_BRKR_PORT_CD', ':PARAMETER.P_BRKR_PORT_CD of the menu (CIC_MENU)'),
               ('P_LIC_TYPE', ':PARAMETER.P_LIC_TYPE of the menu (CIC_MENU)'),
@@ -368,6 +368,10 @@ def spec_item(r):
         it['protect'] = 'N'
     srcs = r['source'] if r['source'] != '-' else r['notes']
     it['comment'] = 'Source: %s.%s' % (FORM, srcs) if r['source'] != '-' else 'Source: %s (%s)' % (FORM, r['notes'])
+    # the step-03 spec still uses the old package names (pkg_ prefix dropped 2026-11-18)
+    it['comment'] = re.sub(r'(?i)\bpkg_impr1110_apx\b', 'IMPR1110_APX',
+                           re.sub(r'(?i)\bpkg_impr1110\b', 'IMPR1110',
+                                  re.sub(r'(?i)\bpkg_forms_compat\b', 'FORMS_COMPAT', it['comment'])))
     return seq, it
 
 def proc_call(page, key, seq, point, name, code, cond, s, ptype='NATIVE_PLSQL', extra=None):
@@ -475,17 +479,10 @@ end;
                                               ('p_item_comment', src(s + ' / f345 P_<name>'))]))
     W(block('application/shared_components/logic/application_items', '\n'.join(body)))
 
-    # authorization - fails closed until the rule source (CIC_MENU / SEC_LIB) is analysed.
-    # Function rights come from the f345 "Page Functions" list (SC_SYSOBJ_ROLE_PRIVS), so no
-    # FUN_* schemes are generated any more.
+    # authorization: none generated. Page access comes from the application's own privileges
+    # (user decision 2026-11-18); function rights come from the f345 "Page Functions" list.
+    # The id is still reserved so the ids of the components after it (LOVs ...) do not change.
     nid('9000:auth:IMPR1110_ACCESS', 3)
-    code = ('-- Source: IMPR1110_ACCESS - spec 13.3. user may open module IMPR1110 (module security of CIC_MENU / SEC_LIB)\n'
-            '-- TODO: MISSING SOURCE - real rule unknown; fails closed (no access) until replaced.\n'
-            'RETURN FALSE;')
-    W(block('application/shared_components/security/authorizations/impr1110_access', call('create_security_scheme', [
-        ('p_id', ref('9000:auth:IMPR1110_ACCESS')), ('p_name', q('IMPR1110_ACCESS')),
-        ('p_scheme_type', q('NATIVE_FUNCTION_BODY')), ('p_attribute_01', lit(code)),
-        ('p_error_message', q('ليس لديك صلاحية')), ('p_caching', q('BY_USER_BY_PAGE_VIEW'))])))
 
     for name, sql, cols, s in LOVS:
         nid('9000:lov:' + name, 5)
@@ -525,7 +522,7 @@ end;
         ('p_javascript_file_urls', q('#APP_FILES#impr1110#MIN#.js')),
         ('p_step_template', fid('PAGE_MAIN')), ('p_page_css_classes', q('zf')),
         ('p_page_template_options', q('#DEFAULT#')),
-        ('p_required_role', ref('9000:auth:IMPR1110_ACCESS')), ('p_protection_level', q('C')),
+        ('p_protection_level', q('C')),
         ('p_page_comment', src('IMPR1110.fmb (window CGSO$WINDOW_1, canvas CG$PAGE_1) / spec 2')),
         ('p_last_upd_yyyymmddhh24miss', q('20261118000000'))],
         'Source: IMPR1110.fmb - spec 2 / f345 standard 4'))
@@ -710,7 +707,7 @@ end;
         ('p_autocomplete_on_off', q('OFF')), ('p_group_id', ref('9000:pg:IMPR')),
         ('p_page_css_classes', q('zf')), ('p_page_template_options', q('#DEFAULT#')),
         ('p_dialog_height', q('800')), ('p_dialog_width', q('1800')),
-        ('p_required_role', ref('9000:auth:IMPR1110_ACCESS')), ('p_protection_level', q('C')),
+        ('p_protection_level', q('C')),
         ('p_page_comment', src('IMPR1110 Enter-Query / Execute-Query of block IMPORTERS (TOOLBAR.RE_ENTER_QUERY) / spec 2, 3')),
         ('p_last_upd_yyyymmddhh24miss', q('20261118000000'))],
         'Source: f345 search page <page>01 (opened by page 0 button SEARCH)'))
@@ -815,7 +812,7 @@ end;
         ('p_name', q(FORM + '_MOBILE')), ('p_alias', q(FORM + '-MOBILE')), ('p_page_mode', q('MODAL')),
         ('p_step_title', q('&SYS_ANAME.')), ('p_autocomplete_on_off', q('OFF')), ('p_group_id', ref('9000:pg:IMPR')),
         ('p_page_css_classes', q('zf')), ('p_page_template_options', q('#DEFAULT#')), ('p_dialog_width', q('480')),
-        ('p_required_role', ref('9000:auth:IMPR1110_ACCESS')), ('p_protection_level', q('C')),
+        ('p_protection_level', q('C')),
         ('p_page_comment', src('LOV_UPDATE_IMPR_MOBILE.fmb (called by IMPR1110 function IMPR1110_MOB) / spec 2, 3')),
         ('p_last_upd_yyyymmddhh24miss', q('20261118000000'))]))
     for sid, title, seq, t, cls, s in [
@@ -906,8 +903,8 @@ def selfcheck(text):
                      if not l.startswith('--') and not re.match(r'^[ ,]p_\w*comment=>', l))
     if re.search(r"\bAI_[A-Z]", code):
         problems.append('AI_ item name found (f345: G_ / P_)')
-    if re.search(r'pkg_impr1110', code, re.I):
-        problems.append('page calls pkg_impr1110* directly (must call IMPR1110)')
+    if re.search(r'pkg_|IMPR1110_APX\.|FORMS_COMPAT\.', code, re.I):
+        problems.append('page calls pkg_* / IMPR1110_APX / FORMS_COMPAT directly (must call IMPR1110)')
     # ids: defined here, or defined in f345 (templates, UI, page 0, shared list)
     defined = re.findall(r'[ ,]p_id=>wwv_flow_api\.id\((\d+)\)', text)
     if len(defined) != len(set(defined)):

@@ -1,14 +1,14 @@
 -- =============================================================================
--- Package     : pkg_impr1110_apx
--- Source form : IMPR1110.fmb - APEX glue for pkg_impr1110 (pages 1110-1119)
+-- Package     : IMPR1110_APX
+-- Source form : IMPR1110.fmb - APEX glue for IMPR1110 (pages 1110-1119)
 -- Target      : Oracle APEX 21.2 / Oracle Database 12.1.0.2
 -- Author      : Claude Code
 -- Created     : 2026-11-18
 -- Version     : 1.1.0  (step 03: server-side item state + validation on submit + port scope)
--- Owner       : LIB_APX_USR (public synonym pkg_impr1110_apx; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
+-- Owner       : LIB_APX_USR (public synonym IMPR1110_APX; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
 -- Purpose     : The ONLY code that reads/writes page items P1110_*. It builds t_rec / t_ctx,
---               calls pkg_impr1110 in the Forms trigger order and writes the results back.
---               pkg_impr1110 itself stays free of page items (testable without APEX).
+--               calls IMPR1110 in the Forms trigger order and writes the results back.
+--               IMPR1110 itself stays free of page items (testable without APEX).
 -- Server state: APEX collection COL_IMPR1110_STATE (per session)
 --                 c001 = 'UI'  : c002 item, c003 property (ENTRABLE/ENABLED/REQUIRED/VISIBLE), c004 Y/N
 --                 c001 = 'VAL' : c002 item, c003 last value the server validated (Forms "item valid")
@@ -27,13 +27,13 @@
 -- =============================================================================
 SET DEFINE OFF
 
-CREATE OR REPLACE PACKAGE LIB_APX_USR.pkg_impr1110_apx AS
+CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110_APX AS
    V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    FUNCTION PKG_VERSION
       RETURN VARCHAR2;
-   V_PACKAGE_NAME      VARCHAR2 (50) := 'PKG_IMPR1110_APX';
+   V_PACKAGE_NAME      VARCHAR2 (50) := 'IMPR1110_APX';
    V_LAST_MODIFY_DT    VARCHAR2 (10) := '18-11-2026';
    V_MODIFIED_BY       VARCHAR2 (50) := 'Claude Code';
    V_INFO              VARCHAR2 (500)
@@ -58,9 +58,9 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.pkg_impr1110_apx AS
     -- behaviour). TRUE = do the same on page load. TODO-VERIFY with a Forms trace (HIGH).
     c_post_chg_on_fetch CONSTANT BOOLEAN := TRUE;
 
-    FUNCTION  get_ctx RETURN pkg_impr1110.t_ctx;
-    FUNCTION  get_rec RETURN pkg_impr1110.t_rec;
-    PROCEDURE set_rec (p_rec IN pkg_impr1110.t_rec);
+    FUNCTION  get_ctx RETURN IMPR1110.t_ctx;
+    FUNCTION  get_rec RETURN IMPR1110.t_rec;
+    PROCEDURE set_rec (p_rec IN IMPR1110.t_rec);
 
     -- Before Header process "WHEN-NEW-FORM-INSTANCE" (condition: P1110_FORM_OPEN is null)
     PROCEDURE page_wnfi;
@@ -74,7 +74,7 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.pkg_impr1110_apx AS
     -- AJAX Callback "IMPR1110_ITEM":
     --   x01 = Forms item name, x02 = event VALIDATE | WNII | WLC | LOV_RET | KEY_NXT | WNRI,
     --   x03 / x04 = answers of Confirm DAs (1 = yes, 2 = no; empty = yes)
-    -- Returns {"items":{"P1110_X":"v",...},"ui":{...pkg_impr1110.ui_json...}} or {"error":"..."}
+    -- Returns {"items":{"P1110_X":"v",...},"ui":{...IMPR1110.ui_json...}} or {"error":"..."}
     PROCEDURE ajax_item;
     -- AJAX Callback "IMPR1110_CONFIRM": x01 = WNRI | SUSP | UPD_IMPR -> {"text":"..."} ("" = none)
     PROCEDURE ajax_confirm;
@@ -82,7 +82,7 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.pkg_impr1110_apx AS
     PROCEDURE ajax_fun;
 
     -- Validation "IMPORTERS.<ITEM>.WHEN-VALIDATE-ITEM" (request SAVE):
-    --   RETURN pkg_impr1110_apx.validate_on_submit('<ITEM>');
+    --   RETURN IMPR1110_APX.validate_on_submit('<ITEM>');
     -- Runs POST-CHANGE + WHEN-VALIDATE-ITEM with p_from_item = FALSE only when the value differs
     -- from the last value the server validated. Returns NULL or the Forms error text.
     FUNCTION  validate_on_submit (p_item IN VARCHAR2) RETURN VARCHAR2;
@@ -102,7 +102,7 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.pkg_impr1110_apx AS
     -- Page processes "IMPORTERS.PRE-INSERT/INSERT/POST-INSERT", ".PRE-UPDATE/UPDATE/POST-UPDATE"
     -- (request SAVE) and "IMPORTERS.KEY-DELREC" (request DELETE)
     PROCEDURE page_dml (p_request IN VARCHAR2);
-END pkg_impr1110_apx;
+END IMPR1110_APX;
 /
 SHOW ERRORS
 
@@ -110,12 +110,12 @@ SHOW ERRORS
 -- Synonym and grants (run as a user allowed to create public synonyms / grant on LIB_APX_USR).
 -- CUSTOMS = parsing schema of the APEX application: APEX needs the direct grant.
 -- -----------------------------------------------------------------------------
-CREATE OR REPLACE PUBLIC SYNONYM pkg_impr1110_apx FOR LIB_APX_USR.pkg_impr1110_apx;
+CREATE OR REPLACE PUBLIC SYNONYM IMPR1110_APX FOR LIB_APX_USR.IMPR1110_APX;
 
-GRANT EXECUTE ON LIB_APX_USR.pkg_impr1110_apx TO LIB_USR;
+GRANT EXECUTE ON LIB_APX_USR.IMPR1110_APX TO LIB_USR;
 
-GRANT EXECUTE ON LIB_APX_USR.pkg_impr1110_apx TO SECURITY_DEFAULT;
+GRANT EXECUTE ON LIB_APX_USR.IMPR1110_APX TO SECURITY_DEFAULT;
 
-GRANT EXECUTE ON LIB_APX_USR.pkg_impr1110_apx TO SECURITY_PROD;
+GRANT EXECUTE ON LIB_APX_USR.IMPR1110_APX TO SECURITY_PROD;
 
-GRANT EXECUTE ON LIB_APX_USR.pkg_impr1110_apx TO CUSTOMS;
+GRANT EXECUTE ON LIB_APX_USR.IMPR1110_APX TO CUSTOMS;

@@ -25,7 +25,7 @@ MAIN PAGE NO.:   {{PAGE_ID}}           (from MIG_FORM_REGISTRY; used in paramete
 TEMPLATES:       plsql_templates/pkg_template_spec.sql, plsql_templates/pkg_template_body.sql
                  (rename the template package to {{FORM_NAME_UC}})
 NAMING RULES:    docs/f345_reference_standard.md §5 and §6
-SHARED PACKAGES: {{LIST_OF_EXISTING_PKG_LIB_PACKAGES_OR_NONE}}
+SHARED PACKAGES: {{LIST_OF_EXISTING_LIB_PACKAGES_OR_NONE}}
 
 ## Step 1 — Collect trigger code
 Read the inventory first. Then, from the XML, re-extract the full decoded code of every
@@ -88,24 +88,24 @@ Parameter names:
 - Internal-only members: `p_<name>`; local variables `v_`, constants `c_`, globals `g_`.
 
 Keep the original Forms trigger code as a comment above each member ("Original Forms code:").
-Use pkg_forms_compat for MESSAGE / FORM_TRIGGER_FAILURE / stop alerts / :GLOBAL / USER so the
+Use FORMS_COMPAT for MESSAGE / FORM_TRIGGER_FAILURE / stop alerts / :GLOBAL / USER so the
 converted code reads like the original.
 
 Rules:
 1. Remove every Forms built-in. Item references (:BLOCK.ITEM) become I_/IO_ parameters (APEX
    entry points) or p_ parameters / record fields (internal) — NEVER v('P..') or bind variables
    to page items inside the package. The package must be testable without an APEX session.
-   Exception: pkg_forms_compat.app_user / get_global may be used anywhere (they also work
+   Exception: FORMS_COMPAT.app_user / get_global may be used anywhere (they also work
    outside APEX, so tests still run).
 2. Validations: `<ITEM>_VAL` returns NULL if OK or the error message (APEX "PL/SQL Function
    Body returning Error Text", and `{{FORM_NAME_UC}}.CHK({{FORM_NAME_UC}}.<ITEM>_VAL(...))` in
    the FOS dynamic action). Values the trigger derives go into `<ITEM>_WVI` with IO_ params.
-3. MESSAGE + RAISE FORM_TRIGGER_FAILURE → pkg_forms_compat.ftf('<text>');
-   SHOW_ALERT (stop) + FTF → pkg_forms_compat.alert('<ALERT_NAME>') and list the alert as a
+3. MESSAGE + RAISE FORM_TRIGGER_FAILURE → FORMS_COMPAT.ftf('<text>');
+   SHOW_ALERT (stop) + FTF → FORMS_COMPAT.alert('<ALERT_NAME>') and list the alert as a
    Text Message to create (name = alert name, text = alert message).
 4. SHOW_ALERT whose result drives logic (e.g. "Are you sure?") → split: the question
    becomes "-- APEX-DA: Confirm ..." and the branch after the answer becomes a procedure.
-5. :GLOBAL.x → pkg_forms_compat.get_global('X') / set_global('X', v); it becomes Application
+5. :GLOBAL.x → FORMS_COMPAT.get_global('X') / set_global('X', v); it becomes Application
    Item **G_X** (f345). :PARAMETER.P_X of the menu → reuse the f345 item when it exists
    (P_CURR_PORT_CD, P_CLASS_CD, P_PORT_TYPE, P_BRKR_NBR, SSO_APP_USER, V_USR_TYPE …), otherwise
    a new P_X. Never AI_. Record the mapping in the extraction doc.
@@ -123,14 +123,14 @@ Rules:
    "UI LOGIC FOR APEX DYNAMIC ACTIONS" (no executable code there).
 10. No COMMIT/ROLLBACK inside the package (APEX manages the transaction), unless the
     original code explicitly commits in an autonomous context — then flag it HIGH.
-11. Library calls → call pkg_lib_<library>.<proc>; if that package doesn't exist yet,
-    add "-- TODO: MISSING SOURCE pkg_lib_<library>.<proc>" and list it.
+11. Library calls → call LIB_<library>.<proc>; if that package doesn't exist yet,
+    add "-- TODO: MISSING SOURCE LIB_<library>.<proc>" and list it.
 12. Must compile on Oracle **12.1.0.2** (CLAUDE.md §2a): identifiers ≤ 30 bytes, no qualified
     expressions, no JSON_OBJECT/JSON_OBJECT_T, no LISTAGG ON OVERFLOW, no 12.2+/18c+ syntax.
 13. Spec and body must be consistent (same signatures, same order).
-14. One package per form. Do not add extra adapter packages (IMPR1110, with
-    PKG_IMPR1110 + PKG_IMPR1110_APX behind IMPR1110, is a documented exception from before
-    the f345 standard).
+14. One package per form. Do not add extra adapter packages. IMPR1110 is a documented
+    exception from before the f345 standard: package IMPR1110 (logic + APEX entry points)
+    keeps its session-state adapter IMPR1110_APX.
 
 ## Step 5 — Write the extraction report
 analysis/{{FORM_NAME}}/{{FORM_NAME}}_logic_extraction.md containing:

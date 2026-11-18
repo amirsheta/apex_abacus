@@ -9,8 +9,8 @@
    ```
 3. Ask the DBA to run `scripts/setup_apex_workspace.sql` (Oracle 12.1.0.2 + APEX 21.2).
 4. As the parsing schema, run once: `scripts/create_migration_registry.sql` and
-   `plsql_templates/pkg_forms_compat.sql`. In the APEX app set
-   Error Handling Function = `pkg_forms_compat.apex_error_handler`.
+   `plsql_templates/forms_compat.sql`. In the APEX app set
+   Error Handling Function = `FORMS_COMPAT.apex_error_handler`.
 5. Read `docs/apex_structure_standard.md` (Forms-mirror naming: pages, regions, items, triggers) and
    `docs/f345_reference_standard.md` (the f345 reference application: templates, toolbar, naming).
    Install `apex/Reference/f345.sql` in the workspace: every form is built inside that application.
@@ -45,7 +45,7 @@ Commit after each step (`git commit -m "<form>: step N"`).
 
 ## 5. Libraries (.pll) and object libraries (.olb)
 - Convert `.pll` to text: `frmcmp_batch module=lib.pll module_type=LIBRARY script=YES` → `lib.pld`.
-- Migrate each library once as `pkg_lib_<name>` (spec/body) using prompt 02 adapted to the `.pld`
+- Migrate each library once as `LIB_<name>` (spec/body) using prompt 02 adapted to the `.pld`
   file; strip Forms built-ins (UI parts become JS/DA guidelines).
 - Migrate shared libraries **before** the forms that use them; forms prompts reference them via `SHARED PACKAGES`.
 - `.olb` objects (property classes, visual attributes, standard toolbars) are not migrated as code:

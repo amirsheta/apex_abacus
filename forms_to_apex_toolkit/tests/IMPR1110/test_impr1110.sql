@@ -1,15 +1,15 @@
 -- =============================================================================
--- utPLSQL v3 tests for PKG_IMPR1110 (pure logic only - no DML).
--- Run:  exec ut.run('test_pkg_impr1110');
--- Members that write globals (g_set -> pkg_forms_compat.set_global) need an APEX
+-- utPLSQL v3 tests for IMPR1110 (pure logic only - no DML).
+-- Run:  exec ut.run('test_impr1110');
+-- Members that write globals (g_set -> FORMS_COMPAT.set_global) need an APEX
 -- session: the beforeall creates one when the app exists (app 2000 = placeholder).
 -- Expected check digits for check_idno were computed with the same algorithm
 -- (1000000008, 1234567897, 2100000005 valid).
 -- Status: NOT executed - utPLSQL availability on the 12.1.0.2 DB is unknown.
 -- =============================================================================
-CREATE OR REPLACE PACKAGE test_pkg_impr1110
+CREATE OR REPLACE PACKAGE test_impr1110
 AS
-    --%suite(IMPR1110 - PKG_IMPR1110)
+    --%suite(IMPR1110 - IMPR1110)
 
     --%beforeall
     PROCEDURE setup_session;
@@ -55,15 +55,15 @@ AS
     PROCEDURE ui_existing;
     --%test(ui_state_json for new record CR type requires COMM_RGSTRTN_TYPE)
     PROCEDURE ui_new_cr;
-END test_pkg_impr1110;
+END test_impr1110;
 /
 
-CREATE OR REPLACE PACKAGE BODY test_pkg_impr1110
+CREATE OR REPLACE PACKAGE BODY test_impr1110
 AS
     FUNCTION ctx (p_class NUMBER DEFAULT 1, p_utype NUMBER DEFAULT 1, p_port NUMBER DEFAULT 1)
-        RETURN pkg_impr1110.t_ctx
+        RETURN IMPR1110.t_ctx
     IS
-        c pkg_impr1110.t_ctx;
+        c IMPR1110.t_ctx;
     BEGIN
         c.curr_port_cd := p_port;
         c.class_cd     := p_class;
@@ -81,120 +81,120 @@ AS
 
     PROCEDURE idno_valid IS
     BEGIN
-        ut.expect(pkg_impr1110.check_idno('1000000008')).to_be_true();
-        ut.expect(pkg_impr1110.check_idno('1234567897')).to_be_true();
-        ut.expect(pkg_impr1110.check_idno('2100000005')).to_be_true();
+        ut.expect(IMPR1110.check_idno('1000000008')).to_be_true();
+        ut.expect(IMPR1110.check_idno('1234567897')).to_be_true();
+        ut.expect(IMPR1110.check_idno('2100000005')).to_be_true();
     END idno_valid;
 
     PROCEDURE idno_invalid IS
     BEGIN
-        ut.expect(pkg_impr1110.check_idno('1234567890')).to_be_false();
-        ut.expect(pkg_impr1110.check_idno('123456789')).to_be_false();
-        ut.expect(pkg_impr1110.check_idno('12345678A7')).to_be_false();
-        ut.expect(pkg_impr1110.check_idno(NULL)).to_be_false();
+        ut.expect(IMPR1110.check_idno('1234567890')).to_be_false();
+        ut.expect(IMPR1110.check_idno('123456789')).to_be_false();
+        ut.expect(IMPR1110.check_idno('12345678A7')).to_be_false();
+        ut.expect(IMPR1110.check_idno(NULL)).to_be_false();
     END idno_invalid;
 
     PROCEDURE digit_cases IS
     BEGIN
-        ut.expect(pkg_impr1110.is_digit('0123456789')).to_be_true();
-        ut.expect(pkg_impr1110.is_digit('12 3')).to_be_false();
-        ut.expect(pkg_impr1110.is_digit('١٢٣')).to_be_false();   -- Arabic-Indic digits
-        ut.expect(pkg_impr1110.is_digit(NULL)).to_be_false();
+        ut.expect(IMPR1110.is_digit('0123456789')).to_be_true();
+        ut.expect(IMPR1110.is_digit('12 3')).to_be_false();
+        ut.expect(IMPR1110.is_digit('١٢٣')).to_be_false();   -- Arabic-Indic digits
+        ut.expect(IMPR1110.is_digit(NULL)).to_be_false();
     END digit_cases;
 
     PROCEDURE iban_normalise IS
-        r pkg_impr1110.t_rec;
+        r IMPR1110.t_rec;
     BEGIN
         r.bank_iban := '80 0000 0000 6080 1016 7519';      -- 22 chars without SA
-        pkg_impr1110.bank_iban_wvi(r);
+        IMPR1110.bank_iban_wvi(r);
         ut.expect(r.bank_iban).to_equal('SA8000000000608010167519');
         r.bank_iban := 'sa8000000000608010167519';
-        pkg_impr1110.bank_iban_wvi(r);
+        IMPR1110.bank_iban_wvi(r);
         ut.expect(r.bank_iban).to_equal('SA8000000000608010167519');
     END iban_normalise;
 
     PROCEDURE iban_bad_length IS
-        r pkg_impr1110.t_rec;
+        r IMPR1110.t_rec;
     BEGIN
         r.bank_iban := 'SA80000';
-        pkg_impr1110.bank_iban_wvi(r);
+        IMPR1110.bank_iban_wvi(r);
     END iban_bad_length;
 
     PROCEDURE iban_empty IS
-        r pkg_impr1110.t_rec;
+        r IMPR1110.t_rec;
     BEGIN
-        pkg_impr1110.bank_iban_wvi(r);
+        IMPR1110.bank_iban_wvi(r);
         ut.expect(r.bank_iban).to_be_null();
         r.bank_iban := 'SA';
-        pkg_impr1110.bank_iban_wvi(r);
+        IMPR1110.bank_iban_wvi(r);
         ut.expect(r.bank_iban).to_equal('SA');
     END iban_empty;
 
     PROCEDURE eng_name_ok IS
-        r pkg_impr1110.t_rec;
+        r IMPR1110.t_rec;
     BEGIN
         r.eng_impr_name := 'ALSAFI TRADING CO 2';
-        pkg_impr1110.eng_impr_name_wvi(r);
+        IMPR1110.eng_impr_name_wvi(r);
         ut.expect(r.eng_impr_name).to_equal('ALSAFI TRADING CO 2');
     END eng_name_ok;
 
     PROCEDURE eng_name_arabic IS
-        r pkg_impr1110.t_rec;
+        r IMPR1110.t_rec;
     BEGIN
         r.eng_impr_name := 'شركة';
-        pkg_impr1110.eng_impr_name_wvi(r);
+        IMPR1110.eng_impr_name_wvi(r);
     END eng_name_arabic;
 
     PROCEDURE mobile_ok IS
-        r pkg_impr1110.t_rec;
+        r IMPR1110.t_rec;
     BEGIN
         r.b_mobile_no := '512345678';
-        pkg_impr1110.b_mobile_no_wvi(r, ctx);
+        IMPR1110.b_mobile_no_wvi(r, ctx);
         ut.expect(r.b_mobile_no).to_equal('512345678');
     END mobile_ok;
 
     PROCEDURE mobile_bad IS
-        r pkg_impr1110.t_rec;
+        r IMPR1110.t_rec;
     BEGIN
         r.b_mobile_no := '0512345678';
-        pkg_impr1110.b_mobile_no_wvi(r, ctx);
+        IMPR1110.b_mobile_no_wvi(r, ctx);
     END mobile_bad;
 
     PROCEDURE email_bad IS
-        r pkg_impr1110.t_rec;
+        r IMPR1110.t_rec;
     BEGIN
         r.b_email := 'abc.com';
-        pkg_impr1110.b_email_wvi(r);
+        IMPR1110.b_email_wvi(r);
     END email_bad;
 
     PROCEDURE tel_bad IS
-        r pkg_impr1110.t_rec;
+        r IMPR1110.t_rec;
     BEGIN
         r.impr_tel_nbr := '12345';
-        pkg_impr1110.impr_tel_nbr_wvi(r);
+        IMPR1110.impr_tel_nbr_wvi(r);
     END tel_bad;
 
     PROCEDURE fun_rules IS
-        r pkg_impr1110.t_rec;
+        r IMPR1110.t_rec;
     BEGIN
-        ut.expect(pkg_impr1110.fun_allowed('IMPR1110F1', r, ctx)).to_be_false();   -- no record
-        ut.expect(pkg_impr1110.fun_allowed('IMPR1110F2', r, ctx)).to_be_false();
+        ut.expect(IMPR1110.fun_allowed('IMPR1110F1', r, ctx)).to_be_false();   -- no record
+        ut.expect(IMPR1110.fun_allowed('IMPR1110F2', r, ctx)).to_be_false();
         r.impr_nbr := 3000001;
-        ut.expect(pkg_impr1110.fun_allowed('IMPR1110F1', r, ctx)).to_be_true();
-        ut.expect(pkg_impr1110.fun_allowed('IMPR1110F3', r, ctx)).to_be_true();
-        ut.expect(pkg_impr1110.fun_allowed('IMPR1110F2', r, ctx)).to_be_false();
-        ut.expect(pkg_impr1110.fun_allowed('CREATE_BRKR_IMPR_AUTH', r, ctx(1, 3))).to_be_true();
-        ut.expect(pkg_impr1110.fun_allowed('CREATE_BRKR_IMPR_AUTH', r, ctx(1, 1))).to_be_false();
-        ut.expect(pkg_impr1110.fun_allowed('IMPR1110_MOB', r, ctx(p_port => 99))).to_be_true();
-        ut.expect(pkg_impr1110.fun_allowed('IMPR1110_MOB', r, ctx(p_port => 1))).to_be_false();
+        ut.expect(IMPR1110.fun_allowed('IMPR1110F1', r, ctx)).to_be_true();
+        ut.expect(IMPR1110.fun_allowed('IMPR1110F3', r, ctx)).to_be_true();
+        ut.expect(IMPR1110.fun_allowed('IMPR1110F2', r, ctx)).to_be_false();
+        ut.expect(IMPR1110.fun_allowed('CREATE_BRKR_IMPR_AUTH', r, ctx(1, 3))).to_be_true();
+        ut.expect(IMPR1110.fun_allowed('CREATE_BRKR_IMPR_AUTH', r, ctx(1, 1))).to_be_false();
+        ut.expect(IMPR1110.fun_allowed('IMPR1110_MOB', r, ctx(p_port => 99))).to_be_true();
+        ut.expect(IMPR1110.fun_allowed('IMPR1110_MOB', r, ctx(p_port => 1))).to_be_false();
     END fun_rules;
 
     PROCEDURE ui_existing IS
-        r pkg_impr1110.t_rec;
+        r IMPR1110.t_rec;
         j CLOB;
     BEGIN
         r.impr_nbr := 10; r.impr_type_cd := 1; r.bus_id_type_cd := 2;
-        j := pkg_impr1110.ui_state_json(r, ctx);
+        j := IMPR1110.ui_state_json(r, ctx);
         ut.expect(j).to_be_like('%"disabled":[%"P1110_BUS_ID"%');
         ut.expect(j).to_be_like('%"P1110_IMPR_TYPE_CD"%');
         ut.expect(j).to_be_like('%"P1110_CTRY_CD"%');            -- type 1 -> country disabled
@@ -202,14 +202,14 @@ AS
     END ui_existing;
 
     PROCEDURE ui_new_cr IS
-        r pkg_impr1110.t_rec;
+        r IMPR1110.t_rec;
         j CLOB;
     BEGIN
         r.impr_type_cd := 3; r.bus_id_type_cd := 2;               -- commercial register
-        j := pkg_impr1110.ui_state_json(r, ctx);
+        j := IMPR1110.ui_state_json(r, ctx);
         ut.expect(j).to_be_like('%"required":[%"P1110_COMM_RGSTRTN_TYPE"%');
         ut.expect(j).not_to_be_like('%"disabled":[%"P1110_BUS_ID"%"required"%');
     END ui_new_cr;
-END test_pkg_impr1110;
+END test_impr1110;
 /
 SHOW ERRORS

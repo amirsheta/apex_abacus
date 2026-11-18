@@ -2,24 +2,29 @@
 
 **When to use:** After `01_inventory_analysis` is complete and reviewed.
 **Input:** `analysis/<form_name>/<form_name>_inventory.md` + `output/xml/<FORM_NAME>_fmb.xml`
+**Standard:** f345 reference application (`CLAUDE.md` §4b, `docs/f345_reference_standard.md` §5):
+the package is named after the form, in upper case and with no prefix.
 **Output:**
-- `plsql/<form_name>/pkg_<form_name>_spec.sql`
-- `plsql/<form_name>/pkg_<form_name>_body.sql`
+- `plsql/<form_name>/<form_name>_spec.sql` (package `<FORM>`)
+- `plsql/<form_name>/<form_name>_body.sql`
 - `analysis/<form_name>/<form_name>_logic_extraction.md`
 
 ---
 
 ```text
 You are working on the Oracle Forms 12c → Oracle APEX 21.2 migration project.
-Follow all rules in CLAUDE.md.
+Follow all rules in CLAUDE.md (especially §4b, the f345 reference standard).
 
 TASK: Extract all portable business logic from ONE form into a PL/SQL package.
 
 FORM NAME:       {{FORM_NAME}}
 INVENTORY:       analysis/{{FORM_NAME}}/{{FORM_NAME}}_inventory.md
 XML FILE:        output/xml/{{FORM_NAME}}_fmb.xml
-PACKAGE NAME:    pkg_{{FORM_NAME}}
+PACKAGE NAME:    {{FORM_NAME_UC}}      (upper-case form name, no pkg_ prefix - f345: AGR1100)
+MAIN PAGE NO.:   {{PAGE_ID}}           (from MIG_FORM_REGISTRY; used in parameter names I_P<page>_<ITEM>)
 TEMPLATES:       plsql_templates/pkg_template_spec.sql, plsql_templates/pkg_template_body.sql
+                 (rename the template package to {{FORM_NAME_UC}})
+NAMING RULES:    docs/f345_reference_standard.md §5 and §6
 SHARED PACKAGES: {{LIST_OF_EXISTING_PKG_LIB_PACKAGES_OR_NONE}}
 
 ## Step 1 — Collect trigger code
@@ -32,13 +37,13 @@ Put each trigger in exactly one group (split a trigger if it mixes concerns and 
 
 | Group | Typical triggers | Target |
 |---|---|---|
-| VALIDATION | WHEN-VALIDATE-ITEM, WHEN-VALIDATE-RECORD, KEY-COMMIT checks | Package function returning error text / raising; APEX Validation |
-| PRE/POST DML | PRE-INSERT, PRE-UPDATE, PRE-DELETE, POST-INSERT, POST-UPDATE, POST-DELETE, ON-INSERT/UPDATE/DELETE, PRE-COMMIT, POST-FORMS-COMMIT | Package procedures; APEX processes |
+| VALIDATION | WHEN-VALIDATE-ITEM, WHEN-VALIDATE-RECORD, KEY-COMMIT checks | `<ITEM>_VAL` function returning error text; APEX validation `<ITEM> VALIDATION` + DA `<ITEM> WHEN-VALIDATE-ITEM` |
+| PRE/POST DML | PRE-INSERT, PRE-UPDATE, PRE-DELETE, POST-INSERT, POST-UPDATE, POST-DELETE, ON-INSERT/UPDATE/DELETE, PRE-COMMIT, POST-FORMS-COMMIT | `PRE_INSERT` … (master) / `<BLOCK_ABBR>_PRE_INSERT` … (detail); APEX processes `PRE-INSERT` / `<BLOCK> PRE-INSERT` |
 | QUERY | PRE-QUERY, POST-QUERY, ON-SELECT, ON-FETCH | View / SQL function / package function |
-| INITIALISATION | WHEN-NEW-FORM-INSTANCE, PRE-FORM, WHEN-CREATE-RECORD | wnfi / pre_form / <block>_wcr; Before Header process |
+| INITIALISATION | WHEN-NEW-FORM-INSTANCE, PRE-FORM, WHEN-CREATE-RECORD | `INIT_FORM` / `PRE_FORM` / `<BLOCK_ABBR>_WCR`; Before Header processes |
 | NAVIGATION | WHEN-NEW-BLOCK-INSTANCE, WHEN-NEW-RECORD-INSTANCE, WHEN-NEW-ITEM-INSTANCE, KEY-NEXT-ITEM, KEY-* | APEX-DA comments |
 | UI-ONLY | SET_ITEM_PROPERTY, SET_WINDOW_PROPERTY, SHOW_VIEW, visual attributes, MESSAGE | APEX-DA comments |
-| BUTTON ACTIONS | WHEN-BUTTON-PRESSED | Split: business part → procedure; UI part → APEX-DA |
+| BUTTON ACTIONS | WHEN-BUTTON-PRESSED | Split: business part → procedure; UI part → APEX-DA. Toolbar buttons (SAVE, REMOVE, ENTER-QUERY, EXIT …) map to the **page 0 toolbar** of f345, not to page buttons |
 
 ## Step 3 — Identify Forms built-ins to replace
 Produce a table: | Trigger | Line | Built-in | Replacement (per CLAUDE.md §7) | Where it goes (PL/SQL / DA / Process / Branch) |
@@ -48,45 +53,63 @@ CLEAR_BLOCK, CLEAR_FORM, CALL_FORM, OPEN_FORM, NEW_FORM, NAME_IN, COPY,
 CREATE_GROUP, POPULATE_GROUP, GET_GROUP_*_CELL, HOST, TEXT_IO, RUN_REPORT_OBJECT,
 FORM_TRIGGER_FAILURE, :SYSTEM.*, :GLOBAL.*, :PARAMETER.*.
 
-## Step 4 — Generate the package
+## Step 4 — Generate the package {{FORM_NAME_UC}}
 Start from plsql_templates/pkg_template_spec.sql and pkg_template_body.sql.
-Follow docs/apex_structure_standard.md (Forms-mirror):
-- Package layout mirrors the form: FORM LEVEL section → one section per BLOCK (in Forms
-  block order) → PROGRAM UNITS (same names as in Forms) → UI LOGIC comments.
-- Member names = <object>_<trigger_abbr> (customer_id_wvi, orders_wvr, orders_pre_ins,
-  orders_post_qry, btn_post_wbp, wnfi ...). Every name ≤ 30 bytes (DB 12.1.0.2).
-- Keep the original Forms trigger code as a comment above each member ("Original Forms code:").
-- Use pkg_forms_compat for MESSAGE / FORM_TRIGGER_FAILURE / stop alerts / :GLOBAL / USER
-  so the converted code reads like the original.
+Layout mirrors the form: FORM LEVEL section → one section per BLOCK (in Forms block order)
+→ PROGRAM UNITS (same names as in Forms) → UI LOGIC comments.
+
+Member names (f345 standard §5; every name ≤ 30 bytes, DB 12.1.0.2; upper case like AGR1100):
+| Forms source | Member | Example |
+|---|---|---|
+| master-block DML trigger | `<TRIGGER>` with `_` for `-` | `PRE_INSERT`, `POST_UPDATE`, `PRE_DELETE` |
+| detail-block DML trigger | `<BLOCK_ABBR>_<TRIGGER>` | `MEMBERS_PRE_INSERT` |
+| WHEN-VALIDATE-ITEM check | FUNCTION `<ITEM>_VAL` (detail: `<BLOCK_ABBR>_<ITEM>_VAL`) returning error text or NULL | `CTRY_CD_VAL`, `MEMBERS_CTRY_CD_VAL` |
+| WHEN-VALIDATE-ITEM side effects (derived values) | PROCEDURE `<ITEM>_WVI` with IO_ parameters | `AGRMNT_NO_WVI` |
+| WHEN-VALIDATE-RECORD | FUNCTION `<BLOCK_ABBR>_WVR` returning error text | `MEMBERS_WVR` |
+| WHEN-NEW-FORM-INSTANCE / PRE-FORM | `INIT_FORM` / `PRE_FORM` | |
+| program unit | same name as in Forms | `CALC_TOTAL` |
+| f345 helpers (always generate) | `CHK(I_ERR)` raises when not null; `REQUIRED_VAL(I_VALUE, I_LABEL)`; `P0_PAGE_PK_CHECK(IO_P0_PAGE_PK)`; `GET_MODULE_ID`; `HEADER_TITLE` | |
+`<BLOCK_ABBR>` = block name without the form's common prefix (AGRMNT_MEMBERS → MEMBERS).
+
+Parameter names:
+- Members called by APEX: `I_` (IN), `IO_` (IN OUT), `O_` (OUT) + the bind name without `:`.
+  Page items → `IO_P{{PAGE_ID}}_<ITEM>`, IG columns → `I_<COLUMN>`, application items →
+  `I_<APP_ITEM>` (e.g. `I_SSO_APP_USER => :SSO_APP_USER`, `I_P_CURR_PORT_CD => :P_CURR_PORT_CD`).
+  The page passes every value as a named bind, so each APEX process stays a one-line call.
+- Internal-only members: `p_<name>`; local variables `v_`, constants `c_`, globals `g_`.
+
+Keep the original Forms trigger code as a comment above each member ("Original Forms code:").
+Use pkg_forms_compat for MESSAGE / FORM_TRIGGER_FAILURE / stop alerts / :GLOBAL / USER so the
+converted code reads like the original.
 
 Rules:
-1. Remove every Forms built-in. Item references (:BLOCK.ITEM) become parameters
-   (p_<item>) or record fields (t_<block>_rec) — NEVER bind variables to page items
-   inside the package. The package must be testable without an APEX session.
+1. Remove every Forms built-in. Item references (:BLOCK.ITEM) become I_/IO_ parameters (APEX
+   entry points) or p_ parameters / record fields (internal) — NEVER v('P..') or bind variables
+   to page items inside the package. The package must be testable without an APEX session.
    Exception: pkg_forms_compat.app_user / get_global may be used anywhere (they also work
    outside APEX, so tests still run).
-2. Validation procedures: either
-   a) FUNCTION <item>_wvi(p_value ...) RETURN VARCHAR2 — returns NULL if OK or the
-      error message (maps to APEX "PL/SQL Function Body (returning Error Text)"), or
-   b) PROCEDURE <block>_wvr(p_rec IN t_<block>_rec) that calls pkg_forms_compat.ftf / alert.
-   Choose (a) for item-level checks, (b) for record-level checks.
+2. Validations: `<ITEM>_VAL` returns NULL if OK or the error message (APEX "PL/SQL Function
+   Body returning Error Text", and `{{FORM_NAME_UC}}.CHK({{FORM_NAME_UC}}.<ITEM>_VAL(...))` in
+   the FOS dynamic action). Values the trigger derives go into `<ITEM>_WVI` with IO_ params.
 3. MESSAGE + RAISE FORM_TRIGGER_FAILURE → pkg_forms_compat.ftf('<text>');
    SHOW_ALERT (stop) + FTF → pkg_forms_compat.alert('<ALERT_NAME>') and list the alert as a
    Text Message to create (name = alert name, text = alert message).
 4. SHOW_ALERT whose result drives logic (e.g. "Are you sure?") → split: the question
    becomes "-- APEX-DA: Confirm ..." and the branch after the answer becomes a procedure.
-5. :GLOBAL.x → pkg_forms_compat.get_global('X') / set_global('X', v); record in the
-   extraction doc that it becomes Application Item AI_X.
-6. POST-QUERY lookups → prefer a function usable in SQL (fnc_ / pkg function marked
+5. :GLOBAL.x → pkg_forms_compat.get_global('X') / set_global('X', v); it becomes Application
+   Item **G_X** (f345). :PARAMETER.P_X of the menu → reuse the f345 item when it exists
+   (P_CURR_PORT_CD, P_CLASS_CD, P_PORT_TYPE, P_BRKR_NBR, SSO_APP_USER, V_USR_TYPE …), otherwise
+   a new P_X. Never AI_. Record the mapping in the extraction doc.
+6. POST-QUERY lookups → prefer a function usable in SQL (fnc_ / package function marked
    for use in the region query or a view v_<form>_<block>). Flag N+1 patterns.
-7. Sequences in PRE-INSERT → keep in <block>_pre_ins (p_rec.id := seq.NEXTVAL is valid on
-   12.1), or note "use identity / DEFAULT seq.NEXTVAL — confirm with DBA". Do not change the table.
+7. Sequences in PRE-INSERT → keep in PRE_INSERT (IO_ key := seq.NEXTVAL is valid on 12.1),
+   or note "use identity / DEFAULT seq.NEXTVAL — confirm with DBA". Do not change the table.
 8. Every procedure has a header comment: purpose, `-- Source: <LEVEL.OWNER.TRIGGER>`,
    parameters, errors raised.
 9. Every UI-only/navigation fragment is preserved as a comment block:
-     -- APEX-DA: [Source: BLOCK.ITEM.WHEN-LIST-CHANGED]
+     -- APEX-DA: [Source: BLOCK.ITEM.WHEN-LIST-CHANGED] -> DA "ORDER_TYPE WHEN-LIST-CHANGED"
      -- Original: SET_ITEM_PROPERTY('ORDERS.DISCOUNT', ENABLED, PROPERTY_FALSE);
-     -- Implement as: Dynamic Action on P10_ORDER_TYPE change → Disable P10_DISCOUNT
+     -- Implement as: Dynamic Action on P{{PAGE_ID}}_ORDER_TYPE change → Disable P{{PAGE_ID}}_DISCOUNT
    Collect these in a dedicated section at the END of the body named
    "UI LOGIC FOR APEX DYNAMIC ACTIONS" (no executable code there).
 10. No COMMIT/ROLLBACK inside the package (APEX manages the transaction), unless the
@@ -96,26 +119,32 @@ Rules:
 12. Must compile on Oracle **12.1.0.2** (CLAUDE.md §2a): identifiers ≤ 30 bytes, no qualified
     expressions, no JSON_OBJECT/JSON_OBJECT_T, no LISTAGG ON OVERFLOW, no 12.2+/18c+ syntax.
 13. Spec and body must be consistent (same signatures, same order).
+14. One package per form. Do not add extra adapter packages (IMPR1110, with
+    PKG_IMPR1110 + PKG_IMPR1110_APX behind IMPR1110, is a documented exception from before
+    the f345 standard).
 
 ## Step 5 — Write the extraction report
 analysis/{{FORM_NAME}}/{{FORM_NAME}}_logic_extraction.md containing:
 1. Trigger classification table (trigger → group → package member / DA / dropped + reason)
 2. Built-in replacement table (Step 3)
-3. Package member list with source trigger
+3. Package member list with source trigger and the f345 APEX component that will call it
+   (`PRE-INSERT`, `CTRY_CD VALIDATION`, `CTRY_CD WHEN-VALIDATE-ITEM` …)
 4. Error code table (-20xxx → message → source)
 5. UI logic list for Dynamic Actions (feeds prompt 03)
-6. Globals/parameters → Application Items / page items
+6. Globals/parameters → Application Items (G_ / P_ / reused f345 items) / page items
 7. Dropped logic (with justification) and TODOs / missing sources
 
 ## Output
-- plsql/{{FORM_NAME}}/pkg_{{FORM_NAME}}_spec.sql
-- plsql/{{FORM_NAME}}/pkg_{{FORM_NAME}}_body.sql
+- plsql/{{FORM_NAME}}/{{FORM_NAME}}_spec.sql   (package {{FORM_NAME_UC}})
+- plsql/{{FORM_NAME}}/{{FORM_NAME}}_body.sql
 - analysis/{{FORM_NAME}}/{{FORM_NAME}}_logic_extraction.md
 
 ## Self-check before finishing
 - grep the generated .sql files for: GO_BLOCK|GO_ITEM|SET_ITEM_PROPERTY|SHOW_ALERT|
   EXECUTE_QUERY|FORM_TRIGGER_FAILURE|:SYSTEM\.|:GLOBAL\.|NAME_IN|COPY\( — matches are
   only allowed inside comments.
+- grep for `pkg_{{FORM_NAME}}` and `AI_` — no matches (f345 naming).
+- CHK and REQUIRED_VAL exist; every name ≤ 30 bytes.
 - Every trigger from the inventory appears in the classification table.
 - Print a summary: members created, triggers mapped, DA items, TODO count.
 ```

@@ -11,16 +11,18 @@
 4. As the parsing schema, run once: `scripts/create_migration_registry.sql` and
    `plsql_templates/pkg_forms_compat.sql`. In the APEX app set
    Error Handling Function = `pkg_forms_compat.apex_error_handler`.
-5. Read `docs/apex_structure_standard.md` (Forms-mirror naming: pages, regions, items, triggers).
+5. Read `docs/apex_structure_standard.md` (Forms-mirror naming: pages, regions, items, triggers) and
+   `docs/f345_reference_standard.md` (the f345 reference application: templates, toolbar, naming).
+   Install `apex/Reference/f345.sql` in the workspace: every form is built inside that application.
 6. Start Claude Code in the repository root: `claude`.
 
 ## 2. Workflow per form
 | Step | Prompt template | Input | Output | Review gate |
 |---|---|---|---|---|
 | 1 | `prompt_templates/01_inventory_analysis.md` | `output/xml/<form>_fmb.xml` | `analysis/<form>/<form>_inventory.md` | Answer open questions, check counts |
-| 2 | `02_logic_extraction.md` | inventory + XML | `pkg_<form>` spec/body + extraction report | Compile in DEV, fix errors |
+| 2 | `02_logic_extraction.md` | inventory + XML | package `<FORM>` (`<form>_spec/_body.sql`) + extraction report | Compile in DEV, fix errors |
 | 3 | `03_apex_page_design.md` | inventory + extraction + spec | `<form>_apex_page_spec.md` | Business/lead approval |
-| 4 | `04_apex_export_generation.md` | page spec (+ reference export) | `f<appid>_<form>.sql` | Import in DEV, review in Page Designer |
+| 4 | `04_apex_export_generation.md` | page spec + `apex/Reference/f345.sql` | `f<appid>_<form>.sql` | Import in DEV, review in Page Designer |
 | 5 | `05_test_generation.md` | package + page spec | utPLSQL, UAT checklist, data compare | Tests green, UAT signed |
 
 Open the template, replace the `{{...}}` fields, paste the content of the fenced block into Claude Code.

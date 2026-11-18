@@ -19,8 +19,8 @@
 -- Page items  : P1110_<FORMS_ITEM_NAME> for every field of t_rec, plus
 --               P1110_ROW_ID, P1110_REC_STATUS, P1110_FORM_OPEN, P1110_NEED_FETCH (server-only),
 --               P1110_PRSNL_IMPR, P1110_LETTER_NBR, P1110_CODE, P1110_UI_STATE (JSON for the DA).
--- App items   : AI_P_CURR_PORT_CD, AI_P_USER_ID, AI_P_WS_ID, AI_P_CLASS_CD, AI_P_USER_TYPE,
---               AI_P_BRKR_PORT_CD, AI_P_LIC_TYPE, AI_P_BRKR_NBR (= :PARAMETER.P_* of the menu)
+-- App items   : P_CURR_PORT_CD, SSO_APP_USER, P_GLOBAL_V_WS_ID, P_CLASS_CD, V_USR_TYPE (f345),
+--               P_BRKR_PORT_CD, P_LIC_TYPE, P_BRKR_NBR (= :PARAMETER.P_* of the menu); globals = G_<NAME>
 -- Status      : NOT COMPILED.
 -- History     : 2026-11-18 1.0.0 step 02; 1.1.0 step 03 (see analysis/IMPR1110/IMPR1110_apex_page_spec.md)
 -- =============================================================================
@@ -44,7 +44,7 @@ AS
     PROCEDURE page_wnfi;
     -- Before Header process "IMPORTERS.POST-QUERY": loads P1110_ROW_ID, or
     -- P1110_PORT_CD + P1110_IMPR_NBR (URL with checksum), or :GLOBAL.PORT_CD/IMPR_NBR
-    -- (EXEC_QUERY_NOW) - always within PORT_CD = AI_P_CURR_PORT_CD (block WHERE clause)
+    -- (EXEC_QUERY_NOW) - always within PORT_CD = P_CURR_PORT_CD (block WHERE clause)
     PROCEDURE page_fetch;
     -- Before Header process "IMPORTERS.WHEN-CREATE-RECORD" (when no row is loaded)
     PROCEDURE page_new_record;

@@ -18,7 +18,7 @@ CREATE OR REPLACE PACKAGE pkg_forms_compat
 AUTHID DEFINER
 AS
     c_err_ftf       CONSTANT PLS_INTEGER := -20000;   -- FORM_TRIGGER_FAILURE equivalent
-    c_global_prefix CONSTANT VARCHAR2(3) := 'AI_';    -- :GLOBAL.X -> application item AI_X
+    c_global_prefix CONSTANT VARCHAR2(3) := 'G_';     -- :GLOBAL.X -> application item G_X (f345 convention; was AI_)
 
     -- TRUE when called inside an APEX session
     FUNCTION in_apex RETURN BOOLEAN;
@@ -47,7 +47,7 @@ AS
         p2           IN VARCHAR2 DEFAULT NULL
     );
 
-    -- :GLOBAL.<name>  (stored in application item AI_<NAME>)
+    -- :GLOBAL.<name>  (stored in application item G_<NAME>, f345 convention)
     FUNCTION  get_global (p_name IN VARCHAR2) RETURN VARCHAR2;
     PROCEDURE set_global (p_name IN VARCHAR2, p_value IN VARCHAR2);
     PROCEDURE erase_global (p_name IN VARCHAR2);

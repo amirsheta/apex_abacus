@@ -15,9 +15,9 @@ CREATE TABLE mig_form_registry (
     subsystem      VARCHAR2(60),                    -- APEX Page Group
     app_id         NUMBER        NOT NULL,          -- APEX application id
     page_from      NUMBER        NOT NULL,          -- e.g. 120
-    page_to        NUMBER        NOT NULL,          -- e.g. 129
+    page_to        NUMBER        NOT NULL,          -- main page (f345: child pages = <page>01..<page>09)
     page_alias     VARCHAR2(255) NOT NULL,          -- ORDERS
-    package_name   VARCHAR2(30),                    -- PKG_ORDERS
+    package_name   VARCHAR2(30),                    -- ORDERS (f345: package = form name)
     complexity     VARCHAR2(10),                    -- SIMPLE / MEDIUM / COMPLEX
     status         VARCHAR2(20)  DEFAULT 'PLANNED' NOT NULL,
     owner          VARCHAR2(60),                    -- developer
@@ -44,9 +44,9 @@ CREATE TABLE mig_object_map (
     forms_object_name VARCHAR2(400)  NOT NULL,      -- ORDERS.CUSTOMER_ID.WHEN-VALIDATE-ITEM
     apex_comp_type    VARCHAR2(30),                 -- PAGE, REGION, ITEM, IG_COLUMN, VALIDATION, PROCESS,
                                                     -- DYNAMIC_ACTION, BUTTON, LOV, TEXT_MESSAGE, APP_ITEM, AUTH_SCHEME
-    apex_comp_name    VARCHAR2(400),                -- ORDERS.CUSTOMER_ID.WHEN-VALIDATE-ITEM / P120_CUSTOMER_ID
+    apex_comp_name    VARCHAR2(400),                -- CUSTOMER_ID VALIDATION / P120_CUSTOMER_ID (f345 names)
     page_id           NUMBER,
-    plsql_member      VARCHAR2(70),                 -- PKG_ORDERS.CUSTOMER_ID_WVI
+    plsql_member      VARCHAR2(70),                 -- ORDERS.CUSTOMER_ID_VAL
     status            VARCHAR2(20)   DEFAULT 'MAPPED' NOT NULL,
     notes             VARCHAR2(4000),
     created_on        DATE           DEFAULT SYSDATE NOT NULL,

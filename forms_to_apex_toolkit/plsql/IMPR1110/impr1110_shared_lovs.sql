@@ -64,7 +64,7 @@ SELECT ci.city_arb_name || ' (' || ci.city_cd || ')' AS d, ci.city_cd AS r
 -- LOV_IMPR  (IMPR_NBR_PARENT - importers of the current port)
 SELECT arbc_impr_name || ' (' || impr_nbr || ')' AS d, impr_nbr AS r
   FROM importers
- WHERE port_cd = :AI_P_CURR_PORT_CD
+ WHERE port_cd = :P_CURR_PORT_CD
  ORDER BY impr_nbr DESC;
 
 -- LOV_COMM_RGSTRTN_TYPE  (static - list item values in the form)

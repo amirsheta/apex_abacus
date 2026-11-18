@@ -2,8 +2,10 @@
 -- Package body : pkg_impr1110_apx  (APEX glue for pkg_impr1110, page 1110)
 -- Author       : Claude Code
 -- Created      : 2026-11-18
--- Version      : 1.1.0
+-- Version      : 1.2.0  (2026-11-18: menu parameters read from f345 application items, see ai();
+--                        previous version rollback/IMPR1110/pkg_impr1110_apx_body_v1_1_0.sql)
 -- Status       : NOT COMPILED.
+-- Called by    : package IMPR1110 (APEX entry point, f345 standard). Pages never call this package directly.
 -- Order rules  : item validation = POST-CHANGE then WHEN-VALIDATE-ITEM (Forms order);
 --                save = item validations (changed items only) -> required items ->
 --                PRE-INSERT -> INSERT -> POST-INSERT  /  PRE-UPDATE -> UPDATE -> POST-UPDATE;
@@ -56,10 +58,19 @@ AS
         pkg_forms_compat.copy(p_val, 'P1110_' || p_item);
     END s;
 
+    -- Menu parameters (:PARAMETER.P_*) -> application items of the f345 reference application.
+    -- 1.2.0: names follow f345 (CLAUDE.md §4b) instead of AI_P_*. Items f345 already fills
+    -- (app process "After Auth") are reused; the others are new f345-style P_* items.
     FUNCTION ai (p_name IN VARCHAR2) RETURN VARCHAR2
     IS
     BEGIN
-        RETURN pkg_forms_compat.name_in('AI_' || p_name);
+        RETURN pkg_forms_compat.name_in(
+                   CASE UPPER(p_name)
+                       WHEN 'P_USER_ID'   THEN 'SSO_APP_USER'      -- TODO-VERIFY: Forms P_USER_ID = SSO user id?
+                       WHEN 'P_USER_TYPE' THEN 'V_USR_TYPE'        -- SC_USERS.USR_TYPE_CD (f345)
+                       WHEN 'P_WS_ID'     THEN 'P_GLOBAL_V_WS_ID'  -- TODO-VERIFY
+                       ELSE UPPER(p_name)                          -- P_CURR_PORT_CD, P_CLASS_CD, P_BRKR_NBR,
+                   END);                                           -- P_PORT_TYPE (f345); P_BRKR_PORT_CD, P_LIC_TYPE (new)
     END ai;
 
     FUNCTION answer (p_val IN VARCHAR2) RETURN PLS_INTEGER

@@ -14,6 +14,7 @@
 | Target technology | Oracle APEX **21.2** (release 21.2.x) |
 | Database | Oracle Database **12.1.0.2** (exactly). Standard Oracle SQL and PL/SQL only — see §2a |
 | Structure | **Forms-mirror** standard — see §4a and `docs/apex_structure_standard.md` |
+| Reference application | **f345** — `apex/Reference/f345.sql`. Its templates and naming are mandatory — see §4b and `docs/f345_reference_standard.md` |
 | Goal | Re-implement each Form as an APEX page set, moving all business logic into PL/SQL packages in the database |
 
 Claude Code **cannot open `.fmb` files**. Always work from the XML exported by
@@ -76,8 +77,9 @@ database — keep this in mind before suggesting an APEX upgrade.
    - Terminate every PL/SQL unit with `/` on its own line.
    - End DDL scripts with `SHOW ERRORS` for each compiled unit.
 2. **PL/SQL packages** — always two files: `<pkg>_spec.sql` and `<pkg>_body.sql`.
-3. **APEX exports** — `f<appid>_<formname>.sql` built with `wwv_flow_api` calls,
-   wrapped in `wwv_flow_api.import_begin` / `import_end`. Mark as `-- REVIEW BEFORE IMPORT`.
+3. **APEX exports** — `f<appid>_<formname>.sql` built with `wwv_flow_api` calls: a **component
+   export** into the application built from f345, wrapped in `wwv_flow_api.component_begin` /
+   `component_end`, using f345's ID offset and template IDs (§4b). Mark as `-- REVIEW BEFORE IMPORT`.
 4. **Analysis & design** — Markdown (`.md`) only. Never leave analysis only in the chat.
 5. **Schema changes** — paired scripts: `NNN_<desc>.sql` and `NNN_<desc>_rollback.sql`.
 6. Use UTF-8, Unix line endings, 4-space indentation in PL/SQL, UPPERCASE SQL keywords.
@@ -88,12 +90,13 @@ database — keep this in mind before suggesting an APEX upgrade.
 
 | Object | Pattern | Example |
 |---|---|---|
-| Package per form | `pkg_<form_name>` | `pkg_customers` |
+| Package per form | `<FORM>` — upper-case form name, no prefix (f345) | `AGR1100` |
 | Shared/library package | `pkg_lib_<library_name>` | `pkg_lib_common` |
 | Standalone procedure | `prc_<name>` | `prc_recalc_totals` |
 | Standalone function | `fnc_<name>` | `fnc_get_discount` |
 | Local variables | `v_<name>` | `v_customer_id` |
-| Parameters | `p_<name>` | `p_order_id` |
+| Parameters of members called from APEX | `I_` / `IO_` / `O_` + bind name without `:` (f345) | `IO_P11100_AGRMNT_NO`, `I_MEMBER_ISN` |
+| Parameters of internal-only members | `p_<name>` | `p_order_id` |
 | Constants | `c_<name>` | `c_status_open` |
 | Global (package) variables | `g_<name>` | `g_user_name` |
 | Cursors | `cur_<name>` | `cur_order_lines` |
@@ -101,7 +104,7 @@ database — keep this in mind before suggesting an APEX upgrade.
 | Exceptions | `e_<name>` | `e_credit_limit` |
 | Views for APEX | `v_<form>_<block>` (view objects only) | `v_orders_lines` |
 | APEX page items | `P<page>_<FORMS_ITEM_NAME>` (see §4a) | `P120_CUSTOMER_ID` |
-| APEX application items | `AI_<name>` (replaces `:GLOBAL.<name>`) | `AI_COMPANY_ID` |
+| APEX application items | Reuse the f345 item if one exists (`SSO_APP_USER`, `P_CURR_PORT_CD`, …); otherwise `:GLOBAL.X` → `G_X`, cross-page `:PARAMETER.X` → `P_X` (f345 convention). No `AI_` prefix | `G_LAST_PAGE`, `P_AGRMNT_NO` |
 | APEX LOVs (shared) | `LOV_<NAME>` | `LOV_COUNTRIES` |
 | APEX collections | `COL_<RECORD_GROUP>` | `COL_RG_PRICES` |
 | Migration scripts | `NNN_<description>.sql` | `001_add_audit_columns.sql` |
@@ -119,28 +122,58 @@ Full rules: `docs/apex_structure_standard.md`. Summary:
 | Forms | APEX 21.2 — named / organised as |
 |---|---|
 | Forms application (main `.mmb`) | One APEX application; Navigation Menu mirrors the menu tree and labels |
-| Form module `ORDERS.fmb` | Page range of 10 from `MIG_FORM_REGISTRY`; main page alias `ORDERS`; Page Group = Forms subsystem |
-| Block `ORDERS` | Region with Static ID `ORDERS`, title = block/canvas title, same display order |
+| Form module `ORDERS.fmb` | Main page ID from `MIG_FORM_REGISTRY`, name and alias `ORDERS`; search modal page `<main page>01`, name `ORDERS_SEARCH`, alias `ORDERS-SEARCH`; Page Group = Forms subsystem |
+| Block `ORDERS` | Region with Static ID `ORDERS`, title = block/canvas title (Arabic), same display order |
 | Item `ORDERS.CUSTOMER_ID` | Page item `P<page>_CUSTOMER_ID` (IG column `CUSTOMER_ID`) — keep the Forms item name |
 | Duplicate item names across blocks | `P<page>_<BLOCK_ABBR>_<ITEM>` |
-| Trigger `ORDERS.CUSTOMER_ID` WHEN-VALIDATE-ITEM | APEX validation named `ORDERS.CUSTOMER_ID.WHEN-VALIDATE-ITEM` calling `pkg_orders.customer_id_wvi` |
-| Trigger `ORDERS` PRE-INSERT | Process named `ORDERS.PRE-INSERT` calling `pkg_orders.orders_pre_ins` |
-| UI trigger (WHEN-LIST-CHANGED…) | Dynamic Action named `ORDERS.ORDER_TYPE.WHEN-LIST-CHANGED` |
-| Program unit `CALC_TOTAL` | `pkg_<form>.calc_total` (same name) |
+| Trigger `ORDERS.CUSTOMER_ID` WHEN-VALIDATE-ITEM | Dynamic Action `CUSTOMER_ID WHEN-VALIDATE-ITEM` (FOS plug-in: `ORDERS.CHK(ORDERS.CUSTOMER_ID_VAL(...))`) + validation `CUSTOMER_ID VALIDATION` (`return ORDERS.CUSTOMER_ID_VAL(...)`) |
+| Trigger PRE-INSERT on the master block | Process `PRE-INSERT` calling `ORDERS.PRE_INSERT(...)` |
+| Trigger PRE-INSERT on detail block `ORDER_LINES` | Process `ORDER_LINES PRE-INSERT` calling `ORDERS.LINES_PRE_INSERT(...)` |
+| UI trigger (WHEN-LIST-CHANGED…) | Dynamic Action `ORDER_TYPE WHEN-LIST-CHANGED` (detail block: `<BLOCK> <ITEM> <TRIGGER>`) |
+| Program unit `CALC_TOTAL` | `<FORM>.CALC_TOTAL` (same name) |
 | LOV `LOV_CUSTOMERS` / record group `RG_X` | Shared LOV `LOV_CUSTOMERS` / collection `COL_RG_X` |
 | Alert `AL_CONFIRM_DEL` | Text Message `AL_CONFIRM_DEL` (Shared Components) |
-| `:GLOBAL.X` / `:PARAMETER.X` | Application Item `AI_X` / page item `P<page>_X` |
+| `:GLOBAL.X` / `:PARAMETER.X` | Application Item `G_X` (reuse f345's if it exists) / page item `P<page>_P_X` (+ app item `P_X` when passed between pages) |
 | Menu role `CLERK` | Authorization Scheme `ROLE_CLERK` |
 
 Rules:
 1. Every APEX component's **Comments** attribute = `Source: <FORM>.<BLOCK>.<ITEM>.<TRIGGER>`.
-2. Package member names = `<object>_<trigger_abbr>` (abbreviations in the standard doc), ≤ 30 bytes.
+2. Package member names follow f345: master-block trigger `PRE_INSERT`, detail block
+   `<BLOCK_ABBR>_PRE_INSERT`, validation function `<ITEM>_VAL` (returns error text), side-effect
+   procedure `<ITEM>_WVI`; all ≤ 30 bytes. Details: `docs/f345_reference_standard.md` §5.
 3. Use `pkg_forms_compat` (Forms-like server built-ins: `message`, `ftf`, `alert`, `get_global`, …)
    so converted code reads like the original trigger code.
 4. Register every form and every mapped object in `MIG_FORM_REGISTRY` / `MIG_OBJECT_MAP`
    (`scripts/create_migration_registry.sql`) — produce the INSERT script per form.
-5. Standard buttons (same order on every page, like the Forms toolbar):
-   `SAVE` · `CREATE` · `DELETE` · `QUERY`(refresh) · `CLEAR` · `EXIT`.
+5. Standard buttons come from the **page 0 toolbar** of f345 (`CREATE` · `SAVE` · `DELETE` ·
+   `SEARCH` · `CLEAR` · `FUNCS` / `REPORT_SHOW` · `REPORT_PRINT` · `BACK`). Form pages do **not**
+   define their own copies; they keep the current record key in `P0_PAGE_PK` and handle the
+   requests `CREATE`, `SAVE` and `DELETE`.
+
+---
+
+## 4b. f345 Reference Application (MANDATORY for every APEX export)
+
+`apex/Reference/f345.sql` is the target application's shell: theme 42 (style **ZATCA Forms**,
+RTL, `ar-sa`), page 0 toolbar, login, plug-ins, application items and app processes.
+Full rules with every template ID: **`docs/f345_reference_standard.md`**. Summary:
+
+1. Generate component exports **into** this application. Never regenerate its shared components
+   (theme, templates, page 0, plug-ins, existing application items).
+2. Copy template IDs exactly from f345 (`wwv_flow_api.id(<n>)`), with the same
+   `p_default_id_offset` as the installed target app (f345: `64111868204433090374`).
+   No `__TEMPLATE_ID_*__` placeholders.
+3. Main page: name/alias `<FORM>`, page template *Zatca-Minimal_No_Navigation*
+   (`11622270914969205733`), `p_step_title=>'&SYS_ANAME.'`, CSS class `zf`, protection `C`.
+   Search page `<main page>01`, modal 1800×800. Page 0 finds the search page by that number.
+4. Regions: master block = Form region with template *Interactive Report*
+   (`11621909206693869707`) and classes `zatca-forms cg-form cg-card`; detail blocks = IG with
+   template *Standard* (`11621913486616869708`), `t-Region--noPadding`, `cg-card cg-grid`.
+   Items: *Required - Above* / *Optional - Above* with `t-Form-fieldContainer--stretchInputs`.
+5. Processes, validations and DAs use space-separated Forms trigger names (`PRE-INSERT`,
+   `AGRMNT_MEMBERS PRE-UPDATE`, `CTRY_CD WHEN-VALIDATE-ITEM`, `CTRY_CD VALIDATION`), each a
+   one-line call into `<FORM>`, following the process order in the standard doc §6.
+6. If f345 and `docs/apex_structure_standard.md` disagree, f345 wins.
 
 ---
 
@@ -165,7 +198,7 @@ Full reference: `docs/forms_to_apex_mapping.md`.
 | Alert | `apex.message.confirm` / Confirm DA / `apex_error` / page message |
 | Parameter list / `:PARAMETER` | Page items set via URL (`apex_page.get_url`) |
 | `:GLOBAL.*` | Application Items |
-| Program unit | Package procedure/function in `pkg_<form>` |
+| Program unit | Package procedure/function in `<FORM>` |
 | PL/SQL library (`.pll`) | Shared database package `pkg_lib_<name>` |
 | Object library (`.olb`) | Theme templates, Shared Components, Template Options |
 | Visual attributes | Template Options / CSS classes |
@@ -189,7 +222,7 @@ Full reference: `docs/forms_to_apex_mapping.md`.
 3. **One form per session.** Do not analyse or convert more than one form in a single
    Claude Code session. Start a new session (`/clear`) for the next form.
 4. **Save analysis as Markdown** in `analysis/<form_name>/`. Every step writes its result to a file.
-5. **Business logic lives in the database.** APEX pages call `pkg_<form>` procedures;
+5. **Business logic lives in the database.** APEX pages call `<FORM>` package procedures;
    no business logic duplicated in page-level anonymous blocks longer than ~5 lines.
 6. **Preserve behaviour first, improve second.** Flag improvements as `-- SUGGESTION:` comments;
    do not silently change business rules.
@@ -268,13 +301,14 @@ forms_to_apex_toolkit/
 │   ├── <form_name>_apex_page_spec.md       # step 03
 │   └── <form_name>_review_notes.md
 ├── plsql/<form_name>/
-│   ├── pkg_<form_name>_spec.sql            # step 02
-│   └── pkg_<form_name>_body.sql            # step 02
+│   ├── <form_name>_spec.sql                # step 02 (package <FORM>)
+│   └── <form_name>_body.sql                # step 02
+├── apex/Reference/f345.sql         # reference application (templates + naming, §4b)
 ├── apex/<form_name>/
 │   └── f<appid>_<form_name>.sql            # step 04 (REVIEW BEFORE IMPORT)
 ├── registry/<form_name>_registry.sql       # step 03: INSERTs into MIG_FORM_REGISTRY / MIG_OBJECT_MAP
 ├── tests/<form_name>/
-│   ├── test_pkg_<form_name>.sql            # step 05 (utPLSQL)
+│   ├── test_<form_name>.sql                # step 05 (utPLSQL package TEST_<FORM>)
 │   ├── uat_checklist_<form_name>.md
 │   └── data_compare_<form_name>.sql
 ├── migration/
@@ -292,7 +326,7 @@ forms_to_apex_toolkit/
 ## 10. Workflow per Form (summary)
 
 1. `prompt_templates/01_inventory_analysis.md` → inventory + risk assessment
-2. `prompt_templates/02_logic_extraction.md` → `pkg_<form>` spec/body
+2. `prompt_templates/02_logic_extraction.md` → package `<FORM>` spec/body
 3. `prompt_templates/03_apex_page_design.md` → page spec
 4. `prompt_templates/04_apex_export_generation.md` → APEX export (review before import)
 5. `prompt_templates/05_test_generation.md` → utPLSQL, UAT, data compare

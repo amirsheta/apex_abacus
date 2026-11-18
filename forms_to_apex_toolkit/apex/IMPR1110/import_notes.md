@@ -1,205 +1,119 @@
-# IMPR1110 – Import notes (Step 04)
+# IMPR1110 – Import notes (Step 04, f345 standard)
 
-> ⚠️ **REVIEW BEFORE IMPORT.** `f2000_impr1110.sql` is generated `wwv_flow_api` code. This is
-> **not** an officially supported way to build APEX applications.
-> **No reference export of the target instance was available** (`apex/reference/` is empty).
-> Parameter names and plug-in attribute values therefore come from APEX 21.2 exports in
-> general, not from your instance.
-> Before you import:
-> * Use a **DEV** workspace only.
-> * Back up the target application (export it) first.
-> * After the import, open every page in Page Designer.
+> ⚠️ **REVIEW BEFORE IMPORT.** `f345_impr1110.sql` is generated `wwv_flow_api` code. This is
+> **not** an officially supported way to build APEX applications. Import it into a **DEV**
+> workspace only, export (back up) the target application first, and open every page in Page
+> Designer after the import.
 
 | Item | Value |
 |---|---|
 | Form | IMPR1110 – "إضافة وتعديل بيانات مستورد" |
+| Standard | f345 reference application (`apex/Reference/f345.sql`), `CLAUDE.md` §4b, `docs/f345_reference_standard.md` |
 | Input | `analysis/IMPR1110/IMPR1110_apex_page_spec.md` (step 03) |
-| Generator | `scripts/gen_apex_impr1110.py`. Re-run it after a spec change. Do not edit the `.sql` by hand. It reads spec §4 (items) and holds §5–§13 as data. Its self-check: placeholders, defined ids, begin/end balance, no `wwv_flow_imp`, no passwords. |
-| Files | `apex/IMPR1110/f2000_impr1110.sql` (export), `apex/IMPR1110/impr1110.js` (static file), this file |
-| App id | **2000 = placeholder** (spec §16 Q1). It is used in the file name only. Inside the file the id is `__APP_ID__`. |
-| Status | Generated 2026-11-18 by Claude Code. **Not imported, not compiled, JavaScript not run.** |
+| Generator | `python3 -I scripts/gen_apex_impr1110.py`. Re-run it after a spec change; do not edit the `.sql` by hand |
+| Files | `apex/IMPR1110/f345_impr1110.sql` (export), `apex/IMPR1110/impr1110.js` 1.1.0 (static file), `plsql/IMPR1110/impr1110_spec.sql` + `impr1110_body.sql` (package `IMPR1110`), this file |
+| Replaces | `f2000_impr1110.sql` (removed; still in git history) and the previous notes (`rollback/IMPR1110/import_notes_v1.md`) |
+| Status | Generated 2026-11-18. **Not imported, not compiled, JavaScript not run** (no `node` on the build machine, so not even syntax-checked). |
 
-## 1. Contents
+## 1. What changed compared with the previous export
 
-| Component | Count | Notes |
+| Topic | Before (f2000) | Now (f345 standard) |
 |---|---|---|
-| Pages | 3 | 1110 `IMPR1110` (Normal), 1111 `IMPR1110_QUERY` (Modal), 1112 `IMPR1110_MOBILE` (Modal). **1113 (SUPPORT_ENTRY) is not generated** – see §7 |
-| Regions | 7 | 1110: `TOOLBAR`, `IMPORTERS`, `IMPORTERS_FUNS` (List / Menu Popup). 1111: `IMPORTERS_QRY`, `IMPORTERS` (IR). 1112: `BLK`, `CTRL_BLK` |
-| Page items | 81 | 1110: 77 (76 from spec §4 + `P1110_URL_MOB`). 1111: 2. 1112: 2 |
-| Buttons | 10 | 1110: SAVE · CREATE · DELETE · QUERY · CLEAR · EXIT · FUNCTIONS. 1111: SEARCH. 1112: PB_OK, PB_CANCEL |
-| Validations | 26 | 25 item validations + `IMPORTERS.REQUIRED-ITEMS`. All run only for request `SAVE` |
-| Processes | 13 | 1110: 3 Before Header, 4 After Submit, 3 Ajax Callback. 1112: 2 PL/SQL + Close Dialog |
-| Dynamic Actions | 40 events / 40 actions | 1110: 38. 1111: 2 |
-| Computations | 2 | `P1110_URL_MOB` (After Header), `P1112_MOBILE_NO` (Before Header) |
-| Branch | 1 | 1110 → 1110 after processing |
-| Shared LOVs | 13 | 11 SQL (with 13 Popup LOV columns) + 2 static (5 values) |
-| Application items | 37 | 9 `AI_P_*` + 28 from `:GLOBAL.*`. All *Restricted – may not be set from browser* |
-| Authorization schemes | 13 | `IMPR1110_ACCESS`, 11 × `FUN_<CODE>`, `FUN_REMOVE`. **All return FALSE** – see §6 |
-| List | 1 | `LIST_IMPR1110_FUNS` with 11 entries (labels **proposed**, spec §13.4) |
-| Page group | 1 | `IMPR` |
+| Target | any application, `__TEMPLATE_ID_*__` and `__USER_INTERFACE_ID__` placeholders | the application installed from f345; real f345 template and UI ids, `__ID_OFFSET__` |
+| Pages | 1110, 1111 (search), 1112 (mobile) | **1110** `IMPR1110`, **111001** `IMPR1110_SEARCH`, **111002** `IMPR1110_MOBILE` |
+| Page template | Standard | **Zatca-Minimal_No_Navigation** (main), theme default Modal Dialog (modals); CSS class `zf`, title `&SYS_ANAME.` |
+| Toolbar | 7 buttons on page 1110 | **none on the page**: page 0 `CREATE` · `SAVE` · `DELETE` · `SEARCH` · `CLEAR` · `FUNCS` · `BACK` |
+| Record key | `P1110_IMPR_NBR` only | `P0_PAGE_PK` (= `IMPR_NBR`) drives the toolbar; processes `P0_PAGE_PK CHECK`, `P0_PAGE_PK`, `P0_PAGE_PK AFTER INSERT/DELETE` |
+| Search | IR dialog, closed with `{IMPR_NBR}` | IG page 111001 (opened by page 0 `SEARCH`), link column → `f?p=…:1110:…:P0_PAGE_PK:&PK.` (as AGR1100) |
+| Functions | list `LIST_IMPR1110_FUNS` + 11 `FUN_*` schemes (all FALSE) | inline dialog `FUNCS` with the f345 list **Page Functions** (rights from `SC_SYSOBJ_ROLE_PRIVS`); one custom-event DA per function code |
+| PL/SQL called by the pages | `pkg_impr1110_apx.*` | **`IMPR1110.*` only** (new package, delegates to `pkg_impr1110_apx` / `pkg_impr1110`) |
+| Component names | `IMPORTERS.BUS_ID.WHEN-VALIDATE-ITEM` | `BUS_ID VALIDATION`, `BUS_ID WHEN-VALIDATE-ITEM`, `ON-INSERT`, `WHEN-NEW-FORM-INSTANCE` |
+| Application items | 37 `AI_*` | f345 items reused (`P_CURR_PORT_CD`, `P_CLASS_CD`, `P_PORT_TYPE`, `P_BRKR_NBR`, `SSO_APP_USER`, `V_USR_TYPE`, `P_GLOBAL_V_WS_ID`); new: 28 × `G_<GLOBAL>` + `P_BRKR_PORT_CD`, `P_LIC_TYPE`, `P_PRSNL_IMPR`, `P_LETTER_NBR` |
+| Authorization | 13 schemes | `IMPR1110_ACCESS` only (still fails closed, §6) |
 
 ## 2. Placeholders
 
-The script has `set define off`. Replace every token before the import, for example:
-`sed -i 's/__APP_ID__/2000/g; s/__WORKSPACE_ID__/1234567890/g' f2000_impr1110.sql`.
+The script has `set define off`. Replace the four tokens before the import:
+`sed -i '' 's/__APP_ID__/345/g; s/__WORKSPACE_ID__/<id>/g; s/__SCHEMA_NAME__/CUSTOMS/g; s/__ID_OFFSET__/<offset>/g' f345_impr1110.sql`
 
 | Token | Value | How to get it |
 |---|---|---|
 | `__WORKSPACE_ID__` | workspace id | `SELECT workspace_id FROM apex_workspaces WHERE workspace = '<NAME>';` |
-| `__APP_ID__` | IMPR application id (must already exist) | App Builder, or `SELECT application_id FROM apex_applications WHERE workspace = '<NAME>';` |
-| `__SCHEMA_NAME__` | parsing schema of the application | `SELECT owner FROM apex_applications WHERE application_id = <APP_ID>;` |
-| `__USER_INTERFACE_ID__` | Desktop user interface of the application. Extra token: `create_page` needs it, and it is not a template | `SELECT user_interface_id FROM apex_appl_user_interfaces WHERE application_id = <APP_ID>;` |
-| `__TEMPLATE_ID_PAGE_STANDARD__` | page template *Standard* | `SELECT template_name, template_id FROM apex_application_temp_page WHERE application_id = <APP_ID>;` |
-| `__TEMPLATE_ID_PAGE_MODAL__` | page template *Modal Dialog* | same view |
-| `__TEMPLATE_ID_REGION_STANDARD__` | region template *Standard* | `SELECT template_name, template_id FROM apex_application_temp_region WHERE application_id = <APP_ID>;` |
-| `__TEMPLATE_ID_REGION_BUTTONS__` | region template *Buttons Container* | same view |
-| `__TEMPLATE_ID_REGION_BLANK__` | region template *Blank with Attributes* | same view |
-| `__TEMPLATE_ID_BUTTON_TEXT__` | button template *Text* | `… FROM apex_application_temp_button …` |
-| `__TEMPLATE_ID_LABEL_OPTIONAL__` | label template *Optional* | `… FROM apex_application_temp_label …` |
-| `__TEMPLATE_ID_LABEL_REQUIRED__` | label template *Required* | same view |
-| `__TEMPLATE_ID_LIST_MENU_POPUP__` | list template *Menu Popup* | `… FROM apex_application_temp_list …` |
+| `__APP_ID__` | id of the application installed from f345 (f345 itself: 345) | App Builder |
+| `__SCHEMA_NAME__` | parsing schema (f345: `CUSTOMS`) | `SELECT owner FROM apex_applications WHERE application_id = <APP_ID>;` |
+| `__ID_OFFSET__` | ID offset of the installed application (f345 export: `64111868204433090374`) | `SELECT template_id - 11621850520475869674 FROM apex_application_temp_page WHERE application_id = <APP_ID> AND template_name = 'Standard';` |
 
-Check that nothing is left: `grep -n '__[A-Z_]*__' f2000_impr1110.sql` must print nothing.
+**The offset must be right.** Every template, the user interface, the page 0 toolbar region and
+the *Page Functions* list are referenced as `wwv_flow_api.id(<f345 number>)`. They resolve only if
+`__ID_OFFSET__` equals the offset of the installed application. Do **not** import with
+`apex_application_install.generate_offset`.
 
-**Offset:** the file uses `p_default_id_offset => 0` and `wwv_flow_api.id(...)` for every id,
-including the template ids. If you import with `apex_application_install.generate_offset`,
-APEX adds the offset to the template ids too, and the template references break. Either:
-* import without an offset (the generated ids start with 1110…, 1111…, 1112…, 9000… and do
-  not clash with normal APEX ids), or
-* subtract the offset from each template id before you put it into the placeholder.
+Check: `grep -n '__[A-Z_]*__' f345_impr1110.sql` must print nothing.
 
 ## 3. Prerequisites (in `__SCHEMA_NAME__`)
 
-1. Compile, in this order:
-   * `pkg_forms_compat` (`plsql_templates/pkg_forms_compat.sql`);
-   * `pkg_impr1110` spec + body (`plsql/IMPR1110/`, body **1.0.1**);
-   * `pkg_impr1110_apx` spec + body (1.1.0).
-
-   None of them have been compiled yet. Open step 02/03 TODOs remain: `STR_DB`, `INTRFACE`, `TMPLT`, `LIB_USR` …
-2. The parsing schema needs SELECT on:
-   * `IMPORTERS`, `IMPR_TYPES`, `IMPR_TYPE_ID_TYPES`, `BUS_ID_TYPES`, `CITIES`, `COUNTRIES`;
-   * `SD_PORTS`, `CG_REF_CODES`.
-
-   It also needs EXECUTE on `STR_DB`. These are used by the LOVs and by the IR of page 1111.
-3. Application attribute *Error Handling Function* = `pkg_forms_compat.apex_error_handler`
-   (spec §11). This is not part of the component export, so set it by hand.
-4. Upload `impr1110.js` as a Static Application File.
-   * The page references `#APP_FILES#impr1110#MIN#.js`, so upload a minified `impr1110.min.js`
-     as well.
-   * Alternatively, change *JavaScript File URLs* of page 1110 to `#APP_FILES#impr1110.js`.
-5. Application process `IMPR_SET_SESSION_PARAMS` (After Authentication) must fill the `AI_P_*`
-   items. It is **MISSING SOURCE** (spec §13.2). Without it, `AI_P_CURR_PORT_CD` is NULL and the
-   block WHERE clause finds no rows.
-6. Application language Arabic + text direction RTL (spec header), set in the application
-   attributes.
+1. Compile, in this order (none of them has been compiled yet):
+   1. `plsql_templates/pkg_forms_compat.sql`: **changed**, `:GLOBAL.X` is now application item `G_X` (was `AI_X`). Previous version: `rollback/COMMON/pkg_forms_compat_v0.sql`.
+   2. `pkg_impr1110` spec + body 1.0.1 (unchanged).
+   3. `pkg_impr1110_apx` spec + body **1.2.0**: the menu parameters are read from the f345 application items (`ai()`). Previous version: `rollback/IMPR1110/pkg_impr1110_apx_body_v1_1_0.sql`.
+   4. **`IMPR1110`** spec + body 1.0.0 (new).
+2. Grants: SELECT on `IMPORTERS`, `IMPR_TYPES`, `IMPR_TYPE_ID_TYPES`, `BUS_ID_TYPES`, `CITIES`, `COUNTRIES`, `SD_PORTS`, `CG_REF_CODES`, `SC_SYSTEM_OBJECTS`; EXECUTE on `STR_DB`.
+3. Upload `impr1110.js` (and a minified `impr1110.min.js`) as Static Application Files. The page references `#APP_FILES#impr1110#MIN#.js`.
+4. Nothing else is needed in the application. Error handling (`APP_ERROR_HANDLER`), RTL / Arabic, login, `After Auth` (fills `P_CURR_PORT_CD`, `SSO_APP_USER`, …) and the page 0 toolbar all come from f345.
 
 ## 4. Import
 
 ```
-sql __SCHEMA_NAME__@<tns> @apex/IMPR1110/f2000_impr1110.sql
+sql __SCHEMA_NAME__@<tns> @apex/IMPR1110/f345_impr1110.sql
 ```
-or App Builder → Import → File Type **"Page or Component Export"**.
+or App Builder → Import → File Type **"Page or Component Export"**. Pages 1110, 111001 and 111002 are
+removed first (`remove_page`), so a re-import is safe. Shared components keep their ids. A
+component with the same name but another id makes the import fail: delete or rename it first.
 
-Alternative with a workspace / application override (read the offset note in §2 first):
-```
-begin
-  apex_application_install.set_workspace('<WORKSPACE>');
-  apex_application_install.set_application_id(<APP_ID>);
-  apex_application_install.generate_offset;   -- breaks template ids, see §2
-  apex_application_install.set_schema('<SCHEMA>');
-end;
-/
-@apex/IMPR1110/f2000_impr1110.sql
-```
-Re-import:
-* Pages 1110–1112 are removed first (`remove_page`).
-* Shared components (LOVs, application items, schemes, list, page group) keep the same ids.
-  A component import is expected to replace them.
-* If a component with the **same name but another id** already exists in the application, the
-  import fails. Delete it or rename it first.
+## 5. Deviations from the f345 standard (on purpose)
 
-## 5. Uncertain parameters and settings left out (check in Page Designer)
-
-| Where | What was generated | Why uncertain / what to check |
+| # | Deviation | Why |
 |---|---|---|
-| Popup LOV items (8) | `p_attribute_01 = 'DIALOG'`, `_02 = 'FIRST_ROWSET'`, `_03 = 'N'` | **Manual entry** (spec: "manual entry allowed") was not set: I am not sure which attribute number it is in 21.2. Set *Manual Entry = Yes* by hand. Display = code (column `D`); the name columns are search/display columns |
-| `create_list_of_values_cols` | `p_query_column_name, p_heading, p_display_sequence, p_data_type` | visibility/searchable flags not set → defaults. Check the column list of each LOV |
-| Display Only items | `p_attribute_01 = 'Y'` (escape), `_02 = 'VALUE'`, `_04 = 'N'`, `_05 = 'PLAIN'` | `_04` is meant to be **Send On Page Submit = No** (spec §0.4). Check it on 2–3 items. If it is wrong, server values can be overwritten by stale page values |
-| Text Field | `_01 'N'`, `_02 'N'`, `_04` subtype (`TEXT`/`EMAIL`/`PHONE`), `_05 'BOTH'` (trim) | check the subtype on `B_EMAIL`, `B_MOBILE_NO`, `P1112_MOBILE_NO` |
-| Number Field | `_03 = 'left'` | alignment only |
-| Buttons | `p_button_position = 'REGION_TEMPLATE_NEXT'` for all toolbar buttons | the 21.2 position name. The order SAVE · CREATE · DELETE · QUERY · CLEAR · EXIT comes from the sequence |
-| Button FUNCTIONS | `p_button_css_classes = 'js-menuButton'`, `data-menu="IMPORTERS_FUNS_menu"` | Universal Theme menu-button pattern. The list region static id `IMPORTERS_FUNS` gives the menu id `IMPORTERS_FUNS_menu` |
-| Layout | `p_colspan` from spec §4 (at least 2 for labelled items), no `p_grid_column` | the spec's start columns were not used, so APEX places the items. **Review the layout** against the Forms canvas |
-| Hidden server items | Display Only + Column CSS class `u-hidden` (`p_grid_column_css_classes`) | check that the empty columns do not leave gaps |
-| `create_worksheet` (1111) | `p_show_detail_link = 'C'`, detail link `javascript:apex.navigation.dialog.close(true,{IMPR_NBR:'#IMPR_NBR#'})` | check that the link returns the number to page 1110 (DA "IMPR1110_QUERY dialog closed") |
-| `create_security_scheme` | `p_scheme_type = 'NATIVE_FUNCTION_BODY'`, `p_caching = 'BY_USER_BY_PAGE_VIEW'` | comments are inside the PL/SQL code (no comment parameter was used) |
-| Processes / validations | `p_process_when_type = 'EXPRESSION'` + `p_process_when2 = 'PLSQL'` (WHEN-CREATE-RECORD), `'VAL_OF_ITEM_IN_COND_EQ_COND2'` (POST-QUERY) | check the condition of the 3 Before Header processes |
-| Process "Close Dialog" (1112) | `NATIVE_CLOSE_WINDOW` without attributes | no items returned. Page 1110 then calls `IMPR1110_FUN('IMPR1110_MOB_RET')` |
-| Page 1110 *Warn on Unsaved Changes* | default (Yes) | buttons CREATE/CLEAR ask in `impr1110.clear()`. QUERY ignores the warning (dialog) |
-| `apex.item().setRequired` | used only if it exists | I am not sure it exists in 21.2. The fallback sets the `required` attribute and the `is-required` class. **The server check (`REQUIRED-ITEMS`) is what counts** |
-| `apex.item().refresh()` on the select list `P1110_BUS_ID_TYPE_CD` | after IMPR_TYPE_CD is validated | no cascading parent is set: the LOVs read the session state, which `IMPR1110_ITEM` updates on every change. Check that the list refreshes |
+| 1 | Item triggers run through `impr1110.js` + the AJAX callbacks `IMPR1110_ITEM / _CONFIRM / _FUN`, not through the FOS *Execute PL/SQL* plug-in | the Forms triggers ask Confirm questions (alert 9-120, WNRI, UPD_IMPR) between server calls and change enable/required state of many items; the FOS plug-in cannot do that. The DA **names** follow f345 (`<ITEM> WHEN-VALIDATE-ITEM`) |
+| 2 | Master block `IMPORTERS` is a Static region (template *Interactive Report*, classes `zatca-forms cg-form cg-card`), not `NATIVE_FORM` | DML is done in the package (`ON-INSERT` / `ON-UPDATE` / `KEY-DELREC` → `page_dml`), with the Forms PRE/POST logic in between |
+| 3 | DML processes are named `ON-INSERT` / `ON-UPDATE` instead of separate `PRE-INSERT` / `Process form` / `POST-INSERT` | one call runs PRE → DML → POST in the order of the Forms commit (`pkg_impr1110_apx.page_dml`) |
+| 4 | Forms parameters keep the item names `P1110_PRSNL_IMPR` / `P1110_LETTER_NBR` (standard: `P1110_P_<PARAM>`) | `pkg_impr1110_apx` reads these names; renaming is a step-02 change |
+| 5 | `IMPR1110.<ITEM>_VAL` ignores its `I_` parameter | the adapter reads the whole record from session state; the parameter documents the item |
+| 6 | Page 111002 sets `:G_LAST_PAGE := 1110` (process `G_LAST_PAGE KEEP`, After Header) | f345 `SCREEN ENTRY RESET` keeps the record only for `<page>` and `<page>01`. Without it, the next load of page 1110 after the mobile dialog would clear `P0_PAGE_PK` and the record |
+| 7 | No `P1110_ADJ_FUNS` item | the *Page Functions* list then shows every function the user's roles allow. Functions that the form switches off (TMPLT.DISABLE_FUN) are refused at click time by `impr1110.js` (`funOff`) |
 
-## 6. Security – must be done before any user test
+## 6. Security (must be done before any user test)
 
-* **All 13 authorization schemes return `FALSE`** (`-- TODO: MISSING SOURCE`).
-  * Nobody can open pages 1110–1112 until the real rules are written.
-  * The rules come from `CIC_MENU` / `SEC_LIB` (`IMPR1110_ACCESS`) and `TMPLT.LOAD_FUNCTIONS` (`FUN_*`).
-  * These sources are now in the repository (`forms/COMMON/menus/CIC_MENU_MMB.xml`,
-    `forms/COMMON/libraries/`); they are to be analysed in a revision of steps 02/03.
-  * For a DEV smoke test only, you may temporarily change the body to `RETURN TRUE;`.
-    **Never import that into TEST/PROD.**
-* Session State Protection:
-  * pages are *Arguments Must Have Checksum* (`p_protection_level 'C'`);
-  * server items are *Restricted* (`'I'`);
-  * URL items (`P1110_PRSNL_IMPR`, `P1110_LETTER_NBR`, `P1111_PRSNL_IMPR`, `P1112_IMPR_NBR`) are *Checksum Required – Session* (`'S'`).
-* No credentials, host names or passwords are in the files (self-check).
+* `IMPR1110_ACCESS` **returns FALSE** (`-- TODO: MISSING SOURCE`), so nobody can open pages 1110 / 111001 / 111002 until the rule from `CIC_MENU` / `SEC_LIB` is written. For a DEV smoke test only, change it to `RETURN TRUE;`. **Never import that into TEST/PROD.**
+* Function rights now come from f345 *Page Functions* (`SC_SYSOBJ_ROLE_PRIVS`, `SC_USER_ROLES`, `SC_GROUP_ROLES`, `SC_USER_EXCLUDED_ROLES`).
+* Session State Protection: pages `C`; server items `I`; `P111002_IMPR_NBR` `S`; all new application items *Restricted*.
 
-## 7. Known gaps (carried from step 03 §16 or found while generating)
+## 7. Open points / TODO-VERIFY
 
-| # | Gap | Effect | Next step |
+| # | Point | Effect | Next step |
 |---|---|---|---|
-| 1 | Page 1113 SUPPORT_ENTRY not generated | functions IMPR1110F1/F2/F3/F5 show "لم تُنشأ بعد" | `forms/SC/Support_Entry_fmb.xml` now exists → design 1113 (revise step 03) |
-| 2 | Authorization rules (§6) | pages closed | analyse CIC_MENU / SEC_LIB / TMPLT |
-| 3 | Function titles (`LIST_IMPR1110_FUNS`) proposed | wrong labels possible | TMPLT / SC_SYSTEM_OBJECTS |
-| 4 | Alert 9-120 ("prefix the commercial code?") in BUS_ID / BUS_ID_BRNCH validation is **not asked**; the server uses button 1 (yes) | user cannot answer "no" | add `CR` to `ajax_confirm`, then ask it in `impr1110.validate` (x03) |
-| 5 | Popup LOV pick detection (`x05 = LOV`, sets `:GLOBAL.MINS_COMM_CD`) uses a mousedown/keydown on the LOV button | a typed value after the LOV button was pressed counts as an LOV pick | acceptable. Check in UAT |
-| 6 | Hijri date entry (KEY-F4 calendar) | plain text with mask `MI-MM-YYYY` | spec §16 Q5 |
-| 7 | FRM-40202/40350/40654 Arabic texts | English/technical text | spec §16 Q7 |
-| 8 | `IMPR1115_SCR` function | message only | when IMPR1115 is converted |
-| 9 | Spec DA 3 (BUS_ID confirm), DA 4 (IMPR_NBR re-query), DA 11 (function click) | implemented inside `impr1110.validate` / `applyUi(REQUERY)` / list links `javascript:impr1110.fun(...)`, not as separate DAs | Forms-mirror name kept on the item DA |
-| 10 | `P1110_UI_STATE` is **Hidden** (spec: Display Only) | `$v()` must read it on page load. The server only writes it; the page-load code clears it, so a later submit cannot send it back stale | none |
-| 11 | `P1110_URL_MOB` (new hidden item + After Header computation `apex_page.get_url`) | page 1112 is opened with a server-built checksum URL | added to spec §4 at the next revision |
-| 12 | Static LOV `LOV_COUNTRIES_GULF` replaces the "inline LOV" of `P1110_CTRY_CD` | a Popup LOV needs a shared LOV for its extra columns | none |
+| 1 | Function custom-event names = function codes (`IMPR1110F1` … `IMPR1110_MOB`). The list fires `SC_SYSTEM_OBJECTS.SYS_OS_FILE_NAME` | if the file names differ (for example `IMPR1110F1.fmx`), the click shows nothing | `SELECT sys_os_file_name FROM sc_system_objects WHERE mainsysobj_id = <IMPR1110 id>` and rename the DAs |
+| 2 | Menu-parameter mapping in `pkg_impr1110_apx.ai()`: `P_USER_ID` → `SSO_APP_USER`, `P_WS_ID` → `P_GLOBAL_V_WS_ID` | wrong user id / workstation in the Forms logic | confirm with the Forms menu `CIC_MENU` |
+| 3 | `P_BRKR_PORT_CD`, `P_LIC_TYPE` are new and **nobody fills them** (f345 `After Auth` does not) | broker logic sees NULL | add them to f345 `After Auth` |
+| 4 | Callers must set `P_PRSNL_IMPR` / `P_LETTER_NBR` (server side) before opening page 1110 | otherwise the page opens without them, like Forms without parameters | change the callers when they are converted |
+| 5 | `&SYS_ANAME.` (page title) is not set by this export | browser tab title is empty if no other code sets it | check how f345 fills `SYS_ANAME` |
+| 6 | `apexbeforepagesubmit` + `apex.event.gCancelFlag` used to stop CREATE / SAVE for the PRE-INSERT confirm and invalid items | if it does not cancel in 21.2, the record is saved without the question (the server still validates) | UAT step 5.4 |
+| 7 | Page SUPPORT_ENTRY (IMPR1110F1/F2/F3/F5) not generated | those functions show "لم تُنشأ بعد" | convert `forms/SC/Support_Entry_fmb.xml` as `<page>02` |
+| 8 | `registry/IMPR1110_registry.sql` (step 03) still lists pages 1111 / 1112 and the old component names | registry out of date | regenerate in a step-03 revision |
+| 9 | Items carried from the previous notes: Popup LOV *Manual Entry*, Display Only *Send On Page Submit*, layout spans, Hijri date entry (spec §16 Q5), FRM-40202 texts | see `rollback/IMPR1110/import_notes_v1.md` §5 / §7 | Page Designer review |
 
-## 8. Code change made in this step
+## 8. Post-import checklist
 
-`plsql/IMPR1110/pkg_impr1110_body.sql` 1.0.0 → **1.0.1** (previous version:
-`rollback/IMPR1110/pkg_impr1110_body_v1.sql`):
-* The real `STR.StrFormat` source is in `forms/COMMON/libraries/CIC_LIB.pld`:
-  `STR_DB.StrFormat(strInput, V_SRCH)` with `V_SRCH = 1` for TRUE, else `0`.
-* The three calls translated from `STR.StrFormat` now pass `1` / `0` instead of `TRUE` / nothing.
-  `TRUE` would not compile against a NUMBER parameter.
-* The IR of page 1111 uses `str_db.strformat(:P1111_ARBC_IMPR_NAME, 1)` (no BOOLEAN in SQL on 12.1).
-* `scripts/expand_orig.py` self-check: 0 problems.
-
-## 9. Post-import checklist
-
-1. Page Designer, pages 1110, 1111, 1112:
-   * no "invalid template" warnings;
-   * check every item marked in §5.
-2. Utilities → Advisor on pages 1110–1112.
-3. Shared Components:
-   * the 13 LOVs return rows for a sample port;
-   * the list has 11 entries;
-   * the 37 application items are *Restricted*.
-4. Replace the authorization bodies (§6).
-5. Test each path. These are the UAT steps (step 05):
+1. Page Designer on 1110, 111001, 111002: no "invalid template" warnings, and the hero / form / dialog regions show the f345 look.
+2. The page 0 toolbar on 1110 shows `CREATE` · `SEARCH` · `CLEAR` · `FUNCS` · `BACK` for a new record, and `SAVE` · `DELETE` · `CLEAR` · `FUNCS` · `BACK` for a queried one. It is hidden inside both dialogs.
+3. Utilities → Advisor on the three pages.
+4. Shared Components: 13 LOVs return rows for a sample port; 32 new application items are *Restricted*; none duplicates an f345 item.
+5. UAT paths:
    1. open the page (WNFI, PORT_CD disabled);
-   2. search with QUERY → 1111 → choose a row (POST-QUERY);
+   2. `SEARCH` → 111001 → search by name / number → click the number → page 1110 shows the importer, toolbar switches to SAVE / DELETE;
    3. change each validated item (AJAX error inline, focus stays);
-   4. new record + SAVE (confirm for class 1 / user type 3, number message);
-   5. update + SAVE;
-   6. DELETE (confirm);
-   7. CLEAR / CREATE with unsaved changes;
-   8. functions F4, IMPR_CAR_AGENT (WNRI confirm), IMPR_MCI_SERVICE, IMPR1110_MOB (→ 1112 → mobile written back), IMPR1115_GZT, CREATE_BRKR_IMPR_AUTH.
+   4. `CLEAR` → new record → `CREATE` (PRE-INSERT confirm for class 1 / user type 3, number message, toolbar switches to SAVE);
+   5. update → `SAVE`;
+   6. `DELETE` (page 0 confirm) → empty record, toolbar back to CREATE;
+   7. `FUNCS` → each function (F4, IMPR_CAR_AGENT, IMPR_MCI_SERVICE, IMPR1110_MOB → 111002 → mobile written back, then `SAVE` keeps the record: deviation 6), IMPR1115_GZT, CREATE_BRKR_IMPR_AUTH.
 6. Debug (`&DEBUG.=YES`): every AJAX call returns `{"items":…,"ui":…}` or `{"error":…}`.

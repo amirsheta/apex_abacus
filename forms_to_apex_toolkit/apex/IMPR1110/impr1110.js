@@ -6,16 +6,17 @@
  * Target      : Oracle APEX 21.2 (apex.server, apex.item, apex.message, apex.page, apex.navigation)
  * Author      : Claude Code
  * Created     : 2026-11-18
- * Version     : 1.0.0 (step 04)
+ * Version     : 1.1.0 (step 04, f345 standard: toolbar on page 0, search page 111001,
+ *               mobile page 111002; previous version rollback/IMPR1110/impr1110_js_v1.js)
  * Purpose     : ONE place for the behaviour the Dynamic Actions of page 1110 call, like a Forms
  *               library. No business rules here: every rule runs on the server in
- *               pkg_impr1110 / pkg_impr1110_apx. This file only
+ *               IMPR1110 (-> pkg_impr1110_apx / pkg_impr1110). This file only
  *                 - calls the AJAX processes IMPR1110_ITEM / IMPR1110_CONFIRM / IMPR1110_FUN,
  *                 - writes the returned item values into the page,
  *                 - applies the UI state (pkg_impr1110.ui_json): enable/disable, required,
  *                   show/hide, focus, messages, function menu,
  *                 - asks the Confirm questions and sends the answers back.
- *               The server re-checks everything at SAVE (validations IMPORTERS.*), so nothing
+ *               The server re-checks everything at SAVE (validations "<ITEM> VALIDATION"), so nothing
  *               here can be bypassed to save invalid data.
  * Status      : NOT TESTED (REVIEW BEFORE IMPORT).
  * ============================================================================= */
@@ -112,7 +113,7 @@ window.impr1110 = (function ($) {
             if (e.item === "IMPORTERS") {
                 if (e.prop === "REQUERY" && on) { apex.page.submit({ request: "QUERY", showWait: true }); }
                 if (e.prop === "DO_COMMIT" && on) { commit = true; }
-                if (e.prop === "BLOCK_UPDATE_ONLY") { $("#CREATE, #DELETE").toggle(!on); }
+                if (e.prop === "BLOCK_UPDATE_ONLY") { toolbar("CREATE").add(toolbar("DELETE")).toggle(!on); }
                 return;
             }
             name = pi(e.item);
@@ -152,8 +153,23 @@ window.impr1110 = (function ($) {
             apex.item(pi(ui.focus)).setFocus();
         }
         if (commit) {
-            apex.page.submit({ request: "SAVE", showWait: true });
+            apex.page.submit({ request: saveRequest(), showWait: true });
         }
+    }
+
+    // ------------------------------------------------------------------ page 0 toolbar (f345)
+    // The toolbar buttons live on the global page (region P0_ACTIONS) and have no static ids.
+    // CREATE and SAVE share the class cg-b-save; only one of them is rendered (P0_PAGE_PK).
+    function toolbar(request) {
+        if (request === "DELETE") { return $("#P0_ACTIONS .cg-b-del"); }
+        if (request === "CREATE") { return $v("P0_PAGE_PK") ? $() : $("#P0_ACTIONS .cg-b-save"); }
+        if (request === "SAVE")   { return $v("P0_PAGE_PK") ? $("#P0_ACTIONS .cg-b-save") : $(); }
+        return $();
+    }
+
+    // CREATE inserts a new record, SAVE updates the record in P0_PAGE_PK (f345 toolbar requests)
+    function saveRequest() {
+        return $v("P0_PAGE_PK") ? "SAVE" : "CREATE";
     }
 
     // ------------------------------------------------------------------ server calls
@@ -269,38 +285,35 @@ window.impr1110 = (function ($) {
         return k.length ? k[0] : null;
     }
 
-    // DA 9 TOOLBAR.SAVE + IMPORTERS.PRE-INSERT confirm
+    // Commit from code (IMPR_MCI_SERVICE, DO_COMMIT): same path as the toolbar button
     function save() {
-        return enqueue(function () {
-            var bad = firstInvalid();
-            if (bad) {
-                pageError(TXT.invalid, bad);
-                apex.item(pi(bad)).setFocus();
-                return;
-            }
-            if (opts.confirmNew) {
-                return confirmAsk(TXT.newRec).then(function (ans) {
-                    if (ans === 1) { apex.page.submit({ request: "SAVE", showWait: true }); }
-                });
-            }
-            apex.page.submit({ request: "SAVE", showWait: true });
-        });
+        apex.page.submit({ request: saveRequest(), showWait: true });
     }
 
-    // DA 10 IMPORTERS.KEY-DELREC confirm
-    function del() {
-        apex.message.confirm(TXT.del, function (ok) {
-            if (ok) { apex.page.submit({ request: "DELETE", showWait: true }); }
-        });
-    }
-
-    // TOOLBAR.CREATE / FORM.KEY-CLRFRM
-    function clear(request) {
-        var go = function () { apex.page.submit({ request: request, showWait: true, ignoreChange: true }); };
-        if (apex.page.isChanged()) {
-            apex.message.confirm(TXT.unsaved, function (ok) { if (ok) { go(); } });
-        } else {
-            go();
+    // DA "PRE-INSERT CONFIRM" (Before Page Submit) = TOOLBAR.SAVE + IMPORTERS.PRE-INSERT confirm.
+    // The page 0 buttons CREATE / SAVE submit directly; this stops the submit while an item is
+    // still invalid, and asks the PRE-INSERT question before a CREATE. DELETE (confirm) and
+    // CLEAR (redirect) are handled by page 0 itself.
+    var confirmed = false;
+    function beforeSubmit(request) {
+        var bad;
+        if (request !== "CREATE" && request !== "SAVE") { return; }
+        if (confirmed) { confirmed = false; return; }
+        bad = firstInvalid();
+        if (bad) {
+            apex.event.gCancelFlag = true;
+            pageError(TXT.invalid, bad);
+            apex.item(pi(bad)).setFocus();
+            return;
+        }
+        if (request === "CREATE" && opts.confirmNew) {
+            apex.event.gCancelFlag = true;
+            confirmAsk(TXT.newRec).then(function (ans) {
+                if (ans === 1) {
+                    confirmed = true;
+                    apex.page.submit({ request: "CREATE", showWait: true });
+                }
+            });
         }
     }
 
@@ -322,7 +335,8 @@ window.impr1110 = (function ($) {
         });
     }
 
-    // DA 11 function menu (LIST_IMPR1110_FUNS) = TMPLT EXECUTE_FUNCTION -> EXEC_FUNS
+    // DA "<CODE> FUNCTION" (custom event <CODE> fired by the f345 "Page Functions" list in
+    // region FUNCS) = TMPLT EXECUTE_FUNCTION -> EXEC_FUNS
     function fun(code) {
         if (funOff[code]) {
             pageError(TXT.funOff);
@@ -360,18 +374,13 @@ window.impr1110 = (function ($) {
         });
     }
 
-    // DA 13 search dialog (page 1111) closed with {IMPR_NBR}
-    function queryClosed(data) {
-        if (data && data.IMPR_NBR) {
-            apex.item(pi("IMPR_NBR")).setValue(String(data.IMPR_NBR), null, true);
-            apex.page.submit({ request: "QUERY_NBR", showWait: true, ignoreChange: true });
-        }
-    }
+    // The search page 111001 returns the record through P0_PAGE_PK (link column, f345), so no
+    // close handler is needed for it.
 
-    // DA 14 / 15 other dialogs closed
+    // DA "DIALOG CLOSED": page 111002 (LOV_UPDATE_IMPR_MOBILE) closed
     function dialogClosed(data) {
         var pg = data && String(data.dialogPageId);
-        if (pg === "1112") {
+        if (pg === "111002") {
             enqueue(function () { return runFun("IMPR1110_MOB_RET"); });
         }
         // page 1113 (SUPPORT_ENTRY): runFun(<code>) after the dialog - TODO when the page exists
@@ -379,7 +388,7 @@ window.impr1110 = (function ($) {
 
     return {
         init: init, validate: validate, lovReturn: lovReturn, wnii: wnii, listChanged: listChanged,
-        keyNext: keyNext, save: save, del: del, clear: clear, fun: fun,
-        queryClosed: queryClosed, dialogClosed: dialogClosed, applyUi: applyUi
+        keyNext: keyNext, save: save, beforeSubmit: beforeSubmit, fun: fun,
+        dialogClosed: dialogClosed, applyUi: applyUi
     };
 })(apex.jQuery);

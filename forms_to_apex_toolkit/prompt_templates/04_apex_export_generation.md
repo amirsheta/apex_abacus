@@ -1,90 +1,99 @@
 # Prompt 04 — APEX 21.2 Export SQL Generation
 
-**When to use:** After `03_apex_page_design` — the page spec has been reviewed and approved.
-**Input:** `analysis/<form_name>/<form_name>_apex_page_spec.md` (+ a reference export, strongly recommended)
+**When to use:** After `03_apex_page_design`, once the page spec has been reviewed and approved.
+**Input:** `analysis/<form_name>/<form_name>_apex_page_spec.md` + the reference application
+`apex/Reference/f345.sql` (mandatory) + `docs/f345_reference_standard.md`
 **Output:** `apex/<form_name>/f<appid>_<form_name>.sql` + `apex/<form_name>/import_notes.md`
 
 > ⚠️ **WARNING — REVIEW BEFORE IMPORT.** Generated `wwv_flow_api` code is NOT an officially
-> supported way to build APEX applications. Internal IDs, template IDs and parameter names
-> must match your instance. Always import into a **DEV workspace** first, back up the target
-> application, and inspect every page in App Builder after import.
+> supported way to build APEX applications. Always import into a **DEV workspace** first, back up
+> the target application, and inspect every page in App Builder after import.
 >
-> **Recommended approach (much more reliable):** In APEX 21.2 create a throw-away page that
-> contains one Form region, one editable Interactive Grid, one Validation, one Process and one
-> Dynamic Action, export it (App Builder → Export/Import → Export → Components → the page),
-> and save it as `apex/reference/reference_page_export.sql`. Claude Code then copies the exact
-> parameter names, template IDs and structure from your own instance.
+> **Reference application:** `apex/Reference/f345.sql` is an export of the target application
+> shell (theme 42 / ZATCA Forms, page 0 toolbar, login, plug-ins, application items). Every export
+> generated here is a component export **into that application**. It copies f345's template IDs,
+> ID offset, CSS classes and naming exactly. The full rules and every template ID are in
+> `docs/f345_reference_standard.md`. The converted AGR1100 pages (11100 / 1110001) that the
+> naming rules come from are in git history if you need a full worked example.
 
 ---
 
 ```text
 You are working on the Oracle Forms 12c → Oracle APEX 21.2 migration project.
-Follow all rules in CLAUDE.md. Target APEX 21.2 ONLY.
+Follow all rules in CLAUDE.md (especially §4b). Target APEX 21.2 ONLY.
 
-TASK: Generate an APEX 21.2 import script for the pages described in the page spec.
+TASK: Generate an APEX 21.2 component export for the pages described in the page spec,
+built to the f345 reference standard.
 
-FORM NAME:        {{FORM_NAME}}
-APP ID:           {{APP_ID}}     (used for the file name only; inside the export use __APP_ID__)
-PAGE SPEC:        analysis/{{FORM_NAME}}/{{FORM_NAME}}_apex_page_spec.md
-REFERENCE EXPORT: apex/reference/reference_page_export.sql   (if present — USE IT AS THE
-                  AUTHORITATIVE SOURCE for parameter names, template IDs, plugin names)
-OUTPUT:           apex/{{FORM_NAME}}/f{{APP_ID}}_{{FORM_NAME}}.sql
-NOTES:            apex/{{FORM_NAME}}/import_notes.md
+FORM NAME:         {{FORM_NAME}}       (package and page name = upper case: {{FORM_NAME_UC}})
+APP ID:            {{APP_ID}}          (file name only; inside the export use __APP_ID__)
+MAIN PAGE ID:      {{PAGE_ID}}         (from MIG_FORM_REGISTRY; search page = {{PAGE_ID}}01)
+PAGE SPEC:         analysis/{{FORM_NAME}}/{{FORM_NAME}}_apex_page_spec.md
+REFERENCE APP:     apex/Reference/f345.sql            (AUTHORITATIVE for parameter names,
+                                                       template IDs, plug-in names, CSS classes)
+REFERENCE RULES:   docs/f345_reference_standard.md    (read it fully before generating)
+OUTPUT:            apex/{{FORM_NAME}}/f{{APP_ID}}_{{FORM_NAME}}.sql
+NOTES:             apex/{{FORM_NAME}}/import_notes.md
+
+## Step 0 — read the reference first
+f345.sql is ~18 MB (mostly hex-encoded static files). Never load it whole. grep it:
+  grep -n "create_template(\|create_plug_template(\|create_field_template(\|create_button_templates(" ...
+  grep -n "prompt --application/pages/page_00000" ...      (page 0 toolbar, P0_* items)
+  grep -n "create_flow_item(" -A3 ...                      (existing application items)
+  grep -n "create_plugin(" -A6 ...                         (plug-in internal names)
+Confirm that every template ID you use exists in f345. If a template you need is missing, stop and
+list it in import_notes.md. Do not invent an ID.
 
 ## Placeholders (never hardcode environment values)
-Use these literal tokens (double underscores, distinct from the {{...}} prompt fields) in the generated file; the developer replaces them before import
-(e.g. `sed -i 's/__APP_ID__/110/g' f110_orders.sql`) and import_notes.md explains each:
+Use only these literal tokens. import_notes.md explains how to get each one:
   __WORKSPACE_ID__  -- select workspace_id from apex_workspaces where workspace = '<NAME>';
-  __APP_ID__        -- target application id (the application must already exist)
-  __SCHEMA_NAME__   -- parsing schema, e.g. FORMS_MIGRATION
-  __TEMPLATE_ID_<NAME>__ -- theme template IDs (see rule 2 below)
-Keep `set define off` for the whole script so '&' inside PL/SQL/HTML is never treated as
-a substitution variable. The tokens must appear ONLY where environment values belong; a
-final grep for '__[A-Z_]*__' must list nothing but these placeholders, and
-'{{' must not appear at all.
+  __APP_ID__        -- target application id (the app installed from f345)
+  __SCHEMA_NAME__   -- parsing schema (f345: CUSTOMS)
+  __ID_OFFSET__     -- target app's ID offset. f345 value: 64111868204433090374. Query:
+                       select template_id - 11621850520475869674 from apex_application_temp_page
+                        where application_id = <app> and template_name = 'Standard';
+Template IDs are NOT placeholders. Copy them from f345 as wwv_flow_api.id(<n>).
+Keep `set define off` for the whole script. A final grep for '__[A-Z_]*__' must list only these
+four tokens, and '{{' must not appear at all.
 
 ## Required structure (APEX 21.2 = wwv_flow_api, NOT wwv_flow_imp)
-Generate a COMPONENT (page) export for an EXISTING application, in this order:
-
 1. Header comment block:
    -- REVIEW BEFORE IMPORT
    -- Generated by Claude Code from <page spec>, date, form name
-   -- Target: Oracle APEX 21.2  (export version 2021.10.15)
+   -- Target: Oracle APEX 21.2 (export version 2021.10.15), reference application f345
 2. prompt --application/set_environment
    set define off verify off feedback off
    whenever sqlerror exit sql.sqlcode rollback
 3. begin
      wwv_flow_api.component_begin (
        p_version_yyyy_mm_dd     => '2021.10.15'
-      ,p_release                => '21.2.0'          -- adjust to exact patch, e.g. 21.2.5
+      ,p_release                => '21.2.0'
       ,p_default_workspace_id   => __WORKSPACE_ID__
       ,p_default_application_id => __APP_ID__
-      ,p_default_id_offset      => 0
+      ,p_default_id_offset      => __ID_OFFSET__
       ,p_default_owner          => '__SCHEMA_NAME__'
      );
    end;
    /
-4. Shared components needed by the pages (only if they don't exist yet; one block each):
-   - wwv_flow_api.create_list_of_values (+ static values where applicable)
-   - wwv_flow_api.create_flow_item       (application items from :GLOBAL)
-   - wwv_flow_api.create_security_scheme (authorization), if listed in spec §13
-5. For each page:
+4. Shared components, ONLY those the page spec needs that f345 does NOT already have:
+   - wwv_flow_api.create_list_of_values (name per CLAUDE.md §4)
+   - wwv_flow_api.create_flow_item. Never duplicate an f345 item (SSO_APP_USER,
+     P_CURR_PORT_CD, PORT_NAME, P_GLOBAL_PORT_TYPE, …). New ones use Forms names, no AI_ prefix.
+   - wwv_flow_api.create_security_scheme, if listed in the spec.
+   Never emit theme, templates, page 0, login page, plug-ins or app processes.
+5. Pages, in this order: main page {{PAGE_ID}}, then search page {{PAGE_ID}}01, then any other
+   modal child pages. For each one:
    prompt --application/pages/page_<NNNNN>
    begin
-     wwv_flow_api.remove_page (p_flow_id => wwv_flow.g_flow_id, p_page_id => <N>);  -- idempotent re-import
-     wwv_flow_api.create_page(...)
-     wwv_flow_api.create_page_plug(...)        -- every region (Form: NATIVE_FORM, IG: NATIVE_IG,
-                                               --  IR: NATIVE_IR, Static: NATIVE_STATIC)
-     wwv_flow_api.create_region_column(...)    -- IG columns
-     wwv_flow_api.create_interactive_grid(...) / create_ig_report(...) / create_ig_report_view(...)
-     wwv_flow_api.create_page_button(...)
-     wwv_flow_api.create_page_branch(...)
+     wwv_flow_api.remove_page (p_flow_id => wwv_flow.g_flow_id, p_page_id => <N>);
+     wwv_flow_api.create_page(...)            -- attributes per standard §4
+     wwv_flow_api.create_page_plug(...)       -- templates/classes per standard §3
+     wwv_flow_api.create_region_column(...) + create_interactive_grid(...) / create_ig_report(...)
+                                              --  / create_ig_report_view(...)  (IG defaults §8)
      wwv_flow_api.create_page_item(...)
-     wwv_flow_api.create_page_computation(...)
      wwv_flow_api.create_page_validation(...)
      wwv_flow_api.create_page_da_event(...) + create_page_da_action(...)
-     wwv_flow_api.create_page_process(...)     -- NATIVE_FORM_INIT, NATIVE_FORM_DML,
-                                               --  NATIVE_IG_DML, NATIVE_PLSQL
+     wwv_flow_api.create_page_process(...)    -- order and conditions per standard §6
    end;
    /
 6. begin
@@ -94,49 +103,84 @@ Generate a COMPONENT (page) export for an EXISTING application, in this order:
    set verify on feedback on define on
    prompt  ...done
 
-## Generation rules
-1. IDs: use wwv_flow_api.id(<large unique number>) for every component; derive numbers
-   deterministically (e.g. <page><seq> padded) so re-generation is stable. Parent/child
-   references (p_item_plug_id, p_plug_id, p_event_id, p_associated_item...) must point
-   to the same wwv_flow_api.id(...) value.
-2. Template IDs (page template, region template, button template, label template):
-   take them from the reference export. If none is available, emit
-   wwv_flow_api.id(__TEMPLATE_ID_<NAME>__) and list every token in import_notes.md
-   with the query to find it:
-     select template_name, template_id from apex_application_temp_region
-      where application_id = {{APP_ID}};   -- also apex_application_temp_page / _button / _label
-3. All PL/SQL inside processes/validations must be ONE-LINE calls to pkg_{{FORM_NAME}}
-   (e.g. p_process_sql_clob => 'pkg_{{FORM_NAME}}.orders_pre_ins(p_rec => ...);').
-   Component names (p_process_name, p_validation_name, DA p_name) use Forms trigger notation
-   (e.g. 'ORDERS.PRE-INSERT') and p_process_comment / comments = 'Source: ...' (Forms-mirror standard).
-   Escape single quotes correctly (''), and keep each string literal < 32k.
-4. Parameter names must match APEX 21.2 exactly. If unsure about a parameter, OMIT it
-   (APEX applies the default) and list it in import_notes.md — never invent parameters.
-5. No features beyond 21.2 (CLAUDE.md §2). No wwv_flow_imp* calls.
-6. No credentials, no hardcoded schema passwords, no hostnames.
-7. Every component carries a comment: -- Source: <Forms object> / <page spec section>.
+## Generation rules (f345 standard)
+1. IDs: wwv_flow_api.id(<n>) for every component, deterministic from <page><seq>, never
+   colliding with f345 IDs. Parent/child references must point to the same id(...) value.
+2. Templates: use the exact f345 IDs from docs/f345_reference_standard.md §3:
+   - main page: p_step_template => Zatca-Minimal_No_Navigation 11622270914969205733 (as AGR1100);
+     modal pages omit p_step_template (theme default "Modal Dialog"). Every page:
+     p_user_interface_id => wwv_flow_api.id(11622010846008869795). Use another template only if
+     the spec says so.
+   - hero region: Blank with Attributes 11621859120066869682, class cg-hero
+   - master block (NATIVE_FORM): Interactive Report 11621909206693869707,
+     classes 'zatca-forms cg-form cg-card'
+   - detail block (NATIVE_IG): Standard 11621913486616869708,
+     '#DEFAULT#:t-Region--noPadding', classes 'cg-card cg-grid'
+   - search criteria: Blank with Attributes, 'zatca-forms cg-form'. Search IG: as detail block,
+     static ID <MASTER_TABLE>_SEARCH
+   - stacked canvas / popup: Inline Dialog 11621894586660869699
+   - items: Required - Above 11621984380233869750 / Optional - Above 11621983529556869749,
+     '#DEFAULT#:t-Form-fieldContainer--stretchInputs'. Hidden items have no field template.
+   - page-specific buttons only: Text with Icon 11621986167597869752,
+     '#DEFAULT#:t-Button--iconLeft', a cg-b-* class.
+3. Pages: main page p_name/p_alias = {{FORM_NAME_UC}}; search page {{PAGE_ID}}01 with
+   p_name {{FORM_NAME_UC}}_SEARCH, p_alias {{FORM_NAME_UC}}-SEARCH, MODAL, 800 × 1800. Both:
+   p_step_title '&SYS_ANAME.', p_page_css_classes 'zf', p_protection_level 'C'.
+   Region titles (p_plug_name) = Forms block/canvas titles written with unistr(...).
+4. Toolbar: do NOT create CREATE/SAVE/DELETE/SEARCH/CLEAR/FUNCS/REPORT/BACK buttons. They come
+   from page 0. The page must:
+   - copy its record key into P0_PAGE_PK (processes 'P0_PAGE_PK', 'P0_PAGE_PK AFTER INSERT',
+     'P0_PAGE_PK AFTER DELETE')
+   - handle the requests CREATE (when P0_PAGE_PK is null), SAVE (when not null) and DELETE
+   - create P{{PAGE_ID}}_REPORT only if the form has a report (it switches FUNCS to REPORT_SHOW /
+     REPORT_PRINT), plus DAs listening for the custom events REPORT_SHOW / REPORT_PRINT on document
+   - create P{{PAGE_ID}}_MODULE_ID (SCREEN ENTRY RESET keeps it when it clears the page items)
+5. Naming (standard §5):
+   - processes: master block '<TRIGGER>' ('PRE-INSERT'); detail block '<BLOCK> <TRIGGER>'
+     ('AGRMNT_MEMBERS PRE-UPDATE'); native ones 'Initialize form', 'Process form',
+     'Process form - DELETE', '<BLOCK> - Save Interactive Grid Data'
+   - validations: '<ITEM> VALIDATION' (FUNC_BODY_RETURNING_ERR_TEXT,
+     'return {{FORM_NAME_UC}}.<ITEM>_VAL(I_P<page>_<ITEM> => :P<page>_<ITEM>);') and
+     '<ITEM> REQUIRED' ('return {{FORM_NAME_UC}}.REQUIRED_VAL(:P<page>_<ITEM>, unistr(''<label>''));')
+   - DAs: '<ITEM> WHEN-VALIDATE-ITEM' (change) / '<BLOCK> <COLUMN> WHEN-VALIDATE-ITEM' (IG column),
+     action PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE with
+     '{{FORM_NAME_UC}}.CHK({{FORM_NAME_UC}}.<ITEM>_VAL(I_... => :...));'
+   - every PL/SQL body is ONE line calling package {{FORM_NAME_UC}} with named parameters
+     I_<bind>, IO_<bind>, O_<bind> (e.g. IO_P11100_AGRMNT_NO => :P11100_AGRMNT_NO,
+     I_SSO_APP_USER => :SSO_APP_USER). The only exceptions are key copies (':P0_PAGE_PK := ...').
+   - p_process_comment / comments = 'Source: <FORM>.<BLOCK>.<ITEM>.<TRIGGER>'.
+   - p_error_display_location => 'INLINE_IN_NOTIFICATION' on every process.
+6. Process order and conditions: follow docs/f345_reference_standard.md §6 exactly
+   (Before Header 10–100, After Submit 10–85 for the master, then 1xx / 2xx per detail block with
+   :APEX$ROW_STATUS conditions and the IG region association).
+7. Parameter names must match APEX 21.2 exactly, as they appear in f345. If a parameter does not
+   appear anywhere in f345 and you are unsure of it, OMIT it and list it in import_notes.md.
+   Never invent parameters.
+8. No features beyond 21.2 (CLAUDE.md §2). No wwv_flow_imp* calls. No credentials or hostnames.
+   Escape single quotes (''); keep each string literal < 32k; Arabic text via unistr('\XXXX').
+9. Every component carries a comment: -- Source: <Forms object> / <page spec section>.
 
 ## import_notes.md must contain
 - REVIEW BEFORE IMPORT warning
-- Placeholder list with how to obtain each value
-- Pre-requisites: package pkg_{{FORM_NAME}} compiled in __SCHEMA_NAME__, LOVs, auth schemes
+- Placeholder list (the four tokens) with how to get each value, including the __ID_OFFSET__
+  query, and a note that template IDs resolve only if the offset matches the installed app
+- Pre-requisites: target app installed from f345; package {{FORM_NAME_UC}} compiled in
+  __SCHEMA_NAME__ with CHK and REQUIRED_VAL; new LOVs / auth schemes
 - Import command:
     sql __SCHEMA_NAME__@<tns> @apex/{{FORM_NAME}}/f{{APP_ID}}_{{FORM_NAME}}.sql
-  or via App Builder → Import (File Type: "Page or Component Export")
-- Alternative with offset/workspace override:
-    begin
-      apex_application_install.set_workspace('<WORKSPACE>');
-      apex_application_install.set_application_id(<APP_ID>);
-      apex_application_install.generate_offset;
-      apex_application_install.set_schema('<SCHEMA>');
-    end;
-    /
-- Post-import review checklist: open each page in Page Designer, fix any "invalid
-  template" warnings, run Advisor (Utilities → Advisor), test each DML path.
+  or App Builder → Import (File Type: "Page or Component Export")
+- Note: child modal pages other than {{PAGE_ID}}01 lose P0_PAGE_PK when the user returns
+  (SCREEN ENTRY RESET). List any such page.
+- Post-import review: open each page in Page Designer, confirm no "invalid template" warnings,
+  confirm the page 0 toolbar buttons show/hide correctly, test the search modal, run Advisor,
+  test each DML path.
 - List of uncertain parameters and omitted settings.
 
 ## Self-check
 - Balanced begin/end; every block ends with "/".
-- grep: no "wwv_flow_imp", no passwords, every wwv_flow_api.id referenced is defined.
+- grep: no "wwv_flow_imp", no passwords, no "__TEMPLATE_ID_", every wwv_flow_api.id referenced
+  is either defined in this file or exists in f345.
+- Every template ID used is present in apex/Reference/f345.sql.
+- No toolbar button duplicated from page 0; no f345 application item re-created.
 - Print summary: pages, components per type, placeholders count, uncertain items.
 ```

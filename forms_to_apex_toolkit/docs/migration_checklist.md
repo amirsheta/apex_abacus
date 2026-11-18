@@ -28,7 +28,7 @@
 | # | Step | Deliverable | Done |
 |---|---|---|---|
 | 1 | Analysis (prompt 01) | `<form>_inventory.md` reviewed, open questions answered | [ ] |
-| 2 | Logic extraction (prompt 02) | `pkg_<form>` spec/body compile without errors; extraction report reviewed | [ ] |
+| 2 | Logic extraction (prompt 02) | package `<FORM>` spec/body compile without errors (f345 naming, no `pkg_` / `AI_`); extraction report reviewed | [ ] |
 | 3 | Schema changes (if any) | `migration/NNN_*.sql` + `_rollback.sql`, DBA-approved | [ ] |
 | 4 | APEX page design (prompt 03) | `<form>_apex_page_spec.md` approved; traceability matrix 100% | [ ] |
 | 5 | APEX build (prompt 04 or manual) | Export imported in DEV, reviewed in Page Designer, Advisor clean | [ ] |

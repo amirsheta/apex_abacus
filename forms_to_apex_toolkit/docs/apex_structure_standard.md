@@ -1,51 +1,62 @@
-# APEX Structure Standard — "Forms-Mirror"
+# APEX Structure Standard — "Forms-Mirror" on the f345 reference application
 
 Target: APEX 21.2 on Oracle Database 12.1.0.2.
 Purpose: organise APEX so it looks like the original Forms application. A developer who knows
 the `.fmb` can find every block, item, trigger, LOV and alert in APEX **by the same name**, so later
 changes are as easy as in Forms Builder.
 
+The concrete rules (template IDs, ID offset, process order, page 0 toolbar) come from the reference
+application **f345** (`apex/Reference/f345.sql`) and are listed in **`docs/f345_reference_standard.md`**.
+This document explains the structure; where the two differ, the f345 standard wins.
+
 ---
 
 ## 1. Applications and workspaces
 | Forms | APEX |
 |---|---|
-| One Forms application (main `.mmb` + its forms) | One APEX application. Name = Forms application name; alias = short code (e.g. `HR`, `INV`) |
-| Several Forms applications | One workspace (`FORMS_MIGRATION`) with one APEX app per Forms application, sharing one parsing schema |
-| Shared `.pll` / `.olb` | DB packages `pkg_lib_<name>` + one "Master" app holding shared Theme, templates and Authorization Schemes. Other apps **subscribe** to it (Shared Components → Subscription) |
+| One Forms application (main `.mmb` + its forms) | One APEX application **installed from f345**: theme 42 (style *ZATCA Forms*, RTL, `ar-sa`), page 0 toolbar, login, plug-ins, application items and app processes come with it |
+| Several Forms applications | One workspace with one application per Forms application, each installed from f345, sharing one parsing schema |
+| Shared `.pll` / `.olb` | DB packages `pkg_lib_<name>`; the `.olb` look is already in f345 (templates, CSS classes `zf`, `cg-*`, `zatca-forms`) |
 
-Application ID ranges (example): HR = 1000, INV = 2000, FIN = 3000. Record them in `MIG_FORM_REGISTRY`.
+Generated exports are **component exports into that application** (`wwv_flow_api.component_begin`
+with the application's ID offset). They never re-create f345's shared components.
 
-## 2. Pages — one page range per form
-- Every form gets a **range of 10 page numbers**, allocated in order in `MIG_FORM_REGISTRY`:
+## 2. Pages — main page + `<page>0n` child pages
+- The main page number comes from `MIG_FORM_REGISTRY` (example: AGR1100 → 11100, IMPR1110 → 1110).
+- Child pages are numbered after the main page:
 
   | Page | Use |
   |---|---|
-  | `N0` (e.g. 120) | Main page = main content canvas |
-  | `N1`–`N5` | Modal dialogs = stacked canvases / popup windows / called forms used as dialogs |
-  | `N6`–`N8` | Extra tab or detail pages, when needed |
-  | `N9` | Reserved |
+  | `<page>` (e.g. 11100) | Main page = main content canvas. Template *Zatca-Minimal_No_Navigation* |
+  | `<page>01` (e.g. 1110001) | **Search page** (Enter Query / Execute Query). The page 0 SEARCH button opens exactly this number |
+  | `<page>02` … `<page>09` | Other modal dialogs: stacked canvases, popup windows, called LOV forms |
 
-- Page **Name** = Forms window title. Page **Alias** = form name (`ORDERS`); dialogs = `ORDERS_<CANVAS>`.
-- Page **Group** = Forms subsystem or menu group (e.g. `Sales`). It works like folders in App Builder.
+- Page **Name** and **Alias** = form name (`AGR1100`); search page `<FORM>_SEARCH` / `<FORM>-SEARCH`;
+  other dialogs `<FORM>_<CANVAS>`. **Title** = `&SYS_ANAME.`. **CSS class** = `zf`. Protection `C`.
+- Page **Group** = Forms subsystem or menu group. It works like folders in App Builder.
 - Page **Comments** = `Source: ORDERS.fmb (window WIN_MAIN, canvas CV_MAIN)`.
-- Page 0 (Global Page) holds only things that are on every page (e.g. a footer). No business logic.
-- Page 9999 = Login. Page 1 = Home (shows the menu as cards, like the Forms main menu screen).
+- Page 0 (Global Page) is f345's: toolbar region `P0_ACTIONS`, confirm dialog `ASK_DLG`, items
+  `P0_PAGE_PK` (key of the open record), `P0_SEARCH_URL`. Do not add form logic to it.
+- f345's app process `SCREEN ENTRY RESET` clears `P0_PAGE_PK` and the page items when the user comes
+  from another screen. It keeps them only between `<page>` and `<page>01`. A dialog `<page>02…09`
+  therefore needs a process `G_LAST_PAGE KEEP` (After Header, `:G_LAST_PAGE := <page>;`).
 
 ## 3. Regions = blocks
-| Forms | APEX region |
-|---|---|
-| Base-table block, single record | Form region |
-| Base-table block, multi record | Interactive Grid |
-| Read-only block | Interactive Report |
-| Control block | Static Content region (`CONTROL` block → Static ID `CONTROL`) |
-| Tab canvas | "Tabs Container" region. Each tab page = sub-region whose Static ID is the tab page name |
-| Stacked canvas | Inline Dialog region, or a modal page `N1`–`N5` |
+| Forms | APEX region | f345 template / classes |
+|---|---|---|
+| Base-table block, single record | Form region | *Interactive Report* template, `zatca-forms cg-form cg-card` |
+| Base-table block, multi record | Interactive Grid | *Standard*, `#DEFAULT#:t-Region--noPadding`, `cg-card cg-grid` |
+| Read-only block | Interactive Grid (read-only) or Interactive Report | *Standard*, `cg-card cg-grid` |
+| Control block | Static Content region (`CONTROL` block → Static ID `CONTROL`) | *Blank with Attributes* |
+| Tab canvas | "Tabs Container" region; each tab page = sub-region whose Static ID is the tab page name | *Tabs Container* |
+| Stacked canvas | Inline Dialog region, or a modal page `<page>02…09` | *Inline Dialog* |
+| Screen header | Hero region with the screen title (process `HEADER TITLE`) | *Blank with Attributes*, `cg-hero` |
+| Function side menu (TMPLT / LSIDE) | Inline Dialog `FUNCS` with the f345 list *Page Functions* | *Inline Dialog*, `cg-funcs` |
 
 Rules:
 - Region **Static ID** = Forms block name (UPPERCASE). JavaScript and DAs refer to the region by this ID,
   like `GO_BLOCK('ORDERS')`.
-- Region **Title** = block prompt / frame title. **Sequence** = Forms block navigation order × 10.
+- Region **Title** = block prompt / frame title (Arabic). **Sequence** = Forms block navigation order × 10.
 - Region **Comments** = `Source: ORDERS.<BLOCK>`.
 - Master-detail relation → the detail IG's "Master Region" = master region. Relation name goes in Comments.
 
@@ -53,37 +64,49 @@ Rules:
 - Page item = `P<page>_<FORMS_ITEM_NAME>`, e.g. `ORDERS.CUSTOMER_ID` → `P120_CUSTOMER_ID`.
 - IG column name = Forms item name, e.g. `LINES.QTY` → column `QTY` in IG `LINES`.
 - Two blocks on one page have the same item name → `P<page>_<BLOCK_ABBR>_<ITEM>` (e.g. `P120_HDR_STATUS`).
-- Item **Label** = Forms prompt. **Sequence** = Forms item order (tab order) × 10.
+- Forms parameter → `P<page>_P_<PARAM>`; when a caller passes it, also application item `P_<PARAM>`
+  (copied by process `PARAMETERS ENTRY`).
+- Item **Label** = Forms prompt. **Sequence** = Forms item order (tab order) × 10. Label template
+  *Required - Above* / *Optional - Above*, options `#DEFAULT#:t-Form-fieldContainer--stretchInputs`.
 - Item type follows Forms: Text Item → Text/Number/Date; List Item → Select List; Check Box → Checkbox/Switch;
   Radio Group → Radio Group; Display Item → Display Only; non-displayed → Hidden (Value Protected = Yes).
 - Format mask, max length and required flag are copied from the Forms item properties.
+- Every main page has `P<page>_MODULE_ID` (kept by SCREEN ENTRY RESET, used by the function list).
 
 ## 5. Triggers = named APEX components + named package members
-APEX component **names** use Forms trigger notation: `<BLOCK>[.<ITEM>].<TRIGGER-NAME>`.
+The package is named after the form: **`ORDERS`** (upper case, no prefix). APEX component names use
+the Forms trigger name, space separated: `<TRIGGER>` for the master block, `<BLOCK> <TRIGGER>` for a
+detail block, `<ITEM> <TRIGGER>` for item triggers.
 
-| Forms trigger | APEX component (name) | Package member (`pkg_<form>`) |
+| Forms trigger | APEX component (name) | Package member (`ORDERS`) |
 |---|---|---|
-| Form WHEN-NEW-FORM-INSTANCE | Process (Before Header) `WHEN-NEW-FORM-INSTANCE` | `wnfi` |
-| Form PRE-FORM | Process (Before Header) `PRE-FORM` | `pre_form` |
-| `ORDERS.CUSTOMER_ID` WHEN-VALIDATE-ITEM | Validation `ORDERS.CUSTOMER_ID.WHEN-VALIDATE-ITEM` | `customer_id_wvi` |
-| `ORDERS` WHEN-VALIDATE-RECORD | Validation `ORDERS.WHEN-VALIDATE-RECORD` | `orders_wvr` |
-| `ORDERS` WHEN-CREATE-RECORD | Item defaults / computation `ORDERS.WHEN-CREATE-RECORD` | `orders_wcr` |
-| `ORDERS` PRE-INSERT / PRE-UPDATE / PRE-DELETE | Process `ORDERS.PRE-INSERT` … | `orders_pre_ins` / `_pre_upd` / `_pre_del` |
-| `ORDERS` POST-INSERT / POST-UPDATE / POST-DELETE | Process `ORDERS.POST-INSERT` … | `orders_post_ins` / `_post_upd` / `_post_del` |
-| `ORDERS` POST-QUERY | Column in region SQL (`pkg_orders.orders_post_qry(...)`) or a view | `orders_post_qry` |
-| `ORDERS` PRE-QUERY | WHERE clause of region SQL | `orders_pre_qry` (only if logic is complex) |
-| Form PRE-COMMIT / POST-FORMS-COMMIT | Process `PRE-COMMIT` / `POST-FORMS-COMMIT` | `pre_commit` / `post_commit` |
-| `ORDERS.BTN_POST` WHEN-BUTTON-PRESSED | Button `BTN_POST` + Process `ORDERS.BTN_POST.WHEN-BUTTON-PRESSED` | `btn_post_wbp` |
-| `ORDERS.ORDER_TYPE` WHEN-LIST-CHANGED | Dynamic Action `ORDERS.ORDER_TYPE.WHEN-LIST-CHANGED` | `order_type_wlc` (only if server logic) |
-| WHEN-CHECKBOX-CHANGED / WHEN-RADIO-CHANGED | Dynamic Action `…WHEN-CHECKBOX-CHANGED` | `<item>_wcc` / `<item>_wrc` |
-| KEY-COMMIT / KEY-EXIT / KEY-xxx | Button `SAVE` / `EXIT` + process `KEY-COMMIT` | `key_commit` … |
-| Program unit `CALC_TOTAL` | — | `calc_total` (same name) |
+| Form WHEN-NEW-FORM-INSTANCE | Process (Before Header) `WHEN-NEW-FORM-INSTANCE` | `INIT_FORM` |
+| Form PRE-FORM | Process (Before Header) `PRE-FORM` | `PRE_FORM` |
+| `ORDERS.CUSTOMER_ID` WHEN-VALIDATE-ITEM | Validation `CUSTOMER_ID VALIDATION` + DA `CUSTOMER_ID WHEN-VALIDATE-ITEM` (FOS: `ORDERS.CHK(ORDERS.CUSTOMER_ID_VAL(...))`) | `CUSTOMER_ID_VAL` (error text); `CUSTOMER_ID_WVI` when it derives values |
+| Required item | Validation `CUSTOMER_ID REQUIRED` | `REQUIRED_VAL` |
+| `LINES.QTY` WHEN-VALIDATE-ITEM (detail IG) | DA `LINES QTY WHEN-VALIDATE-ITEM` | `LINES_QTY_VAL` |
+| `ORDERS` WHEN-VALIDATE-RECORD | Validation `ORDERS WHEN-VALIDATE-RECORD` | `ORDERS_WVR` |
+| `ORDERS` WHEN-CREATE-RECORD | Item defaults / process `WHEN-CREATE-RECORD` | `WHEN_CREATE_RECORD` |
+| master PRE-INSERT / PRE-UPDATE / PRE-DELETE | Process `PRE-INSERT` … (request CREATE / SAVE / DELETE) | `PRE_INSERT` / `PRE_UPDATE` / `PRE_DELETE` |
+| master POST-INSERT / POST-UPDATE / POST-DELETE | Process `POST-INSERT` … | `POST_INSERT` / `POST_UPDATE` / `POST_DELETE` |
+| detail `LINES` PRE-INSERT … | Process `LINES PRE-INSERT` … (`:APEX$ROW_STATUS`) | `LINES_PRE_INSERT` … |
+| `ORDERS` POST-QUERY | Column in region SQL or a view; else process `POST-QUERY` | `POST_QUERY` (only if needed) |
+| `ORDERS` PRE-QUERY | WHERE clause of region / search-page SQL | — |
+| Form PRE-COMMIT / POST-FORMS-COMMIT | Process `PRE-COMMIT` / `POST-FORMS-COMMIT` | `PRE_COMMIT` / `POST_FORMS_COMMIT` |
+| `ORDERS.BTN_POST` WHEN-BUTTON-PRESSED | Button `BTN_POST` + Process `BTN_POST WHEN-BUTTON-PRESSED` | `BTN_POST_WBP` |
+| `ORDERS.ORDER_TYPE` WHEN-LIST-CHANGED | Dynamic Action `ORDER_TYPE WHEN-LIST-CHANGED` | `ORDER_TYPE_WLC` (only if server logic) |
+| Toolbar KEY-COMMIT / KEY-DELREC / ENTER-QUERY / KEY-EXIT | page 0 buttons CREATE·SAVE / DELETE / SEARCH / BACK | — |
+| Function (TMPLT `EXECUTE_FUNCTION`) | DA on the custom event `<SYS_OS_FILE_NAME>` fired by the *Page Functions* list | `EXEC_FUNS` |
+| Program unit `CALC_TOTAL` | — | `CALC_TOTAL` (same name) |
 
-Trigger abbreviations: `wnfi`, `pre_form`, `wvi`, `wvr`, `wcr`, `pre_ins`, `pre_upd`, `pre_del`, `post_ins`,
-`post_upd`, `post_del`, `post_qry`, `pre_qry`, `wbp`, `wlc`, `wcc`, `wrc`, `wnbi` (when-new-block-instance),
-`wnri` (when-new-record-instance), `wnii` (when-new-item-instance), `key_<name>`.
+Always present: `CHK(I_ERR)` (raises the error text), `REQUIRED_VAL`, `P0_PAGE_PK_CHECK`,
+`GET_MODULE_ID`, `HEADER_TITLE`.
 
-Name length: package members ≤ **30 bytes** (DB 12.1.0.2). If `<item>_<abbr>` is longer, shorten the item part
+Parameters of members called by APEX: `I_` / `IO_` / `O_` + the bind name
+(`IO_P11100_AGRMNT_NO => :P11100_AGRMNT_NO`, `I_MEMBER_ISN => :MEMBER_ISN`,
+`I_SSO_APP_USER => :SSO_APP_USER`). Every process body is one line calling the package.
+
+Name length: package members ≤ **30 bytes** (DB 12.1.0.2). If a name is longer, shorten the item part
 and keep the full Forms name in the member's header comment and in `MIG_OBJECT_MAP`.
 
 Every APEX component has **Comments** = `Source: <FORM>.<BLOCK>.<ITEM>.<TRIGGER>`. Every package member
@@ -91,52 +114,60 @@ has a header comment with the same `Source:` line and the original trigger code 
 the logic changed during conversion.
 
 ## 6. Converted code should read like the original code
-Use `pkg_forms_compat` (in `plsql_templates/`) inside `pkg_<form>`:
+Use `pkg_forms_compat` (in `plsql_templates/`) inside the form package:
 
 | Forms code | Converted code |
 |---|---|
 | `MESSAGE('Saved');` | `pkg_forms_compat.message('Saved');` |
 | `MESSAGE('Error'); RAISE FORM_TRIGGER_FAILURE;` | `pkg_forms_compat.ftf('Error');` |
 | `SHOW_ALERT('AL_STOP')` (stop alert) | `pkg_forms_compat.alert('AL_STOP');` (text from Text Messages) |
-| `:GLOBAL.company_id` | `pkg_forms_compat.get_global('COMPANY_ID')` → `AI_COMPANY_ID` |
+| `:GLOBAL.company_id` | `pkg_forms_compat.get_global('COMPANY_ID')` → application item `G_COMPANY_ID` |
 | `:GLOBAL.x := v;` | `pkg_forms_compat.set_global('X', v);` |
 | `NAME_IN('ORDERS.STATUS')` / `COPY(v,'ORDERS.STATUS')` | `pkg_forms_compat.name_in('P120_STATUS')` / `pkg_forms_compat.copy(v, 'P120_STATUS')` (page processes only) |
-| `USER` / `GET_APPLICATION_PROPERTY(USERNAME)` | `pkg_forms_compat.app_user` |
+| `USER` / `GET_APPLICATION_PROPERTY(USERNAME)` | `pkg_forms_compat.app_user` (or the f345 item `SSO_APP_USER`) |
 | `:SYSTEM.CURRENT_FORM` | `pkg_forms_compat.current_form` (page alias) |
 
-Inside `pkg_<form>` prefer **parameters** for item values (testable code). Use `name_in`/`copy` only in thin
-page-level wrapper code.
+Inside the package prefer **parameters** for item values (testable code). Use `name_in`/`copy` only in thin
+page-level code.
 
 UI-only built-ins (`GO_BLOCK`, `SET_ITEM_PROPERTY`, `SHOW_VIEW`…) are not server code → Dynamic Actions
 (see `plsql_templates/dynamic_action_patterns.sql`).
 
 ## 7. Shared Components = Forms shared objects
+Reuse what f345 already has; create only what is missing.
+
 | Forms | APEX Shared Component name |
 |---|---|
 | LOV `LOV_CUSTOMERS` + record group `RG_CUSTOMERS` | List of Values `LOV_CUSTOMERS` (SQL from the record group query) |
 | Record group populated at runtime | Collection `COL_<RG_NAME>` |
 | Alert `AL_CONFIRM_DEL` | Text Message `AL_CONFIRM_DEL` (text = alert message; use with `apex_lang.message`) |
-| `:GLOBAL.COMPANY_ID` | Application Item `AI_COMPANY_ID` (Session State Protection: Restricted) |
+| `:GLOBAL.COMPANY_ID` | Application Item `G_COMPANY_ID` (Session State Protection: Restricted) |
+| Menu parameter `:PARAMETER.P_CURR_PORT_CD` … | f345 items `P_CURR_PORT_CD`, `P_CLASS_CD`, `P_PORT_TYPE`, `P_BRKR_NBR`, `SSO_APP_USER`, `V_USR_TYPE` (filled by f345 `After Auth`); new `P_<NAME>` otherwise |
 | Menu `.mmb` | Navigation Menu list. Same hierarchy, labels and order. Each entry → page alias |
 | Menu item role / `SET_MENU_ITEM_PROPERTY` | Authorization Scheme `ROLE_<ROLE>` on menu entry + page + buttons |
-| Visual attribute `VA_CURRENT_RECORD` | CSS class `va-current-record` (Theme Roller / application CSS file) |
-| Property class `PC_BUTTON` | Template Options standard (documented once in `analysis/_shared/olb_mapping.md`) |
+| Function rights (TMPLT) | f345 list *Page Functions* (`SC_SYSOBJ_ROLE_PRIVS`), no per-function schemes |
+| Visual attribute / property class | f345 CSS classes and Template Options (`docs/f345_reference_standard.md` §3) |
 | Forms `.pll` `COMMON_LIB` | Package `pkg_lib_common_lib` |
+| ON-ERROR / error display | f345 error handling function `APP_ERROR_HANDLER` (already set) |
 
 ## 8. Standard page layout (Forms toolbar feel)
-- Buttons region at the top of every main page, in this order and with these names:
-  `SAVE` (Ctrl+S) · `CREATE` · `DELETE` · `QUERY` (refresh region) · `CLEAR` (clear cache) · `EXIT` (back to menu).
-- Hot keys are optional. If needed, add them once in the Master app JavaScript file.
+- The toolbar is **page 0** (region `P0_ACTIONS`), the same on every screen. Pages do not create their
+  own toolbar buttons:
+  `CREATE` (new record, `P0_PAGE_PK` empty) · `SAVE` (update) · `DELETE` (confirm) · `SEARCH` (opens
+  `<page>01`) · `CLEAR` · `FUNCS` (or `REPORT_SHOW` / `REPORT_PRINT` when the page has `P<page>_REPORT`) · `BACK`.
+- A page keeps its record key in `P0_PAGE_PK` and handles the requests `CREATE`, `SAVE` and `DELETE`.
+- Page-specific buttons use the *Text with Icon* template, `#DEFAULT#:t-Button--iconLeft` and a `cg-b-*` class.
 - Messages: success at top (Forms status line), errors inline + notification.
-- Same theme style for all apps (Universal Theme 42, one style chosen once in the Master app).
+- Theme style *ZATCA Forms* (set in f345).
 
 ## 9. Registry tables (where is everything?)
 `scripts/create_migration_registry.sql` creates:
-- `MIG_FORM_REGISTRY`: one row per form (`form_name`, `app_id`, `page_from`, `page_to`, `page_alias`,
-  `package_name`, `status`, `owner`, dates).
+- `MIG_FORM_REGISTRY`: one row per form (`form_name`, `app_id`, `page_from` = `page_to` = main page,
+  `page_alias`, `package_name` = form name, `status`, `owner`, dates).
 - `MIG_OBJECT_MAP`: one row per Forms object (`form_name`, `forms_object_type`, `forms_object_name`
-  e.g. `ORDERS.CUSTOMER_ID.WHEN-VALIDATE-ITEM`, `apex_comp_type`, `apex_comp_name`, `page_id`,
-  `plsql_member`, `status`, `notes`).
+  e.g. `ORDERS.CUSTOMER_ID.WHEN-VALIDATE-ITEM`, `apex_comp_type`, `apex_comp_name` e.g.
+  `CUSTOMER_ID VALIDATION`, `page_id`, `plsql_member` e.g. `ORDERS.CUSTOMER_ID_VAL`, `status`, `notes`).
+  Toolbar buttons map to page 0.
 - View `MIG_V_WHERE_IS`: search by Forms name → where it is in APEX and PL/SQL.
 
 Example: "Where is the validation of CUSTOMER_ID in ORDERS now?"
@@ -148,5 +179,6 @@ SELECT * FROM mig_v_where_is
 ## 10. Repository folders mirror the forms
 ```
 analysis/<form>/   plsql/<form>/   apex/<form>/   registry/<form>_registry.sql   tests/<form>/
+apex/Reference/f345.sql   (reference application)
 ```
 One Git commit per step per form. The commit message starts with the form name.

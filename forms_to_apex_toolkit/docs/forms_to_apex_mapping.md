@@ -88,8 +88,8 @@
 | `:SYSTEM.MESSAGE_LEVEL` | Not applicable |
 | `:SYSTEM.LAST_QUERY` | Region SQL / `apex_region` APIs |
 | `USER` (in Forms) | `:APP_USER` |
-| `:PARAMETER.<name>` | Page item `P<page>_<NAME>` set via URL/branch (with checksum) |
-| `:GLOBAL.<name>` | Application Item `AI_<NAME>` |
+| `:PARAMETER.<name>` | Page item `P<page>_P_<NAME>`; a caller passes it in application item `P_<NAME>` (process `PARAMETERS ENTRY`). Menu parameters reuse the f345 items (`P_CURR_PORT_CD`, `SSO_APP_USER` …) |
+| `:GLOBAL.<name>` | Application Item `G_<NAME>` (f345) |
 
 ## 5. Record Group → APEX Collection
 ```sql
@@ -108,7 +108,7 @@ Collections are per APEX session; for multi-user shared data use a real table.
 ## 6. Global variables → Application Items
 | Forms | APEX |
 |---|---|
-| `:GLOBAL.company_id := 10;` | Shared Components → Application Items → `AI_COMPANY_ID` (Session State Protection: Restricted); set in Application Process "After Authentication" or `apex_util.set_session_state('AI_COMPANY_ID', 10)` |
-| `x := :GLOBAL.company_id;` | `:AI_COMPANY_ID` in SQL/PLSQL; `v('AI_COMPANY_ID')` in packages |
-| `ERASE('GLOBAL.x')` | `apex_util.set_session_state('AI_X', NULL)` |
+| `:GLOBAL.company_id := 10;` | Shared Components → Application Items → `G_COMPANY_ID` (Session State Protection: Restricted); set in the f345 Application Process "After Auth" or `pkg_forms_compat.set_global('COMPANY_ID', 10)` |
+| `x := :GLOBAL.company_id;` | `:G_COMPANY_ID` in SQL/PLSQL; `pkg_forms_compat.get_global('COMPANY_ID')` in packages |
+| `ERASE('GLOBAL.x')` | `pkg_forms_compat.erase_global('X')` (application item `G_X`) |
 | `DEFAULT_VALUE('x','GLOBAL.y')` | Application computation (On New Instance) |

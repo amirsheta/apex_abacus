@@ -2,7 +2,7 @@
 Usage: python3 gen_inv.py <xml> <manual_dir> <out_md>
 Manual sections are read from <manual_dir>/s01.md, s02.md, s13.md, s14.md, s15.md and notes_*.md.
 """
-import sys, re, html, collections, json, os
+import sys, re, html, collections, json, os, glob
 import xml.etree.ElementTree as ET
 
 NS = '{http://xmlns.oracle.com/Forms}'
@@ -250,10 +250,39 @@ w('## 6. Triggers\n')
 w(man('notes_triggers.md'))
 w('### 6.0 Trigger index\n')
 w('| # | Level | Owner | Trigger | Lines (total / active) | Exec. hierarchy | Source | Program units called |\n|---|---|---|---|---|---|---|---|')
+# inherited trigger code from the object library XML (forms/COMMON/olb/<OLB>_OLB.xml), by block / item / trigger name
+olb_trig = {}
+for cand in glob.glob(os.path.join(os.path.dirname(os.path.abspath(xml_path)), '..', 'COMMON', 'olb', '*_OLB.xml')):
+    if 'OLD' in os.path.basename(cand).upper():
+        continue
+    oroot = ET.parse(cand).getroot()
+    for ob in oroot.iter(NS + 'Block'):
+        for ot in ob.findall(NS + 'Trigger'):
+            olb_trig.setdefault((ob.get('Name'), ot.get('Name')), ot)
+        for oi in ob.findall(NS + 'Item'):
+            for ot in oi.findall(NS + 'Trigger'):
+                olb_trig.setdefault((ob.get('Name') + '.' + oi.get('Name'), ot.get('Name')), ot)
+    for ot in oroot.iter(NS + 'Trigger'):
+        olb_trig.setdefault(('*', ot.get('Name')), ot)
+
+
+def olb_source(t):
+    e = t['e']
+    owner = t['owner']
+    key = (e.get('ParentName') if owner == 'FORM' else owner, t['name']) if owner != 'FORM' else ('*', e.get('ParentName') or t['name'])
+    ot = olb_trig.get(key)
+    code = U(ot.get('TriggerText')) if ot is not None else ''
+    if not code.strip():
+        return None
+    first = next((x.strip() for x in code.split('\n') if x.strip() and not x.strip().startswith('--')), '')
+    return 'OLB code (%d lines): `%s`' % (len(code.split('\n')), first[:60].replace('|', '\\|'))
+
+
 for n, t in enumerate(triggers, 1):
     e = t['e']
-    src = 'XML' if t['code'].strip() else ('MISSING SOURCE (OLB ' + (e.get('ParentName') or e.get('ParentFilename') or 'parent') + ')'
-                                            if e.get('ParentModule') or e.get('SubclassSubObject') else 'EMPTY (no text in XML)')
+    inherited = olb_source(t) if not t['code'].strip() else None
+    src = 'XML' if t['code'].strip() else (inherited or ('MISSING SOURCE (OLB ' + (e.get('ParentName') or e.get('ParentFilename') or 'parent') + ')'
+                                            if e.get('ParentModule') or e.get('SubclassSubObject') else 'EMPTY (no text in XML)'))
     t['src'] = src
     w(f"| {n} | {t['level']} | {t['owner']} | {t['name']} | {t['lines']} / {t['active']} | {cell(e.get('ExecuteHierarchy') or 'default (Override)')} | "
       f"{src} | {cell(', '.join(t['p']))} |")
@@ -406,12 +435,21 @@ for src, code in allcode:
     for a in fm.findall(NS + 'Alert'):
         if re.search(r"['\"]" + re.escape(a.get('Name')) + r"['\"]", code, re.I):
             alert_use[a.get('Name')].append(src)
+# object library next to the form sources (forms/COMMON/olb/<OLB>_OLB.xml): resolves inherited alerts
+olb_alerts = {}
+for cand in glob.glob(os.path.join(os.path.dirname(os.path.abspath(xml_path)), '..', 'COMMON', 'olb', '*_OLB.xml')):
+    if 'OLD' in os.path.basename(cand).upper():
+        continue
+    for oa in ET.parse(cand).getroot().iter(NS + 'Alert'):
+        olb_alerts.setdefault((os.path.basename(cand).upper().replace('_OLB.XML', ''), oa.get('Name')), oa)
 w('| Alert | Style | Title | Message | Buttons | Where used (by literal name) | Source |\n|---|---|---|---|---|---|---|')
 for a in fm.findall(NS + 'Alert'):
-    g = a.get
-    w(f"| {g('Name')} | {cell(g('AlertStyle') or 'MISSING SOURCE')} | {cell(g('Title') or 'MISSING SOURCE')} | {cell(U(g('AlertMessage')) or 'MISSING SOURCE')} | "
-      f"{cell('/'.join(x for x in (g('Button1Label'), g('Button2Label'), g('Button3Label')) if x) or 'MISSING SOURCE')} | "
-      f"{cell(', '.join(alert_use[g('Name')]) or 'not referenced by literal name')} | {g('ParentFilename')}:{g('ParentName')} |")
+    own = a.get
+    lib = olb_alerts.get(((a.get('ParentModule') or '').upper(), a.get('ParentName') or a.get('Name')))
+    g = (lambda k, own=own, lib=lib: own(k) or (lib.get(k) if lib is not None else None))
+    w(f"| {g('Name')} | {cell(g('AlertStyle') or 'MISSING SOURCE')} | {cell(U(g('Title')) or ('–' if lib is not None else 'MISSING SOURCE'))} | {cell(U(g('AlertMessage')) or ('(set at runtime)' if lib is not None else 'MISSING SOURCE'))} | "
+      f"{cell('/'.join(U(x) for x in (g('Button1Label'), g('Button2Label'), g('Button3Label')) if x) or 'MISSING SOURCE')} | "
+      f"{cell(', '.join(alert_use[g('Name')]) or 'not referenced by literal name')} | {g('ParentFilename')}:{g('ParentName')}{' (resolved from the OLB XML)' if lib is not None else ''} |")
 w('')
 w(man('notes_alerts.md'))
 

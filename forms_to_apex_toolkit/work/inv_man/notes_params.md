@@ -1,5 +1,5 @@
 > **Parameter/global notes**
-> - 20 `P_*` parameters (user id/name, port, class, user type, job, module id …) are inherited from the OLB without defaults; they are passed in by the calling menu/launcher (`CIC_MENU` / `EXECUTE_FUNCTION` of the caller) — **MISSING SOURCE** for their origin.
-> - :GLOBAL variables are used as return channels from the LOV forms (CITY_CD, CTRY_CD, IMPR_NBR, PORT_CD, PORT_NAME, MOBILE_NO …) and as control flags (FLAGUPDATE, CHK_DUP_BUSID, FUNS_BUSID, ALLOW_MCI, ALLOW_MOI …). `CURRENT_VER=22` and `CURRENT_DT='29-03-2025'` are version stamps.
+> - 21 `P_*` parameters are inherited from the OLB without defaults. The launcher forms `APPS` and `BUTTON_LAST_TREE` (`forms/SC/`) pass them on with `ADD_PARAMETER(..., :PARAMETER.P_*)`; the login form that sets them first is **MISSING SOURCE**. The menu `CIC_MENU` does not pass parameters.
+> - `P_USER_ID` is the `SC_USERS` / `SC_USER_ROLES.USER_ID` (used that way by `KEY_CONTROL.FOUND_KEY` and `ACTIVITY_DB`); f345 uses `SSO_APP_USER` against the same columns, so `P_USER_ID` → `SSO_APP_USER`. Other mappings to f345 items: `P_CURR_PORT_CD`, `P_CLASS_CD`, `P_PORT_TYPE`, `P_BRKR_NBR` (same names), `P_USER_TYPE` → `V_USR_TYPE`, `P_WS_ID` → `P_GLOBAL_V_WS_ID` (f345 sets `'APEX-WS'`; `ACTIVITY_DB` treats `'NO_TRM_DEF'` specially).
+> - :GLOBAL variables are used as return channels from the LOV forms (CITY_CD, CTRY_CD, IMPR_NBR, PORT_CD, PORT_NAME, MOBILE_NO …) and as control flags (FLAGUPDATE, CHK_DUP_BUSID, FUNS_BUSID, ALLOW_MCI, ALLOW_MOI …) → application items `G_<NAME>` (f345). `CURRENT_VER=22` and `CURRENT_DT='29-03-2025'` are version stamps.
 > - `:SYSTEM.MESSAGE_LEVEL` is forced to 25 around `FORMS_DDL('COMMIT')` in UPDATE_IMPORTER to suppress messages.
-

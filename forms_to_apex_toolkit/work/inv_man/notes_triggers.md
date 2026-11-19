@@ -1,7 +1,4 @@
-> **Trigger summary**
-> - 323 triggers: Form 26, Block 18, Item 279. 158 contain code; 165 have no `TriggerText` in the XML (inherited from `CIC_OLB.olb` or deliberately empty) and are flagged **MISSING SOURCE / empty**.
-> - `LSIDE`: 150 item triggers (WHEN-MOUSE-ENTER / WHEN-MOUSE-LEAVE / WHEN-MOUSE-CLICK × 50 side-menu buttons) — all empty in the XML → behaviour lives in the OLB/NIB library (**MISSING SOURCE**).
-> - Many form-level triggers are one-line delegations to the `NIB` library (e.g. `NIB.ON_ERROR`, `NIB.PRE_FORM`, `NIB.WHEN_TIMER_EXPIRED`, KEY-* handlers). The called library code is **MISSING SOURCE**.
-> - 59 KEY-LISTVAL item triggers: most open separate LOV *forms* via CALL_FORM and read the result back from :GLOBAL variables.
-> - Large commented-out blocks (`/* ... */`, e.g. original WHEN-NEW-FORM-INSTANCE timer code) are kept verbatim below; line counts show total / active.
-
+> **Trigger notes**
+> - 323 triggers: Form 26, Block 18, Item 279. 158 contain code in the form XML; 165 have no `TriggerText` there. **All 165 are inherited from the object library and their code is in `forms/COMMON/olb/CIC_OLB_OLB.xml`** (revision 2; column *Source* below shows the first line).
+> - The inherited code is the standard screen frame, not business logic: `LSIDE` 150 mouse triggers (`TMPLT.MOUSE_ENTER` / `MOUSE_LEAVE` / `MOUSE_CLICK` of the side-menu buttons), `TOOLBAR` 16 button / mouse triggers, `TITLE` 6 (KEY-LISTVAL, date validation via `HIJDATE.VALID_HIJ_DATE`), `EDI_MSG` 1, form `KEY-F4`. In APEX they are replaced by the f345 page template, the page 0 toolbar and the `FUNCS` region.
+> - Many form-level triggers are one-line delegations to the `NIB` library (`NIB.ON_ERROR`, `NIB.PRE_FORM`, `NIB.WHEN_TIMER_EXPIRED`, KEY-* handlers). Their code is in `forms/COMMON/libraries/CIC_LIB.pld`; what it does and its APEX replacement are in §10.8.

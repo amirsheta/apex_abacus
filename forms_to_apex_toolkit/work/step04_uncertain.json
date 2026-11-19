@@ -1,0 +1,13 @@
+[
+ "DA client-side condition p_triggering_condition_type / p_triggering_expression (not in f345)",
+ "NATIVE_DIALOG_CANCEL action (page 111002 PB_CANCEL)",
+ "NATIVE_ENABLE / NATIVE_DISABLE with p_affected_elements (not in f345)",
+ "NATIVE_SET_VALUE attributes 01 / 02 / 05 / 09 (not in f345)",
+ "NATIVE_SUBMIT_PAGE attributes 01 / 02 (not in f345)",
+ "ROWID primary key of the Form region: p_include_rowid_column, item p_source ROWID / p_source_data_type ROWID",
+ "button DA: p_triggering_button_id (page 111001 SEARCH)",
+ "p_lov_cascade_parent_items / p_ajax_optimize_refresh (cascading LOV parents)",
+ "p_query_where on the NATIVE_FORM region (AGR1100 has no WHERE clause)",
+ "p_read_only_when2 => PLSQL with p_read_only_when_type => EXPRESSION (f345 shows the pattern only for p_display_when)",
+ "wwv_flow_api.create_message (Text Message; f345 has none) - p_message_language ar-sa"
+]

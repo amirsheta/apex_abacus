@@ -1,0 +1,4061 @@
+[
+{
+"kind": "PROCEDURE",
+"name": "UI_RESET",
+"start": 60,
+"section": null,
+"end": 66,
+"lines": 7,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "UI",
+"start": 68,
+"section": null,
+"end": 75,
+"lines": 8,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 1,
+"session": 0,
+"calls": [],
+"params": "(p_item IN VARCHAR2, p_prop IN VARCHAR2, p_on IN BOOLEAN)"
+},
+{
+"kind": "PROCEDURE",
+"name": "ENTRABLE",
+"start": 79,
+"section": null,
+"end": 83,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 2,
+"session": 0,
+"calls": [
+"UI"
+],
+"params": "(p_item IN VARCHAR2, p_on IN BOOLEAN)"
+},
+{
+"kind": "PROCEDURE",
+"name": "UI_FOCUS",
+"start": 85,
+"section": null,
+"end": 89,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 1,
+"session": 0,
+"calls": [],
+"params": "(p_item IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "SET_FUNCTION_ENABLED",
+"start": 92,
+"section": null,
+"end": 98,
+"lines": 7,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 1,
+"session": 0,
+"calls": [],
+"params": "(p_fun IN VARCHAR2, p_on IN BOOLEAN)"
+},
+{
+"kind": "FUNCTION",
+"name": "FUNCTION_STATE",
+"start": 100,
+"section": null,
+"end": 110,
+"lines": 11,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(p_fun IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "INFO",
+"start": 113,
+"section": null,
+"end": 118,
+"lines": 6,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(p_text IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "UI_JSON",
+"start": 120,
+"section": null,
+"end": 153,
+"lines": 34,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": ""
+},
+{
+"kind": "FUNCTION",
+"name": "UI_COUNT",
+"start": 155,
+"section": null,
+"end": 159,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "UI_ENTRY",
+"start": 161,
+"section": null,
+"end": 170,
+"lines": 10,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(p_idx IN PLS_INTEGER, p_item OUT VARCHAR2, p_prop OUT VARCHAR2, p_val OUT VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "FORM_TRIGGER_FAILURE",
+"start": 174,
+"section": null,
+"end": 178,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(p_text IN VARCHAR2 DEFAULT NULL)"
+},
+{
+"kind": "FUNCTION",
+"name": "GET_GLOBAL",
+"start": 180,
+"section": null,
+"end": 184,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(p_name IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "SET_GLOBAL",
+"start": 186,
+"section": null,
+"end": 190,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(p_name IN VARCHAR2, p_val IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "ARABIC_MESSAGE",
+"start": 195,
+"section": null,
+"end": 204,
+"lines": 10,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(p_sys IN NUMBER, p_nbr IN NUMBER)"
+},
+{
+"kind": "PROCEDURE",
+"name": "DISPLAY_ARABIC_ERROR",
+"start": 207,
+"section": null,
+"end": 211,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"ARABIC_MESSAGE",
+"FORM_TRIGGER_FAILURE"
+],
+"params": "(p_sys IN NUMBER, p_nbr IN NUMBER)"
+},
+{
+"kind": "PROCEDURE",
+"name": "DISPLAY_ARABIC_INFO",
+"start": 214,
+"section": null,
+"end": 218,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"ARABIC_MESSAGE",
+"INFO"
+],
+"params": "(p_sys IN NUMBER, p_nbr IN NUMBER)"
+},
+{
+"kind": "FUNCTION",
+"name": "CG_MESSAGE",
+"start": 222,
+"section": null,
+"end": 226,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(p_default IN VARCHAR2, p1 IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "ADD_ACTIVITY",
+"start": 235,
+"section": null,
+"end": 243,
+"lines": 9,
+"rec_read": [
+"IMPR_NBR",
+"PORT_CD"
+],
+"rec_write": [],
+"ctx": [
+"CURR_PORT_CD",
+"USER_ID",
+"WS_ID"
+],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"FORM_TRIGGER_FAILURE"
+],
+"params": "(p_act IN NUMBER, p_rec IN T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "FUNCTION",
+"name": "CUR_HIJ_DATE",
+"start": 247,
+"section": null,
+"end": 257,
+"lines": 11,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"FORM_TRIGGER_FAILURE"
+],
+"params": ""
+},
+{
+"kind": "FUNCTION",
+"name": "VALID_HIJ_DATE",
+"start": 265,
+"section": null,
+"end": 278,
+"lines": 14,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"FORM_TRIGGER_FAILURE"
+],
+"params": "(p_dt IN DATE)"
+},
+{
+"kind": "PROCEDURE",
+"name": "CTRY_100_DEFAULTS",
+"start": 282,
+"section": null,
+"end": 301,
+"lines": 20,
+"rec_read": [
+"ADD_CRTY_ARBC_NAME",
+"ADD_CTRY_CD",
+"BUS_ID_TYPE_CD",
+"CRTY_ARBC_NAME",
+"CTRY_CD",
+"IMPR_TYPE_CD"
+],
+"rec_write": [
+"ADD_CTRY_CD",
+"CTRY_CD"
+],
+"ctx": [],
+"ui_calls": 2,
+"session": 0,
+"calls": [
+"DISPLAY_ARABIC_ERROR",
+"UI"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "TYPE_ENTRABLE_QUERY",
+"start": 306,
+"section": null,
+"end": 348,
+"lines": 43,
+"rec_read": [
+"BUS_ID_TYPE_CD",
+"IMPR_TYPE_CD"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 43,
+"session": 0,
+"calls": [
+"ENTRABLE",
+"UI"
+],
+"params": "(p_rec IN T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "LOCK_KEY_ITEMS",
+"start": 352,
+"section": null,
+"end": 366,
+"lines": 15,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 11,
+"session": 0,
+"calls": [
+"ENTRABLE"
+],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "CR_FIELDS_ENTRABLE",
+"start": 369,
+"section": null,
+"end": 382,
+"lines": 14,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 8,
+"session": 0,
+"calls": [
+"ENTRABLE"
+],
+"params": "(p_on IN BOOLEAN, p_with_activity IN BOOLEAN)"
+},
+{
+"kind": "PROCEDURE",
+"name": "CGSF$CLRLU_IMPORTERS_IMP_BUS_I",
+"start": 385,
+"section": null,
+"end": 393,
+"lines": 9,
+"rec_read": [
+"CITY_CODE_OF_ID",
+"CTRY_CD_OF_ID",
+"ID_CITY_NAME",
+"ID_MINS_COMM_CD",
+"L_CT_CITY_STATUS2"
+],
+"rec_write": [
+"CITY_CODE_OF_ID",
+"CTRY_CD_OF_ID",
+"ID_CITY_NAME",
+"ID_MINS_COMM_CD",
+"L_CT_CITY_STATUS2"
+],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "FUNCTION",
+"name": "STRIP_CONSTRAINT",
+"start": 397,
+"section": null,
+"end": 403,
+"lines": 7,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(p_msg IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "WHEN_NEW_FORM_INSTANCE",
+"start": 495,
+"section": null,
+"end": 545,
+"lines": 51,
+"rec_read": [],
+"rec_write": [],
+"ctx": [
+"CLASS_CD",
+"CURR_PORT_CD",
+"LETTER_NBR",
+"USER_TYPE"
+],
+"ui_calls": 5,
+"session": 0,
+"calls": [
+"BROKER_INT",
+"CTRY_100_DEFAULTS",
+"ENTRABLE",
+"GET_GLOBAL",
+"SET_GLOBAL",
+"UI",
+"UI_FOCUS"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPORTERS_WHEN_CREATE_RECORD",
+"start": 578,
+"section": null,
+"end": 603,
+"lines": 26,
+"rec_read": [
+"IMPR_TYPE_CD",
+"IMPR_TYPE_NAME",
+"PORT_CD",
+"PORT_NAME"
+],
+"rec_write": [
+"IMPR_TYPE_CD",
+"PORT_CD"
+],
+"ctx": [
+"CURR_PORT_CD",
+"PRSNL_IMPR"
+],
+"ui_calls": 8,
+"session": 0,
+"calls": [
+"ENTRABLE",
+"SET_GLOBAL",
+"UI"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "PROCEDURE",
+"name": "COMMERCIAL_REGISTER_NAME",
+"start": 606,
+"section": null,
+"end": 631,
+"lines": 26,
+"rec_read": [
+"BUS_ID",
+"BUS_ID_BRNCH",
+"COMM_RGSTRTN_TYPE"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(p_rec IN T_RECORD, p_cnt OUT NUMBER, p_name OUT VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "NEW_RECORD_CONFIRM_TEXT",
+"start": 633,
+"section": null,
+"end": 646,
+"lines": 14,
+"rec_read": [
+"BUS_ID_TYPE_CD",
+"IMPR_TYPE_CD"
+],
+"rec_write": [],
+"ctx": [
+"CODE"
+],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"COMMERCIAL_REGISTER_NAME"
+],
+"params": "(p_rec IN T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPORTERS_NEW_RECORD_INSTANCE",
+"start": 879,
+"section": null,
+"end": 1024,
+"lines": 146,
+"rec_read": [
+"ARBC_IMPR_NAME",
+"BUS_ID_TYPE_CD",
+"COMM_RGSTRTN_TYPE",
+"IMPR_NBR",
+"IMPR_TYPE_CD"
+],
+"rec_write": [
+"ARBC_IMPR_NAME",
+"IMPR_TYPE_CD"
+],
+"ctx": [
+"CLASS_CD",
+"CODE",
+"USER_TYPE"
+],
+"ui_calls": 54,
+"session": 0,
+"calls": [
+"COMMERCIAL_REGISTER_NAME",
+"CTRY_100_DEFAULTS",
+"ENTRABLE",
+"FORM_TRIGGER_FAILURE",
+"INFO",
+"SET_GLOBAL",
+"UI",
+"UI_FOCUS"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD, p_ctx IN OUT NOCOPY T_CONTEXT, p_answer IN PLS_INTEGER DEFAULT c_yes)"
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPORTERS_PRE_RECORD",
+"start": 1047,
+"section": null,
+"end": 1063,
+"lines": 17,
+"rec_read": [
+"IMPR_NAME_PARENT",
+"IMPR_NBR_PARENT"
+],
+"rec_write": [],
+"ctx": [
+"CURR_PORT_CD"
+],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"DISPLAY_ARABIC_INFO"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPORTERS_WHEN_CLEAR_BLOCK",
+"start": 1066,
+"section": null,
+"end": 1070,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"SET_GLOBAL"
+],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPORTERS_PRE_QUERY",
+"start": 1141,
+"section": null,
+"end": 1161,
+"lines": 21,
+"rec_read": [
+"ARBC_IMPR_NAME",
+"IMPR_NAME_STD",
+"IMPR_NBR",
+"IMPR_TYPE_CD",
+"PORT_CD"
+],
+"rec_write": [
+"ARBC_IMPR_NAME",
+"IMPR_NAME_STD",
+"IMPR_NBR",
+"IMPR_TYPE_CD",
+"PORT_CD"
+],
+"ctx": [
+"PRSNL_IMPR"
+],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"GET_GLOBAL",
+"SET_GLOBAL"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPORTERS_POST_QUERY",
+"start": 1496,
+"section": null,
+"end": 1746,
+"lines": 251,
+"rec_read": [
+"ADD_CRTY_ARBC_NAME",
+"ADD_CTRY_CD",
+"BRNH_CITY_CD",
+"BRNH_CITY_NAME",
+"BUS_ID",
+"BUS_ID_BRNCH",
+"BUS_ID_STATUS",
+"BUS_ID_TYPE_CD",
+"BUS_ID_TYPE_NAME",
+"B_EMAIL",
+"B_ID_NBR",
+"B_MOBILE_NO",
+"CITY_CODE",
+"CITY_CODE_OF_ID",
+"CITY_NAME",
+"CRTY_ARBC_NAME",
+"CTRY_CD",
+"CTRY_CD_OF_ID",
+"CTRY_CTRY_STATUS",
+"EMAIL",
+"HQ_IMPR_NBR",
+"ID_CITY_NAME",
+"ID_MINS_COMM_CD",
+"ID_NBR",
+"IMPR_ID_TYPE",
+"IMPR_NBR",
+"IMPR_TYPE_CD",
+"IMPR_TYPE_NAME",
+"ITIDT_NOTE",
+"L_CT_CITY_STATUS",
+"L_CT_CITY_STATUS2",
+"MOBILE_NO",
+"PORT_CD",
+"PORT_NAME",
+"SDP_PORT_STATUS",
+"STATUS",
+"STATUS_DESC",
+"SUSPN_STATUS",
+"WASL_CITY_NAME"
+],
+"rec_write": [
+"B_EMAIL",
+"B_ID_NBR",
+"B_MOBILE_NO",
+"IMPR_ID_TYPE",
+"SUSPN_STATUS",
+"WASL_CITY_NAME"
+],
+"ctx": [
+"CURR_PORT_CD"
+],
+"ui_calls": 6,
+"session": 0,
+"calls": [
+"ADJ_FUNS",
+"CG_MESSAGE",
+"FORM_TRIGGER_FAILURE",
+"INFO",
+"SET_GLOBAL",
+"TYPE_ENTRABLE_QUERY",
+"UI"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPORTERS_PRE_INSERT",
+"start": 1948,
+"section": null,
+"end": 2104,
+"lines": 157,
+"rec_read": [
+"ACTIVITY",
+"ACTIVITY_ENTR",
+"ADD_CTRY_CD",
+"ARBC_IMPR_NAME",
+"BANK_IBAN",
+"BRNH_CITY_CD",
+"BUS_ID",
+"BUS_ID_BRNCH",
+"BUS_ID_EXPRD_DT",
+"BUS_ID_ISSUE_DT",
+"BUS_ID_TYPE_CD",
+"B_EMAIL",
+"B_ID_NBR",
+"B_MOBILE_NO",
+"CAR_AGENT_FLAG",
+"CITY_CODE",
+"CITY_CODE_OF_ID",
+"COMM_RGSTRTN_TYPE",
+"CTRY_CD",
+"CTRY_CD_OF_ID",
+"ENG_IMPR_NAME",
+"EXPD_STMT_NBR",
+"EXPRESS_POST",
+"HQ_IMPR_NBR",
+"IMPD_STMT_NBR",
+"IMPR_ADDRESS",
+"IMPR_CNTCT_NAME",
+"IMPR_DATA_SRCE",
+"IMPR_EXPR_TYPE",
+"IMPR_FAX_NBR",
+"IMPR_NBR_PARENT",
+"IMPR_POB_NBR",
+"IMPR_TELEX_NBR",
+"IMPR_TEL_NBR",
+"IMPR_TYPE_CD",
+"IMPR_ZIP_CD",
+"PORT_CD",
+"WVR_ENTRY_NBR"
+],
+"rec_write": [
+"HQ_IMPR_NBR"
+],
+"ctx": [
+"CLASS_CD",
+"CURR_PORT_CD",
+"USER_ID",
+"USER_TYPE",
+"WS_ID"
+],
+"ui_calls": 3,
+"session": 0,
+"calls": [
+"ADD_ACTIVITY",
+"CGSF$CLRLU_IMPORTERS_IMP_BUS_I",
+"CHK_DUPL_IMP_BRKR",
+"CHK_IMPR_DUPL",
+"DISPLAY_ARABIC_ERROR",
+"ENTRABLE",
+"FORM_TRIGGER_FAILURE",
+"GET_GLOBAL",
+"INFO",
+"SET_GLOBAL"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT, p_answer IN PLS_INTEGER DEFAULT c_yes)"
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPORTERS_INSERT",
+"start": 2113,
+"section": null,
+"end": 2137,
+"lines": 25,
+"rec_read": [
+"ACTIVITY",
+"ADD_CTRY_CD",
+"ARBC_IMPR_NAME",
+"BANK_IBAN",
+"BUS_ID",
+"BUS_ID_BRNCH",
+"BUS_ID_EXPRD_DT",
+"BUS_ID_ISSUE_DT",
+"BUS_ID_STATUS",
+"BUS_ID_TYPE_CD",
+"CAR_AGENT_FLAG",
+"CITY_CODE",
+"CITY_CODE_OF_ID",
+"COMM_RGSTRTN_TYPE",
+"CREATION_FLAG",
+"CTRY_CD",
+"CTRY_CD_OF_ID",
+"CUSTOMS_ENTERED",
+"EMAIL",
+"ENG_IMPR_NAME",
+"EXPD_STMT_NBR",
+"EXPRESS_POST",
+"HQ_IMPR_NBR",
+"ID_NBR",
+"IMPD_STMT_NBR",
+"IMPR_ADDRESS",
+"IMPR_CNTCT_NAME",
+"IMPR_DATA_SRCE",
+"IMPR_EXPR_TYPE",
+"IMPR_FAX_NBR",
+"IMPR_NAME_STD",
+"IMPR_NBR",
+"IMPR_NBR_PARENT",
+"IMPR_POB_NBR",
+"IMPR_TELEX_NBR",
+"IMPR_TEL_NBR",
+"IMPR_TYPE_CD",
+"IMPR_ZIP_CD",
+"LST_TRAN_DT",
+"MOBILE_NO",
+"PORT_CD",
+"ROW_ID",
+"WVR_ENTRY_NBR"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPORTERS_POST_INSERT",
+"start": 2172,
+"section": null,
+"end": 2192,
+"lines": 21,
+"rec_read": [
+"HQ_IMPR_NBR",
+"IMPR_NBR"
+],
+"rec_write": [
+"HQ_IMPR_NBR",
+"IMPR_NBR"
+],
+"ctx": [
+"CLASS_CD",
+"USER_TYPE"
+],
+"ui_calls": 1,
+"session": 0,
+"calls": [
+"CREATE_BRKR_IMPR_AUTH",
+"ENTRABLE",
+"GET_GLOBAL",
+"INSERT_AUDIT_RECORD",
+"RETURN_IMPR_ID",
+"UPDATE_BASIC_IMPORTER"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPORTERS_PRE_UPDATE",
+"start": 2323,
+"section": null,
+"end": 2427,
+"lines": 105,
+"rec_read": [
+"ARBC_IMPR_NAME",
+"BUS_ID",
+"BUS_ID_BRNCH",
+"BUS_ID_EXPRD_DT",
+"BUS_ID_TYPE_CD",
+"B_MOBILE_NO",
+"COMM_RGSTRTN_TYPE",
+"CUSTOMS_ENTERED",
+"ENG_IMPR_NAME",
+"HQ_IMPR_NBR",
+"IMPR_CNTCT_NAME",
+"IMPR_NAME_STD",
+"IMPR_TYPE_CD",
+"MOBILE_NO"
+],
+"rec_write": [
+"ARBC_IMPR_NAME",
+"CUSTOMS_ENTERED",
+"ENG_IMPR_NAME",
+"HQ_IMPR_NBR",
+"IMPR_CNTCT_NAME",
+"IMPR_NAME_STD",
+"MOBILE_NO"
+],
+"ctx": [
+"CURR_PORT_CD",
+"LETTER_NBR"
+],
+"ui_calls": 2,
+"session": 0,
+"calls": [
+"ADD_ACTIVITY",
+"CHK_DUPL_IMP_BRKR",
+"CHK_PERSONAL",
+"DISPLAY_ARABIC_ERROR",
+"ENTRABLE",
+"FORM_TRIGGER_FAILURE",
+"GET_GLOBAL",
+"INSERT_AUDIT_RECORD"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPORTERS_UPDATE",
+"start": 2433,
+"section": null,
+"end": 2484,
+"lines": 52,
+"rec_read": [
+"ACTIVITY",
+"ADD_CTRY_CD",
+"ARBC_IMPR_NAME",
+"BANK_IBAN",
+"BUS_ID",
+"BUS_ID_BRNCH",
+"BUS_ID_EXPRD_DT",
+"BUS_ID_ISSUE_DT",
+"BUS_ID_STATUS",
+"BUS_ID_TYPE_CD",
+"CAR_AGENT_FLAG",
+"CITY_CODE",
+"CITY_CODE_OF_ID",
+"COMM_RGSTRTN_TYPE",
+"CREATION_FLAG",
+"CTRY_CD",
+"CTRY_CD_OF_ID",
+"CUSTOMS_ENTERED",
+"EMAIL",
+"ENG_IMPR_NAME",
+"EXPD_STMT_NBR",
+"EXPRESS_POST",
+"HQ_IMPR_NBR",
+"ID_NBR",
+"IMPD_STMT_NBR",
+"IMPR_ADDRESS",
+"IMPR_CNTCT_NAME",
+"IMPR_DATA_SRCE",
+"IMPR_EXPR_TYPE",
+"IMPR_FAX_NBR",
+"IMPR_NAME_STD",
+"IMPR_NBR",
+"IMPR_NBR_PARENT",
+"IMPR_POB_NBR",
+"IMPR_TELEX_NBR",
+"IMPR_TEL_NBR",
+"IMPR_TYPE_CD",
+"IMPR_ZIP_CD",
+"LST_TRAN_DT",
+"MOBILE_NO",
+"PORT_CD",
+"ROW_ID",
+"WVR_ENTRY_NBR"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"FORM_TRIGGER_FAILURE"
+],
+"params": "(p_rec IN T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPORTERS_POST_UPDATE",
+"start": 2510,
+"section": null,
+"end": 2521,
+"lines": 12,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"GET_GLOBAL",
+"SET_GLOBAL",
+"UPDATE_BASIC_IMPORTER"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPORTERS_PRE_DELETE",
+"start": 2532,
+"section": null,
+"end": 2536,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"ADD_ACTIVITY"
+],
+"params": "(p_rec IN T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPORTERS_KEY_DELREC",
+"start": 2574,
+"section": null,
+"end": 2587,
+"lines": 14,
+"rec_read": [
+"IMPR_NBR",
+"PORT_CD",
+"REC_STATUS",
+"ROW_ID"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"IMPORTERS_PRE_DELETE"
+],
+"params": "(p_rec IN T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "FUNCTION",
+"name": "IMPORTERS_ON_ERROR",
+"start": 2722,
+"section": null,
+"end": 2777,
+"lines": 56,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"CG_MESSAGE",
+"STRIP_CONSTRAINT"
+],
+"params": "(p_op IN VARCHAR2, p_sqlcode IN NUMBER, p_sqlerrm IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "PORT_CD_WHEN_VALIDATE_ITEM",
+"start": 2804,
+"section": null,
+"end": 2816,
+"lines": 13,
+"rec_read": [
+"PORT_CD",
+"PORT_NAME",
+"SDP_PORT_STATUS"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"CG_MESSAGE",
+"FORM_TRIGGER_FAILURE"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "HQ_IMPR_NBR_POST_CHANGE",
+"start": 2819,
+"section": null,
+"end": 2823,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"SET_GLOBAL"
+],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPR_NBR_WHEN_VALIDATE_ITEM",
+"start": 2849,
+"section": null,
+"end": 2866,
+"lines": 18,
+"rec_read": [
+"IMPR_NBR",
+"PORT_CD"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"DISPLAY_ARABIC_ERROR",
+"SET_GLOBAL"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPR_TYPE_CD_VALIDATE_ITEM",
+"start": 3078,
+"section": null,
+"end": 3228,
+"lines": 151,
+"rec_read": [
+"ADD_CRTY_ARBC_NAME",
+"ADD_CTRY_CD",
+"BUS_ID",
+"BUS_ID_TYPE_CD",
+"BUS_ID_TYPE_NAME",
+"CRTY_ARBC_NAME",
+"CTRY_CD",
+"IMPR_NBR",
+"IMPR_TYPE_CD",
+"IMPR_TYPE_NAME",
+"ITIDT_NOTE",
+"STATUS"
+],
+"rec_write": [
+"ADD_CTRY_CD",
+"BUS_ID",
+"BUS_ID_TYPE_CD",
+"CTRY_CD",
+"IMPR_TYPE_CD"
+],
+"ctx": [
+"CURR_PORT_CD"
+],
+"ui_calls": 11,
+"session": 0,
+"calls": [
+"DISPLAY_ARABIC_ERROR",
+"ENTRABLE",
+"FORM_TRIGGER_FAILURE",
+"GET_GLOBAL",
+"SET_GLOBAL",
+"TYPE_ENTRABLE_QUERY",
+"UI"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPR_TYPE_CD_POST_CHANGE",
+"start": 3241,
+"section": null,
+"end": 3248,
+"lines": 8,
+"rec_read": [
+"IMPR_TYPE_CD"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 1,
+"session": 0,
+"calls": [
+"SET_GLOBAL",
+"UI"
+],
+"params": "(p_rec IN T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPR_TYPE_CD_NEW_ITEM_INSTANCE",
+"start": 3283,
+"section": null,
+"end": 3290,
+"lines": 8,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 1,
+"session": 0,
+"calls": [
+"CTRY_100_DEFAULTS",
+"GET_GLOBAL",
+"UI"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPR_TYPE_CD_LOV_RETURN",
+"start": 3295,
+"section": null,
+"end": 3307,
+"lines": 13,
+"rec_read": [
+"BUS_ID_TYPE_CD",
+"BUS_ID_TYPE_NAME",
+"IMPR_TYPE_CD",
+"IMPR_TYPE_NAME"
+],
+"rec_write": [
+"BUS_ID_TYPE_CD",
+"BUS_ID_TYPE_NAME",
+"IMPR_TYPE_CD",
+"IMPR_TYPE_NAME"
+],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"CTRY_100_DEFAULTS",
+"SET_GLOBAL"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "BUS_ID_EXPRD_DT_VALIDATE_ITEM",
+"start": 3335,
+"section": null,
+"end": 3350,
+"lines": 16,
+"rec_read": [
+"BUS_ID_EXPRD_DT"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"DISPLAY_ARABIC_ERROR",
+"VALID_HIJ_DATE"
+],
+"params": "(p_rec IN T_RECORD, p_from_item IN BOOLEAN DEFAULT TRUE)"
+},
+{
+"kind": "PROCEDURE",
+"name": "BUS_ID_TYPE_CD_POST_CHANGE",
+"start": 3382,
+"section": null,
+"end": 3404,
+"lines": 23,
+"rec_read": [
+"ADD_CRTY_ARBC_NAME",
+"ADD_CTRY_CD",
+"BUS_ID_TYPE_CD",
+"CRTY_ARBC_NAME",
+"CTRY_CD",
+"IMPR_TYPE_CD"
+],
+"rec_write": [
+"ADD_CTRY_CD",
+"CTRY_CD"
+],
+"ctx": [],
+"ui_calls": 2,
+"session": 0,
+"calls": [
+"DISPLAY_ARABIC_ERROR",
+"SET_GLOBAL",
+"UI"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "COMM_RGSTRTN_TYPE_LIST_CHANGED",
+"start": 3424,
+"section": null,
+"end": 3439,
+"lines": 16,
+"rec_read": [
+"BUS_ID_BRNCH",
+"COMM_RGSTRTN_TYPE"
+],
+"rec_write": [
+"BUS_ID_BRNCH"
+],
+"ctx": [],
+"ui_calls": 8,
+"session": 0,
+"calls": [
+"ENTRABLE",
+"UI"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "CTRY_CD_OF_ID_VALIDATE_ITEM",
+"start": 3458,
+"section": null,
+"end": 3467,
+"lines": 10,
+"rec_read": [
+"CITY_CODE_OF_ID",
+"CTRY_CD_OF_ID",
+"REC_STATUS"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"CGSF$CLRLU_IMPORTERS_IMP_BUS_I"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "CITY_CODE_OF_ID_VALIDATE_ITEM",
+"start": 3523,
+"section": null,
+"end": 3558,
+"lines": 36,
+"rec_read": [
+"CITY_CODE_OF_ID",
+"CTRY_CD_OF_ID",
+"ID_CITY_NAME",
+"ID_MINS_COMM_CD",
+"L_CT_CITY_STATUS2",
+"REC_STATUS"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"CGSF$CLRLU_IMPORTERS_IMP_BUS_I",
+"INFO"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "CITY_CODE_OF_ID_WHEN_NEW_ITEM",
+"start": 3561,
+"section": null,
+"end": 3568,
+"lines": 8,
+"rec_read": [
+"COMM_RGSTRTN_TYPE"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 2,
+"session": 0,
+"calls": [
+"UI"
+],
+"params": "(p_rec IN T_RECORD)"
+},
+{
+"kind": "FUNCTION",
+"name": "BUS_ID_SUSPENDED_IMPORTER",
+"start": 3571,
+"section": null,
+"end": 3612,
+"lines": 42,
+"rec_read": [
+"BUS_ID",
+"BUS_ID_BRNCH",
+"BUS_ID_TYPE_CD",
+"COMM_RGSTRTN_TYPE",
+"CTRY_CD",
+"IMPR_NBR",
+"PORT_CD"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(p_rec IN T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "BUS_ID_WHEN_VALIDATE_ITEM",
+"start": 3821,
+"section": null,
+"end": 3985,
+"lines": 165,
+"rec_read": [
+"ACTIVITY",
+"ARBC_IMPR_NAME",
+"BUS_ID",
+"BUS_ID_BRNCH",
+"BUS_ID_EXPRD_DT",
+"BUS_ID_TYPE_CD",
+"B_ID_NBR",
+"CITY_CODE_OF_ID",
+"COMM_RGSTRTN_TYPE",
+"CTRY_CD",
+"CTRY_CD_OF_ID",
+"ID_MINS_COMM_CD",
+"IMPR_FAX_NBR",
+"IMPR_NAME_STD",
+"IMPR_NBR",
+"IMPR_POB_NBR",
+"IMPR_TELEX_NBR",
+"IMPR_TEL_NBR",
+"IMPR_TYPE_CD",
+"IMPR_ZIP_CD",
+"PORT_CD",
+"REC_STATUS"
+],
+"rec_write": [
+"BUS_ID",
+"B_ID_NBR"
+],
+"ctx": [],
+"ui_calls": 5,
+"session": 0,
+"calls": [
+"CHECK_IDNO",
+"CHK_BUS_ID_BRNCH",
+"CHK_IMPR_DUPL",
+"CR_FIELDS_ENTRABLE",
+"DISPLAY_ARABIC_ERROR",
+"ENTRABLE",
+"FORM_TRIGGER_FAILURE",
+"GET_BRANCH_CR_DATA",
+"GET_GLOBAL",
+"GET_MAIN_CR_DATA",
+"INFO",
+"IS_DIGIT",
+"UI"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT, p_cr_answer IN PLS_INTEGER DEFAULT c_yes, p_susp_answer IN PLS_INTEGER DEFAULT c_yes)"
+},
+{
+"kind": "PROCEDURE",
+"name": "BUS_ID_POST_CHANGE",
+"start": 3988,
+"section": null,
+"end": 3992,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"SET_GLOBAL"
+],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "BUS_ID_WHEN_NEW_ITEM_INSTANCE",
+"start": 4018,
+"section": null,
+"end": 4038,
+"lines": 21,
+"rec_read": [
+"BUS_ID",
+"BUS_ID_TYPE_CD",
+"CITY_CODE_OF_ID",
+"COMM_RGSTRTN_TYPE",
+"ID_MINS_COMM_CD",
+"IMPR_TYPE_CD"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 4,
+"session": 0,
+"calls": [
+"DISPLAY_ARABIC_INFO",
+"GET_GLOBAL",
+"INFO",
+"SET_GLOBAL",
+"UI",
+"UI_FOCUS"
+],
+"params": "(p_rec IN T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "BRNH_CITY_CD_VALIDATE_ITEM",
+"start": 4058,
+"section": null,
+"end": 4070,
+"lines": 13,
+"rec_read": [
+"BRNH_CITY_CD",
+"BRNH_CITY_NAME",
+"CTRY_CD_OF_ID"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"DISPLAY_ARABIC_ERROR"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "BRNH_CITY_CD_NEW_ITEM_INSTANCE",
+"start": 4073,
+"section": null,
+"end": 4079,
+"lines": 7,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 3,
+"session": 0,
+"calls": [
+"UI"
+],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "BUS_ID_BRNCH_VALIDATE_ITEM",
+"start": 4224,
+"section": null,
+"end": 4324,
+"lines": 101,
+"rec_read": [
+"ARBC_IMPR_NAME",
+"BRNH_CITY_CD",
+"BRNH_ID_MINS_COMM_CD",
+"BUS_ID",
+"BUS_ID_BRNCH",
+"BUS_ID_BRNCH_ENTR",
+"BUS_ID_EXPRD_DT",
+"BUS_ID_TYPE_CD",
+"COMM_RGSTRTN_TYPE",
+"CTRY_CD",
+"IMPR_FAX_NBR",
+"IMPR_NAME_STD",
+"IMPR_POB_NBR",
+"IMPR_TELEX_NBR",
+"IMPR_TEL_NBR",
+"IMPR_TYPE_CD",
+"IMPR_ZIP_CD",
+"REC_STATUS"
+],
+"rec_write": [
+"BUS_ID_BRNCH"
+],
+"ctx": [],
+"ui_calls": 1,
+"session": 0,
+"calls": [
+"CHK_BUS_ID_BRNCH",
+"CHK_IMPR_DUPL",
+"CR_FIELDS_ENTRABLE",
+"DISPLAY_ARABIC_ERROR",
+"GET_BRANCH_CR_DATA",
+"GET_GLOBAL",
+"GET_MAIN_CR_DATA",
+"INFO",
+"IS_DIGIT",
+"UI"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT, p_cr_answer IN PLS_INTEGER DEFAULT c_yes)"
+},
+{
+"kind": "PROCEDURE",
+"name": "BUS_ID_BRNCH_POST_CHANGE",
+"start": 4327,
+"section": null,
+"end": 4331,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"SET_GLOBAL"
+],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "BUS_ID_BRNCH_NEW_ITEM_INSTANCE",
+"start": 4366,
+"section": null,
+"end": 4394,
+"lines": 29,
+"rec_read": [
+"BRNH_CITY_CD",
+"BUS_ID",
+"BUS_ID_BRNCH",
+"BUS_ID_TYPE_CD",
+"CITY_CODE",
+"CITY_CODE_OF_ID",
+"IMPR_TYPE_CD"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 1,
+"session": 0,
+"calls": [
+"GET_GLOBAL",
+"INFO",
+"SET_GLOBAL",
+"UI"
+],
+"params": "(p_rec IN T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "CTRY_CD_WHEN_VALIDATE_ITEM",
+"start": 4440,
+"section": null,
+"end": 4473,
+"lines": 34,
+"rec_read": [
+"BUS_ID_TYPE_CD",
+"CRTY_ARBC_NAME",
+"CTRY_CD",
+"CTRY_CD_OF_ID",
+"CTRY_CTRY_STATUS",
+"IMPR_TYPE_CD"
+],
+"rec_write": [
+"CTRY_CD_OF_ID"
+],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"FORM_TRIGGER_FAILURE"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPR_EXPR_TYPE_POST_CHANGE",
+"start": 4476,
+"section": null,
+"end": 4480,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"SET_GLOBAL"
+],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "ARBC_IMPR_NAME_VALIDATE_ITEM",
+"start": 4490,
+"section": null,
+"end": 4495,
+"lines": 6,
+"rec_read": [
+"ARBC_IMPR_NAME",
+"IMPR_NAME_STD"
+],
+"rec_write": [
+"ARBC_IMPR_NAME",
+"IMPR_NAME_STD"
+],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "ARBC_IMPR_NAME_KEY_NEXT_ITEM",
+"start": 4543,
+"section": null,
+"end": 4580,
+"lines": 38,
+"rec_read": [
+"ADD_CRTY_ARBC_NAME",
+"ADD_CTRY_CD",
+"CITY_CODE",
+"CITY_NAME",
+"CTRY_CD",
+"IMPR_TEL_NBR"
+],
+"rec_write": [
+"ADD_CRTY_ARBC_NAME",
+"ADD_CTRY_CD",
+"CITY_CODE",
+"CITY_NAME",
+"IMPR_TEL_NBR"
+],
+"ctx": [],
+"ui_calls": 1,
+"session": 0,
+"calls": [
+"UI_FOCUS"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "ENG_IMPR_NAME_VALIDATE_ITEM",
+"start": 4607,
+"section": null,
+"end": 4625,
+"lines": 19,
+"rec_read": [
+"ENG_IMPR_NAME"
+],
+"rec_write": [
+"ENG_IMPR_NAME"
+],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"FORM_TRIGGER_FAILURE"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "BUS_ID_ISSUE_DT_VALIDATE_ITEM",
+"start": 4643,
+"section": null,
+"end": 4653,
+"lines": 11,
+"rec_read": [
+"BUS_ID_ISSUE_DT"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALID_HIJ_DATE"
+],
+"params": "(p_rec IN T_RECORD, p_from_item IN BOOLEAN DEFAULT TRUE)"
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPR_NBR_PARENT_VALIDATE_ITEM",
+"start": 4675,
+"section": null,
+"end": 4690,
+"lines": 16,
+"rec_read": [
+"IMPR_NAME_PARENT",
+"IMPR_NBR_PARENT"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"DISPLAY_ARABIC_INFO"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "ADD_CTRY_CD_WHEN_VALIDATE_ITEM",
+"start": 4724,
+"section": null,
+"end": 4751,
+"lines": 28,
+"rec_read": [
+"ADD_CRTY_ARBC_NAME",
+"ADD_CTRY_CD",
+"CITY_CODE",
+"CITY_NAME",
+"L_CT_CITY_STATUS"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"DISPLAY_ARABIC_ERROR",
+"INFO"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "CITY_CODE_WHEN_VALIDATE_ITEM",
+"start": 4790,
+"section": null,
+"end": 4821,
+"lines": 32,
+"rec_read": [
+"ADD_CRTY_ARBC_NAME",
+"ADD_CTRY_CD",
+"CITY_CODE",
+"CITY_NAME",
+"L_CT_CITY_STATUS"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"DISPLAY_ARABIC_ERROR",
+"FORM_TRIGGER_FAILURE",
+"INFO"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "IMPR_TEL_NBR_VALIDATE_ITEM",
+"start": 4842,
+"section": null,
+"end": 4854,
+"lines": 13,
+"rec_read": [
+"IMPR_TEL_NBR"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"FORM_TRIGGER_FAILURE"
+],
+"params": "(p_rec IN T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "CHECK_EMAIL",
+"start": 4857,
+"section": null,
+"end": 4869,
+"lines": 13,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"FORM_TRIGGER_FAILURE"
+],
+"params": "(p_email IN VARCHAR2, p_from_item IN BOOLEAN)"
+},
+{
+"kind": "PROCEDURE",
+"name": "B_EMAIL_WHEN_VALIDATE_ITEM",
+"start": 4895,
+"section": null,
+"end": 4899,
+"lines": 5,
+"rec_read": [
+"B_EMAIL"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"CHECK_EMAIL"
+],
+"params": "(p_rec IN T_RECORD, p_from_item IN BOOLEAN DEFAULT TRUE)"
+},
+{
+"kind": "PROCEDURE",
+"name": "EMAIL_WHEN_VALIDATE_ITEM",
+"start": 4902,
+"section": null,
+"end": 4906,
+"lines": 5,
+"rec_read": [
+"EMAIL"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"CHECK_EMAIL"
+],
+"params": "(p_rec IN T_RECORD, p_from_item IN BOOLEAN DEFAULT TRUE)"
+},
+{
+"kind": "PROCEDURE",
+"name": "B_EMAIL_POST_CHANGE",
+"start": 4917,
+"section": null,
+"end": 4922,
+"lines": 6,
+"rec_read": [
+"PORT_CD"
+],
+"rec_write": [
+"PORT_CD"
+],
+"ctx": [
+"CURR_PORT_CD"
+],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"SET_GLOBAL"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "PROCEDURE",
+"name": "B_MOBILE_NO_WHEN_VALIDATE_ITEM",
+"start": 4956,
+"section": null,
+"end": 4979,
+"lines": 24,
+"rec_read": [
+"B_MOBILE_NO",
+"IMPR_NBR"
+],
+"rec_write": [],
+"ctx": [
+"CURR_PORT_CD"
+],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"FORM_TRIGGER_FAILURE",
+"GET_GLOBAL"
+],
+"params": "(p_rec IN T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "PROCEDURE",
+"name": "B_MOBILE_NO_POST_CHANGE",
+"start": 4982,
+"section": null,
+"end": 4986,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"B_EMAIL_POST_CHANGE"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "PROCEDURE",
+"name": "BANK_IBAN_WHEN_VALIDATE_ITEM",
+"start": 5004,
+"section": null,
+"end": 5016,
+"lines": 13,
+"rec_read": [
+"BANK_IBAN"
+],
+"rec_write": [
+"BANK_IBAN"
+],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"FORM_TRIGGER_FAILURE"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "BANK_IBAN_NEW_ITEM_INSTANCE",
+"start": 5019,
+"section": null,
+"end": 5025,
+"lines": 7,
+"rec_read": [
+"BANK_IBAN"
+],
+"rec_write": [
+"BANK_IBAN"
+],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "B_ID_NBR_WHEN_VALIDATE_ITEM",
+"start": 5047,
+"section": null,
+"end": 5064,
+"lines": 18,
+"rec_read": [
+"B_ID_NBR"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"CHECK_IDNO",
+"FORM_TRIGGER_FAILURE"
+],
+"params": "(p_rec IN T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "B_ID_NBR_POST_CHANGE",
+"start": 5067,
+"section": null,
+"end": 5071,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"B_EMAIL_POST_CHANGE"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "FUNCTION",
+"name": "CHECK_IDNO",
+"start": 5105,
+"section": null,
+"end": 5131,
+"lines": 27,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(id_no IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "IS_DIGIT",
+"start": 5152,
+"section": null,
+"end": 5167,
+"lines": 16,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(txt_num IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "CHECK_BUS_ID",
+"start": 5170,
+"section": null,
+"end": 5174,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "CHK_BUS_ID_BRNCH",
+"start": 5187,
+"section": null,
+"end": 5193,
+"lines": 7,
+"rec_read": [
+"BUS_ID",
+"BUS_ID_BRNCH"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"FORM_TRIGGER_FAILURE"
+],
+"params": "(p_rec IN T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "CHK_IMPR_DUPL",
+"start": 5232,
+"section": null,
+"end": 5263,
+"lines": 32,
+"rec_read": [
+"BUS_ID",
+"BUS_ID_BRNCH",
+"BUS_ID_TYPE_CD",
+"CTRY_CD",
+"IMPR_NBR",
+"PORT_CD"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"FORM_TRIGGER_FAILURE"
+],
+"params": "(p_rec IN T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "CHK_DUPL_IMP_BRKR",
+"start": 5297,
+"section": null,
+"end": 5324,
+"lines": 28,
+"rec_read": [
+"BUS_ID",
+"BUS_ID_BRNCH",
+"COMM_RGSTRTN_TYPE",
+"IMPR_TYPE_CD",
+"PORT_CD"
+],
+"rec_write": [],
+"ctx": [
+"CURR_PORT_CD"
+],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"FORM_TRIGGER_FAILURE"
+],
+"params": "(p_rec IN T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "PROCEDURE",
+"name": "CHK_PERSONAL",
+"start": 5368,
+"section": null,
+"end": 5403,
+"lines": 36,
+"rec_read": [
+"IMPR_TYPE_CD",
+"IMPR_TYPE_NAME"
+],
+"rec_write": [
+"IMPR_TYPE_CD"
+],
+"ctx": [
+"CURR_PORT_CD"
+],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"FORM_TRIGGER_FAILURE",
+"GET_GLOBAL",
+"INFO"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT, p_impr_type_cd IN NUMBER, p_hq_impr_nbr IN NUMBER, p_stop IN NUMBER DEFAULT 1)"
+},
+{
+"kind": "PROCEDURE",
+"name": "INSERT_AUDIT_RECORD",
+"start": 5454,
+"section": null,
+"end": 5502,
+"lines": 49,
+"rec_read": [
+"ADD_CTRY_CD",
+"ARBC_IMPR_NAME",
+"BANK_IBAN",
+"BUS_ID",
+"BUS_ID_BRNCH",
+"BUS_ID_EXPRD_DT",
+"BUS_ID_ISSUE_DT",
+"BUS_ID_STATUS",
+"BUS_ID_TYPE_CD",
+"CAR_AGENT_FLAG",
+"CITY_CODE",
+"CITY_CODE_OF_ID",
+"COMM_RGSTRTN_TYPE",
+"CREATION_FLAG",
+"CTRY_CD",
+"CTRY_CD_OF_ID",
+"EMAIL",
+"ENG_IMPR_NAME",
+"EXPRESS_POST",
+"HQ_IMPR_NBR",
+"ID_NBR",
+"IMPD_STMT_NBR",
+"IMPR_ADDRESS",
+"IMPR_CNTCT_NAME",
+"IMPR_DATA_SRCE",
+"IMPR_EXPR_TYPE",
+"IMPR_FAX_NBR",
+"IMPR_NAME_STD",
+"IMPR_NBR",
+"IMPR_NBR_PARENT",
+"IMPR_POB_NBR",
+"IMPR_TELEX_NBR",
+"IMPR_TEL_NBR",
+"IMPR_TYPE_CD",
+"IMPR_ZIP_CD",
+"LST_TRAN_DT",
+"MOBILE_NO",
+"PORT_CD"
+],
+"rec_write": [],
+"ctx": [
+"CURR_PORT_CD",
+"USER_ID"
+],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"DISPLAY_ARABIC_ERROR"
+],
+"params": "(p_rec IN T_RECORD, p_ctx IN T_CONTEXT, v_act_type IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "UPDATE_BASIC_IMPORTER",
+"start": 5533,
+"section": null,
+"end": 5561,
+"lines": 29,
+"rec_read": [
+"BUS_ID",
+"BUS_ID_BRNCH",
+"BUS_ID_TYPE_CD",
+"B_EMAIL",
+"B_ID_NBR",
+"B_MOBILE_NO",
+"HQ_IMPR_NBR",
+"IMPR_TYPE_CD"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(p_rec IN T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "RETURN_IMPR_ID",
+"start": 5574,
+"section": null,
+"end": 5581,
+"lines": 8,
+"rec_read": [
+"ARBC_IMPR_NAME",
+"IMPR_NBR"
+],
+"rec_write": [],
+"ctx": [
+"CLASS_CD",
+"USER_TYPE"
+],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"SET_GLOBAL"
+],
+"params": "(p_rec IN T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "PROCEDURE",
+"name": "BROKER_INT",
+"start": 5594,
+"section": null,
+"end": 5601,
+"lines": 8,
+"rec_read": [
+"EXPRESS_POST",
+"IMPR_EXPR_TYPE"
+],
+"rec_write": [
+"EXPRESS_POST",
+"IMPR_EXPR_TYPE"
+],
+"ctx": [],
+"ui_calls": 2,
+"session": 0,
+"calls": [
+"UI"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "ADJ_FUNS",
+"start": 5641,
+"section": null,
+"end": 5675,
+"lines": 35,
+"rec_read": [
+"BUS_ID_TYPE_CD",
+"IMPR_NBR",
+"IMPR_TYPE_CD"
+],
+"rec_write": [],
+"ctx": [
+"CLASS_CD",
+"CURR_PORT_CD",
+"USER_ID",
+"USER_TYPE"
+],
+"ui_calls": 7,
+"session": 0,
+"calls": [
+"GET_GLOBAL",
+"SET_FUNCTION_ENABLED"
+],
+"params": "(p_rec IN T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "PROCEDURE",
+"name": "GET_CR_DATA",
+"start": 6044,
+"section": null,
+"end": 6159,
+"lines": 116,
+"rec_read": [
+"ACTIVITY",
+"ARBC_IMPR_NAME",
+"BRNH_CITY_CD",
+"BRNH_CITY_NAME",
+"BUS_ID_EXPRD_DT",
+"BUS_ID_ISSUE_DT",
+"BUS_ID_STATUS",
+"CITY_CODE_OF_ID",
+"CREATION_FLAG",
+"CTRY_CD_OF_ID",
+"ID_CITY_NAME",
+"IMPR_ADDRESS",
+"IMPR_FAX_NBR",
+"IMPR_NAME_STD",
+"IMPR_TELEX_NBR",
+"IMPR_TEL_NBR",
+"LST_TRAN_DT"
+],
+"rec_write": [
+"ACTIVITY",
+"ARBC_IMPR_NAME",
+"BRNH_CITY_CD",
+"BUS_ID_EXPRD_DT",
+"BUS_ID_ISSUE_DT",
+"BUS_ID_STATUS",
+"CITY_CODE_OF_ID",
+"CREATION_FLAG",
+"IMPR_ADDRESS",
+"IMPR_FAX_NBR",
+"IMPR_NAME_STD",
+"IMPR_TELEX_NBR",
+"IMPR_TEL_NBR",
+"LST_TRAN_DT"
+],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"INFO"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD, p_string_result IN VARCHAR2, p_type IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "GET_MAIN_CR_DATA",
+"start": 6175,
+"section": null,
+"end": 6186,
+"lines": 12,
+"rec_read": [
+"BUS_ID"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"GET_CR_DATA"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "GET_BRANCH_CR_DATA",
+"start": 6202,
+"section": null,
+"end": 6213,
+"lines": 12,
+"rec_read": [
+"BUS_ID_BRNCH"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"GET_CR_DATA"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "CREATE_BRKR_IMPR_AUTH",
+"start": 6276,
+"section": null,
+"end": 6300,
+"lines": 25,
+"rec_read": [
+"ARBC_IMPR_NAME",
+"IMPR_NBR",
+"PORT_CD"
+],
+"rec_write": [],
+"ctx": [
+"BRKR_NBR",
+"BRKR_PORT_CD",
+"CLASS_CD",
+"CURR_PORT_CD",
+"LIC_TYPE",
+"USER_TYPE"
+],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"ADD_ACTIVITY",
+"INFO",
+"SET_GLOBAL"
+],
+"params": "(p_rec IN T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "FUNCTION",
+"name": "UPDATE_IMPORTER_MSG",
+"start": 6305,
+"section": null,
+"end": 6322,
+"lines": 18,
+"rec_read": [
+"BUS_ID",
+"BUS_ID_BRNCH",
+"BUS_ID_TYPE_CD",
+"IMPR_NBR",
+"IMPR_TYPE_CD",
+"PORT_CD"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(p_rec IN T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "UPDATE_IMPORTER",
+"start": 6388,
+"section": null,
+"end": 6402,
+"lines": 15,
+"rec_read": [
+"IMPR_NBR",
+"PORT_CD"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"INFO"
+],
+"params": "(p_rec IN T_RECORD)"
+},
+{
+"kind": "FUNCTION",
+"name": "CENTRAL_MOBILE",
+"start": 6405,
+"section": null,
+"end": 6418,
+"lines": 14,
+"rec_read": [
+"IMPR_NBR"
+],
+"rec_write": [],
+"ctx": [
+"CURR_PORT_CD"
+],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(p_rec IN T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "PROCEDURE",
+"name": "LOV_UPDATE_MOBLIE",
+"start": 6478,
+"section": null,
+"end": 6495,
+"lines": 18,
+"rec_read": [
+"IMPR_NBR"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"FORM_TRIGGER_FAILURE",
+"GET_GLOBAL",
+"INFO"
+],
+"params": "(p_rec IN T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "EXEC_FUNS",
+"start": 6578,
+"section": null,
+"end": 6628,
+"lines": 51,
+"rec_read": [
+"BUS_ID",
+"BUS_ID_BRNCH",
+"IMPR_NBR"
+],
+"rec_write": [],
+"ctx": [
+"CODE",
+"LETTER_NBR"
+],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"CREATE_BRKR_IMPR_AUTH",
+"FORM_TRIGGER_FAILURE",
+"GET_GLOBAL",
+"INFO"
+],
+"params": "(p_rec IN OUT NOCOPY T_RECORD, p_ctx IN OUT NOCOPY T_CONTEXT, cd IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "ITEM_VALUE",
+"start": 6637,
+"section": "SESSION-STATE ADAPTER",
+"end": 6641,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 1,
+"calls": [],
+"params": "(p_item IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "NUMBER_ITEM",
+"start": 6643,
+"section": "SESSION-STATE ADAPTER",
+"end": 6647,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 2,
+"calls": [
+"ITEM_VALUE"
+],
+"params": "(p_item IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "DATE_ITEM",
+"start": 6649,
+"section": "SESSION-STATE ADAPTER",
+"end": 6653,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 2,
+"calls": [
+"ITEM_VALUE"
+],
+"params": "(p_item IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "SET_ITEM",
+"start": 6655,
+"section": "SESSION-STATE ADAPTER",
+"end": 6659,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 1,
+"calls": [],
+"params": "(p_item IN VARCHAR2, p_val IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "APPLICATION_ITEM",
+"start": 6664,
+"section": "SESSION-STATE ADAPTER",
+"end": 6674,
+"lines": 11,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(p_name IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "ANSWER",
+"start": 6676,
+"section": "SESSION-STATE ADAPTER",
+"end": 6680,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(p_val IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "STATE_RESET",
+"start": 6683,
+"section": "SESSION-STATE ADAPTER",
+"end": 6687,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 1,
+"calls": [],
+"params": ""
+},
+{
+"kind": "FUNCTION",
+"name": "STATE_SEQUENCE",
+"start": 6689,
+"section": "SESSION-STATE ADAPTER",
+"end": 6698,
+"lines": 10,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 1,
+"calls": [],
+"params": "(p_kind IN VARCHAR2, p_item IN VARCHAR2, p_prop IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "STATE_PUT",
+"start": 6700,
+"section": "SESSION-STATE ADAPTER",
+"end": 6715,
+"lines": 16,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 3,
+"calls": [
+"STATE_SEQUENCE"
+],
+"params": "(p_kind IN VARCHAR2, p_item IN VARCHAR2, p_prop IN VARCHAR2, p_val IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "STATE_GET",
+"start": 6717,
+"section": "SESSION-STATE ADAPTER",
+"end": 6732,
+"lines": 16,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 2,
+"calls": [],
+"params": "(p_kind IN VARCHAR2, p_item IN VARCHAR2, p_prop IN VARCHAR2, p_found OUT BOOLEAN)"
+},
+{
+"kind": "FUNCTION",
+"name": "UI_STATE",
+"start": 6735,
+"section": "SESSION-STATE ADAPTER",
+"end": 6741,
+"lines": 7,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"STATE_GET"
+],
+"params": "(p_item IN VARCHAR2, p_prop IN VARCHAR2, p_default IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "SAVE_UI",
+"start": 6744,
+"section": "SESSION-STATE ADAPTER",
+"end": 6756,
+"lines": 13,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"STATE_PUT",
+"UI_ENTRY"
+],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "BASELINE_VALUES",
+"start": 6759,
+"section": "SESSION-STATE ADAPTER",
+"end": 6765,
+"lines": 7,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 1,
+"calls": [
+"ITEM_VALUE",
+"STATE_PUT"
+],
+"params": ""
+},
+{
+"kind": "FUNCTION",
+"name": "GET_CONTEXT",
+"start": 6768,
+"section": "SESSION-STATE ADAPTER",
+"end": 6784,
+"lines": 17,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 3,
+"calls": [
+"APPLICATION_ITEM",
+"ITEM_VALUE",
+"NUMBER_ITEM"
+],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "SET_CONTEXT",
+"start": 6786,
+"section": "SESSION-STATE ADAPTER",
+"end": 6791,
+"lines": 6,
+"rec_read": [],
+"rec_write": [],
+"ctx": [
+"CODE",
+"LETTER_NBR"
+],
+"ui_calls": 0,
+"session": 2,
+"calls": [
+"SET_ITEM"
+],
+"params": "(p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "FUNCTION",
+"name": "GET_RECORD",
+"start": 6793,
+"section": "SESSION-STATE ADAPTER",
+"end": 6837,
+"lines": 45,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 70,
+"calls": [
+"DATE_ITEM",
+"ITEM_VALUE",
+"NUMBER_ITEM",
+"UI_STATE"
+],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "SET_RECORD",
+"start": 6839,
+"section": "SESSION-STATE ADAPTER",
+"end": 6877,
+"lines": 39,
+"rec_read": [
+"ACTIVITY",
+"ADD_CRTY_ARBC_NAME",
+"ADD_CTRY_CD",
+"ARBC_IMPR_NAME",
+"BANK_IBAN",
+"BRNH_CITY_CD",
+"BRNH_CITY_NAME",
+"BRNH_ID_MINS_COMM_CD",
+"BUS_ID",
+"BUS_ID_BRNCH",
+"BUS_ID_EXPRD_DT",
+"BUS_ID_ISSUE_DT",
+"BUS_ID_STATUS",
+"BUS_ID_TYPE_CD",
+"BUS_ID_TYPE_NAME",
+"B_EMAIL",
+"B_ID_NBR",
+"B_MOBILE_NO",
+"CAR_AGENT_FLAG",
+"CITY_CODE",
+"CITY_CODE_OF_ID",
+"CITY_NAME",
+"COMM_RGSTRTN_TYPE",
+"CREATION_FLAG",
+"CRTY_ARBC_NAME",
+"CTRY_CD",
+"CTRY_CD_OF_ID",
+"CTRY_CTRY_STATUS",
+"CUSTOMS_ENTERED",
+"EMAIL",
+"ENG_IMPR_NAME",
+"EXPD_STMT_NBR",
+"EXPRESS_POST",
+"HQ_IMPR_NBR",
+"ID_CITY_NAME",
+"ID_MINS_COMM_CD",
+"ID_NBR",
+"IMPD_STMT_NBR",
+"IMPR_ADDRESS",
+"IMPR_CNTCT_NAME",
+"IMPR_DATA_SRCE",
+"IMPR_EXPR_TYPE",
+"IMPR_FAX_NBR",
+"IMPR_ID_TYPE",
+"IMPR_NAME_PARENT",
+"IMPR_NAME_STD",
+"IMPR_NBR",
+"IMPR_NBR_PARENT",
+"IMPR_POB_NBR",
+"IMPR_TELEX_NBR",
+"IMPR_TEL_NBR",
+"IMPR_TYPE_CD",
+"IMPR_TYPE_NAME",
+"IMPR_ZIP_CD",
+"ITIDT_NOTE",
+"LST_TRAN_DT",
+"L_CT_CITY_STATUS",
+"L_CT_CITY_STATUS2",
+"MOBILE_NO",
+"PORT_CD",
+"PORT_NAME",
+"REC_STATUS",
+"ROW_ID",
+"SDP_PORT_STATUS",
+"STATUS",
+"STATUS_DESC",
+"SUSPN_STATUS",
+"WASL_CITY_NAME",
+"WVR_ENTRY_NBR"
+],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 69,
+"calls": [
+"SET_ITEM"
+],
+"params": "(p_rec IN T_RECORD)"
+},
+{
+"kind": "PROCEDURE",
+"name": "KEEP_UI",
+"start": 6881,
+"section": "SESSION-STATE ADAPTER",
+"end": 6886,
+"lines": 6,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 1,
+"calls": [
+"SET_ITEM"
+],
+"params": ""
+},
+{
+"kind": "FUNCTION",
+"name": "ERROR_TEXT",
+"start": 6889,
+"section": "SESSION-STATE ADAPTER",
+"end": 6896,
+"lines": 8,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"IMPORTERS_ON_ERROR"
+],
+"params": "(p_op IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "LOAD_ROW",
+"start": 6899,
+"section": "SESSION-STATE ADAPTER",
+"end": 6927,
+"lines": 29,
+"rec_read": [
+"ACTIVITY",
+"ADD_CTRY_CD",
+"ARBC_IMPR_NAME",
+"BANK_IBAN",
+"BUS_ID",
+"BUS_ID_BRNCH",
+"BUS_ID_EXPRD_DT",
+"BUS_ID_ISSUE_DT",
+"BUS_ID_STATUS",
+"BUS_ID_TYPE_CD",
+"CAR_AGENT_FLAG",
+"CITY_CODE",
+"CITY_CODE_OF_ID",
+"COMM_RGSTRTN_TYPE",
+"CREATION_FLAG",
+"CTRY_CD",
+"CTRY_CD_OF_ID",
+"CUSTOMS_ENTERED",
+"EMAIL",
+"ENG_IMPR_NAME",
+"EXPD_STMT_NBR",
+"EXPRESS_POST",
+"HQ_IMPR_NBR",
+"ID_NBR",
+"IMPD_STMT_NBR",
+"IMPR_ADDRESS",
+"IMPR_CNTCT_NAME",
+"IMPR_DATA_SRCE",
+"IMPR_EXPR_TYPE",
+"IMPR_FAX_NBR",
+"IMPR_NAME_STD",
+"IMPR_NBR",
+"IMPR_NBR_PARENT",
+"IMPR_POB_NBR",
+"IMPR_TELEX_NBR",
+"IMPR_TEL_NBR",
+"IMPR_TYPE_CD",
+"IMPR_ZIP_CD",
+"LST_TRAN_DT",
+"MOBILE_NO",
+"PORT_CD",
+"REC_STATUS",
+"ROW_ID",
+"WVR_ENTRY_NBR"
+],
+"rec_write": [
+"REC_STATUS"
+],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(p_rec IN OUT NOCOPY T_RECORD, p_where_rowid IN VARCHAR2, p_port_cd IN NUMBER, p_impr_nbr IN NUMBER, p_curr_port IN NUMBER)"
+},
+{
+"kind": "PROCEDURE",
+"name": "RUN_VALIDATE",
+"start": 6930,
+"section": "SESSION-STATE ADAPTER",
+"end": 6979,
+"lines": 50,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"ADD_CTRY_CD_WHEN_VALIDATE_ITEM",
+"ARBC_IMPR_NAME_VALIDATE_ITEM",
+"BANK_IBAN_WHEN_VALIDATE_ITEM",
+"BRNH_CITY_CD_VALIDATE_ITEM",
+"BUS_ID_BRNCH_VALIDATE_ITEM",
+"BUS_ID_EXPRD_DT_VALIDATE_ITEM",
+"BUS_ID_ISSUE_DT_VALIDATE_ITEM",
+"BUS_ID_TYPE_CD_POST_CHANGE",
+"BUS_ID_WHEN_VALIDATE_ITEM",
+"B_EMAIL_POST_CHANGE",
+"B_EMAIL_WHEN_VALIDATE_ITEM",
+"B_ID_NBR_POST_CHANGE",
+"B_ID_NBR_WHEN_VALIDATE_ITEM",
+"B_MOBILE_NO_POST_CHANGE",
+"B_MOBILE_NO_WHEN_VALIDATE_ITEM",
+"CITY_CODE_OF_ID_VALIDATE_ITEM",
+"CITY_CODE_WHEN_VALIDATE_ITEM",
+"CTRY_CD_OF_ID_VALIDATE_ITEM",
+"CTRY_CD_WHEN_VALIDATE_ITEM",
+"EMAIL_WHEN_VALIDATE_ITEM",
+"ENG_IMPR_NAME_VALIDATE_ITEM",
+"IMPR_NBR_PARENT_VALIDATE_ITEM",
+"IMPR_NBR_WHEN_VALIDATE_ITEM",
+"IMPR_TEL_NBR_VALIDATE_ITEM",
+"IMPR_TYPE_CD_POST_CHANGE",
+"IMPR_TYPE_CD_VALIDATE_ITEM",
+"PORT_CD_WHEN_VALIDATE_ITEM"
+],
+"params": "(p_item IN VARCHAR2, r IN OUT NOCOPY T_RECORD, c IN T_CONTEXT, a1 IN PLS_INTEGER, a2 IN PLS_INTEGER, p_from_item IN BOOLEAN)"
+},
+{
+"kind": "PROCEDURE",
+"name": "PAGE_WHEN_NEW_FORM_INSTANCE",
+"start": 6982,
+"section": "SESSION-STATE ADAPTER",
+"end": 6992,
+"lines": 11,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 1,
+"calls": [
+"SET_ITEM",
+"SET_RECORD",
+"WHEN_NEW_FORM_INSTANCE"
+],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "PAGE_FETCH",
+"start": 6994,
+"section": "SESSION-STATE ADAPTER",
+"end": 7030,
+"lines": 37,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 1,
+"calls": [
+"BUS_ID_TYPE_CD_POST_CHANGE",
+"IMPORTERS_NEW_RECORD_INSTANCE",
+"IMPORTERS_POST_QUERY",
+"IMPORTERS_PRE_QUERY",
+"IMPORTERS_PRE_RECORD",
+"IMPR_TYPE_CD_POST_CHANGE",
+"LOAD_ROW",
+"SET_CONTEXT",
+"SET_ITEM",
+"SET_RECORD"
+],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "PAGE_NEW_RECORD",
+"start": 7032,
+"section": "SESSION-STATE ADAPTER",
+"end": 7049,
+"lines": 18,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"IMPORTERS_NEW_RECORD_INSTANCE",
+"IMPORTERS_PRE_RECORD",
+"IMPORTERS_WHEN_CREATE_RECORD",
+"SET_CONTEXT",
+"SET_RECORD"
+],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "REPLY",
+"start": 7052,
+"section": "SESSION-STATE ADAPTER",
+"end": 7076,
+"lines": 25,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"SET_CONTEXT",
+"SET_RECORD"
+],
+"params": "(p_rec IN T_RECORD, p_ctx IN T_CONTEXT)"
+},
+{
+"kind": "PROCEDURE",
+"name": "REPLY_ERROR",
+"start": 7078,
+"section": "SESSION-STATE ADAPTER",
+"end": 7088,
+"lines": 11,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"ERROR_TEXT",
+"SET_CONTEXT",
+"SET_RECORD"
+],
+"params": "(p_rec IN T_RECORD, p_ctx IN T_CONTEXT, p_op IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "AJAX_ITEM",
+"start": 7090,
+"section": "SESSION-STATE ADAPTER",
+"end": 7151,
+"lines": 62,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 2,
+"calls": [
+"ANSWER",
+"ARBC_IMPR_NAME_KEY_NEXT_ITEM",
+"BANK_IBAN_NEW_ITEM_INSTANCE",
+"BUS_ID_BRNCH_NEW_ITEM_INSTANCE",
+"BUS_ID_TYPE_CD_POST_CHANGE",
+"BUS_ID_WHEN_NEW_ITEM_INSTANCE",
+"CITY_CODE_OF_ID_WHEN_NEW_ITEM",
+"COMM_RGSTRTN_TYPE_LIST_CHANGED",
+"IMPORTERS_NEW_RECORD_INSTANCE",
+"IMPR_TYPE_CD_LOV_RETURN",
+"IMPR_TYPE_CD_NEW_ITEM_INSTANCE",
+"ITEM_VALUE",
+"REPLY",
+"REPLY_ERROR",
+"RUN_VALIDATE",
+"SET_RECORD",
+"STATE_PUT"
+],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "AJAX_CONFIRM",
+"start": 7153,
+"section": "SESSION-STATE ADAPTER",
+"end": 7177,
+"lines": 25,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"BUS_ID_SUSPENDED_IMPORTER",
+"NEW_RECORD_CONFIRM_TEXT",
+"UPDATE_IMPORTER_MSG"
+],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "AJAX_FUNCTION",
+"start": 7179,
+"section": "SESSION-STATE ADAPTER",
+"end": 7203,
+"lines": 25,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"ANSWER",
+"EXEC_FUNS",
+"LOV_UPDATE_MOBLIE",
+"REPLY",
+"REPLY_ERROR",
+"UPDATE_IMPORTER"
+],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "PAGE_CLEAR",
+"start": 7206,
+"section": "SESSION-STATE ADAPTER",
+"end": 7221,
+"lines": 16,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 5,
+"calls": [
+"SET_ITEM",
+"SET_RECORD"
+],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "PAGE_QUERY",
+"start": 7223,
+"section": "SESSION-STATE ADAPTER",
+"end": 7230,
+"lines": 8,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 3,
+"calls": [
+"APPLICATION_ITEM",
+"SET_ITEM"
+],
+"params": "(p_impr_nbr IN NUMBER)"
+},
+{
+"kind": "FUNCTION",
+"name": "VALIDATE_ON_SUBMIT",
+"start": 7234,
+"section": "SESSION-STATE ADAPTER",
+"end": 7256,
+"lines": 23,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 2,
+"calls": [
+"ERROR_TEXT",
+"ITEM_VALUE",
+"RUN_VALIDATE",
+"SET_RECORD",
+"STATE_GET",
+"STATE_PUT"
+],
+"params": "(p_item IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "REQUIRED_ITEMS",
+"start": 7258,
+"section": "SESSION-STATE ADAPTER",
+"end": 7277,
+"lines": 20,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 2,
+"calls": [
+"ITEM_VALUE",
+"UI_STATE"
+],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "PAGE_DML",
+"start": 7279,
+"section": "SESSION-STATE ADAPTER",
+"end": 7315,
+"lines": 37,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"ERROR_TEXT",
+"IMPORTERS_INSERT",
+"IMPORTERS_KEY_DELREC",
+"IMPORTERS_POST_INSERT",
+"IMPORTERS_POST_UPDATE",
+"IMPORTERS_PRE_INSERT",
+"IMPORTERS_PRE_UPDATE",
+"IMPORTERS_UPDATE",
+"SET_RECORD"
+],
+"params": "(p_request IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "CHECK_ERROR",
+"start": 7324,
+"section": "SESSION-STATE ADAPTER",
+"end": 7330,
+"lines": 7,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(I_ERR IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "REQUIRED_VALIDATION",
+"start": 7332,
+"section": "SESSION-STATE ADAPTER",
+"end": 7337,
+"lines": 6,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(I_VALUE IN VARCHAR2, I_LABEL IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "P0_PAGE_PK_CHECK",
+"start": 7340,
+"section": "SESSION-STATE ADAPTER",
+"end": 7358,
+"lines": 19,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 1,
+"calls": [],
+"params": "(IO_P0_PAGE_PK IN OUT VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "GET_MODULE_ID",
+"start": 7360,
+"section": "SESSION-STATE ADAPTER",
+"end": 7372,
+"lines": 13,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(I_P1110_MODULE_ID IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "PARAMETERS_ENTRY",
+"start": 7374,
+"section": "SESSION-STATE ADAPTER",
+"end": 7385,
+"lines": 12,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(IO_P_PRSNL_IMPR IN OUT VARCHAR2, IO_P_LETTER_NBR IN OUT VARCHAR2, IO_P1110_PRSNL_IMPR IN OUT VARCHAR2, IO_P1110_LETTER_NBR IN OUT VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "WHEN_NEW_FORM_INSTANCE",
+"start": 7387,
+"section": "SESSION-STATE ADAPTER",
+"end": 7391,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "SET_PAGE_PK",
+"start": 7393,
+"section": "SESSION-STATE ADAPTER",
+"end": 7401,
+"lines": 9,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 2,
+"calls": [
+"PAGE_QUERY"
+],
+"params": "(I_P0_PAGE_PK IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "POST_QUERY",
+"start": 7403,
+"section": "SESSION-STATE ADAPTER",
+"end": 7407,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "WHEN_CREATE_RECORD",
+"start": 7409,
+"section": "SESSION-STATE ADAPTER",
+"end": 7413,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "HEADER_TITLE",
+"start": 7415,
+"section": "SESSION-STATE ADAPTER",
+"end": 7430,
+"lines": 16,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(I_P1110_MODULE_ID IN VARCHAR2, IO_P1110_HERO_TITLE IN OUT VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "MOBILE_URL",
+"start": 7432,
+"section": "SESSION-STATE ADAPTER",
+"end": 7442,
+"lines": 11,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(I_P1110_IMPR_NBR IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "ON_INSERT",
+"start": 7445,
+"section": "SESSION-STATE ADAPTER",
+"end": 7449,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"PAGE_DML"
+],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "ON_UPDATE",
+"start": 7451,
+"section": "SESSION-STATE ADAPTER",
+"end": 7455,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"PAGE_DML"
+],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "KEY_DELREC",
+"start": 7457,
+"section": "SESSION-STATE ADAPTER",
+"end": 7461,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"PAGE_DML"
+],
+"params": ""
+},
+{
+"kind": "PROCEDURE",
+"name": "EXECUTE_QUERY",
+"start": 7463,
+"section": "SESSION-STATE ADAPTER",
+"end": 7469,
+"lines": 7,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 1,
+"calls": [
+"PAGE_QUERY"
+],
+"params": "(I_REQUEST IN VARCHAR2, I_P1110_IMPR_NBR IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "PORT_CD_VALIDATION",
+"start": 7472,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_PORT_CD IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "HQ_IMPR_NBR_VALIDATION",
+"start": 7473,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_HQ_IMPR_NBR IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "IMPR_NBR_VALIDATION",
+"start": 7474,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_IMPR_NBR IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "IMPR_TYPE_CD_VALIDATION",
+"start": 7475,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_IMPR_TYPE_CD IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "BUS_ID_EXPRD_DT_VALIDATION",
+"start": 7476,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_BUS_ID_EXPRD_DT IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "BUS_ID_TYPE_CD_VALIDATION",
+"start": 7477,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_BUS_ID_TYPE_CD IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "CITY_CODE_OF_ID_VALIDATION",
+"start": 7478,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_CITY_CODE_OF_ID IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "BUS_ID_VALIDATION",
+"start": 7479,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_BUS_ID IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "BRNH_CITY_CD_VALIDATION",
+"start": 7480,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_BRNH_CITY_CD IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "BUS_ID_BRNCH_VALIDATION",
+"start": 7481,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_BUS_ID_BRNCH IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "CTRY_CD_VALIDATION",
+"start": 7482,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_CTRY_CD IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "IMPR_EXPR_TYPE_VALIDATION",
+"start": 7483,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_IMPR_EXPR_TYPE IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "ARBC_IMPR_NAME_VALIDATION",
+"start": 7484,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_ARBC_IMPR_NAME IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "ENG_IMPR_NAME_VALIDATION",
+"start": 7485,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_ENG_IMPR_NAME IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "BUS_ID_ISSUE_DT_VALIDATION",
+"start": 7486,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_BUS_ID_ISSUE_DT IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "IMPR_NBR_PARENT_VALIDATION",
+"start": 7487,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_IMPR_NBR_PARENT IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "ADD_CTRY_CD_VALIDATION",
+"start": 7488,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_ADD_CTRY_CD IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "CITY_CODE_VALIDATION",
+"start": 7489,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_CITY_CODE IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "IMPR_TEL_NBR_VALIDATION",
+"start": 7490,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_IMPR_TEL_NBR IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "B_EMAIL_VALIDATION",
+"start": 7491,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_B_EMAIL IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "EMAIL_VALIDATION",
+"start": 7492,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_EMAIL IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "B_MOBILE_NO_VALIDATION",
+"start": 7493,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_B_MOBILE_NO IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "BANK_IBAN_VALIDATION",
+"start": 7494,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_BANK_IBAN IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "B_ID_NBR_VALIDATION",
+"start": 7495,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_B_ID_NBR IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "CTRY_CD_OF_ID_VALIDATION",
+"start": 7496,
+"section": "SESSION-STATE ADAPTER",
+"lines": 1,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [
+"VALIDATE_ON_SUBMIT"
+],
+"params": "(I_P1110_CTRY_CD_OF_ID IN VARCHAR2)"
+},
+{
+"kind": "FUNCTION",
+"name": "REQUIRED_ITEMS_VALIDATION",
+"start": 7498,
+"section": "SESSION-STATE ADAPTER",
+"end": 7502,
+"lines": 5,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": ""
+},
+{
+"kind": "FUNCTION",
+"name": "CENTRAL_MOBILE",
+"start": 7507,
+"section": "SESSION-STATE ADAPTER",
+"end": 7513,
+"lines": 7,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(I_P111002_IMPR_NBR IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "MOBILE_OK",
+"start": 7515,
+"section": "SESSION-STATE ADAPTER",
+"end": 7520,
+"lines": 6,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": "(I_P111002_MOBILE_NO IN VARCHAR2)"
+},
+{
+"kind": "PROCEDURE",
+"name": "MOBILE_CANCEL",
+"start": 7522,
+"section": "SESSION-STATE ADAPTER",
+"end": 7527,
+"lines": 6,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": ""
+},
+{
+"kind": "FUNCTION",
+"name": "PKG_VERSION",
+"start": 7532,
+"section": "PACKAGE VERSION",
+"end": 7537,
+"lines": 6,
+"rec_read": [],
+"rec_write": [],
+"ctx": [],
+"ui_calls": 0,
+"session": 0,
+"calls": [],
+"params": ""
+}
+]

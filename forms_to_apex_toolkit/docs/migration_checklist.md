@@ -6,7 +6,7 @@
 - [ ] ORDS configured; Universal Theme 42 available
 - [ ] `scripts/setup_apex_workspace.sql` run by DBA (schema `FORMS_MIGRATION`, workspace)
 - [ ] Database version confirmed 12.1.0.2 (`select version from v$instance`)
-- [ ] `scripts/create_migration_registry.sql` and `plsql_templates/forms_compat.sql` installed; error handling function set
+- [ ] `scripts/create_migration_registry.sql` and `plsql_templates/forms_apx.sql` installed; error handling function set
 - [ ] Forms-mirror standard (`docs/apex_structure_standard.md`) agreed by the team; page ranges allocated in `MIG_FORM_REGISTRY`
 - [ ] utPLSQL v3 installed in DEV/TEST (version that supports DB 12.1)
 - [ ] Git repository created from this toolkit; Claude Code installed; `CLAUDE.md` reviewed

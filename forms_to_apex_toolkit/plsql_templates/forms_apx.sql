@@ -1,6 +1,6 @@
 -- =============================================================================
--- Owner       : LIB_APX_USR (public synonym FORMS_COMPAT; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
--- Package     : FORMS_COMPAT
+-- Owner       : LIB_APX_USR (public synonym FORMS_APX; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
+-- Package     : FORMS_APX
 -- Purpose     : Forms-like server-side "built-ins" for migrated code, so converted
 --               trigger code reads like the original Forms code.
 --               (MESSAGE, RAISE FORM_TRIGGER_FAILURE, SHOW_ALERT, :GLOBAL, NAME_IN,
@@ -15,13 +15,13 @@
 -- =============================================================================
 SET DEFINE OFF
 
-CREATE OR REPLACE PACKAGE LIB_APX_USR.FORMS_COMPAT AS
-   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '002';
+CREATE OR REPLACE PACKAGE LIB_APX_USR.FORMS_APX AS
+   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '003';
    V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    FUNCTION PKG_VERSION
       RETURN VARCHAR2;
-   V_PACKAGE_NAME      VARCHAR2 (50) := 'FORMS_COMPAT';
+   V_PACKAGE_NAME      VARCHAR2 (50) := 'FORMS_APX';
    V_LAST_MODIFY_DT    VARCHAR2 (10) := '18-11-2026';
    V_MODIFIED_BY       VARCHAR2 (50) := 'Claude Code';
    V_INFO              VARCHAR2 (500)
@@ -85,17 +85,17 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.FORMS_COMPAT AS
     FUNCTION current_form RETURN VARCHAR2;
 
     -- Application error handling function (Application > Edit Application Properties >
-    -- Error Handling > Error Handling Function = FORMS_COMPAT.apex_error_handler).
+    -- Error Handling > Error Handling Function = FORMS_APX.apex_error_handler).
     -- Shows business errors (-20000..-20999) without the "ORA-200xx:" prefix and
     -- translates constraint violations via Text Messages named after the constraint.
     FUNCTION apex_error_handler (p_error IN apex_error.t_error)
         RETURN apex_error.t_error_result;
 
-END FORMS_COMPAT;
+END FORMS_APX;
 /
 SHOW ERRORS
 
-CREATE OR REPLACE PACKAGE BODY LIB_APX_USR.FORMS_COMPAT
+CREATE OR REPLACE PACKAGE BODY LIB_APX_USR.FORMS_APX
 AS
     -- Fallback storage for globals when running outside APEX (unit tests, SQL*Plus)
     TYPE t_globals IS TABLE OF VARCHAR2(4000) INDEX BY VARCHAR2(30);
@@ -278,7 +278,7 @@ AS
 
 
     -- =========================================================================
-    -- PACKAGE VERSION   (SELECT FORMS_COMPAT.PKG_VERSION FROM dual;)
+    -- PACKAGE VERSION   (SELECT FORMS_APX.PKG_VERSION FROM dual;)
     -- =========================================================================
     FUNCTION PKG_VERSION
        RETURN VARCHAR2
@@ -287,7 +287,7 @@ AS
        RETURN V_INFO;
     END PKG_VERSION;
 
-END FORMS_COMPAT;
+END FORMS_APX;
 /
 SHOW ERRORS
 
@@ -295,12 +295,12 @@ SHOW ERRORS
 -- Synonym and grants (run as a user allowed to create public synonyms / grant on LIB_APX_USR).
 -- CUSTOMS = parsing schema of the APEX application: APEX needs the direct grant.
 -- -----------------------------------------------------------------------------
-CREATE OR REPLACE PUBLIC SYNONYM FORMS_COMPAT FOR LIB_APX_USR.FORMS_COMPAT;
+CREATE OR REPLACE PUBLIC SYNONYM FORMS_APX FOR LIB_APX_USR.FORMS_APX;
 
-GRANT EXECUTE ON LIB_APX_USR.FORMS_COMPAT TO LIB_USR;
+GRANT EXECUTE ON LIB_APX_USR.FORMS_APX TO LIB_USR;
 
-GRANT EXECUTE ON LIB_APX_USR.FORMS_COMPAT TO SECURITY_DEFAULT;
+GRANT EXECUTE ON LIB_APX_USR.FORMS_APX TO SECURITY_DEFAULT;
 
-GRANT EXECUTE ON LIB_APX_USR.FORMS_COMPAT TO SECURITY_PROD;
+GRANT EXECUTE ON LIB_APX_USR.FORMS_APX TO SECURITY_PROD;
 
-GRANT EXECUTE ON LIB_APX_USR.FORMS_COMPAT TO CUSTOMS;
+GRANT EXECUTE ON LIB_APX_USR.FORMS_APX TO CUSTOMS;

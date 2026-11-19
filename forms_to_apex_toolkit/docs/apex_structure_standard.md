@@ -114,18 +114,18 @@ has a header comment with the same `Source:` line and the original trigger code 
 the logic changed during conversion.
 
 ## 6. Converted code should read like the original code
-Use `FORMS_COMPAT` (in `plsql_templates/`) inside the form package:
+Use `FORMS_APX` (in `plsql_templates/`) inside the form package:
 
 | Forms code | Converted code |
 |---|---|
-| `MESSAGE('Saved');` | `FORMS_COMPAT.message('Saved');` |
-| `MESSAGE('Error'); RAISE FORM_TRIGGER_FAILURE;` | `FORMS_COMPAT.FORM_TRIGGER_FAILURE('Error');` |
-| `SHOW_ALERT('AL_STOP')` (stop alert) | `FORMS_COMPAT.alert('AL_STOP');` (text from Text Messages) |
-| `:GLOBAL.company_id` | `FORMS_COMPAT.get_global('COMPANY_ID')` → application item `G_COMPANY_ID` |
-| `:GLOBAL.x := v;` | `FORMS_COMPAT.set_global('X', v);` |
-| `NAME_IN('ORDERS.STATUS')` / `COPY(v,'ORDERS.STATUS')` | `FORMS_COMPAT.name_in('P120_STATUS')` / `FORMS_COMPAT.copy(v, 'P120_STATUS')` (page processes only) |
-| `USER` / `GET_APPLICATION_PROPERTY(USERNAME)` | `FORMS_COMPAT.app_user` (or the f345 item `SSO_APP_USER`) |
-| `:SYSTEM.CURRENT_FORM` | `FORMS_COMPAT.current_form` (page alias) |
+| `MESSAGE('Saved');` | `FORMS_APX.message('Saved');` |
+| `MESSAGE('Error'); RAISE FORM_TRIGGER_FAILURE;` | `FORMS_APX.FORM_TRIGGER_FAILURE('Error');` |
+| `SHOW_ALERT('AL_STOP')` (stop alert) | `FORMS_APX.alert('AL_STOP');` (text from Text Messages) |
+| `:GLOBAL.company_id` | `FORMS_APX.get_global('COMPANY_ID')` → application item `G_COMPANY_ID` |
+| `:GLOBAL.x := v;` | `FORMS_APX.set_global('X', v);` |
+| `NAME_IN('ORDERS.STATUS')` / `COPY(v,'ORDERS.STATUS')` | `FORMS_APX.name_in('P120_STATUS')` / `FORMS_APX.copy(v, 'P120_STATUS')` (page processes only) |
+| `USER` / `GET_APPLICATION_PROPERTY(USERNAME)` | `FORMS_APX.app_user` (or the f345 item `SSO_APP_USER`) |
+| `:SYSTEM.CURRENT_FORM` | `FORMS_APX.current_form` (page alias) |
 
 Inside the package prefer **parameters** for item values (testable code). Use `name_in`/`copy` only in thin
 page-level code.

@@ -1,7 +1,7 @@
 -- =============================================================================
 -- utPLSQL v3 tests for IMPR1110 (pure logic only - no DML).
 -- Run:  exec ut.run('test_impr1110');
--- Members that write globals (SET_GLOBAL -> FORMS_COMPAT.set_global) need an APEX
+-- Members that write globals (SET_GLOBAL -> FORMS_APX.set_global) need an APEX
 -- session: the beforeall creates one when the app exists (app 2000 = placeholder).
 -- Expected check digits for check_idno were computed with the same algorithm
 -- (1000000008, 1234567897, 2100000005 valid).

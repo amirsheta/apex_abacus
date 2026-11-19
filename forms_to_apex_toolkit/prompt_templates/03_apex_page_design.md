@@ -163,7 +163,7 @@ Count the JavaScript actions at the end of the section (target: as close to 0 as
 | Forms alert | Usage | APEX equivalent | Text |
 Rules:
 - Informational (Note) after success → process Success Message.
-- Stop alert + FORM_TRIGGER_FAILURE → FORMS_COMPAT.alert('<ALERT>') (Text Message with the alert name).
+- Stop alert + FORM_TRIGGER_FAILURE → FORMS_APX.alert('<ALERT>') (Text Message with the alert name).
 - Caution with Yes/No deciding an action → DA "Confirm" action / apex.message.confirm (or the
   page 0 ASK_DLG dialog), followed by the server action.
 - Text messages → Shared Components > Text Messages (for translation) where reused.

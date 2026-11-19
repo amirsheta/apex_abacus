@@ -160,7 +160,7 @@ Rules:
 2. Package member names (full words, see §4): master-block trigger `PRE_INSERT`, detail block
    `<BLOCK>_PRE_INSERT`, validation function `<ITEM>_VALIDATION` (returns error text), side-effect
    procedure `<ITEM>_WHEN_VALIDATE_ITEM`; all ≤ 30 bytes. Details: `docs/f345_reference_standard.md` §5.
-3. Use `FORMS_COMPAT` (Forms-like server built-ins: `message`, `FORM_TRIGGER_FAILURE`, `alert`, `get_global`, …)
+3. Use `FORMS_APX` (Forms-like server built-ins: `message`, `FORM_TRIGGER_FAILURE`, `alert`, `get_global`, …)
    so converted code reads like the original trigger code.
 4. Register every form and every mapped object in `MIG_FORM_REGISTRY` / `MIG_OBJECT_MAP`
    (`scripts/create_migration_registry.sql`) — produce the INSERT script per form.

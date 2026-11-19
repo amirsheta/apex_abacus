@@ -113,7 +113,7 @@ this in import_notes.md whenever you generate such a page.
 | Page item | `P<page>_<FORMS_ITEM>` | `P11100_AGRMNT_NO` |
 | Forms parameter → page item | `P<page>_P_<PARAM>` | `P11100_P_AGRMNT_NO` |
 | Forms parameter passed between pages → application item | `P_<PARAM>` (no `AI_`) | `P_AGRMNT_NO`, `P_DISPLAY_ONLY` |
-| `:GLOBAL.X` → application item | `G_<X>` (`FORMS_COMPAT.global_item`) | `G_LAST_PAGE`, `G_UP_MAIN` |
+| `:GLOBAL.X` → application item | `G_<X>` (`FORMS_APX.global_item`) | `G_LAST_PAGE`, `G_UP_MAIN` |
 | Menu parameter `:PARAMETER.P_X` | reuse the f345 item (`P_CURR_PORT_CD`, `P_CLASS_CD`, `P_PORT_TYPE`, `P_BRKR_NBR`, `SSO_APP_USER`, `V_USR_TYPE`); otherwise new `P_X` | |
 | IG column | Forms item name | `MEMBER_ISN` |
 | Report flag item (shows REPORT_SHOW/REPORT_PRINT) | `P<page>_REPORT` | — |
@@ -221,7 +221,7 @@ Every Forms behaviour is built from native APEX components. JavaScript is the la
 | `SET_ITEM_PROPERTY(VISIBLE)` | Native *Show* / *Hide*, or a server-side condition on the item |
 | `SET_ITEM_PROPERTY(REQUIRED)` | Validation `<ITEM> REQUIRED` with a server-side condition (`<FORM>.<ITEM>_IS_REQUIRED(...)`). No client-side "required" script |
 | `GO_ITEM` | Native *Set Focus* |
-| `SHOW_ALERT` stop / `MESSAGE` + `FORM_TRIGGER_FAILURE` | `<FORM>.CHECK_ERROR` / `FORMS_COMPAT.FORM_TRIGGER_FAILURE` - FOS shows the error (`p_attribute_05 => '#SQLERRM#'`) |
+| `SHOW_ALERT` stop / `MESSAGE` + `FORM_TRIGGER_FAILURE` | `<FORM>.CHECK_ERROR` / `FORMS_APX.FORM_TRIGGER_FAILURE` - FOS shows the error (`p_attribute_05 => '#SQLERRM#'`) |
 | `SHOW_ALERT` caution (Yes / No) | Native *Confirm* action (fixed text, from a Text Message), then the server action. Only when the text is computed on the server: one line `apex.message.confirm($v('P<page>_CONFIRM_TEXT'), ...)` |
 | `EXECUTE_QUERY` / re-query | Page submit with a request, or native *Refresh* |
 | `CALL_FORM` | Modal page `<page>0n` + *Dialog Closed* DA (native Refresh / Submit) |
@@ -266,5 +266,5 @@ Rules:
 - The package never builds UI state (no lists of item properties, no JSON for the page). UI rules are
   BOOLEAN functions (`<ITEM>_IS_READ_ONLY`, `<ITEM>_IS_REQUIRED`) that APEX conditions call.
 - The package reads no session state (`v('P..')`); APEX passes values as binds. Exception: `:APP_USER`
-  through `FORMS_COMPAT.APP_USER` and globals through `FORMS_COMPAT.GET_GLOBAL`.
+  through `FORMS_APX.APP_USER` and globals through `FORMS_APX.GET_GLOBAL`.
 - No COMMIT / ROLLBACK (APEX commits after page processing).

@@ -130,13 +130,13 @@ def read_items():
     return rows
 
 # ----------------------------------------------------------------------------- shared data
-# :GLOBAL.X -> application item G_X (f345 convention, FORMS_COMPAT.global_item)
+# :GLOBAL.X -> application item G_X (f345 convention, FORMS_APX.global_item)
 GLOBALS = ['FLAGUPDATE', 'EXEC_QUERY_NOW', 'PORT_CD', 'IMPR_NBR', 'VALID', 'FUNS_IMP', 'FUNS_BUSID',
            'CHK_IMP_TYP', 'CHK_DUP_BUSID', 'OLD_IMPR_TYPE_CD', 'OLD_PORT_CD', 'ALLOW_MCI', 'ALLOW_MOI',
            'SET', 'MINS_COMM_CD', 'LETTER_NBR', 'SUPP_TITLE_CD', 'LETTER_DT', 'MOBILE_NO', 'IMPR_NBR_B',
            'IMPR_NAME_B', 'BRKR_ATHRZTN_NBR_B', 'CHEK', 'STAT_QUE', 'STAT_CLR', 'IMP0F4',
            'EXE_DETAIL_QUERY', 'INS']
-# menu parameters the f345 application does not have yet (IMPR1110_APX.ai), and the two
+# menu parameters the f345 application does not have yet (IMPR1110.APPLICATION_ITEM), and the two
 # Forms parameters callers hand to the page (PARAMETERS ENTRY)
 NEW_PARAMS = [('P_BRKR_PORT_CD', ':PARAMETER.P_BRKR_PORT_CD of the menu (CIC_MENU)'),
               ('P_LIC_TYPE', ':PARAMETER.P_LIC_TYPE of the menu (CIC_MENU)'),
@@ -369,9 +369,9 @@ def spec_item(r):
     srcs = r['source'] if r['source'] != '-' else r['notes']
     it['comment'] = 'Source: %s.%s' % (FORM, srcs) if r['source'] != '-' else 'Source: %s (%s)' % (FORM, r['notes'])
     # the step-03 spec still uses the old package names (pkg_ prefix dropped 2026-11-18)
-    it['comment'] = re.sub(r'(?i)\bpkg_impr1110_apx\b', 'IMPR1110_APX',
+    it['comment'] = re.sub(r'(?i)\bpkg_impr1110_apx\b', 'IMPR1110',
                            re.sub(r'(?i)\bpkg_impr1110\b', 'IMPR1110',
-                                  re.sub(r'(?i)\bpkg_forms_compat\b', 'FORMS_COMPAT', it['comment'])))
+                                  re.sub(r'(?i)\bpkg_forms_compat\b', 'FORMS_APX', it['comment'])))
     return seq, it
 
 def proc_call(page, key, seq, point, name, code, cond, s, ptype='NATIVE_PLSQL', extra=None):
@@ -903,8 +903,8 @@ def selfcheck(text):
                      if not l.startswith('--') and not re.match(r'^[ ,]p_\w*comment=>', l))
     if re.search(r"\bAI_[A-Z]", code):
         problems.append('AI_ item name found (f345: G_ / P_)')
-    if re.search(r'pkg_|IMPR1110_APX\.|FORMS_COMPAT\.', code, re.I):
-        problems.append('page calls pkg_* / IMPR1110_APX / FORMS_COMPAT directly (must call IMPR1110)')
+    if re.search(r'pkg_|IMPR1110_APX\.|FORMS_APX\.', code, re.I):
+        problems.append('page calls pkg_* / IMPR1110_APX / FORMS_APX directly (must call IMPR1110)')
     # ids: defined here, or defined in f345 (templates, UI, page 0, shared list)
     defined = re.findall(r'[ ,]p_id=>wwv_flow_api\.id\((\d+)\)', text)
     if len(defined) != len(set(defined)):

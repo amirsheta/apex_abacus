@@ -11,12 +11,12 @@
 --               FORM LEVEL -> BLOCK IMPORTERS (block triggers, item triggers in item order)
 --               -> PROGRAM UNITS (same names as in Forms) -> UI state recorder.
 -- Rules       : - no reference to APEX page items: item values come in as T_RECORD,
---                 :PARAMETER.* as T_CONTEXT; :GLOBAL.* through FORMS_COMPAT.get/set_global.
+--                 :PARAMETER.* as T_CONTEXT; :GLOBAL.* through FORMS_APX.get/set_global.
 --               - INTRFACE.Make_Field_Entrable / SET_ITEM_PROPERTY / GO_ITEM are recorded
 --                 (ui_* below) at the exact place Forms executes them; the page reads
 --                 ui_json after each call and applies it with a Dynamic Action.
 --               - every identifier <= 30 bytes; no 12.2+/18c+ syntax.
--- Depends on  : FORMS_COMPAT, and DB code called by the form (see extraction report §7):
+-- Depends on  : FORMS_APX, and DB code called by the form (see extraction report §7):
 --               GNRL, STR_DB, HIJDATE_DB, ACTIVITY, DB_JOURNAL, IMPR, IMPR_CENTRAL,
 --               IMPR_UTILITIES, MCISERVICE, WEB_SERVICES_GAZT (LIB_USR schema).
 -- Status      : NOT COMPILED - no 12.1.0.2 / APEX 21.2 instance was available.
@@ -26,7 +26,7 @@
 SET DEFINE OFF
 
 CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
-   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '003';
+   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '004';
    V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    FUNCTION PKG_VERSION
@@ -296,7 +296,7 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
     -- {"items":[{"item":"BUS_ID","prop":"ENTRABLE","value":false},...],
     --  "focus":"IMPR_NBR","messages":["..."],"funs":[{"fun":"IMPR1110F3","enabled":true}]}
     FUNCTION  ui_json RETURN CLOB;
-    -- Read access to the recorded entries (used by IMPR1110_APX to keep the item state
+    -- Read access to the recorded entries (used by the SESSION-STATE ADAPTER section to keep the item state
     -- on the server, so REQUIRED / ENTRABLE can be enforced at SAVE)
     FUNCTION  ui_count RETURN PLS_INTEGER;
     PROCEDURE ui_entry (p_idx  IN  PLS_INTEGER,
@@ -304,6 +304,59 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
                         p_prop OUT VARCHAR2,
                         p_val  OUT VARCHAR2);
 
+
+
+    -- =========================================================================
+    -- SESSION-STATE ADAPTER (formerly package IMPR1110_APX, merged 2026-11-19)
+    -- =========================================================================
+    c_state_coll CONSTANT VARCHAR2(30) := 'COLLECTION_IMPR1110_STATE';
+
+    -- Forms fires POST-CHANGE for non-NULL values fetched by a query (documented legacy
+    -- behaviour). TRUE = do the same on page load. TODO-VERIFY with a Forms trace (HIGH).
+    c_post_chg_on_fetch CONSTANT BOOLEAN := TRUE;
+
+    FUNCTION  GET_CONTEXT RETURN T_CONTEXT;
+    FUNCTION  GET_RECORD RETURN T_RECORD;
+    PROCEDURE SET_RECORD (p_rec IN T_RECORD);
+
+    -- Before Header process "WHEN-NEW-FORM-INSTANCE" (condition: P1110_FORM_OPEN is null)
+    PROCEDURE PAGE_WHEN_NEW_FORM_INSTANCE;
+    -- Before Header process "IMPORTERS.POST-QUERY": loads P1110_ROW_ID, or
+    -- P1110_PORT_CD + P1110_IMPR_NBR (URL with checksum), or :GLOBAL.PORT_CD/IMPR_NBR
+    -- (EXEC_QUERY_NOW) - always within PORT_CD = P_CURR_PORT_CD (block WHERE clause)
+    PROCEDURE page_fetch;
+    -- Before Header process "IMPORTERS.WHEN-CREATE-RECORD" (when no row is loaded)
+    PROCEDURE page_new_record;
+
+    -- AJAX Callback "IMPR1110_ITEM":
+    --   x01 = Forms item name, x02 = event VALIDATE | WNII | WLC | LOV_RET | KEY_NXT | WNRI,
+    --   x03 / x04 = answers of Confirm DAs (1 = yes, 2 = no; empty = yes)
+    -- Returns {"items":{"P1110_X":"v",...},"ui":{...ui_json...}} or {"error":"..."}
+    PROCEDURE ajax_item;
+    -- AJAX Callback "IMPR1110_CONFIRM": x01 = WNRI | SUSP | UPD_IMPR -> {"text":"..."} ("" = none)
+    PROCEDURE ajax_confirm;
+    -- AJAX Callback "IMPR1110_FUN": x01 = function code (EXEC_FUNS), x02 = answer
+    PROCEDURE AJAX_FUNCTION;
+
+    -- Validation "IMPORTERS.<ITEM>.WHEN-VALIDATE-ITEM" (request SAVE):
+    --   RETURN VALIDATE_ON_SUBMIT('<ITEM>');
+    -- Runs POST-CHANGE + WHEN-VALIDATE-ITEM with p_from_item = FALSE only when the value differs
+    -- from the last value the server validated. Returns NULL or the Forms error text.
+    FUNCTION  validate_on_submit (p_item IN VARCHAR2) RETURN VARCHAR2;
+    -- Validation "IMPORTERS.REQUIRED-ITEMS" (request SAVE): first required item that is NULL
+    -- (static Forms Required items + dynamic REQUIRED) -> Forms FRM-40202 text, else NULL
+    FUNCTION  required_items RETURN VARCHAR2;
+
+    -- Process "IMPORTERS.KEY-CLRBLK" (requests CLEAR / CREATE): WHEN-CLEAR-BLOCK + empty record;
+    -- the next page show runs WHEN-CREATE-RECORD
+    PROCEDURE page_clear;
+    -- Process "IMPORTERS.EXECUTE-QUERY" (requests QUERY / QUERY_NBR): clears the record and asks
+    -- the next page show to fetch IMPR_NBR (NULL = use :GLOBAL.PORT_CD/IMPR_NBR, EXEC_QUERY_NOW)
+    PROCEDURE page_query (p_impr_nbr IN NUMBER);
+
+    -- Page processes "IMPORTERS.PRE-INSERT/INSERT/POST-INSERT", ".PRE-UPDATE/UPDATE/POST-UPDATE"
+    -- (request SAVE) and "IMPORTERS.KEY-DELREC" (request DELETE)
+    PROCEDURE page_dml (p_request IN VARCHAR2);
 
     -- =========================================================================
     -- APEX ENTRY POINTS (f345)  - every page process / validation / DA / AJAX callback
@@ -385,9 +438,6 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
     FUNCTION REQUIRED_ITEMS_VALIDATION RETURN VARCHAR2;
 
     -- ------------------------------------------------------------- AJAX callbacks (impr1110.js)
-    PROCEDURE AJAX_ITEM;        -- all item triggers (x01 item, x02 event)
-    PROCEDURE AJAX_CONFIRM;     -- CONFIRM / WARNING alert texts
-    PROCEDURE AJAX_FUNCTION;         -- PU EXEC_FUNS
 
     -- ------------------------------------------------------------- page 111002 (LOV_UPDATE_IMPR_MOBILE)
     FUNCTION  CENTRAL_MOBILE (I_P111002_IMPR_NBR IN VARCHAR2) RETURN NUMBER;

@@ -2,7 +2,7 @@
 -- =============================================================================
 -- Package body: <FORM>   (matches pkg_template_spec.sql - f345 standard)
 -- Source form : <FORM>.fmb   Target: APEX 21.2 / DB 12.1.0.2   Version: 1.0.0
--- Rules: no Forms built-ins (use FORMS_COMPAT), no COMMIT/ROLLBACK,
+-- Rules: no Forms built-ins (use FORMS_APX), no COMMIT/ROLLBACK,
 --        item values passed as I_/IO_ parameters, identifiers <= 30 bytes.
 -- Layout (docs/f345_reference_standard.md §10): VERSION -> f345 HELPERS -> FORM LEVEL -> one section
 -- per BLOCK (query, record, items in navigation order, DML, buttons) -> PROGRAM UNITS ->
@@ -91,8 +91,8 @@ AS
                          IO_P0_PAGE_PK       IN OUT VARCHAR2)
     IS
     BEGIN
-        IF FORMS_COMPAT.get_global('COMPANY_ID') IS NULL THEN
-            FORMS_COMPAT.set_global('COMPANY_ID', '10');   -- :GLOBAL.company_id := 10; (item G_COMPANY_ID)
+        IF FORMS_APX.get_global('COMPANY_ID') IS NULL THEN
+            FORMS_APX.set_global('COMPANY_ID', '10');   -- :GLOBAL.company_id := 10; (item G_COMPANY_ID)
         END IF;
         IF I_P<page>_P_<PARAM> IS NOT NULL THEN
             IO_P0_PAGE_PK := I_P<page>_P_<PARAM>;              -- open the record (toolbar shows SAVE / DELETE)
@@ -177,7 +177,7 @@ AS
     BEGIN
         -- SELECT COUNT(*) INTO v_cnt FROM <child_table> WHERE <fk> = I_P<page>_<PK>;
         IF v_cnt > 0 THEN
-            FORMS_COMPAT.FORM_TRIGGER_FAILURE('Child records exist');      -- MESSAGE + FORM_TRIGGER_FAILURE
+            FORMS_APX.FORM_TRIGGER_FAILURE('Child records exist');      -- MESSAGE + FORM_TRIGGER_FAILURE
         END IF;
     END PRE_DELETE;
 

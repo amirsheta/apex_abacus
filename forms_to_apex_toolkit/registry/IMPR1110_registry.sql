@@ -24,7 +24,7 @@ INSERT INTO mig_form_registry
 VALUES
     ('IMPR1110', 'IMPR', 'IMPR', 345, 1110, 1110, 'IMPR1110',
      'IMPR1110', 'COMPLEX', 'DESIGN', NULL, NULL,
-     'إضافة وتعديل بيانات مستورد - step 04 export f345_impr1110.sql generated (pages 1110, 111001, 111002; 111003 TODO); package IMPR1110 (logic + APEX entry points) with session-state adapter IMPR1110_APX, not compiled');
+     'إضافة وتعديل بيانات مستورد - step 04 export f345_impr1110.sql generated (pages 1110, 111001, 111002; 111003 TODO); one package IMPR1110 (logic, session-state adapter, APEX entry points), not compiled');
 
 DECLARE
     PROCEDURE m (p_type    VARCHAR2, p_name   VARCHAR2, p_comp  VARCHAR2, p_comp_name VARCHAR2,
@@ -402,7 +402,7 @@ BEGIN
     m('TRIGGER', 'TOOLBAR.PAGE_DOWN.WHEN-BUTTON-PRESSED', NULL, NULL, NULL, NULL, 'DROPPED', 'Single-record form region');
     m('TRIGGER', 'TOOLBAR.FUN_BUT.WHEN-MOUSE-UP', NULL, NULL, NULL, NULL, 'DROPPED', 'Side function menu (TMPLT)');
     m('TRIGGER', 'TOOLBAR.FUN_BUT.WHEN-MOUSE-DOWN', 'DYNAMIC_ACTION', 'FUNCS (page 0 toolbar) -> region FUNCS', 0, NULL, 'MAPPED', 'Opens region FUNCS (f345 Page Functions list, rights from SC_SYSOBJ_ROLE_PRIVS); one custom-event DA per function code on page 1110');
-    m('TRIGGER', 'IMPORTERS.ON-ERROR', 'PROCESS', 'error text via IMPR1110_APX.ERROR_TEXT', 1110, 'IMPR1110.IMPORTERS_ON_ERROR', 'MAPPED', 'Used by IMPR1110_APX.ERROR_TEXT for DB errors');
+    m('TRIGGER', 'IMPORTERS.ON-ERROR', 'PROCESS', 'error text via IMPR1110.ERROR_TEXT', 1110, 'IMPR1110.IMPORTERS_ON_ERROR', 'MAPPED', 'Used by IMPR1110.ERROR_TEXT for DB errors');
     m('TRIGGER', 'IMPORTERS.POST-QUERY', 'PROCESS', 'P0_PAGE_PK + POST-QUERY (Before Header)', 1110, 'IMPR1110.IMPORTERS_POST_QUERY', 'MAPPED', 'Process "POST-QUERY" IMPR1110.POST_QUERY');
     m('TRIGGER', 'IMPORTERS.PRE-QUERY', 'PROCESS', 'P0_PAGE_PK + POST-QUERY (Before Header)', 1110, 'IMPR1110.IMPORTERS_PRE_QUERY', 'MAPPED', 'EXEC_QUERY_NOW / PRSNL_IMPR / name criterion; PORT_NAME criterion -> region SQL');
     m('TRIGGER', 'IMPORTERS.PRE-INSERT', 'PROCESS', 'ON-INSERT (CREATE) / ON-UPDATE (SAVE)', 1110, 'IMPR1110.IMPORTERS_PRE_INSERT', 'MAPPED', 'Process "ON-INSERT"; CONFIRM for class 1/type 3 -> DA PRE-INSERT CONFIRM (before submit of CREATE)');
@@ -643,34 +643,34 @@ BEGIN
     m('PARAMETER', 'LETTER_NBR', 'ITEM', 'P1110_LETTER_NBR', 1110, NULL, 'MAPPED', 'page parameter');
     m('PARAMETER', 'CODE', 'ITEM', 'P1110_CODE', 1110, NULL, 'MAPPED', 'page parameter');
     m('PARAMETER', 'PRSNL_IMPR', 'ITEM', 'P1110_PRSNL_IMPR', 1110, NULL, 'MAPPED', 'page parameter');
-    m('GLOBAL', 'FLAGUPDATE', 'APP_ITEM', 'G_FLAGUPDATE', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'EXEC_QUERY_NOW', 'APP_ITEM', 'G_EXEC_QUERY_NOW', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'PORT_CD', 'APP_ITEM', 'G_PORT_CD', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'IMPR_NBR', 'APP_ITEM', 'G_IMPR_NBR', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'VALID', 'APP_ITEM', 'G_VALID', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'FUNS_IMP', 'APP_ITEM', 'G_FUNS_IMP', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'FUNS_BUSID', 'APP_ITEM', 'G_FUNS_BUSID', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'CHK_IMP_TYP', 'APP_ITEM', 'G_CHK_IMP_TYP', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'CHK_DUP_BUSID', 'APP_ITEM', 'G_CHK_DUP_BUSID', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'OLD_IMPR_TYPE_CD', 'APP_ITEM', 'G_OLD_IMPR_TYPE_CD', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'OLD_PORT_CD', 'APP_ITEM', 'G_OLD_PORT_CD', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'ALLOW_MCI', 'APP_ITEM', 'G_ALLOW_MCI', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'ALLOW_MOI', 'APP_ITEM', 'G_ALLOW_MOI', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'SET', 'APP_ITEM', 'SET_GLOBAL', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'MINS_COMM_CD', 'APP_ITEM', 'G_MINS_COMM_CD', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'LETTER_NBR', 'APP_ITEM', 'G_LETTER_NBR', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'SUPP_TITLE_CD', 'APP_ITEM', 'G_SUPP_TITLE_CD', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'LETTER_DT', 'APP_ITEM', 'G_LETTER_DT', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'MOBILE_NO', 'APP_ITEM', 'G_MOBILE_NO', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'IMPR_NBR_B', 'APP_ITEM', 'G_IMPR_NBR_B', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'IMPR_NAME_B', 'APP_ITEM', 'G_IMPR_NAME_B', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'BRKR_ATHRZTN_NBR_B', 'APP_ITEM', 'G_BRKR_ATHRZTN_NBR_B', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'CHEK', 'APP_ITEM', 'G_CHEK', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'STAT_QUE', 'APP_ITEM', 'G_STAT_QUE', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'STAT_CLR', 'APP_ITEM', 'G_STAT_CLR', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'IMP0F4', 'APP_ITEM', 'G_IMP0F4', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'EXE_DETAIL_QUERY', 'APP_ITEM', 'G_EXE_DETAIL_QUERY', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
-    m('GLOBAL', 'INS', 'APP_ITEM', 'G_INS', NULL, NULL, 'MAPPED', 'FORMS_COMPAT.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'FLAGUPDATE', 'APP_ITEM', 'G_FLAGUPDATE', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'EXEC_QUERY_NOW', 'APP_ITEM', 'G_EXEC_QUERY_NOW', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'PORT_CD', 'APP_ITEM', 'G_PORT_CD', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'IMPR_NBR', 'APP_ITEM', 'G_IMPR_NBR', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'VALID', 'APP_ITEM', 'G_VALID', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'FUNS_IMP', 'APP_ITEM', 'G_FUNS_IMP', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'FUNS_BUSID', 'APP_ITEM', 'G_FUNS_BUSID', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'CHK_IMP_TYP', 'APP_ITEM', 'G_CHK_IMP_TYP', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'CHK_DUP_BUSID', 'APP_ITEM', 'G_CHK_DUP_BUSID', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'OLD_IMPR_TYPE_CD', 'APP_ITEM', 'G_OLD_IMPR_TYPE_CD', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'OLD_PORT_CD', 'APP_ITEM', 'G_OLD_PORT_CD', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'ALLOW_MCI', 'APP_ITEM', 'G_ALLOW_MCI', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'ALLOW_MOI', 'APP_ITEM', 'G_ALLOW_MOI', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'SET', 'APP_ITEM', 'SET_GLOBAL', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'MINS_COMM_CD', 'APP_ITEM', 'G_MINS_COMM_CD', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'LETTER_NBR', 'APP_ITEM', 'G_LETTER_NBR', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'SUPP_TITLE_CD', 'APP_ITEM', 'G_SUPP_TITLE_CD', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'LETTER_DT', 'APP_ITEM', 'G_LETTER_DT', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'MOBILE_NO', 'APP_ITEM', 'G_MOBILE_NO', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'IMPR_NBR_B', 'APP_ITEM', 'G_IMPR_NBR_B', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'IMPR_NAME_B', 'APP_ITEM', 'G_IMPR_NAME_B', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'BRKR_ATHRZTN_NBR_B', 'APP_ITEM', 'G_BRKR_ATHRZTN_NBR_B', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'CHEK', 'APP_ITEM', 'G_CHEK', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'STAT_QUE', 'APP_ITEM', 'G_STAT_QUE', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'STAT_CLR', 'APP_ITEM', 'G_STAT_CLR', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'IMP0F4', 'APP_ITEM', 'G_IMP0F4', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'EXE_DETAIL_QUERY', 'APP_ITEM', 'G_EXE_DETAIL_QUERY', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
+    m('GLOBAL', 'INS', 'APP_ITEM', 'G_INS', NULL, NULL, 'MAPPED', 'FORMS_APX.get/set_global (f345: G_<name>)');
     m('GLOBAL', 'IMPR_TYPE_CD', 'LOV', 'Popup LOV return value', NULL, NULL, 'MAPPED', 'LOV-form return global');
     m('GLOBAL', 'IMPR_TYPE_NAME', 'LOV', 'Popup LOV return value', NULL, NULL, 'MAPPED', 'LOV-form return global');
     m('GLOBAL', 'BUS_ID_TYPE_CD', 'LOV', 'Popup LOV return value', NULL, NULL, 'MAPPED', 'LOV-form return global');

@@ -9,8 +9,8 @@
    ```
 3. Ask the DBA to run `scripts/setup_apex_workspace.sql` (Oracle 12.1.0.2 + APEX 21.2).
 4. As the parsing schema, run once: `scripts/create_migration_registry.sql` and
-   `plsql_templates/forms_compat.sql`. In the APEX app set
-   Error Handling Function = `FORMS_COMPAT.apex_error_handler`.
+   `plsql_templates/forms_apx.sql`. In the APEX app set
+   Error Handling Function = `FORMS_APX.apex_error_handler`.
 5. Read `docs/apex_structure_standard.md` (Forms-mirror naming: pages, regions, items, triggers) and
    `docs/f345_reference_standard.md` (the f345 reference application: templates, toolbar, naming).
    Install `apex/Reference/f345.sql` in the workspace: every form is built inside that application.

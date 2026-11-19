@@ -64,8 +64,13 @@ Package header and installation (CLAUDE.md §3.2), exactly as in the template:
   SECURITY_DEFAULT, SECURITY_PROD and CUSTOMS.
 - List in the extraction report every table / package the code uses: LIB_APX_USR needs a direct
   grant on each (definer rights).
-Layout mirrors the form: FORM LEVEL section → one section per BLOCK (in Forms block order)
-→ PROGRAM UNITS (same names as in Forms) → UI LOGIC comments.
+Layout (docs/f345_reference_standard.md §10), one banner comment per section, same order in spec and body:
+VERSION → f345 HELPERS → FORM LEVEL → one section per BLOCK in Forms block order (query → record →
+items in Forms navigation order, each with POST_CHANGE / VALIDATION / WHEN_VALIDATE_ITEM /
+IS_READ_ONLY / IS_REQUIRED → DML → buttons) → PROGRAM UNITS (Forms names, Forms order) →
+PRIVATE HELPERS (body, top) → UI LOGIC FOR APEX DYNAMIC ACTIONS (body end, comments only).
+Write the code for a reader: one Forms trigger = one member, about 80 lines at most; shared code
+goes into a private helper named by what it does.
 
 Member names (f345 standard §5; every name ≤ 30 bytes, DB 12.1.0.2; upper case like AGR1100):
 | Forms source | Member | Example |
@@ -131,9 +136,14 @@ Rules:
 12. Must compile on Oracle **12.1.0.2** (CLAUDE.md §2a): identifiers ≤ 30 bytes, no qualified
     expressions, no JSON_OBJECT/JSON_OBJECT_T, no LISTAGG ON OVERFLOW, no 12.2+/18c+ syntax.
 13. Spec and body must be consistent (same signatures, same order).
-14. One package per form. Do not add extra adapter packages. IMPR1110 is a documented
-    exception from before the f345 standard: package IMPR1110 (logic + APEX entry points)
-    keeps its session-state adapter IMPR1110_APX.
+14. One package per form, nothing else: no adapter package (no <FORM>_APX), no record of all
+    block items read from / written to session state. Each member's signature lists exactly the
+    items it reads (I_) and changes (IO_ / O_).
+15. No UI state in PL/SQL: do not collect item properties (enabled / required / visible) in lists or
+    JSON. Every Make_Field_Entrable / SET_ITEM_PROPERTY rule becomes a BOOLEAN function
+    <ITEM>_IS_READ_ONLY / <ITEM>_IS_REQUIRED (or one per group of items that share the rule:
+    <GROUP>_IS_READ_ONLY, full words) that APEX conditions call, plus an "-- APEX-DA:" comment
+    saying which DA action uses it (docs/f345_reference_standard.md §9).
 
 ## Step 5 — Write the extraction report
 analysis/{{FORM_NAME}}/{{FORM_NAME}}_logic_extraction.md containing:
@@ -157,6 +167,9 @@ analysis/{{FORM_NAME}}/{{FORM_NAME}}_logic_extraction.md containing:
   only allowed inside comments.
 - grep for `pkg_{{FORM_NAME}}` and `AI_` — no matches (f345 naming).
 - CHECK_ERROR and REQUIRED_VALIDATION exist; every name ≤ 30 bytes.
+- No <FORM>_APX package, no v('P..') / apex_util.get_session_state in the package, no JSON / UI lists;
+  every Make_Field_Entrable / SET_ITEM_PROPERTY has its _IS_READ_ONLY / _IS_REQUIRED function.
+- Section banners present in the §10 order; report members longer than 80 lines.
 - Owner LIB_APX_USR in spec and body; version block and PKG_VERSION present; synonym and the
   4 grants (LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS) at the end of the spec file.
 - Every trigger from the inventory appears in the classification table.

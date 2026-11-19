@@ -40,6 +40,11 @@ Toolbar
 - Functions (TMPLT / side menu): inline-dialog region FUNCS with the f345 list "Page Functions";
   one DA per function on the custom event named after SC_SYSTEM_OBJECTS.SYS_OS_FILE_NAME.
 - Reports: an item P{{PAGE_ID}}_REPORT switches FUNCS to REPORT_SHOW / REPORT_PRINT (custom events).
+Behaviour (docs/f345_reference_standard.md §9 - declarative first)
+- Build every Forms behaviour from native components: validations, FOS Execute PL/SQL Code (Items to
+  Submit / Return), native DA actions, item Read Only / server-side conditions calling BOOLEAN package
+  functions. No JavaScript file, no AJAX callbacks, no client UI-state engine. An Execute JavaScript
+  Code action has at most 3 lines; list every one in §10 with the reason.
 Names
 - Region Static ID = Forms block name; region order = Forms block order; title = block/frame title (Arabic).
 - Items keep the Forms item name: P<page>_<FORMS_ITEM>; IG column = Forms item name.
@@ -87,6 +92,7 @@ For every page:
 | Page item / IG column | Source column | Type (Text Field, Number Field, Date Picker, Select List,
   Popup LOV, Radio Group, Checkbox, Switch, Display Only, Hidden, Textarea, File Browse) |
   Label | Required | Format mask | Default (type + value) | LOV | Maximum length |
+  Read Only condition (`{{FORM_NAME_UC}}.<ITEM>_IS_READ_ONLY(...)`, from Make_Field_Entrable) |
   Session State Protection | Source Forms item |
 Rules: item names per §0; label templates Required - Above / Optional - Above with
 `t-Form-fieldContainer--stretchInputs`; Forms checkbox → Switch or Checkbox; Forms list item
@@ -120,7 +126,7 @@ Plus the matching DA `<ITEM> WHEN-VALIDATE-ITEM` (change → FOS Execute PL/SQL 
 For IG validations use :COLUMN bind syntax and "Editable Region" set to the IG.
 
 ## 8. Processes
-| Process | Point (Before Header / After Submit / Ajax Callback) | Sequence | Type |
+| Process | Point (Before Header / After Submit) | Sequence | Type |
   Code | Condition (request / :APEX$ROW_STATUS) | Success / error message | Source trigger |
 Use the order of docs/f345_reference_standard.md §6:
 - Before Header: 20 `P0_PAGE_PK CHECK` · 40 `PARAMETERS` · 50 `PARAMETERS ENTRY` ·
@@ -144,9 +150,14 @@ From the "UI logic for Dynamic Actions" section of the extraction report:
   Selection (item/region/jQuery) | Client-side condition | True actions (Show / Hide / Enable / Disable /
   Set Value / Refresh / FOS Execute PL/SQL Code / Execute JavaScript Code / Confirm / Set Focus) |
   False actions | Items to submit / return | Fire on initialization | Source trigger |
-Use the patterns in plsql_templates/dynamic_action_patterns.sql. A confirm before CREATE / SAVE
-(page 0 buttons submit directly) is a DA on "Before Page Submit" that cancels with
-apex.event.gCancelFlag and re-submits after the answer.
+Use the patterns in plsql_templates/dynamic_action_patterns.sql, in this order of preference:
+1. FOS Execute PL/SQL Code (validation / derived values via Items to Return);
+2. native Enable / Disable / Show / Hide / Set Value / Set Focus / Refresh / Confirm, with
+   client-side conditions (Item = Value, or a flag item returned by FOS);
+3. only if 1-2 cannot do it: Execute JavaScript Code, at most 3 lines, with the reason.
+The one known case for 3: a confirm before page 0's CREATE / SAVE (they submit directly), a DA on
+"Before Page Submit" whose code sets apex.event.gCancelFlag and re-submits after the answer.
+Count the JavaScript actions at the end of the section (target: as close to 0 as possible).
 
 ## 11. Alerts and messages
 | Forms alert | Usage | APEX equivalent | Text |

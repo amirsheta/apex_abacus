@@ -160,6 +160,20 @@ four tokens, and '{{' must not appear at all.
 8. No features beyond 21.2 (CLAUDE.md §2). No wwv_flow_imp* calls. No credentials or hostnames.
    Escape single quotes (''); keep each string literal < 32k; Arabic text via unistr('\XXXX').
 9. Every component carries a comment: -- Source: <Forms object> / <page spec section>.
+10. Declarative first (docs/f345_reference_standard.md §9):
+   - DA server calls: p_action => 'PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE', p_attribute_01 = one-line
+     call, p_attribute_02 = Items to Submit, p_attribute_03 = Items to Return,
+     p_attribute_05 => '#SQLERRM#', p_attribute_15 => 'suppressChangeEvent:escape-message',
+     p_wait_for_result => 'Y' (as in f345 AGR1100).
+   - UI changes: native actions NATIVE_ENABLE / NATIVE_DISABLE / NATIVE_SHOW / NATIVE_HIDE /
+     NATIVE_SET_VALUE / NATIVE_SET_FOCUS / NATIVE_REFRESH / NATIVE_CONFIRM with client-side conditions.
+   - Read-only rules: item p_read_only_when_type => 'EXPRESSION', p_read_only_when =>
+     '{{FORM_NAME_UC}}.<ITEM>_IS_READ_ONLY(I_... => :...)', p_read_only_when2 => 'PLSQL'
+     (f345 itself only shows p_read_only_when / _type with ITEM_IS_NOT_NULL: list
+     p_read_only_when2 as "verify after import" in import_notes.md).
+   - Not generated: p_javascript_file_urls on pages, ON_DEMAND (AJAX callback) processes, hidden
+     items that carry UI state, NATIVE_JAVASCRIPT_CODE actions longer than 3 lines. Every
+     NATIVE_JAVASCRIPT_CODE action must be listed in the page spec §10 with its reason.
 
 ## import_notes.md must contain
 - REVIEW BEFORE IMPORT warning
@@ -183,5 +197,8 @@ four tokens, and '{{' must not appear at all.
   is either defined in this file or exists in f345.
 - Every template ID used is present in apex/Reference/f345.sql.
 - No toolbar button duplicated from page 0; no f345 application item re-created.
+- No p_javascript_file_urls, no ON_DEMAND processes; count NATIVE_JAVASCRIPT_CODE actions (each
+  ≤ 3 lines, each in page spec §10) and print the count.
+- Every {{FORM_NAME_UC}}.<member> called exists in the package spec.
 - Print summary: pages, components per type, placeholders count, uncertain items.
 ```

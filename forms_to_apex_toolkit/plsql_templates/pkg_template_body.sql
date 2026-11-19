@@ -4,7 +4,10 @@
 -- Source form : <FORM>.fmb   Target: APEX 21.2 / DB 12.1.0.2   Version: 1.0.0
 -- Rules: no Forms built-ins (use FORMS_COMPAT), no COMMIT/ROLLBACK,
 --        item values passed as I_/IO_ parameters, identifiers <= 30 bytes.
--- Layout mirrors the form: f345 HELPERS -> FORM LEVEL -> one section per BLOCK -> PROGRAM UNITS.
+-- Layout (docs/f345_reference_standard.md §10): VERSION -> f345 HELPERS -> FORM LEVEL -> one section
+-- per BLOCK (query, record, items in navigation order, DML, buttons) -> PROGRAM UNITS ->
+-- UI LOGIC comments. Private helpers shared by several triggers go first in the body, named by
+-- what they do. One Forms trigger = one member, about 80 lines at most.
 -- =============================================================================
 SET DEFINE OFF
 
@@ -113,6 +116,20 @@ AS
         END IF;
         RETURN NULL;
     END <ITEM>_VALIDATION;
+
+    -- Source: Make_Field_Entrable('<BLOCK>.<ITEM>', FALSE) when <condition>
+    FUNCTION <ITEM>_IS_READ_ONLY (I_P<page>_<OTHER_ITEM> IN VARCHAR2) RETURN BOOLEAN
+    IS
+    BEGIN
+        RETURN I_P<page>_<OTHER_ITEM> = '<VALUE>';
+    END <ITEM>_IS_READ_ONLY;
+
+    -- Source: SET_ITEM_PROPERTY('<BLOCK>.<ITEM>', REQUIRED, PROPERTY_TRUE) when <condition>
+    FUNCTION <ITEM>_IS_REQUIRED (I_P<page>_<OTHER_ITEM> IN VARCHAR2) RETURN BOOLEAN
+    IS
+    BEGIN
+        RETURN I_P<page>_<OTHER_ITEM> = '<VALUE>';
+    END <ITEM>_IS_REQUIRED;
 
     -- Source: <BLOCK>.WHEN-VALIDATE-RECORD
     -- Original Forms code:

@@ -7,7 +7,10 @@
 -- Created     : <YYYY-MM-DD>
 -- Version     : 1.0.0
 -- Purpose     : Business logic of the form, organised like the form itself:
---               FORM LEVEL -> one section per BLOCK -> PROGRAM UNITS.
+--               VERSION -> f345 HELPERS -> FORM LEVEL -> one section per BLOCK (query, record,
+--               items in navigation order, DML, buttons) -> PROGRAM UNITS
+--               (docs/f345_reference_standard.md §10). No UI state, no session-state reads:
+--               UI rules are BOOLEAN functions that APEX conditions call (§9).
 --               Member and component names: docs/f345_reference_standard.md section 5.
 -- Parameters  : members called by APEX use I_ (IN) / IO_ (IN OUT) / O_ (OUT) + the bind name
 --               (IO_P<page>_<ITEM> => :P<page>_<ITEM>, I_<COLUMN> => :<COLUMN> for IG columns,
@@ -87,6 +90,15 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.<FORM> AS
     --         DA "<ITEM> WHEN-VALIDATE-ITEM" (change, FOS Execute PL/SQL Code)
     --           <FORM>.CHECK_ERROR(<FORM>.<ITEM>_VALIDATION(I_P<page>_<ITEM> => :P<page>_<ITEM>));
     FUNCTION  <ITEM>_VALIDATION (I_P<page>_<ITEM> IN VARCHAR2) RETURN VARCHAR2;
+
+    -- Source: Make_Field_Entrable('<BLOCK>.<ITEM>', FALSE) in <trigger>
+    -- APEX  : item P<page>_<ITEM> Read Only = PL/SQL Expression <FORM>.<ITEM>_IS_READ_ONLY(I_... => :...)
+    --         (or native Enable / Disable in the DA of the item that changes the rule)
+    FUNCTION  <ITEM>_IS_READ_ONLY (I_P<page>_<OTHER_ITEM> IN VARCHAR2) RETURN BOOLEAN;
+
+    -- Source: SET_ITEM_PROPERTY('<BLOCK>.<ITEM>', REQUIRED, PROPERTY_TRUE) in <trigger>
+    -- APEX  : server-side condition of Validation "<ITEM> REQUIRED"
+    FUNCTION  <ITEM>_IS_REQUIRED (I_P<page>_<OTHER_ITEM> IN VARCHAR2) RETURN BOOLEAN;
 
     -- Source: <BLOCK>.<ITEM>.WHEN-VALIDATE-ITEM - the part that derives other item values
     -- APEX  : same DA, FOS "Items to Return" = the IO_ items

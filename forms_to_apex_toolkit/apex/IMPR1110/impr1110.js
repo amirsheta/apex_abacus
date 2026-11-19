@@ -110,6 +110,8 @@ window.impr1110 = (function ($) {
         if (!ui) { return; }
         (ui.items || []).forEach(function (e) {
             var on = e.value === true, name, base;
+            // visible in the browser console when APEX debug is on (Developer Toolbar -> Debug)
+            apex.debug.info("IMPR1110 UI", e.item, e.prop, on ? "Y" : "N");
             if (e.item === "IMPORTERS") {
                 if (e.prop === "REQUERY" && on) { apex.page.submit({ request: "QUERY", showWait: true }); }
                 if (e.prop === "DO_COMMIT" && on) { commit = true; }

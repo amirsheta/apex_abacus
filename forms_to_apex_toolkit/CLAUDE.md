@@ -196,6 +196,25 @@ Full rules with every template ID: **`docs/f345_reference_standard.md`**. Summar
 
 ---
 
+## 4c. Declarative APEX, readable PL/SQL (MANDATORY)
+
+Full rules: `docs/f345_reference_standard.md` §9 and §10. Summary:
+
+1. **Declarative first.** Item triggers become a validation plus a DA built from the FOS plug-in
+   (*Execute PL/SQL Code*, Items to Submit / Return) and native actions (Enable/Disable, Show/Hide,
+   Set Value, Set Focus, Confirm, Refresh). Read-only and required rules are APEX conditions that call
+   BOOLEAN package functions (`<ITEM>_IS_READ_ONLY`, `<ITEM>_IS_REQUIRED`).
+2. **Minimal JavaScript.** No JavaScript file per form, no AJAX-callback "engine", no client-side UI
+   state. An *Execute JavaScript Code* action may have at most 3 lines; anything more needs a reason in
+   the page spec and the user's approval.
+3. **One readable package per form.** No adapter packages and no all-items record copied through
+   session state: each member takes only the items it uses (`I_` / `IO_`). Fixed section order
+   (version → helpers → form level → each block: query, record, items in navigation order, DML,
+   buttons → program units → private helpers → UI comments). One Forms trigger = one member,
+   about 80 lines at most.
+
+---
+
 ## 5. Key Mapping (Forms → APEX 21.2)
 
 Full reference: `docs/forms_to_apex_mapping.md`.
@@ -214,7 +233,7 @@ Full reference: `docs/forms_to_apex_mapping.md`.
 | Stacked canvas / popup window | Inline Dialog or Modal Dialog page |
 | LOV + Record Group | Shared Component LOV / Popup LOV / Select List |
 | Record Group (runtime) | `APEX_COLLECTION` |
-| Alert | `apex.message.confirm` / Confirm DA / `apex_error` / page message |
+| Alert | Native Confirm action / `apex_error` / page message (JavaScript only as a one-line exception, §4c) |
 | Parameter list / `:PARAMETER` | Page items set via URL (`apex_page.get_url`) |
 | `:GLOBAL.*` | Application Items |
 | Program unit | Package procedure/function in `<FORM>` |
@@ -228,7 +247,7 @@ Full reference: `docs/forms_to_apex_mapping.md`.
 | WHEN-NEW-FORM-INSTANCE | Before Header process / computations |
 | WHEN-BUTTON-PRESSED | Button + Process or Dynamic Action |
 | WHEN-LIST-CHANGED / WHEN-RADIO-CHANGED | Dynamic Action (Change) |
-| KEY-* triggers | Buttons / keyboard shortcuts via JavaScript (rarely needed) |
+| KEY-* triggers | Page 0 toolbar buttons / page buttons (no keyboard-shortcut scripts) |
 
 ---
 
@@ -265,16 +284,16 @@ Forms built-ins **must not appear** in generated PL/SQL (they do not exist in th
 | Forms built-in | APEX 21.2 replacement |
 |---|---|
 | `MESSAGE('...')` | `apex_application.g_print_success_message` / Success Message of process |
-| `SHOW_ALERT` / `SET_ALERT_PROPERTY` | `apex.message.confirm` (JS), Confirm DA, or `apex_error.add_error` |
+| `SHOW_ALERT` / `SET_ALERT_PROPERTY` | Native Confirm action, `CHECK_ERROR` / `apex_error.add_error` |
 | `RAISE FORM_TRIGGER_FAILURE` | `apex_error.add_error(...)` or `raise_application_error(-20xxx, ...)` |
-| `GO_BLOCK` / `GO_ITEM` / `GO_RECORD` | Dynamic Action "Set Focus" / region navigation / `apex.item().setFocus()` |
+| `GO_BLOCK` / `GO_ITEM` / `GO_RECORD` | Native DA action "Set Focus" / region navigation |
 | `NEXT_RECORD` / `PREVIOUS_RECORD` | IG navigation, or Form region "Next/Previous" buttons |
 | `EXECUTE_QUERY` | Region refresh (DA "Refresh") / page submit |
 | `ENTER_QUERY` | Faceted Search, IR/IG search, or filter page items |
 | `COMMIT_FORM` / `DO_KEY('COMMIT_FORM')` | Page submit + Automatic Row Processing (APEX commits) |
 | `CLEAR_FORM` / `CLEAR_BLOCK` | "Clear Cache" on branch / DA "Clear" |
-| `SET_ITEM_PROPERTY(..., ENABLED/VISIBLE)` | DA Show/Hide, Enable/Disable; server-side conditions |
-| `SET_ITEM_PROPERTY(..., REQUIRED)` | Validation with condition, or DA + `apex.item().setRequired` (JS) — see `plsql_templates/dynamic_action_patterns.sql` |
+| `SET_ITEM_PROPERTY(..., ENABLED/VISIBLE)`, `Make_Field_Entrable` | Item Read Only condition (`<FORM>.<ITEM>_IS_READ_ONLY`), native DA Enable/Disable / Show/Hide, server-side conditions |
+| `SET_ITEM_PROPERTY(..., REQUIRED)` | Validation `<ITEM> REQUIRED` with a server-side condition (`<FORM>.<ITEM>_IS_REQUIRED`) — see `plsql_templates/dynamic_action_patterns.sql` |
 | `SET_BLOCK_PROPERTY(..., DEFAULT_WHERE)` | Region SQL with bind filters on page items |
 | `GET_ITEM_PROPERTY` | Read item value via `:P1_ITEM` / `apex_util.get_session_state` |
 | `CALL_FORM` / `OPEN_FORM` / `NEW_FORM` | Branch / link to page, Modal Dialog page, `apex_page.get_url` |

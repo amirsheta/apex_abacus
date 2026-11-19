@@ -207,3 +207,64 @@ search grids use `p_is_editable=>false`. Always set `p_add_row_if_empty=>false`,
 `p_lazy_loading=>false`, `p_toolbar_buttons=>'SEARCH_COLUMN:SEARCH_FIELD:ACTIONS_MENU:RESET'`,
 and `p_enable_save_public_report=>false`. Server calls from IG column DAs use
 `PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE` with `<FORM>.CHECK_ERROR(<FORM>.<BLOCK>_<COL>_VALIDATION(I_<COL> => :<COL>))`.
+
+## 9. Declarative first: as little JavaScript as possible
+
+Every Forms behaviour is built from native APEX components. JavaScript is the last resort.
+
+| Forms | APEX 21.2 (in this order of preference) |
+|---|---|
+| WHEN-VALIDATE-ITEM / POST-CHANGE | Validation `<ITEM> VALIDATION` (server, at submit) **plus** DA `<ITEM> WHEN-VALIDATE-ITEM` on Change: action 1 *FOS - Execute PL/SQL Code* `<FORM>.CHECK_ERROR(<FORM>.<ITEM>_VALIDATION(I_P<page>_<ITEM> => :P<page>_<ITEM>));` or, when the trigger derives values, `<FORM>.<ITEM>_WHEN_VALIDATE_ITEM(I_... => :..., IO_... => :...);` |
+| Values the trigger derives (names, codes) | FOS *Items to Return* (`p_attribute_03`) - no JavaScript |
+| `Make_Field_Entrable` / `SET_ITEM_PROPERTY(ENABLED / UPDATEABLE)` decided by **stored data** | Item **Read Only** condition, *PL/SQL Expression* `<FORM>.<ITEM>_IS_READ_ONLY(I_... => :...)` (BOOLEAN function) - evaluated by APEX at page render |
+| Same, decided **while typing** | Native *Enable* / *Disable* actions in the item's DA, with a client-side condition. If the rule needs the database, FOS returns a flag item `P<page>_<ITEM>_READ_ONLY` (`Y` / `N`) and the condition is *Item = Value* |
+| `SET_ITEM_PROPERTY(VISIBLE)` | Native *Show* / *Hide*, or a server-side condition on the item |
+| `SET_ITEM_PROPERTY(REQUIRED)` | Validation `<ITEM> REQUIRED` with a server-side condition (`<FORM>.<ITEM>_IS_REQUIRED(...)`). No client-side "required" script |
+| `GO_ITEM` | Native *Set Focus* |
+| `SHOW_ALERT` stop / `MESSAGE` + `FORM_TRIGGER_FAILURE` | `<FORM>.CHECK_ERROR` / `FORMS_COMPAT.FORM_TRIGGER_FAILURE` - FOS shows the error (`p_attribute_05 => '#SQLERRM#'`) |
+| `SHOW_ALERT` caution (Yes / No) | Native *Confirm* action (fixed text, from a Text Message), then the server action. Only when the text is computed on the server: one line `apex.message.confirm($v('P<page>_CONFIRM_TEXT'), ...)` |
+| `EXECUTE_QUERY` / re-query | Page submit with a request, or native *Refresh* |
+| `CALL_FORM` | Modal page `<page>0n` + *Dialog Closed* DA (native Refresh / Submit) |
+
+FOS action attributes, copied from f345 (AGR1100):
+`p_attribute_01` = PL/SQL code (one line, named parameters) · `p_attribute_02` = Items to Submit ·
+`p_attribute_03` = Items to Return · `p_attribute_05 => '#SQLERRM#'` ·
+`p_attribute_15 => 'suppressChangeEvent:escape-message'` · `p_wait_for_result => 'Y'`.
+
+Not allowed:
+- a JavaScript file per form (no `<form>.js`, no `p_javascript_file_urls` on the page);
+- AJAX callback processes or a home-made client "engine" that applies UI state (JSON of item properties);
+- *Execute JavaScript Code* actions longer than **3 lines**. If more seems necessary, write down why in
+  the page spec and ask before generating it.
+
+## 10. Package organisation (one readable package per form)
+
+One package `<FORM>` per form, owned by `LIB_APX_USR` (CLAUDE.md §3.2). No adapter packages, and no
+"record of all items" copied to and from session state: each member takes **only the items it uses**,
+as `I_` / `IO_` parameters, so APEX passes them as binds and a reader sees every input and output in
+the signature.
+
+Fixed section order (banner comment per section, the same in spec and body):
+
+1. **VERSION** - the version block and `PKG_VERSION`.
+2. **f345 HELPERS** - `CHECK_ERROR`, `REQUIRED_VALIDATION`, `P0_PAGE_PK_CHECK`, `GET_MODULE_ID`, `HEADER_TITLE`.
+3. **FORM LEVEL** - form triggers in Forms order (`PRE_FORM`, `WHEN_NEW_FORM_INSTANCE`, `PRE_COMMIT` ...).
+4. **BLOCK `<BLOCK>`** - one section per block, in Forms block order, and inside it:
+   query (`<BLOCK>_PRE_QUERY`, `<BLOCK>_POST_QUERY`) → record (`<BLOCK>_WHEN_CREATE_RECORD`,
+   `<BLOCK>_WHEN_NEW_RECORD_INSTANCE`) → **items in Forms navigation order**, each with its
+   `<ITEM>_POST_CHANGE`, `<ITEM>_VALIDATION` / `<ITEM>_WHEN_VALIDATE_ITEM`, `<ITEM>_IS_READ_ONLY`,
+   `<ITEM>_IS_REQUIRED` → DML (`PRE_INSERT`, `POST_INSERT`, `PRE_UPDATE`, `POST_UPDATE`, `PRE_DELETE`,
+   `POST_DELETE`) → buttons (`<BUTTON>_WHEN_BUTTON_PRESSED`).
+5. **PROGRAM UNITS** - Forms program units, same names, Forms order.
+6. **PRIVATE HELPERS** (body only, declared before use at the top of the body) - code that several
+   triggers share, named by what it does.
+7. **UI LOGIC FOR APEX DYNAMIC ACTIONS** (body end, comments only).
+
+Rules:
+- One Forms trigger = one member. A member longer than about **80 lines** is split into private helpers.
+- Keep the original Forms code as a comment above each member (`-- Original Forms code:`).
+- The package never builds UI state (no lists of item properties, no JSON for the page). UI rules are
+  BOOLEAN functions (`<ITEM>_IS_READ_ONLY`, `<ITEM>_IS_REQUIRED`) that APEX conditions call.
+- The package reads no session state (`v('P..')`); APEX passes values as binds. Exception: `:APP_USER`
+  through `FORMS_COMPAT.APP_USER` and globals through `FORMS_COMPAT.GET_GLOBAL`.
+- No COMMIT / ROLLBACK (APEX commits after page processing).

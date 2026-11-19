@@ -1,95 +1,125 @@
 -- =============================================================================
--- dynamic_action_patterns.sql — APEX 21.2 Dynamic Action reference patterns
--- Reference only (not a runnable script). Page 10 / items P10_* are examples.
--- Each pattern: Forms original -> declarative DA settings -> code snippets.
+-- dynamic_action_patterns.sql — APEX 21.2 Dynamic Action reference patterns (f345 standard)
+-- Reference only (not a runnable script). Form ORDERS, page 120 / items P120_* are examples.
+-- Rules: docs/f345_reference_standard.md §9 (declarative first) and §10 (package layout).
+-- Order of preference in every pattern:
+--   1. validation / item condition / FOS "Execute PL/SQL Code" (Items to Submit / Return)
+--   2. native DA actions (Enable, Disable, Show, Hide, Set Value, Set Focus, Refresh, Confirm)
+--   3. "Execute JavaScript Code" - at most 3 lines, only when 1-2 cannot do it (write the reason)
+-- No JavaScript file per form, no AJAX callback processes, no UI state in PL/SQL.
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
--- PATTERN 1: Show / hide items based on another item's value
--- Forms: WHEN-LIST-CHANGED on ORDERS.ORDER_TYPE
---        IF :ORDERS.ORDER_TYPE = 'EXPORT' THEN
---           SET_ITEM_PROPERTY('ORDERS.COUNTRY', VISIBLE, PROPERTY_TRUE); ...
--- APEX : DA "Toggle Country"
---   Event: Change | Selection: Item P10_ORDER_TYPE
---   Client-side condition: Item = Value, P10_ORDER_TYPE, EXPORT
---   True  action: Show  -> P10_COUNTRY   (Fire on Initialization = Yes)
---   False action: Hide  -> P10_COUNTRY   (Fire on Initialization = Yes)
---   Tip: also set "Clear when hidden"? Use False action Clear -> P10_COUNTRY if needed.
--- Server side safety: P10_COUNTRY server-side condition is NOT used (item must render);
---   instead add a validation so hidden values cannot be submitted incorrectly.
+-- PATTERN 1: WHEN-VALIDATE-ITEM that checks a value
+-- Forms: ORDERS.CUSTOMER_ID WHEN-VALIDATE-ITEM
+--          IF NOT exists(...) THEN MESSAGE('Unknown customer'); RAISE FORM_TRIGGER_FAILURE; END IF;
+-- Package : FUNCTION CUSTOMER_ID_VALIDATION (I_P120_CUSTOMER_ID IN VARCHAR2) RETURN VARCHAR2
+--           (returns the error text, NULL when valid)
+-- APEX 1  : Validation "CUSTOMER_ID VALIDATION" - PL/SQL Function Body returning Error Text,
+--           associated item P120_CUSTOMER_ID, condition request CREATE / SAVE:
+--             return ORDERS.CUSTOMER_ID_VALIDATION(I_P120_CUSTOMER_ID => :P120_CUSTOMER_ID);
+-- APEX 2  : DA "CUSTOMER_ID WHEN-VALIDATE-ITEM" - Event Change, Item P120_CUSTOMER_ID
+--           True action: FOS - Execute PL/SQL Code
+--             Code (p_attribute_01):
+--               ORDERS.CHECK_ERROR(ORDERS.CUSTOMER_ID_VALIDATION(I_P120_CUSTOMER_ID => :P120_CUSTOMER_ID));
+--             Items to Submit (p_attribute_02): P120_CUSTOMER_ID
+--             Error message  (p_attribute_05): #SQLERRM#
+--           The user sees the error at once; the validation still enforces it at submit.
 -- -----------------------------------------------------------------------------
 
 -- -----------------------------------------------------------------------------
--- PATTERN 2: Cascading LOV (refresh select list when parent changes)
--- Forms: LOV record group filtered by :ORDERS.COUNTRY_ID, re-populated in WHEN-VALIDATE-ITEM
--- APEX : no DA needed — declarative cascading LOV on P10_CITY_ID:
---   Type: Select List | List of Values: SQL Query
---   Cascading List of Values > Parent Item(s): P10_COUNTRY_ID
---   Items to Submit: P10_COUNTRY_ID | Parent Required: Yes
+-- PATTERN 2: WHEN-VALIDATE-ITEM that fills other items
+-- Forms: ORDERS.CUSTOMER_ID WHEN-VALIDATE-ITEM fills CUSTOMER_NAME / CREDIT_LIMIT
+-- Package : PROCEDURE CUSTOMER_ID_WHEN_VALIDATE_ITEM (I_P120_CUSTOMER_ID   IN VARCHAR2,
+--                                                    IO_P120_CUSTOMER_NAME IN OUT VARCHAR2,
+--                                                    IO_P120_CREDIT_LIMIT  IN OUT NUMBER)
+-- APEX    : DA "CUSTOMER_ID WHEN-VALIDATE-ITEM" - Event Change, Item P120_CUSTOMER_ID
+--           True action: FOS - Execute PL/SQL Code
+--             ORDERS.CUSTOMER_ID_WHEN_VALIDATE_ITEM(I_P120_CUSTOMER_ID => :P120_CUSTOMER_ID,
+--                 IO_P120_CUSTOMER_NAME => :P120_CUSTOMER_NAME, IO_P120_CREDIT_LIMIT => :P120_CREDIT_LIMIT);
+--             Items to Submit: P120_CUSTOMER_ID
+--             Items to Return: P120_CUSTOMER_NAME,P120_CREDIT_LIMIT
+-- No JavaScript: FOS writes the returned values into the page items.
+-- -----------------------------------------------------------------------------
+
+-- -----------------------------------------------------------------------------
+-- PATTERN 3: Make_Field_Entrable / SET_ITEM_PROPERTY(ENABLED) decided by stored data
+-- Forms: WHEN-NEW-RECORD-INSTANCE
+--          IF :ORDERS.STATUS = 'CLOSED' THEN Make_Field_Entrable('ORDERS.AMOUNT', FALSE); END IF;
+-- Package : FUNCTION AMOUNT_IS_READ_ONLY (I_P120_STATUS IN VARCHAR2) RETURN BOOLEAN
+--             IS BEGIN RETURN I_P120_STATUS = 'CLOSED'; END;
+-- APEX    : item P120_AMOUNT - Read Only: PL/SQL Expression
+--             ORDERS.AMOUNT_IS_READ_ONLY(I_P120_STATUS => :P120_STATUS)
+--           APEX evaluates it when the page is rendered. Several items with the same rule share
+--           one function, named by the rule in full words (e.g. CLOSED_ORDER_IS_READ_ONLY).
+-- -----------------------------------------------------------------------------
+
+-- -----------------------------------------------------------------------------
+-- PATTERN 4: Make_Field_Entrable decided while the user types
+-- Forms: ORDERS.ORDER_TYPE WHEN-VALIDATE-ITEM
+--          IF :ORDERS.ORDER_TYPE = 'EXPORT' THEN Make_Field_Entrable('ORDERS.COUNTRY', TRUE);
+--          ELSE Make_Field_Entrable('ORDERS.COUNTRY', FALSE); END IF;
+-- APEX (rule uses only page values): DA "ORDER_TYPE WHEN-VALIDATE-ITEM" - Event Change
+--   Client-side condition: Item = Value, P120_ORDER_TYPE, EXPORT
+--   True  action: Enable  -> P120_COUNTRY   (Fire on Initialization = Yes)
+--   False action: Disable -> P120_COUNTRY   (Fire on Initialization = Yes)
+-- APEX (rule needs the database): FOS returns a flag item
+--   True action 1: FOS - Execute PL/SQL Code
+--     :P120_COUNTRY_READ_ONLY := CASE WHEN ORDERS.COUNTRY_IS_READ_ONLY(I_P120_ORDER_TYPE => :P120_ORDER_TYPE)
+--                                     THEN 'Y' ELSE 'N' END;
+--     Items to Submit: P120_ORDER_TYPE | Items to Return: P120_COUNTRY_READ_ONLY
+--   True action 2: Enable P120_COUNTRY, client-side condition Item = Value P120_COUNTRY_READ_ONLY N
+--   True action 3: Disable P120_COUNTRY, client-side condition Item = Value P120_COUNTRY_READ_ONLY Y
+-- Note: a disabled item is not submitted; the package reads the stored value when it needs it.
+-- -----------------------------------------------------------------------------
+
+-- -----------------------------------------------------------------------------
+-- PATTERN 5: Show / hide items
+-- Forms: SET_ITEM_PROPERTY('ORDERS.COUNTRY', VISIBLE, PROPERTY_TRUE / FALSE)
+-- APEX : DA on change, client-side condition Item = Value
+--   True action: Show -> P120_COUNTRY | False action: Hide -> P120_COUNTRY (Fire on Initialization = Yes)
+--   Stored-data rule: item Server-side Condition instead (the item is not rendered at all).
+-- -----------------------------------------------------------------------------
+
+-- -----------------------------------------------------------------------------
+-- PATTERN 6: Conditional required field
+-- Forms: SET_ITEM_PROPERTY('ORDERS.PO_NUMBER', REQUIRED, PROPERTY_TRUE) when PAY_TYPE = 'INVOICE'
+-- Package : FUNCTION PO_NUMBER_IS_REQUIRED (I_P120_PAY_TYPE IN VARCHAR2) RETURN BOOLEAN
+-- APEX    : Validation "PO_NUMBER REQUIRED" - PL/SQL Function Body returning Error Text
+--             return ORDERS.REQUIRED_VALIDATION(:P120_PO_NUMBER, '<label>');
+--           Server-side Condition: PL/SQL Expression
+--             ORDERS.PO_NUMBER_IS_REQUIRED(I_P120_PAY_TYPE => :P120_PAY_TYPE)
+--           No client-side script for the "required" marker.
+-- -----------------------------------------------------------------------------
+
+-- -----------------------------------------------------------------------------
+-- PATTERN 7: Cascading LOV (refresh a list when its parent changes)
+-- Forms: LOV record group filtered by :ORDERS.COUNTRY_ID
+-- APEX : no DA - declarative cascading LOV on P120_CITY_ID:
+--   Cascading List of Values > Parent Item(s): P120_COUNTRY_ID | Items to Submit: P120_COUNTRY_ID
 SELECT city_name AS display_value,
        city_id   AS return_value
   FROM cities
- WHERE country_id = :P10_COUNTRY_ID
+ WHERE country_id = :P120_COUNTRY_ID
  ORDER BY city_name;
--- In Interactive Grid columns use the same SQL with :COUNTRY_ID (column bind)
--- and set Cascading LOV Parent Column(s) = COUNTRY_ID.
+-- In Interactive Grid columns use :COUNTRY_ID and Cascading LOV Parent Column(s) = COUNTRY_ID.
 -- -----------------------------------------------------------------------------
 
 -- -----------------------------------------------------------------------------
--- PATTERN 3: Conditional required field
--- Forms: SET_ITEM_PROPERTY('ORDERS.PO_NUMBER', REQUIRED, PROPERTY_TRUE) when PAY_TYPE='INVOICE'
--- APEX (server-side = authoritative): Validation "PO number required for invoices"
---   Type: PL/SQL Function Body (returning Error Text) | Associated Item: P10_PO_NUMBER
---   Code:
---     RETURN CASE WHEN :P10_PAY_TYPE = 'INVOICE' AND :P10_PO_NUMBER IS NULL
---                 THEN 'PO Number is required for invoice payments.' END;
---   (or Type "Item is NOT NULL" + Server-side Condition: Item = Value P10_PAY_TYPE INVOICE)
--- APEX (client-side visual cue): DA on change of P10_PAY_TYPE, True action Execute JavaScript:
---     apex.item('P10_PO_NUMBER').setRequired?.( $v('P10_PAY_TYPE') === 'INVOICE' );
---     $('#P10_PO_NUMBER_CONTAINER').toggleClass('is-required', $v('P10_PAY_TYPE') === 'INVOICE');
---   Note: verify item.setRequired availability in your 21.2 patch; the CSS class
---   approach works everywhere. The validation above is what enforces the rule.
+-- PATTERN 8: GO_ITEM
+-- Forms: GO_ITEM('ORDERS.ENG_NAME');
+-- APEX : native action Set Focus -> P120_ENG_NAME (last action of the DA that did the work)
 -- -----------------------------------------------------------------------------
 
 -- -----------------------------------------------------------------------------
--- PATTERN 4: Call a PL/SQL procedure from a Dynamic Action
--- Forms: WHEN-VALIDATE-ITEM on ORDERS.CUSTOMER_ID fills CUSTOMER_NAME / CREDIT_LIMIT
--- APEX : DA "Fetch customer" — Event: Change | Item: P10_CUSTOMER_ID
---   True action: Execute Server-side Code
---     Items to Submit: P10_CUSTOMER_ID
---     Items to Return: P10_CUSTOMER_NAME,P10_CREDIT_LIMIT
-BEGIN
-    ORDERS.get_customer_info(
-        p_customer_id   => :P10_CUSTOMER_ID,
-        p_customer_name => :P10_CUSTOMER_NAME,
-        p_credit_limit  => :P10_CREDIT_LIMIT);
-END;
---   Errors raised (raise_application_error) are shown as an error notification.
---   Add "Wait for Result = Yes" (default) before dependent actions.
+-- PATTERN 9: Confirmation (SHOW_ALERT with Yes / No)
+-- Forms: IF SHOW_ALERT('AL_CONFIRM_SEND') = ALERT_BUTTON1 THEN <send>; END IF;
+-- APEX (fixed text, declarative): DA on the button / event
+--   True action 1: Confirm (text from Text Message AL_CONFIRM_SEND)
+--   True action 2: Submit Page, request SEND   (cancel stops the following actions)
+-- APEX (text computed on the server): FOS returns P120_CONFIRM_TEXT, then ONE line:
+--   apex.message.confirm($v('P120_CONFIRM_TEXT'), function (ok) { if (ok) { apex.page.submit('SEND'); } });
+-- Page 0 toolbar DELETE already confirms - nothing to build for KEY-DELREC.
+-- Confirm before page 0 CREATE / SAVE (they submit directly): DA "Before Page Submit", the only
+--   accepted 3-line JavaScript case - list it in the page spec §10.
 -- -----------------------------------------------------------------------------
-
--- -----------------------------------------------------------------------------
--- PATTERN 5: Confirmation dialog before DML
--- Forms: v_btn := SHOW_ALERT('CONFIRM_DELETE'); IF v_btn = ALERT_BUTTON1 THEN DELETE_RECORD; COMMIT_FORM; END IF;
--- APEX option A (declarative, simplest): Button DELETE
---   Behavior > Action: Submit Page, Request: DELETE
---   Confirmation > Message: 'Are you sure you want to delete this order?'
---   (Database Action: SQL DELETE action; DML process condition: request = DELETE)
--- APEX option B (Dynamic Action): Button Action = Defined by Dynamic Action
---   DA Event: Click on button DELETE
---   True action 1: Confirm  (Text: 'Are you sure you want to delete this order?')
---   True action 2: Submit Page (Request / Button Name: DELETE)
---   -> if the user cancels, subsequent actions are not executed.
--- APEX option C (JavaScript, custom text/logic):
---   apex.message.confirm('Delete order ' + $v('P10_ORDER_ID') + '?', function (okPressed) {
---       if (okPressed) { apex.page.submit({ request: 'DELETE', showWait: true }); }
---   });
--- Server process "ORDERS.PRE-DELETE" (Processing, condition request = DELETE),
--- before Automatic Row Processing:
-BEGIN
-    ORDERS.orders_pre_del(p_rec => ORDERS.get_order(:P10_ORDER_ID));
-END;
--- Confirm text taken from the Forms alert (Text Message AL_CONFIRM_DEL), JS:
---   apex.message.confirm(apex.lang.getMessage('AL_CONFIRM_DEL'), function (ok) { ... });
---   (Text Message must have "Used in JavaScript" = Yes)
--- =============================================================================

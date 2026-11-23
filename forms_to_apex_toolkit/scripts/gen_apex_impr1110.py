@@ -414,7 +414,7 @@ def gen():
 -- Target      : Oracle APEX 21.2 (export version 2021.10.15), Oracle Database 12.1.0.2,
 --               reference application f345 (apex/Reference/f345.sql)
 -- Standard    : CLAUDE.md 4b / 4c, docs/f345_reference_standard.md 3-9: native Form region (ROWID),
---               FOS + native dynamic actions, one-line calls into package IMPR1110 (version 008).
+--               FOS + native dynamic actions, one-line calls into package IMPR1110 (version 009).
 --               No JavaScript file, no AJAX callback process.
 -- Contents    : component export INTO the application installed from f345: pages 1110 (main),
 --               111001 (search), 111002 (mobile) + the shared components they need.
@@ -619,7 +619,7 @@ end;
         ('p_attribute_02', q('TEXT')), ('p_attribute_03', q('Y')),
         ('p_plug_comment', src('IMPR1110.IMPORTERS.PRE-QUERY (name criterion) / spec 3'))]))
     ig_sql = '\n'.join([
-        'SELECT ROWIDTOCHAR(i.ROWID) AS row_id,',
+        "SELECT TRANSLATE(ROWIDTOCHAR(i.ROWID), '+/', '-_') AS row_id,   -- URL-safe: a '+' in f?p arrives as a space",
         '       i.impr_nbr, i.arbc_impr_name, i.eng_impr_name, i.bus_id, i.bus_id_brnch,',
         "       i.impr_type_cd || ' - ' || it.impr_type_name AS impr_type, i.hq_impr_nbr",
         '  FROM importers i, impr_types it',
@@ -654,10 +654,10 @@ end;
                     ('p_use_as_row_header', 'false'), ('p_enable_sort_group', 'false'), ('p_is_primary_key', 'true'),
                     ('p_duplicate_value', 'true'), ('p_include_in_export', 'false')]
         elif c == 'IMPR_NBR':
-            # Link Builder target: APEX escapes the ROWID characters + and / (spec 3)
+            # ROW_ID is URL-safe ('+' / '/' -> '-' / '_'); IMPR1110.P0_PAGE_PK_CHECK translates it back (spec 3)
             prm += [('p_item_type', q('NATIVE_LINK')), ('p_heading', q(h)), ('p_heading_alignment', q('CENTER')),
                     ('p_display_sequence', str((i + 1) * 10)), ('p_value_alignment', q('CENTER')),
-                    ('p_link_target', q('f?p=&APP_ID.:1110:&SESSION.::&DEBUG.:1110:P0_PAGE_PK:\\&ROW_ID.\\')),
+                    ('p_link_target', q('f?p=&APP_ID.:1110:&SESSION.::&DEBUG.:1110:P0_PAGE_PK:&ROW_ID.')),
                     ('p_link_text', q('&IMPR_NBR.')), ('p_link_attributes', q('target="_top"'))] + filt
         else:
             prm += [('p_item_type', q('NATIVE_DISPLAY_ONLY')), ('p_heading', q(h)), ('p_heading_alignment', q('CENTER')),

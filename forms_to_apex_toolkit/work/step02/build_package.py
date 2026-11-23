@@ -398,7 +398,7 @@ def spec_decl(m):
 
 # ------------------------------------------------------------------ assemble the spec
 vb = re.search(r'(?s)(   V_PKG_VERSION .*?\|\| V_MODIFIED_BY;\n)', spec_src).group(1)
-vb = re.sub(r"'VERSION NO\. IS:' \|\| '\d+'", "'VERSION NO. IS:' || '008'", vb, count=1)
+vb = re.sub(r"'VERSION NO\. IS:' \|\| '\d+'", "'VERSION NO. IS:' || '009'", vb, count=1)
 vb = re.sub(r"V_LAST_MODIFY_DT    VARCHAR2 \(10\) := '[^']*'", "V_LAST_MODIFY_DT    VARCHAR2 (10) := '%s'" % DATE, vb)
 grants = spec_src[spec_src.index('\n-- -----------------------------------------------------------------------------\n-- Synonym and grants'):]
 def banner(t):
@@ -419,9 +419,11 @@ order += [s for s in sections if s not in order]
 spec = ['-- =============================================================================',
         '-- Package     : IMPR1110  (form IMPR1110.fmb "إضافة وتعديل بيانات مستورد")',
         '-- Owner       : LIB_APX_USR (public synonym IMPR1110; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)',
-        '-- Version     : 008 (%s: 006 = step 02 revision 2 + step 03 changes (DATE items as text, ROWID page key);' % DATE,
+        '-- Version     : 009 (%s: 006 = step 02 revision 2 + step 03 changes (DATE items as text, ROWID page key);' % DATE,
         '--               007 = parameter names by scripts/parameter_names.py; 008 = no doubled P_P_ (P_CODE => :P1110_P_CODE),',
-        '--               APP_P_PRSNL_IMPR / APP_P_LETTER_NBR in PARAMETERS_ENTRY. No logic change. 007: rollback/IMPR1110/step04_v007/)',
+        '--               APP_P_PRSNL_IMPR / APP_P_LETTER_NBR in PARAMETERS_ENTRY. No logic change. 007: rollback/IMPR1110/step04_v007/;',
+        "--               009 = P0_PAGE_PK_CHECK restores the URL-safe ROWID of page 111001 ('-' / '_' -> '+' / '/'; a '+'",
+        '--               in f?p arrived as a space: checksum error). 008: rollback/IMPR1110/step04_v008/)',
         '-- Author      : Claude Code',
         '-- Status      : NOT COMPILED.',
         '-- Layout      : VERSION -> f345 HELPERS -> FORM LEVEL -> BLOCK IMPORTERS (query, record, items in Forms',
@@ -446,7 +448,7 @@ spec_text = '\n'.join(spec)
 # ------------------------------------------------------------------ assemble the body
 logic_fwd = ['    ' + m['header'] + ';' for m, _ in logic_text]
 body = ['-- =============================================================================',
-        '-- Package body: IMPR1110 (version 008, %s) - see the spec header. NOT COMPILED.' % DATE,
+        '-- Package body: IMPR1110 (version 009, %s) - see the spec header. NOT COMPILED.' % DATE,
         '-- Layout      : 1 private types and declarations, 2 forward declarations, 3 private helpers and the',
         '--               converted Forms logic (record based, Forms order, UI calls replaced by "NULL; -- APEX ..."),',
         '--               4 read-only / required rules, 5 f345 helpers, 6 APEX entry points (spec order), 7 version.',

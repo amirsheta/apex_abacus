@@ -52,7 +52,9 @@
 
     -- Section: f345 HELPERS
     -- Process "P0_PAGE_PK CHECK" (Before Header): P0_PAGE_PK holds the ROWID of the importer (Forms key
-    -- mode ROWID); forget a key that is not a row of IMPORTERS of this port (block WHERE clause)
+    -- mode ROWID); forget a key that is not a row of IMPORTERS of this port (block WHERE clause).
+    -- The search page 111001 passes the ROWID URL-safe (TRANSLATE(ROWID, '+/', '-_'): a '+' in f?p arrives
+    -- as a space and the checksum fails); it is translated back first. A ROWID never contains '-' or '_'.
     PROCEDURE P0_PAGE_PK_CHECK (IO_P0_PAGE_PK    IN OUT VARCHAR2,
                                 I_P_CURR_PORT_CD IN     NUMBER)
     IS
@@ -61,6 +63,7 @@
         IF IO_P0_PAGE_PK IS NULL THEN
             RETURN;
         END IF;
+        IO_P0_PAGE_PK := TRANSLATE(IO_P0_PAGE_PK, '-_', '+/');      -- URL-safe ROWID of page 111001 -> ROWID
         SELECT COUNT(*)
           INTO v_cnt
           FROM importers i

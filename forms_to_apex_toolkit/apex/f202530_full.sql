@@ -98482,7 +98482,7 @@ wwv_flow_api.create_page_plug(
 ,p_plug_display_sequence=>20
 ,p_query_type=>'SQL'
 ,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
-'SELECT ROWIDTOCHAR(i.ROWID) AS row_id,',
+'SELECT TRANSLATE(ROWIDTOCHAR(i.ROWID), ''+/'', ''-_'') AS row_id,   -- URL-safe: a ''+'' in f?p arrives as a space',
 '       i.impr_nbr, i.arbc_impr_name, i.eng_impr_name, i.bus_id, i.bus_id_brnch,',
 '       i.impr_type_cd || '' - '' || it.impr_type_name AS impr_type, i.hq_impr_nbr',
 '  FROM importers i, impr_types it',
@@ -98525,7 +98525,7 @@ wwv_flow_api.create_region_column(
 ,p_heading_alignment=>'CENTER'
 ,p_display_sequence=>20
 ,p_value_alignment=>'CENTER'
-,p_link_target=>'f?p=&APP_ID.:1110:&SESSION.::&DEBUG.:1110:P0_PAGE_PK:\&ROW_ID.\'
+,p_link_target=>'f?p=&APP_ID.:1110:&SESSION.::&DEBUG.:1110:P0_PAGE_PK:&ROW_ID.'
 ,p_link_text=>'&IMPR_NBR.'
 ,p_link_attributes=>'target="_top"'
 ,p_enable_filter=>true
@@ -99233,20 +99233,6 @@ wwv_flow_api.create_page_plug(
 ,p_plug_display_when_condition=>'P0_PAGE_PK'
 ,p_plug_comment=>'Source: IMPR1120.IMPR_SUSPN (relation CGFK$IS_1_IMP_FK, WHERE SUSPN_RLSE_DT IS NULL) / spec 3'
 );
-wwv_flow_api.create_page_plug(
- p_id=>wwv_flow_api.id(460632573718563870)
-,p_plug_name=>unistr('\0627\0644\0648\0638\0627\0626\0641')
-,p_region_name=>'FUNCS'
-,p_region_css_classes=>'cg-funcs'
-,p_region_template_options=>'#DEFAULT#:js-dialog-size480x320'
-,p_plug_template=>wwv_flow_api.id(12082527048378433529)
-,p_plug_display_sequence=>990
-,p_plug_source_type=>'NATIVE_LIST'
-,p_list_id=>wwv_flow_api.id(73515118111876811433)
-,p_list_template_id=>wwv_flow_api.id(63624495485623556746)
-,p_plug_query_num_rows=>15
-,p_plug_comment=>'Source: IMPR1120.LSIDE / TMPLT function menu (FORM.KEY-F9), opened by page 0 FUNCS; f345 list Page Functions / spec 3'
-);
 wwv_flow_api.create_region_column(
  p_id=>wwv_flow_api.id(460632573719563840)
 ,p_name=>'APEX$ROW_ACTION'
@@ -99631,6 +99617,20 @@ wwv_flow_api.create_ig_report_column(
 ,p_column_id=>wwv_flow_api.id(460632573719563930)
 ,p_is_visible=>true
 ,p_is_frozen=>false
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(460632573718563870)
+,p_plug_name=>unistr('\0627\0644\0648\0638\0627\0626\0641')
+,p_region_name=>'FUNCS'
+,p_region_css_classes=>'cg-funcs'
+,p_region_template_options=>'#DEFAULT#:js-dialog-size480x320'
+,p_plug_template=>wwv_flow_api.id(12082527048378433529)
+,p_plug_display_sequence=>990
+,p_plug_source_type=>'NATIVE_LIST'
+,p_list_id=>wwv_flow_api.id(73515118111876811433)
+,p_list_template_id=>wwv_flow_api.id(63624495485623556746)
+,p_plug_query_num_rows=>15
+,p_plug_comment=>'Source: IMPR1120.LSIDE / TMPLT function menu (FORM.KEY-F9), opened by page 0 FUNCS; f345 list Page Functions / spec 3'
 );
 wwv_flow_api.create_page_branch(
  p_id=>wwv_flow_api.id(460632573720563970)
@@ -100499,6 +100499,7 @@ wwv_flow_api.create_page(
 ,p_dialog_height=>'800'
 ,p_dialog_width=>'1800'
 ,p_protection_level=>'C'
+,p_first_item=>'AUTO_FIRST_ITEM'
 ,p_page_comment=>'Source: IMPR1120 Enter-Query / Execute-Query of block IMPORTERS / spec 2, 3'
 ,p_last_upd_yyyymmddhh24miss=>'20261123000000'
 );
@@ -100513,7 +100514,7 @@ wwv_flow_api.create_page_plug(
 ,p_attribute_01=>'N'
 ,p_attribute_02=>'TEXT'
 ,p_attribute_03=>'Y'
-,p_plug_comment=>'Source: IMPR1120.IMPORTERS.PRE-QUERY (port, port name, Arabic name) / spec 3'
+,p_plug_comment=>'Source: IMPR1120.IMPORTERS.PRE-QUERY criteria, as one search text over all columns / spec 3'
 );
 wwv_flow_api.create_page_plug(
  p_id=>wwv_flow_api.id(460643661818563850)
@@ -100525,28 +100526,34 @@ wwv_flow_api.create_page_plug(
 ,p_plug_display_sequence=>20
 ,p_query_type=>'SQL'
 ,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
-'SELECT ROWIDTOCHAR(i.ROWID) AS row_id,',
+'-- one search text over every shown column (user request 2026-11-23); no rows until a search is made, as Forms',
+'-- opens the block in Enter-Query mode: the dialog opens without reading IMPORTERS. No sort clause (user request',
+'-- 2026-11-23: the whole result is not sorted; the grid columns can still be sorted)',
+'SELECT TRANSLATE(ROWIDTOCHAR(i.ROWID), ''+/'', ''-_'') AS row_id,   -- URL-safe: a ''+'' in f?p arrives as a space',
 '       i.port_cd, p.port_name, i.impr_nbr, i.hq_impr_nbr,',
 '       i.arbc_impr_name, i.eng_impr_name, i.impr_cntct_name,',
 '       i.impr_type_cd, it.impr_type_name, i.bus_id_type_cd, i.bus_id, i.bus_id_brnch,',
 '       i.ctry_cd, c.crty_arbc_name, i.city_code_of_id, i.impr_expr_type',
 '  FROM importers i, sd_ports p, impr_types it, countries c',
-' WHERE i.port_cd = NVL((SELECT IMPR1120.IMPORTERS_PRE_QUERY_PORT_CD(PORT_CD        => :P112001_PORT_CD,',
+' WHERE :P112001_SEARCH IS NOT NULL',
+'   AND i.port_cd = NVL((SELECT IMPR1120.IMPORTERS_PRE_QUERY_PORT_CD(PORT_CD        => NULL,',
 '                                                                    P_CURR_PORT_CD => :P_CURR_PORT_CD)',
 '                          FROM dual), i.port_cd)',
 '   AND p.port_cd (+)       = i.port_cd',
 '   AND it.impr_type_cd (+) = i.impr_type_cd',
 '   AND c.ctry_cd (+)       = i.ctry_cd',
-'   AND (:P112001_PORT_NAME IS NULL OR p.port_name LIKE :P112001_PORT_NAME)',
-'   AND (:P112001_ARBC_IMPR_NAME IS NULL',
-'        OR i.impr_name_std LIKE (SELECT IMPR1120.IMPORTERS_PRE_QUERY_NAME_STD(',
-'                                            ARBC_IMPR_NAME => :P112001_ARBC_IMPR_NAME)',
-'                                   FROM dual))',
-' ORDER BY i.port_cd DESC'))
+'   AND (INSTR(UPPER(i.port_cd || ''|'' || p.port_name || ''|'' || i.impr_nbr || ''|'' || i.hq_impr_nbr || ''|'' ||',
+'                    i.arbc_impr_name || ''|'' || i.eng_impr_name || ''|'' || i.impr_cntct_name || ''|'' ||',
+'                    i.impr_type_cd || ''|'' || it.impr_type_name || ''|'' || i.bus_id_type_cd || ''|'' || i.bus_id || ''|'' ||',
+'                    i.bus_id_brnch || ''|'' || i.ctry_cd || ''|'' || c.crty_arbc_name || ''|'' || i.city_code_of_id || ''|'' ||',
+'                    i.impr_expr_type), UPPER(TRIM(:P112001_SEARCH))) > 0',
+'        OR i.impr_name_std LIKE ''%'' || (SELECT IMPR1120.IMPORTERS_PRE_QUERY_NAME_STD(',
+'                                                   ARBC_IMPR_NAME => TRIM(:P112001_SEARCH))',
+'                                          FROM dual) || ''%'')'))
 ,p_plug_source_type=>'NATIVE_IG'
-,p_ajax_items_to_submit=>'P112001_PORT_CD,P112001_PORT_NAME,P112001_ARBC_IMPR_NAME'
+,p_ajax_items_to_submit=>'P112001_SEARCH'
 ,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
-,p_plug_comment=>'Source: IMPR1120.IMPORTERS block query (ORDER BY port_cd desc) + PRE-QUERY / spec 3'
+,p_plug_comment=>'Source: IMPR1120.IMPORTERS block query + PRE-QUERY (block ORDER BY dropped); one search text over all columns, no query until a search, no total row count / spec 3'
 );
 wwv_flow_api.create_region_column(
  p_id=>wwv_flow_api.id(460643661819563840)
@@ -100630,7 +100637,7 @@ wwv_flow_api.create_region_column(
 ,p_heading_alignment=>'CENTER'
 ,p_display_sequence=>40
 ,p_value_alignment=>'CENTER'
-,p_link_target=>'f?p=&APP_ID.:1120:&SESSION.::&DEBUG.:1120:P0_PAGE_PK:\&ROW_ID.\'
+,p_link_target=>'f?p=&APP_ID.:1120:&SESSION.::&DEBUG.:1120:P0_PAGE_PK:&ROW_ID.'
 ,p_link_text=>'&IMPR_NBR.'
 ,p_link_attributes=>'target="_top"'
 ,p_enable_filter=>true
@@ -101001,15 +101008,15 @@ wwv_flow_api.create_interactive_grid(
  p_id=>wwv_flow_api.id(460643661820563840)
 ,p_internal_uid=>112001000201
 ,p_is_editable=>false
-,p_lazy_loading=>false
+,p_lazy_loading=>true
 ,p_requires_filter=>false
 ,p_select_first_row=>true
 ,p_fixed_row_height=>true
 ,p_pagination_type=>'SET'
-,p_show_total_row_count=>true
-,p_no_data_found_message=>unistr('\0644\0627 \064A\0648\062C\062F \0645\0633\062A\0648\0631\062F\0648\0646')
+,p_show_total_row_count=>false
+,p_no_data_found_message=>unistr('\0644\0627 \062A\0648\062C\062F \0646\062A\0627\0626\062C - \0623\062F\062E\0644 \0646\0635 \0627\0644\0628\062D\062B \062B\0645 \0627\0636\063A\0637 \0628\062D\062B')
 ,p_show_toolbar=>true
-,p_toolbar_buttons=>'SEARCH_COLUMN:SEARCH_FIELD:ACTIONS_MENU:RESET'
+,p_toolbar_buttons=>'ACTIONS_MENU:RESET'
 ,p_enable_save_public_report=>false
 ,p_enable_subscriptions=>true
 ,p_enable_flashback=>true
@@ -101177,59 +101184,15 @@ wwv_flow_api.create_ig_report_column(
 );
 wwv_flow_api.create_page_item(
  p_id=>wwv_flow_api.id(460643661821563840)
-,p_name=>'P112001_PORT_CD'
+,p_name=>'P112001_SEARCH'
 ,p_item_sequence=>10
 ,p_item_plug_id=>wwv_flow_api.id(460643661818563840)
-,p_prompt=>unistr('\0631\0645\0632 \0627\0644\062C\0645\0631\0643')
-,p_display_as=>'NATIVE_POPUP_LOV'
-,p_named_lov=>'LOV_SD_PORTS'
-,p_lov_display_null=>'YES'
-,p_cSize=>30
-,p_cMaxlength=>4
-,p_begin_on_new_line=>'YES'
-,p_colspan=>2
-,p_read_only_when=>'IMPR1120.PORT_CD_IS_READ_ONLY(P_CURR_PORT_CD => :P_CURR_PORT_CD)'
-,p_read_only_when2=>'PLSQL'
-,p_read_only_when_type=>'EXPRESSION'
-,p_field_template=>wwv_flow_api.id(12082615991274433579)
-,p_item_template_options=>'#DEFAULT#:t-Form-fieldContainer--stretchInputs'
-,p_is_persistent=>'N'
-,p_attribute_01=>'DIALOG'
-,p_attribute_02=>'FIRST_ROWSET'
-,p_attribute_03=>'N'
-,p_item_comment=>'Source: IMPR1120.IMPORTERS.PORT_CD as query criterion (PRE-QUERY: forced to the user port outside port 99)'
-);
-wwv_flow_api.create_page_item(
- p_id=>wwv_flow_api.id(460643661821563850)
-,p_name=>'P112001_PORT_NAME'
-,p_item_sequence=>20
-,p_item_plug_id=>wwv_flow_api.id(460643661818563840)
-,p_prompt=>unistr('\0627\0633\0645 \0627\0644\062C\0645\0631\0643')
-,p_display_as=>'NATIVE_TEXT_FIELD'
-,p_cSize=>30
-,p_cMaxlength=>40
-,p_begin_on_new_line=>'NO'
-,p_colspan=>3
-,p_field_template=>wwv_flow_api.id(12082615991274433579)
-,p_item_template_options=>'#DEFAULT#:t-Form-fieldContainer--stretchInputs'
-,p_is_persistent=>'N'
-,p_attribute_01=>'N'
-,p_attribute_02=>'N'
-,p_attribute_04=>'TEXT'
-,p_attribute_05=>'BOTH'
-,p_item_comment=>'Source: IMPR1120.IMPORTERS.PORT_NAME criterion (CGFK$DEFAULT_WHERE sub-query on SD_PORTS)'
-);
-wwv_flow_api.create_page_item(
- p_id=>wwv_flow_api.id(460643661821563860)
-,p_name=>'P112001_ARBC_IMPR_NAME'
-,p_item_sequence=>30
-,p_item_plug_id=>wwv_flow_api.id(460643661818563840)
-,p_prompt=>unistr('\0627\0644\0627\0633\0645 \0627\0644\0639\0631\0628\0649')
+,p_prompt=>unistr('\0628\062D\062B \0641\064A \0643\0644 \0627\0644\0623\0639\0645\062F\0629')
 ,p_display_as=>'NATIVE_TEXT_FIELD'
 ,p_cSize=>30
 ,p_cMaxlength=>200
-,p_begin_on_new_line=>'NO'
-,p_colspan=>4
+,p_begin_on_new_line=>'YES'
+,p_colspan=>6
 ,p_field_template=>wwv_flow_api.id(12082615991274433579)
 ,p_item_template_options=>'#DEFAULT#:t-Form-fieldContainer--stretchInputs'
 ,p_is_persistent=>'N'
@@ -101237,19 +101200,7 @@ wwv_flow_api.create_page_item(
 ,p_attribute_02=>'N'
 ,p_attribute_04=>'TEXT'
 ,p_attribute_05=>'BOTH'
-,p_item_comment=>'Source: IMPR1120.IMPORTERS.ARBC_IMPR_NAME criterion (PRE-QUERY: IMPR_NAME_STD = STR.StrFormat(name, TRUE))'
-);
-wwv_flow_api.create_page_computation(
- p_id=>wwv_flow_api.id(460643661822563840)
-,p_computation_sequence=>10
-,p_computation_item=>'P112001_PORT_CD'
-,p_computation_point=>'BEFORE_HEADER'
-,p_computation_type=>'EXPRESSION'
-,p_computation_language=>'PLSQL'
-,p_computation=>':P_CURR_PORT_CD'
-,p_compute_when=>'P112001_PORT_CD'
-,p_compute_when_type=>'ITEM_IS_NULL'
-,p_computation_comment=>'Source: IMPR1120.IMPORTERS.PRE-QUERY :IMPORTERS.PORT_CD := :PARAMETER.P_CURR_PORT_CD / spec 9'
+,p_item_comment=>'Source: IMPR1120.IMPORTERS query criteria (PORT_CD, PORT_NAME, ARBC_IMPR_NAME ...) as one text over all columns; port rule of PRE-QUERY in the region SQL (user request 2026-11-23)'
 );
 wwv_flow_api.create_page_button(
  p_id=>wwv_flow_api.id(460643661819564010)
@@ -101264,6 +101215,20 @@ wwv_flow_api.create_page_button(
 ,p_icon_css_classes=>'fa-search'
 ,p_button_css_classes=>'cg-b-search'
 ,p_button_comment=>'Source: IMPR1120 TOOLBAR.EXECUTE (Execute Query of block IMPORTERS) / spec 5'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(460643661819564020)
+,p_button_sequence=>50
+,p_button_plug_id=>wwv_flow_api.id(460643661818563840)
+,p_button_name=>'CLEAR'
+,p_button_action=>'DEFINED_BY_DA'
+,p_button_template_options=>'#DEFAULT#:t-Button--iconLeft'
+,p_button_template_id=>wwv_flow_api.id(12082618629315433582)
+,p_button_image_alt=>unistr('\0645\0633\062D \0627\0644\0628\062D\062B')
+,p_button_position=>'BODY'
+,p_icon_css_classes=>'fa-eraser'
+,p_button_css_classes=>'cg-b-clear'
+,p_button_comment=>'Source: IMPR1120 TOOLBAR.CLEAR_ALL for the search (user request 2026-11-23) / spec 5'
 );
 wwv_flow_api.create_page_da_event(
  p_id=>wwv_flow_api.id(460643661825563840)
@@ -101287,6 +101252,58 @@ wwv_flow_api.create_page_da_action(
 );
 wwv_flow_api.create_page_da_event(
  p_id=>wwv_flow_api.id(460643661825563850)
+,p_name=>'SEARCH KEY-ENTER'
+,p_event_sequence=>12
+,p_triggering_element_type=>'ITEM'
+,p_triggering_element=>'P112001_SEARCH'
+,p_triggering_condition_type=>'JAVASCRIPT_EXPRESSION'
+,p_triggering_expression=>'this.browserEvent.which === 13'
+,p_bind_type=>'bind'
+,p_bind_event_type=>'keyup'
+,p_da_event_comment=>'Source: IMPR1120 KEY-EXEQRY (Enter in the search text; f345 AGR1100_SEARCH "SEARCH REFRESH" keyup pattern) / spec 10'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(460643661826563850)
+,p_event_id=>wwv_flow_api.id(460643661825563850)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'N'
+,p_action=>'NATIVE_REFRESH'
+,p_affected_elements_type=>'REGION'
+,p_affected_region_id=>wwv_flow_api.id(460643661818563850)
+);
+wwv_flow_api.create_page_da_event(
+ p_id=>wwv_flow_api.id(460643661825563860)
+,p_name=>'CLEAR WHEN-BUTTON-PRESSED'
+,p_event_sequence=>15
+,p_triggering_element_type=>'BUTTON'
+,p_triggering_button_id=>wwv_flow_api.id(460643661819564020)
+,p_bind_type=>'bind'
+,p_bind_event_type=>'click'
+,p_da_event_comment=>'Source: IMPR1120 TOOLBAR.CLEAR_ALL (search criteria) / spec 10'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(460643661826563860)
+,p_event_id=>wwv_flow_api.id(460643661825563860)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'N'
+,p_action=>'NATIVE_CLEAR'
+,p_affected_elements_type=>'ITEM'
+,p_affected_elements=>'P112001_SEARCH'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(460643661826563870)
+,p_event_id=>wwv_flow_api.id(460643661825563860)
+,p_event_result=>'TRUE'
+,p_action_sequence=>20
+,p_execute_on_page_init=>'N'
+,p_action=>'NATIVE_REFRESH'
+,p_affected_elements_type=>'REGION'
+,p_affected_region_id=>wwv_flow_api.id(460643661818563850)
+);
+wwv_flow_api.create_page_da_event(
+ p_id=>wwv_flow_api.id(460643661825563870)
 ,p_name=>'Hide'
 ,p_event_sequence=>20
 ,p_bind_type=>'bind'
@@ -101294,8 +101311,8 @@ wwv_flow_api.create_page_da_event(
 ,p_da_event_comment=>'Source: f345 AGR1100_SEARCH "Hide" (page 0 toolbar not used in a dialog)'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(460643661826563850)
-,p_event_id=>wwv_flow_api.id(460643661825563850)
+ p_id=>wwv_flow_api.id(460643661826563880)
+,p_event_id=>wwv_flow_api.id(460643661825563870)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
 ,p_execute_on_page_init=>'Y'

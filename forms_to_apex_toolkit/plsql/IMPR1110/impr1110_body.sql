@@ -1,5 +1,5 @@
 -- =============================================================================
--- Package body: IMPR1110 (version 008, 23-11-2026) - see the spec header. NOT COMPILED.
+-- Package body: IMPR1110 (version 009, 23-11-2026) - see the spec header. NOT COMPILED.
 -- Layout      : 1 private types and declarations, 2 forward declarations, 3 private helpers and the
 --               converted Forms logic (record based, Forms order, UI calls replaced by "NULL; -- APEX ..."),
 --               4 read-only / required rules, 5 f345 helpers, 6 APEX entry points (spec order), 7 version.
@@ -6914,7 +6914,9 @@ AS
 
     -- Section: f345 HELPERS
     -- Process "P0_PAGE_PK CHECK" (Before Header): P0_PAGE_PK holds the ROWID of the importer (Forms key
-    -- mode ROWID); forget a key that is not a row of IMPORTERS of this port (block WHERE clause)
+    -- mode ROWID); forget a key that is not a row of IMPORTERS of this port (block WHERE clause).
+    -- The search page 111001 passes the ROWID URL-safe (TRANSLATE(ROWID, '+/', '-_'): a '+' in f?p arrives
+    -- as a space and the checksum fails); it is translated back first. A ROWID never contains '-' or '_'.
     PROCEDURE P0_PAGE_PK_CHECK (P_PAGE_PK    IN OUT VARCHAR2,
                                 P_CURR_PORT_CD IN     NUMBER)
     IS
@@ -6923,6 +6925,7 @@ AS
         IF P_PAGE_PK IS NULL THEN
             RETURN;
         END IF;
+        P_PAGE_PK := TRANSLATE(P_PAGE_PK, '-_', '+/');      -- URL-safe ROWID of page 111001 -> ROWID
         SELECT COUNT(*)
           INTO v_cnt
           FROM importers i

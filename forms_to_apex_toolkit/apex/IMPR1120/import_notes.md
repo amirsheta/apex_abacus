@@ -21,7 +21,7 @@
 | `apex/IMPR1120/f345_impr1120.sql` | The export: a 2237-line `wwv_flow_api` component export with the four `__…__` placeholders and the `-- REVIEW BEFORE IMPORT` header |
 | `apex/IMPR1120/f202530_impr1120_import.sql` | Import-ready copy for application **202530**: the same export with workspace 23232323, application 202530, ID offset 460632461717563830 and schema `CUSTOMS` filled in. For any other application, regenerate it |
 | `apex/f202530_full.sql` | Full application export of 202530: f345 + IMPR1110 + IMPR1120, IDs shifted by 460632461717563830, header offset 0 (the way the IMPR1110 import succeeded on 2026-11-18). Rebuilt with `python3 -I scripts/build_full_app.py --app-id=202530 --shift-ids=460632461717563830 apex/IMPR1110/f345_impr1110.sql apex/IMPR1120/f345_impr1120.sql`. Checked: 1833 IDs, no duplicate, no undefined ID, no placeholder. Rebuilding from IMPR1110 alone reproduces the previous file byte for byte |
-| `plsql/IMPR1120/impr1120_spec.sql` + `impr1120_body.sql` | Package `IMPR1120` version **006**, which holds all the logic (006 = compile fix: no private function inside SQL; 003 = 002 without the `I_` / `IO_` / `O_` prefix; 004 = page items passed as `P_<ITEM>`, e.g. `P_PORT_CD => :P1120_PORT_CD`; 005 = no doubled `P_P_` (`P_CURRENT_SIDE => :P1120_P_CURRENT_SIDE`) and helper `hijri_text_to_date`; rule in `scripts/parameter_names.py`) |
+| `plsql/IMPR1120/impr1120_spec.sql` + `impr1120_body.sql` | Package `IMPR1120` version **007**, which holds all the logic (007 = URL-safe ROWID key from the search page; 006 = compile fix: no private function inside SQL; 003 = 002 without the `I_` / `IO_` / `O_` prefix; 004 = page items passed as `P_<ITEM>`, e.g. `P_PORT_CD => :P1120_PORT_CD`; 005 = no doubled `P_P_` (`P_CURRENT_SIDE => :P1120_P_CURRENT_SIDE`) and helper `hijri_text_to_date`; rule in `scripts/parameter_names.py`) |
 | `scripts/gen_apex_impr1120.py` | The generator. The design data is in the script (sections marked "spec N"). Re-run it after a spec change; do not edit the `.sql` by hand |
 
 Generator summary (`python3 -I scripts/gen_apex_impr1120.py`):
@@ -64,10 +64,10 @@ The script has `set define off`. There are four tokens:
 ## 3. Prerequisites
 
 1. **Application 202530 contains the IMPR1110 export.** This export reuses its page group `IMPR` (`wwv_flow_api.id(900001000010)`) and its LOVs `LOV_SD_PORTS` and `LOV_ALLOWED_EXPORT` (by name). Without them the component import fails (page group: ORA-02291) or the items have no LOV. The full-application file (option B) contains both forms, so it has no such dependency.
-2. **Package `IMPR1120` version 006 compiled** as `LIB_APX_USR.IMPR1120`:
+2. **Package `IMPR1120` version 007 compiled** as `LIB_APX_USR.IMPR1120`:
    - Run `plsql/IMPR1120/impr1120_spec.sql`, then `impr1120_body.sql`.
    - The spec ends with the public synonym and `GRANT EXECUTE` to `LIB_USR`, `SECURITY_DEFAULT`, `SECURITY_PROD` and `CUSTOMS`; run it as a user allowed to create public synonyms.
-   - `SELECT IMPR1120.PKG_VERSION FROM dual` must show `VERSION NO. IS:006`.
+   - `SELECT IMPR1120.PKG_VERSION FROM dual` must show `VERSION NO. IS:007`.
    - The body needs the direct grants listed in the extraction report §8 (tables `IMPR_SUSPNS` (SELECT, UPDATE), `IMPORTERS`, `IMPORTER_BASIC_DATA`, `SD_PORTS`, `CG_REF_CODES`, lookup tables, `SC_SYSTEM_OBJECTS`, `SC_PORT_SETTING`; packages `ACTIVITY_DB`, `HIJDATE_DB`, `STR_DB`, `GNRL`, `SMS_MESSAGE`, `FORMS_APX`).
    - `STR_DB`, `GNRL`, `SMS_MESSAGE` and `LIB_APX_USR.APEX_NOTIFICATIONS` have no source in the repository, so check that they exist with the signatures the Forms code used.
 3. **Grid DML runs as the package**, so `CUSTOMS` needs no DML grant on `IMPR_SUSPNS`. The grid process calls `IMPR1120.IMPR_SUSPN_SAVE_ROW`, which inserts and updates with definer rights (`LIB_APX_USR`). The two region queries do need SELECT for `CUSTOMS` on `IMPR_SUSPNS`, `IMPORTERS`, `SD_PORTS`, `IMPR_TYPES` and `COUNTRIES`.
@@ -84,6 +84,12 @@ Choose **one** option.
 
 It removes and re-creates pages 1120 and 112001 only (`remove_page`). It also creates the two LOVs and the Text Message with fixed IDs. On a second import they normally replace the same components. If APEX reports a duplicate LOV or message name instead, delete `LOV_IMPR_SUSPN_RSN_CD`, `LOV_SUSPN_SIDE_CD` and `IS_1_IMP_FK` first (not verified).
 
+Fix 2026-11-23: the error "The checksum computed on the request … did not match the checksum passed into the show procedure" when an importer was opened from the search page. Its ROWID contained `+`, which arrives in an `f?p` value as a space. The search page now passes the ROWID URL-safe (`+` → `-`, `/` → `_`) and `IMPR1120.P0_PAGE_PK_CHECK` (package 007) translates it back. Compile package 007 before this import.
+
+Change 2026-11-23 (user request): search page 112001 has one search text `P112001_SEARCH` over all columns (replacing the port, port name and Arabic name criteria and the grid's toolbar search), a CLEAR button, search on Enter (DA `SEARCH KEY-ENTER`), and opens fast: no query until a search, no total row count, no sort clause; focus on the search field; بحث and Enter refresh the grid (the loading overlay was removed: it did not work). Package comments of the PRE-QUERY members still name the old search items.
+
+Fix 2026-11-23: the import error "Interactive Grid Column 'SUSPN_STRT_DT' specified for Dynamic Action 'IMPR_SUSPN SUSPN_STRT_DT WHEN-VALIDATE-ITEM' does not exist". `create_region_column` has no region parameter; APEX attaches a column to the region created last. The IG columns came after the FUNCS region, so they belonged to FUNCS. The generator now writes the IG columns and grid right after region `IMPR_SUSPN`, as f345 AGR1100 does, and the self-check reports any column that does not follow an IG region and any column DA whose column is not in its region.
+
 **B. Full application** `apex/f202530_full.sql` (App Builder → Import → *Database Application*, reuse application ID 202530). This **replaces the whole application**, including the IMPR1110 pages, with this repository's version.
 
 ## 5. After import – review and tests
@@ -94,6 +100,7 @@ It removes and re-creates pages 1120 and 112001 only (`remove_page`). It also cr
 4. **Functional tests**, as in Forms, for each site (`CURRENT_SIDE` 1, 2, 3):
    - **Entry:** site 3 outside port 99 gets "ليس لديك الصلاحية للدخول على الشاشة".
    - **Open an importer:** type `IMPR_NBR` (unknown number → message 9-150; known number → the page shows the importer and its active suspensions); also open one from SEARCH (page 112001, filters, link). Page 0 CREATE with a number does the same.
+   - **Search page 112001:** it opens at once with an empty grid (no query yet). Type any part of a port code or name, importer number, unified number, Arabic or English name, agent, activity, ID number, branch or country in the one search field and press بحث or Enter: every column is searched (typing other keys does not search). When the dialog opens, the cursor is in the search field. Open several importers from the link column, including ones whose ROWID contains `+` or `/` (no checksum error). Outside port 99 only the user's port is found. Press مسح البحث: the field and the grid are emptied. Time the opening and one search on port 99 (all importers).
    - **Add a suspension:**
      - start date defaults to today and the reason, text and side default for the site;
      - a start date before today gives 9-100, and an end date before the start gives 9-110;
@@ -117,11 +124,12 @@ It removes and re-creates pages 1120 and 112001 only (`remove_page`). It also cr
 | 4 | FOS *Items to Return* = grid column `SUSPN_RSN_TEXT` | DA `IMPR_SUSPN SUSPN_RSN_CD WHEN-VALIDATE-ITEM` | if FOS does not set columns: return into a hidden page item and add a native *Set Value* on the column |
 | 5 | read-only `NATIVE_FORM` region `p_is_editable => false` | region `IMPORTERS` | turn *Edit Enabled* off by hand |
 | 6 | ROWID primary key (`p_include_rowid_column`, item source ROWID) | `P1120_ROW_ID` | as IMPR1110 |
-| 7 | item `p_read_only_when2 => 'PLSQL'` with type `EXPRESSION` | `P1120_PORT_CD`, `P112001_PORT_CD` | as IMPR1110 |
+| 7 | item `p_read_only_when2 => 'PLSQL'` with type `EXPRESSION` | `P1120_PORT_CD` | as IMPR1110 |
 | 8 | Display Only based on LOV (`p_attribute_02 => 'LOV'` + `p_named_lov`) | `P1120_IMPR_EXPR_TYPE` | set *Based On: Display Value of List of Values* |
 | 9 | `create_ig_report p_rows_per_page => 5` | grid `IMPR_SUSPN` | set 5 rows in the saved report |
 | 10 | branch `REQUEST_IN_CONDITION` | branch `EXECUTE-QUERY` | – |
 | 11 | DA client condition `NOT_NULL`, `NATIVE_SUBMIT_PAGE` attributes, button DA `p_triggering_button_id`, `create_message` | as IMPR1110 | as IMPR1110 |
+| 12 | search grid: `p_lazy_loading => true`, `p_show_total_row_count => false`, toolbar `ACTIONS_MENU:RESET` (no toolbar search field); native `NATIVE_CLEAR` action with `p_affected_elements` | page 112001 grid `IMPORTERS_SEARCH`, DA `CLEAR WHEN-BUTTON-PRESSED` | set them by hand if APEX ignores them |
 
 ## 7. Notes, deviations and open items
 

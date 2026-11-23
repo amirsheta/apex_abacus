@@ -6,7 +6,7 @@
 -- Target      : Oracle APEX 21.2 (export version 2021.10.15), Oracle Database 12.1.0.2,
 --               reference application f345 (apex/Reference/f345.sql)
 -- Standard    : CLAUDE.md 4b / 4c, docs/f345_reference_standard.md 3-9: native Form region (ROWID),
---               FOS + native dynamic actions, one-line calls into package IMPR1110 (version 008).
+--               FOS + native dynamic actions, one-line calls into package IMPR1110 (version 009).
 --               No JavaScript file, no AJAX callback process.
 -- Contents    : component export INTO the application installed from f345: pages 1110 (main),
 --               111001 (search), 111002 (mobile) + the shared components they need.
@@ -5106,7 +5106,7 @@ wwv_flow_api.create_page_plug(
 ,p_plug_display_sequence=>20
 ,p_query_type=>'SQL'
 ,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
-'SELECT ROWIDTOCHAR(i.ROWID) AS row_id,',
+'SELECT TRANSLATE(ROWIDTOCHAR(i.ROWID), ''+/'', ''-_'') AS row_id,   -- URL-safe: a ''+'' in f?p arrives as a space',
 '       i.impr_nbr, i.arbc_impr_name, i.eng_impr_name, i.bus_id, i.bus_id_brnch,',
 '       i.impr_type_cd || '' - '' || it.impr_type_name AS impr_type, i.hq_impr_nbr',
 '  FROM importers i, impr_types it',
@@ -5149,7 +5149,7 @@ wwv_flow_api.create_region_column(
 ,p_heading_alignment=>'CENTER'
 ,p_display_sequence=>20
 ,p_value_alignment=>'CENTER'
-,p_link_target=>'f?p=&APP_ID.:1110:&SESSION.::&DEBUG.:1110:P0_PAGE_PK:\&ROW_ID.\'
+,p_link_target=>'f?p=&APP_ID.:1110:&SESSION.::&DEBUG.:1110:P0_PAGE_PK:&ROW_ID.'
 ,p_link_text=>'&IMPR_NBR.'
 ,p_link_attributes=>'target="_top"'
 ,p_enable_filter=>true

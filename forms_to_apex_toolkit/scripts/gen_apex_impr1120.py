@@ -232,9 +232,12 @@ def ig(page, plug_key, editable, cols, empty_msg):
     if editable:
         prm += [('p_edit_operations', q('i:u:d')), ('p_lost_update_check_type', q('VALUES')), ('p_add_row_if_empty', 'false'),
                 ('p_submit_checked_rows', 'false')]
-    prm += [('p_lazy_loading', 'false'), ('p_requires_filter', 'false'), ('p_select_first_row', 'true'), ('p_fixed_row_height', 'true'),
-            ('p_pagination_type', q('SET')), ('p_show_total_row_count', 'true'), ('p_no_data_found_message', q(empty_msg)),
-            ('p_show_toolbar', 'true'), ('p_toolbar_buttons', q('SEARCH_COLUMN:SEARCH_FIELD:ACTIONS_MENU:RESET')),
+    search = page == PG_SEARCH   # search page: one search text of its own, opened fast (user request 2026-11-23)
+    prm += [('p_lazy_loading', 'true' if search else 'false'), ('p_requires_filter', 'false'), ('p_select_first_row', 'true'),
+            ('p_fixed_row_height', 'true'), ('p_pagination_type', q('SET')),
+            ('p_show_total_row_count', 'false' if search else 'true'), ('p_no_data_found_message', q(empty_msg)),
+            ('p_show_toolbar', 'true'),
+            ('p_toolbar_buttons', q('ACTIONS_MENU:RESET' if search else 'SEARCH_COLUMN:SEARCH_FIELD:ACTIONS_MENU:RESET')),
             ('p_enable_save_public_report', 'false'), ('p_enable_subscriptions', 'true'), ('p_enable_flashback', 'true'),
             ('p_define_chart_view', 'true'), ('p_enable_download', 'true'), ('p_download_formats', q('CSV:HTML:XLSX:PDF')),
             ('p_enable_mail_download', 'true'), ('p_fixed_header', q('PAGE')), ('p_show_icon_view', 'false'), ('p_show_detail_view', 'false')]
@@ -312,6 +315,9 @@ def da(page, seq, name, trigger, event, actions, s, cond=None):
     if cond == 'NOT_NULL':
         p.append(('p_triggering_condition_type', q('NOT_NULL')))
         UNCERTAIN.add('DA client-side condition p_triggering_condition_type => NOT_NULL (not in f345; IMPR1110 uses it)')
+    elif cond == 'ENTER':      # the key that fired the event is Enter (one JavaScript expression, no JavaScript action)
+        p += [('p_triggering_condition_type', q('JAVASCRIPT_EXPRESSION')), ('p_triggering_expression', q('this.browserEvent.which === 13'))]
+        UNCERTAIN.add('DA client-side condition JAVASCRIPT_EXPRESSION this.browserEvent.which === 13 (Enter key; not in f345)')
     p += [('p_bind_type', q('bind')), ('p_bind_event_type', q(event)), ('p_da_event_comment', src(s))]
     out = [call('create_page_da_event', p)]
     for i, a in enumerate(actions, 1):
@@ -406,24 +412,30 @@ SUSPN_SQL = '\n'.join([
     '   AND s.suspn_rlse_dt IS NULL',
     ' ORDER BY s.suspn_seq'])
 SEARCH_SQL = '\n'.join([
-    'SELECT ROWIDTOCHAR(i.ROWID) AS row_id,',
+    '-- one search text over every shown column (user request 2026-11-23); no rows until a search is made, as Forms',
+    '-- opens the block in Enter-Query mode: the dialog opens without reading IMPORTERS. No sort clause (user request',
+    '-- 2026-11-23: the whole result is not sorted; the grid columns can still be sorted)',
+    "SELECT TRANSLATE(ROWIDTOCHAR(i.ROWID), '+/', '-_') AS row_id,   -- URL-safe: a '+' in f?p arrives as a space",
     '       i.port_cd, p.port_name, i.impr_nbr, i.hq_impr_nbr,',
     '       i.arbc_impr_name, i.eng_impr_name, i.impr_cntct_name,',
     '       i.impr_type_cd, it.impr_type_name, i.bus_id_type_cd, i.bus_id, i.bus_id_brnch,',
     '       i.ctry_cd, c.crty_arbc_name, i.city_code_of_id, i.impr_expr_type',
     '  FROM importers i, sd_ports p, impr_types it, countries c',
-    ' WHERE i.port_cd = NVL((SELECT IMPR1120.IMPORTERS_PRE_QUERY_PORT_CD(PORT_CD        => :P112001_PORT_CD,',
+    ' WHERE :P112001_SEARCH IS NOT NULL',
+    '   AND i.port_cd = NVL((SELECT IMPR1120.IMPORTERS_PRE_QUERY_PORT_CD(PORT_CD        => NULL,',
     '                                                                    P_CURR_PORT_CD => :P_CURR_PORT_CD)',
     '                          FROM dual), i.port_cd)',
     '   AND p.port_cd (+)       = i.port_cd',
     '   AND it.impr_type_cd (+) = i.impr_type_cd',
     '   AND c.ctry_cd (+)       = i.ctry_cd',
-    '   AND (:P112001_PORT_NAME IS NULL OR p.port_name LIKE :P112001_PORT_NAME)',
-    '   AND (:P112001_ARBC_IMPR_NAME IS NULL',
-    '        OR i.impr_name_std LIKE (SELECT IMPR1120.IMPORTERS_PRE_QUERY_NAME_STD(',
-    '                                            ARBC_IMPR_NAME => :P112001_ARBC_IMPR_NAME)',
-    '                                   FROM dual))',
-    ' ORDER BY i.port_cd DESC'])
+    "   AND (INSTR(UPPER(i.port_cd || '|' || p.port_name || '|' || i.impr_nbr || '|' || i.hq_impr_nbr || '|' ||",
+    "                    i.arbc_impr_name || '|' || i.eng_impr_name || '|' || i.impr_cntct_name || '|' ||",
+    "                    i.impr_type_cd || '|' || it.impr_type_name || '|' || i.bus_id_type_cd || '|' || i.bus_id || '|' ||",
+    "                    i.bus_id_brnch || '|' || i.ctry_cd || '|' || c.crty_arbc_name || '|' || i.city_code_of_id || '|' ||",
+    "                    i.impr_expr_type), UPPER(TRIM(:P112001_SEARCH))) > 0",
+    "        OR i.impr_name_std LIKE '%' || (SELECT IMPR1120.IMPORTERS_PRE_QUERY_NAME_STD(",
+    '                                                   ARBC_IMPR_NAME => TRIM(:P112001_SEARCH))',
+    "                                          FROM dual) || '%')"])
 SEARCH_COLUMNS = [
     ('ROW_ID', None, 'VARCHAR2'), ('PORT_CD', 'رمز الجمرك', 'NUMBER'), ('PORT_NAME', 'اسم الجمرك', 'VARCHAR2'),
     ('IMPR_NBR', 'الرقم الجمركى', 'NUMBER'), ('HQ_IMPR_NBR', 'الرقم الموحد بالمصلحة', 'NUMBER'),
@@ -460,7 +472,7 @@ def gen():
 --               reference application f345 (apex/Reference/f345.sql)
 -- Standard    : CLAUDE.md 4b / 4c, docs/f345_reference_standard.md 3-9: read-only Form region (ROWID),
 --               editable Interactive Grid with PL/SQL row DML, FOS + native dynamic actions,
---               one-line calls into package IMPR1120 (version 006). No JavaScript, no AJAX callback.
+--               one-line calls into package IMPR1120 (version 007). No JavaScript, no AJAX callback.
 -- Contents    : component export INTO the application installed from f345 AND already holding the
 --               IMPR1110 export (page group IMPR, LOV_SD_PORTS, LOV_ALLOWED_EXPORT are reused):
 --               pages 1120 (main) and 112001 (search) + 2 LOVs + 1 Text Message.
@@ -684,7 +696,7 @@ end;
         ('p_page_mode', q('MODAL')), ('p_step_title', q('&SYS_ANAME.')), ('p_warn_on_unsaved_changes', q('N')),
         ('p_autocomplete_on_off', q('OFF')), ('p_group_id', 'wwv_flow_api.id(%s)' % IMPR1110_IDS['PAGE_GROUP_IMPR']),
         ('p_page_css_classes', q('zf')), ('p_page_template_options', q('#DEFAULT#')), ('p_dialog_height', q('800')),
-        ('p_dialog_width', q('1800')), ('p_protection_level', q('C')),
+        ('p_dialog_width', q('1800')), ('p_protection_level', q('C')), ('p_first_item', q('AUTO_FIRST_ITEM')),
         ('p_page_comment', src('IMPR1120 Enter-Query / Execute-Query of block IMPORTERS / spec 2, 3')),
         ('p_last_upd_yyyymmddhh24miss', q(STAMP))], 'Source: f345 search page <page>01 (page 0 SEARCH)'))
     nid('112001:plug:CRIT', 1)
@@ -693,42 +705,32 @@ end;
         ('p_region_css_classes', q('zatca-forms cg-form')), ('p_region_template_options', q('#DEFAULT#')),
         ('p_plug_template', fid('REGION_HERO')), ('p_plug_display_sequence', '10'), ('p_attribute_01', q('N')),
         ('p_attribute_02', q('TEXT')), ('p_attribute_03', q('Y')),
-        ('p_plug_comment', src('IMPR1120.IMPORTERS.PRE-QUERY (port, port name, Arabic name) / spec 3'))]))
+        ('p_plug_comment', src('IMPR1120.IMPORTERS.PRE-QUERY criteria, as one search text over all columns / spec 3'))]))
     nid('112001:plug:IG', 1)
     A(call('create_page_plug', [
         ('p_id', ref('112001:plug:IG')), ('p_plug_name', q('المستوردون')), ('p_region_name', q('IMPORTERS_SEARCH')),
         ('p_region_css_classes', q('cg-card cg-grid')), ('p_region_template_options', q('#DEFAULT#:t-Region--noPadding')),
         ('p_plug_template', fid('REGION_GRID')), ('p_plug_display_sequence', '20'), ('p_query_type', q('SQL')),
         ('p_plug_source', lit(SEARCH_SQL)), ('p_plug_source_type', q('NATIVE_IG')),
-        ('p_ajax_items_to_submit', q('P112001_PORT_CD,P112001_PORT_NAME,P112001_ARBC_IMPR_NAME')),
+        ('p_ajax_items_to_submit', q('P112001_SEARCH')),
         ('p_plug_query_options', q('DERIVED_REPORT_COLUMNS')),
-        ('p_plug_comment', src('IMPR1120.IMPORTERS block query (ORDER BY port_cd desc) + PRE-QUERY / spec 3'))]))
+        ('p_plug_comment', src('IMPR1120.IMPORTERS block query + PRE-QUERY (block ORDER BY dropped); one search text over all columns, '
+                               'no query until a search, no total row count / spec 3'))]))
     for i, (c, h, dt) in enumerate(SEARCH_COLUMNS):
         if c == 'ROW_ID':
             col = dict(name=c, kind='HIDDEN', data_type=dt, pk=True)
         elif c == 'IMPR_NBR':
             col = dict(name=c, kind='LINK', data_type=dt, heading=h,
-                       link_target='f?p=&APP_ID.:1120:&SESSION.::&DEBUG.:1120:P0_PAGE_PK:\\&ROW_ID.\\', link_text='&IMPR_NBR.')
+                       link_target='f?p=&APP_ID.:1120:&SESSION.::&DEBUG.:1120:P0_PAGE_PK:&ROW_ID.', link_text='&IMPR_NBR.')
         else:
             col = dict(name=c, kind='DISPLAY', data_type=dt, heading=h)
         A(ig_column(PG_SEARCH, col, (i + 1) * 10))
-    for c in ig(PG_SEARCH, '112001:plug:IG', False, [c for c, _, _ in SEARCH_COLUMNS], 'لا يوجد مستوردون'):
+    for c in ig(PG_SEARCH, '112001:plug:IG', False, [c for c, _, _ in SEARCH_COLUMNS], 'لا توجد نتائج - أدخل نص البحث ثم اضغط بحث'):
         A(c)
-    for seq, it in [
-        (10, dict(name='P112001_PORT_CD', kind='NATIVE_POPUP_LOV', label='رمز الجمرك', lov='LOV_SD_PORTS', maxlen=4, span=2,
-                  read_only=('IMPR1120.PORT_CD_IS_READ_ONLY(P_CURR_PORT_CD => :P_CURR_PORT_CD)', 'EXPRESSION', 'PLSQL'),
-                  comment='Source: IMPR1120.IMPORTERS.PORT_CD as query criterion (PRE-QUERY: forced to the user port outside port 99)')),
-        (20, dict(name='P112001_PORT_NAME', kind='NATIVE_TEXT_FIELD', label='اسم الجمرك', maxlen=40, span=3, newline=False,
-                  comment='Source: IMPR1120.IMPORTERS.PORT_NAME criterion (CGFK$DEFAULT_WHERE sub-query on SD_PORTS)')),
-        (30, dict(name='P112001_ARBC_IMPR_NAME', kind='NATIVE_TEXT_FIELD', label='الاسم العربى', maxlen=200, span=4, newline=False,
-                  comment='Source: IMPR1120.IMPORTERS.ARBC_IMPR_NAME criterion (PRE-QUERY: IMPR_NAME_STD = STR.StrFormat(name, TRUE))'))]:
-        A(page_item(PG_SEARCH, '112001:plug:CRIT', seq, it))
-    nid('112001:comp:P112001_PORT_CD', 5)
-    A(call('create_page_computation', [
-        ('p_id', ref('112001:comp:P112001_PORT_CD')), ('p_computation_sequence', '10'), ('p_computation_item', q('P112001_PORT_CD')),
-        ('p_computation_point', q('BEFORE_HEADER')), ('p_computation_type', q('EXPRESSION')), ('p_computation_language', q('PLSQL')),
-        ('p_computation', q(':P_CURR_PORT_CD')), ('p_compute_when', q('P112001_PORT_CD')), ('p_compute_when_type', q('ITEM_IS_NULL')),
-        ('p_computation_comment', src('IMPR1120.IMPORTERS.PRE-QUERY :IMPORTERS.PORT_CD := :PARAMETER.P_CURR_PORT_CD / spec 9'))]))
+    A(page_item(PG_SEARCH, '112001:plug:CRIT', 10, dict(
+        name='P112001_SEARCH', kind='NATIVE_TEXT_FIELD', label='بحث في كل الأعمدة', maxlen=200, span=6,
+        comment='Source: IMPR1120.IMPORTERS query criteria (PORT_CD, PORT_NAME, ARBC_IMPR_NAME ...) as one text over all columns; '
+                'port rule of PRE-QUERY in the region SQL (user request 2026-11-23)')))
     nid('112001:btn:SEARCH', 2)
     A(call('create_page_button', [
         ('p_id', ref('112001:btn:SEARCH')), ('p_button_sequence', '40'), ('p_button_plug_id', ref('112001:plug:CRIT')),
@@ -736,9 +738,25 @@ end;
         ('p_button_template_id', fid('BUTTON')), ('p_button_image_alt', q('بحث')), ('p_button_position', q('BODY')),
         ('p_icon_css_classes', q('fa-search')), ('p_button_css_classes', q('cg-b-search')),
         ('p_button_comment', src('IMPR1120 TOOLBAR.EXECUTE (Execute Query of block IMPORTERS) / spec 5'))]))
+    nid('112001:btn:CLEAR', 2)
+    A(call('create_page_button', [
+        ('p_id', ref('112001:btn:CLEAR')), ('p_button_sequence', '50'), ('p_button_plug_id', ref('112001:plug:CRIT')),
+        ('p_button_name', q('CLEAR')), ('p_button_action', q('DEFINED_BY_DA')), ('p_button_template_options', q('#DEFAULT#:t-Button--iconLeft')),
+        ('p_button_template_id', fid('BUTTON')), ('p_button_image_alt', q('مسح البحث')), ('p_button_position', q('BODY')),
+        ('p_icon_css_classes', q('fa-eraser')), ('p_button_css_classes', q('cg-b-clear')),
+        ('p_button_comment', src('IMPR1120 TOOLBAR.CLEAR_ALL for the search (user request 2026-11-23) / spec 5'))]))
     A(da(PG_SEARCH, 10, 'SEARCH WHEN-BUTTON-PRESSED', ('BUTTON', '112001:btn:SEARCH'), 'click',
          [[('p_action', q('NATIVE_REFRESH')), ('p_affected_elements_type', q('REGION')), ('p_affected_region_id', ref('112001:plug:IG'))]],
          'IMPR1120 TOOLBAR.EXECUTE / spec 10'))
+    A(da(PG_SEARCH, 12, 'SEARCH KEY-ENTER', ('ITEM', 'P112001_SEARCH'), 'keyup',
+         [[('p_action', q('NATIVE_REFRESH')), ('p_affected_elements_type', q('REGION')), ('p_affected_region_id', ref('112001:plug:IG'))]],
+         'IMPR1120 KEY-EXEQRY (Enter in the search text; f345 AGR1100_SEARCH "SEARCH REFRESH" keyup pattern) / spec 10', cond='ENTER'))
+    A(da(PG_SEARCH, 15, 'CLEAR WHEN-BUTTON-PRESSED', ('BUTTON', '112001:btn:CLEAR'), 'click',
+         [[('p_action', q('NATIVE_CLEAR')), ('p_affected_elements_type', q('ITEM')), ('p_affected_elements', q('P112001_SEARCH'))],
+          [('p_action', q('NATIVE_REFRESH')), ('p_affected_elements_type', q('REGION')), ('p_affected_region_id', ref('112001:plug:IG'))]],
+         'IMPR1120 TOOLBAR.CLEAR_ALL (search criteria) / spec 10'))
+    UNCERTAIN.add('NATIVE_CLEAR action with p_affected_elements (page 112001 CLEAR; not in f345 / IMPR1110)')
+    UNCERTAIN.add('search IG: p_lazy_loading true, p_show_total_row_count false, toolbar ACTIONS_MENU:RESET (search field removed)')
     UNCERTAIN.add('button DA: p_triggering_button_id (page 112001 SEARCH; IMPR1110 uses it)')
     ek, ak = '112001:da:Hide', '112001:daa:Hide:10'
     nid(ek, 8); nid(ak, 9)

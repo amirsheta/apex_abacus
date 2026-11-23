@@ -336,10 +336,10 @@
 | 332 | TRIGGER | `TOOLBAR.FUN_BUT.WHEN-MOUSE-DOWN` | FUNCS (page 0 toolbar) | 0 | – | MAPPED | toolbar button |
 | 333 | TRIGGER | `IMPORTERS.ON-ERROR` | APP_ERROR_HANDLER (f345) | – | – | MAPPED | Designer constraint messages |
 | 334 | TRIGGER | `IMPORTERS.POST-QUERY` | POST-QUERY | 1120 | IMPR1120.IMPORTERS_POST_QUERY | MAPPED | Before Header after Initialize form |
-| 335 | TRIGGER | `IMPORTERS.PRE-QUERY` | IMPORTERS_SEARCH region SQL (page 112001) | 112001 | IMPR1120.IMPORTERS_PRE_QUERY_PORT_CD | MAPPED | port and name criteria (+ IMPORTERS_PRE_QUERY_NAME_STD); Exec_Query_Now -> P0_PAGE_PK |
+| 335 | TRIGGER | `IMPORTERS.PRE-QUERY` | IMPORTERS_SEARCH region SQL (page 112001) | 112001 | IMPR1120.IMPORTERS_PRE_QUERY_PORT_CD | MAPPED | port rule + one search text P112001_SEARCH over all columns (+ IMPORTERS_PRE_QUERY_NAME_STD); Exec_Query_Now -> P0_PAGE_PK |
 | 336 | TRIGGER | `IMPORTERS.KEY-HELP` | – | – | – | DROPPED | MS-Help obsolete |
 | 337 | TRIGGER | `IMPORTERS.WHEN-CREATE-RECORD` | IMPORTERS WHEN-CREATE-RECORD | 1120 | IMPR1120.IMPORTERS_WHEN_CREATE_RECORD | MAPPED | Before Header when P0_PAGE_PK is null |
-| 338 | TRIGGER | `IMPORTERS.PORT_CD.KEY-LISTVAL` | LOV_SD_PORTS (Popup LOV of P1120_PORT_CD / P112001_PORT_CD) | 1120 | – | MAPPED | CALL_FORM LOV_SD_PORTS |
+| 338 | TRIGGER | `IMPORTERS.PORT_CD.KEY-LISTVAL` | LOV_SD_PORTS (Popup LOV of P1120_PORT_CD; on 112001 the port is part of the search text) | 1120 | – | MAPPED | CALL_FORM LOV_SD_PORTS |
 | 339 | TRIGGER | `IMPORTERS.PORT_CD2.WHEN-BUTTON-PRESSED` | – | – | – | DROPPED | LOV button -> popup LOV icon / item display only |
 | 340 | TRIGGER | `IMPORTERS.PORT_NAME.KEY-LISTVAL` | – | – | – | DROPPED | Designer "may the LOV be shown" check -> item read-only state |
 | 341 | TRIGGER | `IMPORTERS.HQ_IMPR_NBR.KEY-LISTVAL` | – | – | – | DROPPED | Designer "may the LOV be shown" check -> item read-only state |
@@ -395,7 +395,7 @@
 | 391 | TRIGGER | `IMPR_SUSPN.SUSPN_RLSE_DT.KEY-F4` | – | – | – | DROPPED | INTRFACE.DISP_DATE_CON -> date column (Hijri picker) |
 | 392 | TRIGGER | `IMPR_SUSPN.SUSPN_RLSE_DT.WHEN-VALIDATE-ITEM` | – | – | – | DROPPED | hidden, non-navigable item: never fires |
 | 393 | RELATION | `CGFK$IS_1_IMP_FK` | IMPR_SUSPN (IG WHERE port_cd = :P1120_PORT_CD AND impr_nbr = :P1120_IMPR_NBR) | 1120 | – | MAPPED | IMPORTERS -> IMPR_SUSPN; master keys copied by process IMPR_SUSPN MASTER KEYS |
-| 394 | LOV | `CGFK$IMPORTERS_PORT_CD` | LOV_SD_PORTS (from IMPR1110) | 1120 | – | MAPPED | P1120_PORT_CD, P112001_PORT_CD (port 99 only) |
+| 394 | LOV | `CGFK$IMPORTERS_PORT_CD` | LOV_SD_PORTS (from IMPR1110) | 1120 | – | MAPPED | P1120_PORT_CD (port 99 only) |
 | 395 | LOV | `CGFK$IMPORTERS_CITY_CODE_OF_ID` | – | – | – | DROPPED | item display only; search by IG column filter |
 | 396 | LOV | `CGFK$IMPORTERS_CTRY_CD` | – | – | – | DROPPED | item display only; search by IG column filter |
 | 397 | LOV | `CGFK$IMPORTERS_HQ_IMPR_NBR` | – | – | – | DROPPED | item display only |

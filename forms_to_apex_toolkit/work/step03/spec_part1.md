@@ -103,7 +103,7 @@ the Before Header processes and the FOS *Items to Return*.
 | 20 | `IMPORTERS_SEARCH` | Interactive Grid, not editable | SQL below | Standard, `#DEFAULT#:t-Region--noPadding`, `cg-card cg-grid`; f345 IG defaults (standard §8) | IG search field and column filters = Forms query-by-example on the other items |
 
 ```sql
-SELECT ROWIDTOCHAR(i.ROWID) AS row_id,
+SELECT TRANSLATE(ROWIDTOCHAR(i.ROWID), '+/', '-_') AS row_id,   -- URL-safe ROWID (see the link column)
        i.impr_nbr, i.arbc_impr_name, i.eng_impr_name, i.bus_id, i.bus_id_brnch,
        i.impr_type_cd, it.impr_type_name, i.bus_id_type_cd, i.ctry_cd, i.hq_impr_nbr
   FROM importers i, impr_types it
@@ -115,8 +115,10 @@ SELECT ROWIDTOCHAR(i.ROWID) AS row_id,
  ORDER BY i.impr_nbr DESC                                                 -- block ORDER BY
 ```
 
-- Link column `IMPR_NBR`: Link Builder → page 1110, clear cache 1110, set `P0_PAGE_PK = &ROW_ID.`. Use the
-  Link Builder, not a hand-written `f?p` URL: APEX then escapes the `+` and `/` characters of a ROWID.
+- Link column `IMPR_NBR`: Link Builder → page 1110, clear cache 1110, set `P0_PAGE_PK = &ROW_ID.`. `ROW_ID` is
+  the ROWID made URL-safe (`+` → `-`, `/` → `_`): a `+` in an `f?p` value arrives as a space and the checksum
+  fails (found on IMPR1120, 2026-11-23). `IMPR1110.P0_PAGE_PK_CHECK` (package 009) translates it back; a ROWID
+  never contains `-` or `_`.
 - `:P1110_P_PRSNL_IMPR` is read from session state: SCREEN ENTRY RESET keeps page 1110 items between 1110
   and its `01` page.
 - Forms QBE uses `=` unless the value contains `%`. `LIKE` gives the same result, except that `_` is also a

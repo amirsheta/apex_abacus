@@ -1,6 +1,6 @@
 -- =============================================================================
 -- Package body: IMPR1120   (matches impr1120_spec.sql - f345 standard)
--- Source form : IMPR1120.fmb   Target: APEX 21.2 / DB 12.1.0.2   Version: 006
+-- Source form : IMPR1120.fmb   Target: APEX 21.2 / DB 12.1.0.2   Version: 007
 -- Author      : Claude Code     Created: 2026-11-23   (see the spec history)
 -- Rules: no Forms built-ins (FORMS_APX instead), no COMMIT / ROLLBACK,
 --        parameters named after their binds without I_ / IO_ / O_; page items P<page>_X -> P_X;
@@ -244,6 +244,7 @@ AS
         IF P_PAGE_PK IS NULL THEN
             RETURN;
         END IF;
+        P_PAGE_PK := TRANSLATE(P_PAGE_PK, '-_', '+/');      -- URL-safe ROWID of page 112001 -> ROWID
         SELECT COUNT(*)
           INTO v_cnt
           FROM importers i

@@ -6,7 +6,7 @@
 | Date | 2026-11-23 |
 | Application | 202530 (installed from f345, ID offset 460632461717563830), page group `IMPR` |
 | Pages | **1120** `IMPR1120` (main) · **112001** `IMPR1120_SEARCH` (modal search) |
-| Package | `LIB_APX_USR.IMPR1120` version **006** (006: compile fix in IMPR_SUSPN_SAVE_ROW; step 03 changes in §16; 003–005: parameter names without `I_` / `IO_` / `O_`, page items passed as `P_<ITEM>`, no doubled `P_P_`, §16 #14) |
+| Package | `LIB_APX_USR.IMPR1120` version **007** (007: URL-safe ROWID key from the search page, P0_PAGE_PK_CHECK; 006: compile fix in IMPR_SUSPN_SAVE_ROW; step 03 changes in §16; 003–005: parameter names without `I_` / `IO_` / `O_`, page items passed as `P_<ITEM>`, no doubled `P_P_`, §16 #14) |
 | Inputs | [inventory](IMPR1120_inventory.md), [logic extraction](IMPR1120_logic_extraction.md), [package spec](../../plsql/IMPR1120/impr1120_spec.sql), `docs/f345_reference_standard.md` |
 | Generated parts | §14 and `registry/IMPR1120_registry.sql` are built by `work/IMPR1120/step03/build_trace.py` from the XML (edit `work/IMPR1120/step03/spec_manual.md` or the script, then re-run) |
 | Status | design only: no export yet (step 04); the package is **not compiled** |
@@ -61,7 +61,7 @@
 | Page | Name / alias | Mode | Page template | Title | CSS / protection | Source canvas / window | Menu role (documentation only) | Navigation menu |
 |---|---|---|---|---|---|---|---|---|
 | 1120 | `IMPR1120` / `IMPR1120` | Normal | Zatca-Minimal_No_Navigation (`11622270914969205733`) | `&SYS_ANAME.` | `zf` / `C` | `CG$PAGE_1` / `CGSO$WINDOW_1` "بيانات المستورد" | none in the form; the launcher opens it from `SC_SYSTEM_OBJECTS` (privileges: application, CLAUDE.md §8) | entry under the IMPR group, as for IMPR1110 (f345 menu list) |
-| 112001 | `IMPR1120_SEARCH` / `IMPR1120-SEARCH` | Modal Dialog 1800 × 800 | theme default for dialogs | `&SYS_ANAME.` | `zf` / `C` | Enter-Query / Execute-Query of block IMPORTERS | as 1120 | no |
+| 112001 | `IMPR1120_SEARCH` / `IMPR1120-SEARCH` | Modal Dialog 1800 × 800, Cursor Focus *First item on page* (`P112001_SEARCH`) | theme default for dialogs | `&SYS_ANAME.` | `zf` / `C` | Enter-Query / Execute-Query of block IMPORTERS | as 1120 | no |
 
 Both pages: `p_user_interface_id => wwv_flow_api.id(11622010846008869795)`, page group `IMPR`. No `<page>02` page is needed (no stacked canvas, and the 4 LOV forms become LOVs / column filters).
 
@@ -103,35 +103,44 @@ SELECT s.port_cd,
 
 | Seq | Region | Type | Content | Template | Forms source |
 |---|---|---|---|---|---|
-| 10 | `IMPORTERS_SEARCH_CRITERIA` | Static Content | `P112001_PORT_CD`, `P112001_PORT_NAME`, `P112001_ARBC_IMPR_NAME`, button `SEARCH` (Text with Icon, `fa-search`, `#DEFAULT#:t-Button--iconLeft`, class `cg-b-search`, Defined by DA) | Blank with Attributes, `zatca-forms cg-form` | PRE-QUERY criteria that the IG search cannot express |
-| 20 | `IMPORTERS_SEARCH` | Interactive Grid, not editable | SQL below | Standard, `#DEFAULT#:t-Region--noPadding`, `cg-card cg-grid`; IG defaults (standard §8) | QBE on the IMPORTERS items: IG search field and column filters |
+| 10 | `IMPORTERS_SEARCH_CRITERIA` | Static Content | one search text `P112001_SEARCH`, buttons `SEARCH` (Text with Icon, `fa-search`, class `cg-b-search`) and `CLEAR` (Text with Icon, `fa-eraser`, class `cg-b-clear`), both `#DEFAULT#:t-Button--iconLeft`, Defined by DA | Blank with Attributes, `zatca-forms cg-form` | PRE-QUERY criteria as one text over all columns (user request 2026-11-23) |
+| 20 | `IMPORTERS_SEARCH` | Interactive Grid, not editable | SQL below | Standard, `#DEFAULT#:t-Region--noPadding`, `cg-card cg-grid`; IG defaults (standard §8) except: toolbar `ACTIONS_MENU:RESET` (no second search field), Lazy Loading on, no total row count | QBE on the IMPORTERS items: the one search text and the column filters |
 
 ```sql
-SELECT ROWIDTOCHAR(i.ROWID) AS row_id,
+-- one search text over every shown column (user request 2026-11-23); no rows until a search is made, as Forms
+-- opens the block in Enter-Query mode: the dialog opens without reading IMPORTERS. No sort clause (user request
+-- 2026-11-23: the whole result is not sorted; the grid columns can still be sorted)
+SELECT TRANSLATE(ROWIDTOCHAR(i.ROWID), '+/', '-_') AS row_id,   -- URL-safe: a '+' in f?p arrives as a space
        i.port_cd, p.port_name, i.impr_nbr, i.hq_impr_nbr,
        i.arbc_impr_name, i.eng_impr_name, i.impr_cntct_name,
        i.impr_type_cd, it.impr_type_name, i.bus_id_type_cd, i.bus_id, i.bus_id_brnch,
        i.ctry_cd, c.crty_arbc_name, i.city_code_of_id, i.impr_expr_type
   FROM importers i, sd_ports p, impr_types it, countries c
- WHERE i.port_cd = NVL((SELECT IMPR1120.IMPORTERS_PRE_QUERY_PORT_CD(PORT_CD        => :P112001_PORT_CD,
+ WHERE :P112001_SEARCH IS NOT NULL
+   AND i.port_cd = NVL((SELECT IMPR1120.IMPORTERS_PRE_QUERY_PORT_CD(PORT_CD        => NULL,
                                                                     P_CURR_PORT_CD => :P_CURR_PORT_CD)
-                          FROM dual), i.port_cd)                                  -- PRE-QUERY (port)
-   AND p.port_cd (+)      = i.port_cd
+                          FROM dual), i.port_cd)
+   AND p.port_cd (+)       = i.port_cd
    AND it.impr_type_cd (+) = i.impr_type_cd
-   AND c.ctry_cd (+)      = i.ctry_cd
-   AND (:P112001_PORT_NAME IS NULL OR p.port_name LIKE :P112001_PORT_NAME)        -- CGFK$DEFAULT_WHERE (PORT_NAME)
-   AND (:P112001_ARBC_IMPR_NAME IS NULL
-        OR i.impr_name_std LIKE (SELECT IMPR1120.IMPORTERS_PRE_QUERY_NAME_STD(
-                                            ARBC_IMPR_NAME => :P112001_ARBC_IMPR_NAME)
-                                   FROM dual))                                    -- PRE-QUERY (name)
- ORDER BY i.port_cd DESC                                                          -- block ORDER BY
+   AND c.ctry_cd (+)       = i.ctry_cd
+   AND (INSTR(UPPER(i.port_cd || '|' || p.port_name || '|' || i.impr_nbr || '|' || i.hq_impr_nbr || '|' ||
+                    i.arbc_impr_name || '|' || i.eng_impr_name || '|' || i.impr_cntct_name || '|' ||
+                    i.impr_type_cd || '|' || it.impr_type_name || '|' || i.bus_id_type_cd || '|' || i.bus_id || '|' ||
+                    i.bus_id_brnch || '|' || i.ctry_cd || '|' || c.crty_arbc_name || '|' || i.city_code_of_id || '|' ||
+                    i.impr_expr_type), UPPER(TRIM(:P112001_SEARCH))) > 0
+        OR i.impr_name_std LIKE '%' || (SELECT IMPR1120.IMPORTERS_PRE_QUERY_NAME_STD(
+                                                   ARBC_IMPR_NAME => TRIM(:P112001_SEARCH))
+                                          FROM dual) || '%')
 ```
 
 - The `(SELECT … FROM dual)` wrappers make Oracle call each function once per query (scalar subquery caching), not once per row.
-- Page Items to Submit: `P112001_PORT_CD`, `P112001_PORT_NAME`, `P112001_ARBC_IMPR_NAME`.
-- Link column `IMPR_NBR`: Link Builder → page 1120, clear cache 1120, `P0_PAGE_PK = &ROW_ID.`. As in IMPR1110, the Link Builder escapes the `+` and `/` of a ROWID.
+- Page Items to Submit: `P112001_SEARCH`.
+- **Opening is fast:** the query returns no rows while `P112001_SEARCH` is empty (Forms opens the block in Enter-Query mode), so the dialog opens without reading `IMPORTERS`; there is no total row count (a COUNT over the whole result on every search) and no sort clause (the block ORDER BY port_cd DESC is dropped at the user's request: the whole result is not sorted; a grid column can still be sorted).
+- بحث and Enter refresh the grid (no page submit). The loading overlay tried on 2026-11-23 (Submit Page with Show Processing) did not work and was removed at the user's request.
+- **One search text** is compared (contains, upper case) with every shown column, and the Arabic name is also searched in `IMPR_NAME_STD` through `IMPORTERS_PRE_QUERY_NAME_STD` (PRE-QUERY `STR.StrFormat`). The port rule of PRE-QUERY stays: outside port 99 only the user's port (`IMPORTERS_PRE_QUERY_PORT_CD(PORT_CD => NULL, …)`). A search reads the importers of the port (all importers for port 99): it cannot use an index, because the text may match any column.
+- Link column `IMPR_NBR`: Link Builder → page 1120, clear cache 1120, `P0_PAGE_PK = &ROW_ID.`. `ROW_ID` is the ROWID made URL-safe (`TRANSLATE(…, '+/', '-_')`): a `+` in an `f?p` value arrives as a space and the checksum fails ("The checksum computed on the request … did not match", found at import 2026-11-23). `IMPR1120.P0_PAGE_PK_CHECK` translates it back; a ROWID never contains `-` or `_`.
 - `ROW_ID` is hidden. Every other column is shown with the Forms prompt as its heading, so the IG column filters replace the Forms QBE on each item. They also replace the LOV forms `LOV_Impr_Type`, `LOV_COUNTRIES` and `LOV_CITIES`, which this form only used as query criteria.
-- Forms QBE on PORT_NAME supports `<`, `>`, `=` and `#` prefixes; here it is `LIKE` only (accepted for IMPR1110 too). `_` is also a wildcard.
+- Forms QBE supports `<`, `>`, `=`, `#` and `%`; the search text is a plain *contains* search (no wildcards). The column filters of the Actions menu remain for exact criteria.
 
 ## 4. Items
 
@@ -193,9 +202,7 @@ The row read-only expression **R** is `IMPR1120.IMPR_SUSPN_IS_READ_ONLY(SUSPN_SI
 
 | Item | Type | Label | Default | Read Only | LOV | Forms source |
 |---|---|---|---|---|---|---|
-| `P112001_PORT_CD` | Popup LOV | رمز الجمرك | `:P_CURR_PORT_CD` (Item default, PL/SQL Expression) | `IMPR1120.PORT_CD_IS_READ_ONLY(P_CURR_PORT_CD => :P_CURR_PORT_CD)` | `LOV_SD_PORTS` | PRE-QUERY port + WHEN-NEW-FORM-INSTANCE (port 99) |
-| `P112001_PORT_NAME` | Text Field | اسم الميناء | – | – | – | `CGFK$DEFAULT_WHERE` on PORT_NAME |
-| `P112001_ARBC_IMPR_NAME` | Text Field | الاسم العربى | – | – | – | PRE-QUERY `STR.StrFormat` |
+| `P112001_SEARCH` | Text Field | بحث في كل الأعمدة | – | – | – | PRE-QUERY criteria (PORT_CD, PORT_NAME, ARBC_IMPR_NAME) and the QBE of the other items, as one text |
 
 ## 5. Buttons
 
@@ -204,6 +211,7 @@ No page buttons on 1120: page 0 supplies CREATE, SAVE, DELETE, SEARCH, CLEAR, FU
 | Button | Page / region | Action | Template | Source |
 |---|---|---|---|---|
 | `SEARCH` | 112001 / `IMPORTERS_SEARCH_CRITERIA` | Defined by DA `SEARCH WHEN-BUTTON-PRESSED` (native Refresh of `IMPORTERS_SEARCH`) | Text with Icon (`11621986167597869752`), `#DEFAULT#:t-Button--iconLeft`, `fa-search`, class `cg-b-search` | TOOLBAR.EXECUTE (Execute Query) |
+| `CLEAR` | 112001 / `IMPORTERS_SEARCH_CRITERIA` | Defined by DA `CLEAR WHEN-BUTTON-PRESSED` (native Clear of `P112001_SEARCH`, then Refresh of `IMPORTERS_SEARCH`) | Text with Icon (`11621986167597869752`), `#DEFAULT#:t-Button--iconLeft`, `fa-eraser`, class `cg-b-clear`, label "مسح البحث" | TOOLBAR.CLEAR_ALL for the search (user request 2026-11-23) |
 
 The Forms toolbar and LOV buttons map to page 0 or to the popup LOV icon (§14).
 
@@ -211,7 +219,7 @@ The Forms toolbar and LOV buttons map to page 0 or to the popup LOV icon (§14).
 
 | Forms LOV / list | APEX LOV | Type | SQL (display, return) | Used by | Item type | Notes |
 |---|---|---|---|---|---|---|
-| `CGFK$IMPORTERS_PORT_CD` / LOV form `LOV_SD_PORTS` | **`LOV_SD_PORTS`** (exists from IMPR1110) | SQL | `SELECT port_cd d, port_cd r, port_name FROM sd_ports WHERE port_status = 1 AND port_type = NVL(:P_PORT_TYPE, port_type) ORDER BY port_cd` | `P1120_PORT_CD`, `P112001_PORT_CD` | Popup LOV, Additional Output PORT_NAME | Forms passes `STATUS = 1` only outside Enter-Query (§16 #8) |
+| `CGFK$IMPORTERS_PORT_CD` / LOV form `LOV_SD_PORTS` | **`LOV_SD_PORTS`** (exists from IMPR1110) | SQL | `SELECT port_cd d, port_cd r, port_name FROM sd_ports WHERE port_status = 1 AND port_type = NVL(:P_PORT_TYPE, port_type) ORDER BY port_cd` | `P1120_PORT_CD` | Popup LOV, Additional Output PORT_NAME | Forms passes `STATUS = 1` only outside Enter-Query (§16 #8) |
 | list item `IMPR_EXPR_TYPE` (`CG_REF_CODES` 'ALLOWED EXPORT') | **`LOV_ALLOWED_EXPORT`** (exists from IMPR1110) | SQL | `SELECT rv_meaning d, rv_low_value r FROM cg_ref_codes WHERE rv_domain = 'ALLOWED EXPORT' ORDER BY 2` | `P1120_IMPR_EXPR_TYPE` | Display Only based on LOV | |
 | list item `SUSPN_RSN_CD` (`CG_REF_CODES` 'IMPR_SUSPN_RSN_CD') | **`LOV_IMPR_SUSPN_RSN_CD`** (new) | SQL | `SELECT rv_meaning d, rv_low_value r FROM cg_ref_codes WHERE rv_domain = 'IMPR_SUSPN_RSN_CD' ORDER BY 2` | IG `SUSPN_RSN_CD` | Select List | `CGDV$POPULATE_DYNAMIC_LISTS` |
 | pop list `SUSPN_SIDE_CD` (`CG_REF_CODES` 'SUSPN SIDE CD') | **`LOV_SUSPN_SIDE_CD`** (new) | SQL | `SELECT rv_meaning d, rv_low_value r FROM cg_ref_codes WHERE rv_domain = 'SUSPN SIDE CD' ORDER BY 2` | IG `SUSPN_SIDE_CD` | Select List | `CGDV$POPULATE_DYNAMIC_LISTS` |
@@ -269,7 +277,7 @@ f345 order (standard §6), error display inline in notification. Slot 50 `PARAME
 
 | Item | Point | Type | Expression | Condition | Source |
 |---|---|---|---|---|---|
-| `P112001_PORT_CD` | item Default | PL/SQL Expression | `:P_CURR_PORT_CD` | – | PRE-QUERY port (`:IMPORTERS.PORT_CD := :PARAMETER.P_CURR_PORT_CD`) |
+| – | – | – | – | – | PRE-QUERY port (`:IMPORTERS.PORT_CD := :PARAMETER.P_CURR_PORT_CD`) is applied in the region SQL; no computation on 112001 |
 
 The IG column defaults are listed in §4.3. No other computation is needed.
 
@@ -285,6 +293,8 @@ All server calls use **FOS – Execute PL/SQL Code** (`COM.FOS.EXECUTE_PLSQL_COD
 | `IMPR_SUSPN SUSPN_RSN_CD WHEN-VALIDATE-ITEM` | 1120 | Change, column `SUSPN_RSN_CD` | FOS `IMPR1120.SUSPN_RSN_CD_VALIDATE_ITEM(SUSPN_RSN_CD => :SUSPN_RSN_CD, P_CURRENT_SIDE => :P1120_P_CURRENT_SIDE, PORT_CD => :PORT_CD, IMPR_NBR => :IMPR_NBR, SUSPN_SEQ => :SUSPN_SEQ, SUSPN_RSN_TEXT => :SUSPN_RSN_TEXT);` | – | Submit `SUSPN_RSN_CD`, `P1120_P_CURRENT_SIDE`, `PORT_CD`, `IMPR_NBR`, `SUSPN_SEQ`; Return `SUSPN_RSN_TEXT` | No | SUSPN_RSN_CD WVI |
 | `IMPR_SUSPN SUSPN_SIDE_CD WHEN-LIST-CHANGED` | 1120 | Change, column `SUSPN_SIDE_CD` | FOS `IMPR1120.CHECK_ERROR(IMPR1120.SUSPN_SIDE_CD_VALIDATION(SUSPN_SIDE_CD => :SUSPN_SIDE_CD, P_CURRENT_SIDE => :P1120_P_CURRENT_SIDE, P_CURR_PORT_CD => :P_CURR_PORT_CD, PORT_CD => :PORT_CD, IMPR_NBR => :IMPR_NBR, SUSPN_SEQ => :SUSPN_SEQ));` | – | Submit `SUSPN_SIDE_CD`, `P1120_P_CURRENT_SIDE`, `PORT_CD`, `IMPR_NBR`, `SUSPN_SEQ` | No | SUSPN_SIDE_CD WLC |
 | `SEARCH WHEN-BUTTON-PRESSED` | 112001 | Click, button `SEARCH` | native Refresh, region `IMPORTERS_SEARCH` | – | – | No | TOOLBAR.EXECUTE |
+| `SEARCH KEY-ENTER` | 112001 | Key Up, item `P112001_SEARCH`; client condition JavaScript expression `this.browserEvent.which === 13` (Enter) | native Refresh, region `IMPORTERS_SEARCH` | – | – | No | KEY-EXEQRY; f345 AGR1100_SEARCH `SEARCH REFRESH` (keyup) |
+| `CLEAR WHEN-BUTTON-PRESSED` | 112001 | Click, button `CLEAR` | native Clear, item `P112001_SEARCH` | native Refresh, region `IMPORTERS_SEARCH` (empty again) | – | No | TOOLBAR.CLEAR_ALL (criteria) |
 
 **Not built:**
 - the Forms resets of a rejected value (start date → today, reason / side → the site's default; §16 #9);
@@ -675,10 +685,10 @@ Theme 42 / style ZATCA Forms, page 0 (`P0_ACTIONS`, `P0_PAGE_PK`, `P0_SEARCH_URL
 | 332 | TRIGGER | `TOOLBAR.FUN_BUT.WHEN-MOUSE-DOWN` | FUNCS (page 0 toolbar) | 0 | – | MAPPED | toolbar button |
 | 333 | TRIGGER | `IMPORTERS.ON-ERROR` | APP_ERROR_HANDLER (f345) | – | – | MAPPED | Designer constraint messages |
 | 334 | TRIGGER | `IMPORTERS.POST-QUERY` | POST-QUERY | 1120 | IMPR1120.IMPORTERS_POST_QUERY | MAPPED | Before Header after Initialize form |
-| 335 | TRIGGER | `IMPORTERS.PRE-QUERY` | IMPORTERS_SEARCH region SQL (page 112001) | 112001 | IMPR1120.IMPORTERS_PRE_QUERY_PORT_CD | MAPPED | port and name criteria (+ IMPORTERS_PRE_QUERY_NAME_STD); Exec_Query_Now -> P0_PAGE_PK |
+| 335 | TRIGGER | `IMPORTERS.PRE-QUERY` | IMPORTERS_SEARCH region SQL (page 112001) | 112001 | IMPR1120.IMPORTERS_PRE_QUERY_PORT_CD | MAPPED | port rule + one search text P112001_SEARCH over all columns (+ IMPORTERS_PRE_QUERY_NAME_STD); Exec_Query_Now -> P0_PAGE_PK |
 | 336 | TRIGGER | `IMPORTERS.KEY-HELP` | – | – | – | DROPPED | MS-Help obsolete |
 | 337 | TRIGGER | `IMPORTERS.WHEN-CREATE-RECORD` | IMPORTERS WHEN-CREATE-RECORD | 1120 | IMPR1120.IMPORTERS_WHEN_CREATE_RECORD | MAPPED | Before Header when P0_PAGE_PK is null |
-| 338 | TRIGGER | `IMPORTERS.PORT_CD.KEY-LISTVAL` | LOV_SD_PORTS (Popup LOV of P1120_PORT_CD / P112001_PORT_CD) | 1120 | – | MAPPED | CALL_FORM LOV_SD_PORTS |
+| 338 | TRIGGER | `IMPORTERS.PORT_CD.KEY-LISTVAL` | LOV_SD_PORTS (Popup LOV of P1120_PORT_CD; on 112001 the port is part of the search text) | 1120 | – | MAPPED | CALL_FORM LOV_SD_PORTS |
 | 339 | TRIGGER | `IMPORTERS.PORT_CD2.WHEN-BUTTON-PRESSED` | – | – | – | DROPPED | LOV button -> popup LOV icon / item display only |
 | 340 | TRIGGER | `IMPORTERS.PORT_NAME.KEY-LISTVAL` | – | – | – | DROPPED | Designer "may the LOV be shown" check -> item read-only state |
 | 341 | TRIGGER | `IMPORTERS.HQ_IMPR_NBR.KEY-LISTVAL` | – | – | – | DROPPED | Designer "may the LOV be shown" check -> item read-only state |
@@ -734,7 +744,7 @@ Theme 42 / style ZATCA Forms, page 0 (`P0_ACTIONS`, `P0_PAGE_PK`, `P0_SEARCH_URL
 | 391 | TRIGGER | `IMPR_SUSPN.SUSPN_RLSE_DT.KEY-F4` | – | – | – | DROPPED | INTRFACE.DISP_DATE_CON -> date column (Hijri picker) |
 | 392 | TRIGGER | `IMPR_SUSPN.SUSPN_RLSE_DT.WHEN-VALIDATE-ITEM` | – | – | – | DROPPED | hidden, non-navigable item: never fires |
 | 393 | RELATION | `CGFK$IS_1_IMP_FK` | IMPR_SUSPN (IG WHERE port_cd = :P1120_PORT_CD AND impr_nbr = :P1120_IMPR_NBR) | 1120 | – | MAPPED | IMPORTERS -> IMPR_SUSPN; master keys copied by process IMPR_SUSPN MASTER KEYS |
-| 394 | LOV | `CGFK$IMPORTERS_PORT_CD` | LOV_SD_PORTS (from IMPR1110) | 1120 | – | MAPPED | P1120_PORT_CD, P112001_PORT_CD (port 99 only) |
+| 394 | LOV | `CGFK$IMPORTERS_PORT_CD` | LOV_SD_PORTS (from IMPR1110) | 1120 | – | MAPPED | P1120_PORT_CD (port 99 only) |
 | 395 | LOV | `CGFK$IMPORTERS_CITY_CODE_OF_ID` | – | – | – | DROPPED | item display only; search by IG column filter |
 | 396 | LOV | `CGFK$IMPORTERS_CTRY_CD` | – | – | – | DROPPED | item display only; search by IG column filter |
 | 397 | LOV | `CGFK$IMPORTERS_HQ_IMPR_NBR` | – | – | – | DROPPED | item display only |

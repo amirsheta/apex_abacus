@@ -6,7 +6,7 @@
 --               main page 1120 (IMPR1120), search page 112001 (IMPR1120_SEARCH)
 -- Author      : Claude Code
 -- Created     : 2026-11-23
--- Version     : 006
+-- Version     : 007
 -- Purpose     : Business logic of the form, organised like the form itself:
 --               VERSION -> f345 HELPERS -> FORM LEVEL -> BLOCK IMPORTERS (master, query only)
 --               -> BLOCK IMPR_SUSPN (detail, Interactive Grid) -> PROGRAM UNITS
@@ -52,13 +52,16 @@
 --                          hijri_text_to_date inside INSERT / UPDATE (ORA-00904 invalid identifier: a private
 --                          package function cannot be used in SQL); the texts are now converted into local
 --                          DATE variables first. Previous version: rollback/IMPR1120/step04_v005/
+--               2026-11-23 Claude Code 007 P0_PAGE_PK_CHECK restores a URL-safe ROWID ('-' / '_' back to
+--                          '+' / '/'): the search page link passed the ROWID in f?p and a '+' arrived as a
+--                          space (checksum error). Previous version: rollback/IMPR1120/step04_v006/
 -- =============================================================================
 SET DEFINE OFF
 
 CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1120 AS
-   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '006';
-   V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '006';
-   V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '006';
+   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '007';
+   V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '007';
+   V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '007';
    FUNCTION PKG_VERSION
       RETURN VARCHAR2;
    V_PACKAGE_NAME      VARCHAR2 (50) := 'IMPR1120';
@@ -91,6 +94,8 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1120 AS
 
     -- APEX  : Process "P0_PAGE_PK CHECK" (Before Header). P0_PAGE_PK holds the ROWID of the
     --         IMPORTERS row (as IMPR1110); a key that is not an importer of this port is dropped.
+    --         The search page 112001 passes the ROWID URL-safe (TRANSLATE(ROWID, '+/', '-_'): a '+' in
+    --         f?p arrives as a space); it is translated back first. A ROWID never contains '-' or '_'.
     PROCEDURE P0_PAGE_PK_CHECK (P_PAGE_PK    IN OUT VARCHAR2,
                                 P_CURR_PORT_CD IN     NUMBER);
 

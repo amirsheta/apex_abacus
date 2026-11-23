@@ -6,7 +6,7 @@
 | Date | 2026-11-23 |
 | Application | 202530 (installed from f345, ID offset 460632461717563830), page group `IMPR` |
 | Pages | **1120** `IMPR1120` (main) · **112001** `IMPR1120_SEARCH` (modal search) |
-| Package | `LIB_APX_USR.IMPR1120` version **008** (008: Hijri date format from the Application Setting `HIJRI_DATE_FORMAT`; 007: URL-safe ROWID key from the search page, P0_PAGE_PK_CHECK; 006: compile fix in IMPR_SUSPN_SAVE_ROW; step 03 changes in §16; 003–005: parameter names without `I_` / `IO_` / `O_`, page items passed as `P_<ITEM>`, no doubled `P_P_`, §16 #14) |
+| Package | `LIB_APX_USR.IMPR1120` version **009** (009: common helpers in FORMS_APX 004, pages call FORMS_APX.CHECK_ERROR / GET_MODULE_ID / HEADER_TITLE / HIJRI_DATE_FORMAT; 008: Hijri date format from the Application Setting `HIJRI_DATE_FORMAT`; 007: URL-safe ROWID key from the search page, P0_PAGE_PK_CHECK; 006: compile fix in IMPR_SUSPN_SAVE_ROW; step 03 changes in §16; 003–005: parameter names without `I_` / `IO_` / `O_`, page items passed as `P_<ITEM>`, no doubled `P_P_`, §16 #14) |
 | Inputs | [inventory](IMPR1120_inventory.md), [logic extraction](IMPR1120_logic_extraction.md), [package spec](../../plsql/IMPR1120/impr1120_spec.sql), `docs/f345_reference_standard.md` |
 | Generated parts | §14 and `registry/IMPR1120_registry.sql` are built by `work/IMPR1120/step03/build_trace.py` from the XML (edit `work/IMPR1120/step03/spec_manual.md` or the script, then re-run) |
 | Status | design only: no export yet (step 04); the package is **not compiled** |
@@ -40,7 +40,7 @@
    - the column defaults;
    - the reason and side validations;
    - row read-only state (every column: `IMPR_SUSPN_IS_READ_ONLY`, *For Each Row*), with the matching server check in `IMPR_SUSPN_SAVE_ROW`.
-6. **Hijri dates as text, one format.** The grid SQL returns the dates as `TO_CHAR(…, (SELECT IMPR1120.HIJRI_DATE_FORMAT FROM dual))`. `IMPR1120.HIJRI_DATE_FORMAT` reads the APEX Application Setting `HIJRI_DATE_FORMAT` (default `YYYY-MM-MI`, the output format of the f345 Hijri picker; the day is kept in the minutes); Forms used `MI-MM-RRRR` (OLB class `CGSO$HDATE_ARB`). Change the setting to change the format of both forms, without a recompile (user request 2026-11-23). The columns are Text Fields with the f345 class `hijri-date-default` (app-wide Hijri picker), and the package converts the text with the same function.
+6. **Hijri dates as text, one format.** The grid SQL returns the dates as `TO_CHAR(…, (SELECT FORMS_APX.HIJRI_DATE_FORMAT FROM dual))`. `FORMS_APX.HIJRI_DATE_FORMAT` reads the APEX Application Setting `HIJRI_DATE_FORMAT` (default `YYYY-MM-MI`, the output format of the f345 Hijri picker; the day is kept in the minutes); Forms used `MI-MM-RRRR` (OLB class `CGSO$HDATE_ARB`). Change the setting to change the format of both forms, without a recompile (user request 2026-11-23). The columns are Text Fields with the f345 class `hijri-date-default` (app-wide Hijri picker), and the package converts the text with the same function.
 7. **Forms WHEN-VALIDATE-ITEM fires only when the item changes.** The grid validations get the row key and skip a value equal to the stored one. Without this, editing only the end date of an older suspension would fail "start date ≥ today".
 8. **Declarative, no JavaScript.** 0 *Execute JavaScript Code* actions, no JavaScript file, no AJAX callback.
 
@@ -82,8 +82,8 @@ Region `IMPR_SUSPN`:
 SELECT s.port_cd,
        s.impr_nbr,
        s.suspn_seq,
-       TO_CHAR(s.suspn_strt_dt, (SELECT IMPR1120.HIJRI_DATE_FORMAT FROM dual)) AS suspn_strt_dt,
-       TO_CHAR(s.suspn_end_dt,  (SELECT IMPR1120.HIJRI_DATE_FORMAT FROM dual)) AS suspn_end_dt,
+       TO_CHAR(s.suspn_strt_dt, (SELECT FORMS_APX.HIJRI_DATE_FORMAT FROM dual)) AS suspn_strt_dt,
+       TO_CHAR(s.suspn_end_dt,  (SELECT FORMS_APX.HIJRI_DATE_FORMAT FROM dual)) AS suspn_end_dt,
        s.suspn_rsn_cd,
        s.suspn_rsn_text,
        s.suspn_side_cd
@@ -251,14 +251,14 @@ f345 order (standard §6), error display inline in notification. Slot 50 `PARAME
 |---|---|---|---|---|---|
 | Before Header | 10 | `New` | f345 session setup, copied from AGR1100 / IMPR1110 | – | f345 §6 |
 | Before Header | 20 | `P0_PAGE_PK CHECK` | `IMPR1120.P0_PAGE_PK_CHECK(P_PAGE_PK => :P0_PAGE_PK, P_CURR_PORT_CD => :P_CURR_PORT_CD);` | – | f345; PRE-QUERY port rule |
-| Before Header | 40 | `PARAMETERS` | `:P1120_MODULE_ID := IMPR1120.GET_MODULE_ID(P_MODULE_ID => :P1120_MODULE_ID);` | – | f345 |
+| Before Header | 40 | `PARAMETERS` | `:P1120_MODULE_ID := FORMS_APX.GET_MODULE_ID(P_MODULE_ID => :P1120_MODULE_ID, FORM_NAME => 'IMPR1120');` | – | f345 |
 | Before Header | 45 | `PARAMETERS CURRENT_SIDE` | `:P1120_P_CURRENT_SIDE := IMPR1120.GET_CURRENT_SIDE(P_MODULE_ID => :P1120_MODULE_ID, P_CURR_PORT_CD => :P_CURR_PORT_CD);` | Item `P1120_P_CURRENT_SIDE` is null | parameter CURRENT_SIDE (launcher, SC_PORT_SETTING) |
 | Before Header | 60 | `WHEN-NEW-FORM-INSTANCE` | `IMPR1120.INIT_FORM(P_CURRENT_SIDE => :P1120_P_CURRENT_SIDE, P_CURR_PORT_CD => :P_CURR_PORT_CD);` | – | FORM.WHEN-NEW-FORM-INSTANCE |
 | Before Header | 70 | `P0_PAGE_PK` | `:P1120_ROW_ID := :P0_PAGE_PK;` | – | f345 (key = ROWID) |
 | Before Header | 80 | `Initialize form IMPORTERS` | NATIVE_FORM_INIT, region `IMPORTERS` | – | block IMPORTERS fetch |
 | Before Header | 82 | `POST-QUERY` | `IMPR1120.IMPORTERS_POST_QUERY(P_PORT_CD => :P1120_PORT_CD, P_IMPR_TYPE_CD => :P1120_IMPR_TYPE_CD, P_BUS_ID_TYPE_CD => :P1120_BUS_ID_TYPE_CD, P_CTRY_CD => :P1120_CTRY_CD, P_CTRY_CD_OF_ID => :P1120_CTRY_CD_OF_ID, P_CITY_CODE_OF_ID => :P1120_CITY_CODE_OF_ID, P_PORT_NAME => :P1120_PORT_NAME, P_IMPR_TYPE_NAME => :P1120_IMPR_TYPE_NAME, P_BUS_ID_TYPE_NAME => :P1120_BUS_ID_TYPE_NAME, P_CRTY_ARBC_NAME => :P1120_CRTY_ARBC_NAME, P_ID_CITY_NAME => :P1120_ID_CITY_NAME);` | Item `P1120_ROW_ID` is not null | IMPORTERS.POST-QUERY |
 | Before Header | 84 | `IMPORTERS WHEN-CREATE-RECORD` | `IMPR1120.IMPORTERS_WHEN_CREATE_RECORD(P_CURR_PORT_CD => :P_CURR_PORT_CD, P_PORT_CD => :P1120_PORT_CD, P_PORT_NAME => :P1120_PORT_NAME);` | Item `P1120_ROW_ID` is null **and** `P1120_PORT_CD` is null | IMPORTERS.WHEN-CREATE-RECORD (the second condition keeps a port 99 user's chosen port after a failed validation) |
-| Before Header | 100 | `HEADER TITLE` | `IMPR1120.HEADER_TITLE(P_MODULE_ID => :P1120_MODULE_ID, P_HERO_TITLE => :P1120_HERO_TITLE);` | – | f345 (OLB block TITLE) |
+| Before Header | 100 | `HEADER TITLE` | `FORMS_APX.HEADER_TITLE(P_MODULE_ID => :P1120_MODULE_ID, P_HERO_TITLE => :P1120_HERO_TITLE, DEFAULT_TITLE => 'صيانة توقيفات المستوردين');` | – | f345 (OLB block TITLE) |
 | After Submit | 10 | `EXECUTE-QUERY` | `IMPR1120.IMPR_NBR_WHEN_VALIDATE_ITEM(P_PORT_CD => :P1120_PORT_CD, P_IMPR_NBR => :P1120_IMPR_NBR, P_PAGE_PK => :P0_PAGE_PK);` | `:REQUEST IN ('EXECUTE_QUERY', 'CREATE')` | IMPR_NBR.WHEN-VALIDATE-ITEM → Exec_Query_Now → EXECUTE_QUERY |
 | After Submit | 30 | `PRE-DELETE` | `IMPR1120.PRE_DELETE;` | `:REQUEST = 'DELETE'` | block IMPORTERS Delete Allowed = No |
 | After Submit | 110 | `IMPR_SUSPN - Save Interactive Grid Data` | NATIVE_IG_DML, Editable Region `IMPR_SUSPN`, Target Type **PL/SQL Code**: `IMPR1120.IMPR_SUSPN_SAVE_ROW(APEX$ROW_STATUS => :APEX$ROW_STATUS, PORT_CD => NVL(:PORT_CD, :P1120_PORT_CD), IMPR_NBR => NVL(:IMPR_NBR, :P1120_IMPR_NBR), SUSPN_SEQ => :SUSPN_SEQ, SUSPN_STRT_DT => :SUSPN_STRT_DT, SUSPN_END_DT => :SUSPN_END_DT, SUSPN_RSN_CD => :SUSPN_RSN_CD, SUSPN_RSN_TEXT => :SUSPN_RSN_TEXT, SUSPN_SIDE_CD => :SUSPN_SIDE_CD, P_HQ_IMPR_NBR => :P1120_HQ_IMPR_NBR, P_PORT_NAME => :P1120_PORT_NAME, P_BUS_ID => :P1120_BUS_ID, P_CURRENT_SIDE => :P1120_P_CURRENT_SIDE, P_CURR_PORT_CD => :P_CURR_PORT_CD, SSO_APP_USER => :SSO_APP_USER, P_GLOBAL_V_WS_ID => :P_GLOBAL_V_WS_ID);` | `:REQUEST = 'SAVE'` | Forms transaction processing of IMPR_SUSPN: PRE-INSERT, POST-INSERT, PRE-UPDATE, ON-DELETE (§0 #4) |
@@ -286,11 +286,11 @@ All server calls use **FOS – Execute PL/SQL Code** (`COM.FOS.EXECUTE_PLSQL_COD
 
 | DA | Page | Event / selection | Action 1 | Action 2 | Items to Submit / Return | Fire on init | Source |
 |---|---|---|---|---|---|---|---|
-| `IMPR_NBR WHEN-VALIDATE-ITEM` | 1120 | Change, item `P1120_IMPR_NBR`; client condition item is not null | FOS `IMPR1120.CHECK_ERROR(IMPR1120.IMPR_NBR_VALIDATION(P_PORT_CD => :P1120_PORT_CD, P_IMPR_NBR => :P1120_IMPR_NBR));` | native Submit Page, request `EXECUTE_QUERY` | Submit `P1120_PORT_CD`, `P1120_IMPR_NBR` | No | IMPR_NBR WVI + IMPR_TYPE_CD WNII (EXECUTE_QUERY) |
-| `IMPR_SUSPN SUSPN_STRT_DT WHEN-VALIDATE-ITEM` | 1120 | Change, column `SUSPN_STRT_DT` of IG `IMPR_SUSPN` | FOS `IMPR1120.CHECK_ERROR(IMPR1120.SUSPN_STRT_DT_VALIDATION(SUSPN_STRT_DT => :SUSPN_STRT_DT, PORT_CD => :PORT_CD, IMPR_NBR => :IMPR_NBR, SUSPN_SEQ => :SUSPN_SEQ));` | – | Submit `SUSPN_STRT_DT`, `PORT_CD`, `IMPR_NBR`, `SUSPN_SEQ` | No | SUSPN_STRT_DT WVI |
-| `IMPR_SUSPN SUSPN_END_DT WHEN-VALIDATE-ITEM` | 1120 | Change, column `SUSPN_END_DT` | FOS `IMPR1120.CHECK_ERROR(IMPR1120.SUSPN_END_DT_VALIDATION(SUSPN_STRT_DT => :SUSPN_STRT_DT, SUSPN_END_DT => :SUSPN_END_DT, PORT_CD => :PORT_CD, IMPR_NBR => :IMPR_NBR, SUSPN_SEQ => :SUSPN_SEQ));` | – | Submit `SUSPN_STRT_DT`, `SUSPN_END_DT`, `PORT_CD`, `IMPR_NBR`, `SUSPN_SEQ` | No | SUSPN_END_DT WVI |
+| `IMPR_NBR WHEN-VALIDATE-ITEM` | 1120 | Change, item `P1120_IMPR_NBR`; client condition item is not null | FOS `FORMS_APX.CHECK_ERROR(IMPR1120.IMPR_NBR_VALIDATION(P_PORT_CD => :P1120_PORT_CD, P_IMPR_NBR => :P1120_IMPR_NBR));` | native Submit Page, request `EXECUTE_QUERY` | Submit `P1120_PORT_CD`, `P1120_IMPR_NBR` | No | IMPR_NBR WVI + IMPR_TYPE_CD WNII (EXECUTE_QUERY) |
+| `IMPR_SUSPN SUSPN_STRT_DT WHEN-VALIDATE-ITEM` | 1120 | Change, column `SUSPN_STRT_DT` of IG `IMPR_SUSPN` | FOS `FORMS_APX.CHECK_ERROR(IMPR1120.SUSPN_STRT_DT_VALIDATION(SUSPN_STRT_DT => :SUSPN_STRT_DT, PORT_CD => :PORT_CD, IMPR_NBR => :IMPR_NBR, SUSPN_SEQ => :SUSPN_SEQ));` | – | Submit `SUSPN_STRT_DT`, `PORT_CD`, `IMPR_NBR`, `SUSPN_SEQ` | No | SUSPN_STRT_DT WVI |
+| `IMPR_SUSPN SUSPN_END_DT WHEN-VALIDATE-ITEM` | 1120 | Change, column `SUSPN_END_DT` | FOS `FORMS_APX.CHECK_ERROR(IMPR1120.SUSPN_END_DT_VALIDATION(SUSPN_STRT_DT => :SUSPN_STRT_DT, SUSPN_END_DT => :SUSPN_END_DT, PORT_CD => :PORT_CD, IMPR_NBR => :IMPR_NBR, SUSPN_SEQ => :SUSPN_SEQ));` | – | Submit `SUSPN_STRT_DT`, `SUSPN_END_DT`, `PORT_CD`, `IMPR_NBR`, `SUSPN_SEQ` | No | SUSPN_END_DT WVI |
 | `IMPR_SUSPN SUSPN_RSN_CD WHEN-VALIDATE-ITEM` | 1120 | Change, column `SUSPN_RSN_CD` | FOS `IMPR1120.SUSPN_RSN_CD_VALIDATE_ITEM(SUSPN_RSN_CD => :SUSPN_RSN_CD, P_CURRENT_SIDE => :P1120_P_CURRENT_SIDE, PORT_CD => :PORT_CD, IMPR_NBR => :IMPR_NBR, SUSPN_SEQ => :SUSPN_SEQ, SUSPN_RSN_TEXT => :SUSPN_RSN_TEXT);` | – | Submit `SUSPN_RSN_CD`, `P1120_P_CURRENT_SIDE`, `PORT_CD`, `IMPR_NBR`, `SUSPN_SEQ`; Return `SUSPN_RSN_TEXT` | No | SUSPN_RSN_CD WVI |
-| `IMPR_SUSPN SUSPN_SIDE_CD WHEN-LIST-CHANGED` | 1120 | Change, column `SUSPN_SIDE_CD` | FOS `IMPR1120.CHECK_ERROR(IMPR1120.SUSPN_SIDE_CD_VALIDATION(SUSPN_SIDE_CD => :SUSPN_SIDE_CD, P_CURRENT_SIDE => :P1120_P_CURRENT_SIDE, P_CURR_PORT_CD => :P_CURR_PORT_CD, PORT_CD => :PORT_CD, IMPR_NBR => :IMPR_NBR, SUSPN_SEQ => :SUSPN_SEQ));` | – | Submit `SUSPN_SIDE_CD`, `P1120_P_CURRENT_SIDE`, `PORT_CD`, `IMPR_NBR`, `SUSPN_SEQ` | No | SUSPN_SIDE_CD WLC |
+| `IMPR_SUSPN SUSPN_SIDE_CD WHEN-LIST-CHANGED` | 1120 | Change, column `SUSPN_SIDE_CD` | FOS `FORMS_APX.CHECK_ERROR(IMPR1120.SUSPN_SIDE_CD_VALIDATION(SUSPN_SIDE_CD => :SUSPN_SIDE_CD, P_CURRENT_SIDE => :P1120_P_CURRENT_SIDE, P_CURR_PORT_CD => :P_CURR_PORT_CD, PORT_CD => :PORT_CD, IMPR_NBR => :IMPR_NBR, SUSPN_SEQ => :SUSPN_SEQ));` | – | Submit `SUSPN_SIDE_CD`, `P1120_P_CURRENT_SIDE`, `PORT_CD`, `IMPR_NBR`, `SUSPN_SEQ` | No | SUSPN_SIDE_CD WLC |
 | `SEARCH WHEN-BUTTON-PRESSED` | 112001 | Click, button `SEARCH` | native Refresh, region `IMPORTERS_SEARCH` | – | – | No | TOOLBAR.EXECUTE |
 | `SEARCH KEY-ENTER` | 112001 | Key Up, item `P112001_SEARCH`; client condition JavaScript expression `this.browserEvent.which === 13` (Enter) | native Refresh, region `IMPORTERS_SEARCH` | – | – | No | KEY-EXEQRY; f345 AGR1100_SEARCH `SEARCH REFRESH` (keyup) |
 | `CLEAR WHEN-BUTTON-PRESSED` | 112001 | Click, button `CLEAR` | native Clear, item `P112001_SEARCH` | native Refresh, region `IMPORTERS_SEARCH` (empty again) | – | No | TOOLBAR.CLEAR_ALL (criteria) |

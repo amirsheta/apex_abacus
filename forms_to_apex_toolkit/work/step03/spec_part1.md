@@ -47,7 +47,7 @@
    DATE). The items are Text Fields with the f345 class `hijri-date-default` (app-wide Hijri picker, no page
    JavaScript). Since package 010 (user request 2026-11-23) the format comes from one place: the APEX
    Application Setting `HIJRI_DATE_FORMAT` (default `YYYY-MM-MI`, the output of the f345 Hijri picker; the day
-   stays in the minutes). Computation `P1110_HIJRI_DATE_FORMAT` (Before Header) = `IMPR1110.HIJRI_DATE_FORMAT`,
+   stays in the minutes). Computation `P1110_HIJRI_DATE_FORMAT` (Before Header) = `FORMS_APX.HIJRI_DATE_FORMAT`,
    item format mask `&P1110_HIJRI_DATE_FORMAT.`, placeholder سنة-شهر-يوم. The package entry points take them as
    `VARCHAR2` and convert with the same function. Interface texts keep `MI-MM-YYYY` (the MCI data string,
    the values sent with the importer, the residence-expiry message): they are external formats.

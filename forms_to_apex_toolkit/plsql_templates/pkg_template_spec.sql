@@ -52,24 +52,12 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.<FORM> AS
          || V_MODIFIED_BY;
 
     -- =========================================================================
-    -- f345 HELPERS                                 (every form package has these)
+    -- f345 HELPERS  (the form's own key check; the common helpers CHECK_ERROR, REQUIRED_VALIDATION,
+    --               GET_MODULE_ID, HEADER_TITLE, HIJRI_DATE_FORMAT ... are in FORMS_APX 004: never copy them here)
     -- =========================================================================
-    -- Raises the error text; used by dynamic actions: <FORM>.CHECK_ERROR(<FORM>.<ITEM>_VALIDATION(...))
-    PROCEDURE CHECK_ERROR (ERROR_TEXT IN VARCHAR2);
-
-    -- Error text when a required value is empty, else NULL
-    -- APEX  : Validation "<ITEM> REQUIRED": return <FORM>.REQUIRED_VALIDATION(:P<page>_<ITEM>, '<label>');
-    FUNCTION  REQUIRED_VALIDATION (ITEM_VALUE IN VARCHAR2, ITEM_LABEL IN VARCHAR2) RETURN VARCHAR2;
 
     -- APEX  : Process "P0_PAGE_PK CHECK" (Before Header) - drops a key that no longer exists
     PROCEDURE P0_PAGE_PK_CHECK (P_PAGE_PK IN OUT VARCHAR2);
-
-    -- APEX  : Process "PARAMETERS": :P<page>_MODULE_ID := <FORM>.GET_MODULE_ID(...)
-    FUNCTION  GET_MODULE_ID (P_MODULE_ID IN VARCHAR2) RETURN VARCHAR2;
-
-    -- APEX  : Process "HEADER TITLE" (Before Header) - title of the hero region
-    PROCEDURE HEADER_TITLE (P_PAGE_PK         IN VARCHAR2,
-                            P_HERO_TITLE IN OUT VARCHAR2);
 
     -- =========================================================================
     -- FORM LEVEL                                   (Forms: form-level triggers)
@@ -91,7 +79,7 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.<FORM> AS
     -- APEX  : Validation "<ITEM> VALIDATION" (PL/SQL Function Body returning Error Text)
     --           return <FORM>.<ITEM>_VALIDATION(P_<ITEM> => :P<page>_<ITEM>);
     --         DA "<ITEM> WHEN-VALIDATE-ITEM" (change, FOS Execute PL/SQL Code)
-    --           <FORM>.CHECK_ERROR(<FORM>.<ITEM>_VALIDATION(P_<ITEM> => :P<page>_<ITEM>));
+    --           FORMS_APX.CHECK_ERROR(<FORM>.<ITEM>_VALIDATION(P_<ITEM> => :P<page>_<ITEM>));
     FUNCTION  <ITEM>_VALIDATION (P_<ITEM> IN VARCHAR2) RETURN VARCHAR2;
 
     -- Source: Make_Field_Entrable('<BLOCK>.<ITEM>', FALSE) in <trigger>

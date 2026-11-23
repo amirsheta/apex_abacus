@@ -30,46 +30,10 @@
     END PRIVATE_ENABLED_FUNCTIONS;
 
     -- Section: f345 HELPERS
-    -- f345 CHECK_ERROR: raise the text returned by a <ITEM>_VALIDATION function (used by the FOS DAs)
-    PROCEDURE CHECK_ERROR (I_ERR IN VARCHAR2)
-    IS
-    BEGIN
-        IF I_ERR IS NOT NULL THEN
-            raise_application_error(c_err, I_ERR);
-        END IF;
-    END CHECK_ERROR;
-
-    -- Section: f345 HELPERS
-    -- Validation "<ITEM> REQUIRED" (server-side condition <ITEM>_IS_REQUIRED): Forms FRM-40202
-    FUNCTION REQUIRED_VALIDATION (I_VALUE IN VARCHAR2, I_LABEL IN VARCHAR2) RETURN VARCHAR2
-    IS
-    BEGIN
-        IF I_VALUE IS NULL THEN
-            RETURN CG_MESSAGE('<p1> must be entered', I_LABEL);
-        END IF;
-        RETURN NULL;
-    END REQUIRED_VALIDATION;
-
-    -- Section: f345 HELPERS
-    -- Hijri date format of the application: APEX Application Setting HIJRI_DATE_FORMAT, default YYYY-MM-MI
-    -- (the f345 Hijri picker writes iYYYY-iMM-iDD; the day is kept in the minutes). Change the setting
-    -- (Shared Components > Application Settings, or APEX_APP_SETTING.SET_VALUE) to change it.
-    -- APEX  : computation P1110_HIJRI_DATE_FORMAT (Before Header) = format mask &P1110_HIJRI_DATE_FORMAT.
-    --         of the Hijri date items; the package converts the item texts with the same function.
-    FUNCTION HIJRI_DATE_FORMAT RETURN VARCHAR2
-    IS
-    BEGIN
-        RETURN NVL(APEX_APP_SETTING.GET_VALUE(p_name => 'HIJRI_DATE_FORMAT'), c_hijri_date_format);
-    EXCEPTION
-        WHEN OTHERS THEN               -- no APEX session / setting missing: the default format
-            RETURN c_hijri_date_format;
-    END HIJRI_DATE_FORMAT;
-
-    -- Section: f345 HELPERS
     -- Process "P0_PAGE_PK CHECK" (Before Header): P0_PAGE_PK holds the ROWID of the importer (Forms key
     -- mode ROWID); forget a key that is not a row of IMPORTERS of this port (block WHERE clause).
     -- The search page 111001 passes the ROWID URL-safe (TRANSLATE(ROWID, '+/', '-_'): a '+' in f?p arrives
-    -- as a space and the checksum fails); it is translated back first. A ROWID never contains '-' or '_'.
+    -- as a space and the checksum fails); FORMS_APX.ROWID_FROM_URL translates it back first.
     PROCEDURE P0_PAGE_PK_CHECK (IO_P0_PAGE_PK    IN OUT VARCHAR2,
                                 I_P_CURR_PORT_CD IN     NUMBER)
     IS
@@ -78,7 +42,7 @@
         IF IO_P0_PAGE_PK IS NULL THEN
             RETURN;
         END IF;
-        IO_P0_PAGE_PK := TRANSLATE(IO_P0_PAGE_PK, '-_', '+/');      -- URL-safe ROWID of page 111001 -> ROWID
+        IO_P0_PAGE_PK := FORMS_APX.ROWID_FROM_URL(IO_P0_PAGE_PK);   -- URL-safe ROWID of page 111001 -> ROWID
         SELECT COUNT(*)
           INTO v_cnt
           FROM importers i
@@ -110,22 +74,6 @@
     END IMPORTER_ROW_ID;
 
     -- Section: f345 HELPERS
-    -- Computation P1110_MODULE_ID: SC_SYSTEM_OBJECTS id of the form (f345 Page Functions list)
-    FUNCTION GET_MODULE_ID (I_P1110_MODULE_ID IN VARCHAR2) RETURN VARCHAR2
-    IS
-        v_id VARCHAR2(40);
-    BEGIN
-        IF I_P1110_MODULE_ID IS NOT NULL THEN
-            RETURN I_P1110_MODULE_ID;
-        END IF;
-        SELECT TO_CHAR(MIN(o.sysobj_id))
-          INTO v_id
-          FROM sc_system_objects o
-         WHERE UPPER(REGEXP_REPLACE(o.sys_os_file_name, '\..*$', '')) = 'IMPR1110';
-        RETURN v_id;
-    END GET_MODULE_ID;
-
-    -- Section: f345 HELPERS
     -- Process "PARAMETERS ENTRY" (f345): one-shot hand-over of :PARAMETER.PRSNL_IMPR / LETTER_NBR
     PROCEDURE PARAMETERS_ENTRY (IO_P_PRSNL_IMPR       IN OUT VARCHAR2,
                                 IO_P_LETTER_NBR       IN OUT VARCHAR2,
@@ -138,25 +86,6 @@
         IO_P_PRSNL_IMPR       := NULL;
         IO_P_LETTER_NBR       := NULL;
     END PARAMETERS_ENTRY;
-
-    -- Section: f345 HELPERS
-    -- Process "HEADER TITLE": the form title from SC_SYSTEM_OBJECTS (Forms TITLE block)
-    PROCEDURE HEADER_TITLE (I_P1110_MODULE_ID   IN     VARCHAR2,
-                            IO_P1110_HERO_TITLE IN OUT VARCHAR2)
-    IS
-        v_name VARCHAR2(400);
-    BEGIN
-        IF I_P1110_MODULE_ID IS NOT NULL THEN
-            SELECT MAX(o.sys_aname)
-              INTO v_name
-              FROM sc_system_objects o
-             WHERE o.sysobj_id = TO_NUMBER(I_P1110_MODULE_ID);
-        END IF;
-        IO_P1110_HERO_TITLE := NVL(v_name, c_hero_title);
-    EXCEPTION
-        WHEN VALUE_ERROR OR INVALID_NUMBER THEN
-            IO_P1110_HERO_TITLE := c_hero_title;
-    END HEADER_TITLE;
 
     -- Section: PAGE 111002 (LOV_UPDATE_IMPR_MOBILE)
     -- Source: LOV_UPDATE_IMPR_MOBILE.CTRL_BLK.PB_OK (:GLOBAL.OK := 1; COPY_SELECTED_VALUES)

@@ -138,8 +138,8 @@ wwv_flow_api.create_page_plug(
 'SELECT s.port_cd,',
 '       s.impr_nbr,',
 '       s.suspn_seq,',
-'       TO_CHAR(s.suspn_strt_dt, (SELECT IMPR1120.HIJRI_DATE_FORMAT FROM dual)) AS suspn_strt_dt,   -- Application Setting',
-'       TO_CHAR(s.suspn_end_dt,  (SELECT IMPR1120.HIJRI_DATE_FORMAT FROM dual)) AS suspn_end_dt,    -- HIJRI_DATE_FORMAT',
+'       TO_CHAR(s.suspn_strt_dt, (SELECT FORMS_APX.HIJRI_DATE_FORMAT FROM dual)) AS suspn_strt_dt,   -- Application Setting',
+'       TO_CHAR(s.suspn_end_dt,  (SELECT FORMS_APX.HIJRI_DATE_FORMAT FROM dual)) AS suspn_end_dt,    -- HIJRI_DATE_FORMAT',
 '       s.suspn_rsn_cd,',
 '       s.suspn_rsn_text,',
 '       s.suspn_side_cd',
@@ -1125,7 +1125,7 @@ wwv_flow_api.create_page_process(
 ,p_process_point=>'BEFORE_HEADER'
 ,p_process_type=>'NATIVE_PLSQL'
 ,p_process_name=>'PARAMETERS'
-,p_process_sql_clob=>':P1120_MODULE_ID := IMPR1120.GET_MODULE_ID(P_MODULE_ID => :P1120_MODULE_ID);'
+,p_process_sql_clob=>':P1120_MODULE_ID := FORMS_APX.GET_MODULE_ID(P_MODULE_ID => :P1120_MODULE_ID, FORM_NAME => ''IMPR1120'');'
 ,p_process_clob_language=>'PLSQL'
 ,p_error_display_location=>'INLINE_IN_NOTIFICATION'
 ,p_process_comment=>'Source: f345 / spec 8'
@@ -1208,7 +1208,7 @@ wwv_flow_api.create_page_process(
 ,p_process_point=>'BEFORE_HEADER'
 ,p_process_type=>'NATIVE_PLSQL'
 ,p_process_name=>'HEADER TITLE'
-,p_process_sql_clob=>'IMPR1120.HEADER_TITLE(P_MODULE_ID => :P1120_MODULE_ID, P_HERO_TITLE => :P1120_HERO_TITLE);'
+,p_process_sql_clob=>unistr('FORMS_APX.HEADER_TITLE(P_MODULE_ID => :P1120_MODULE_ID, P_HERO_TITLE => :P1120_HERO_TITLE, DEFAULT_TITLE => ''\0635\064A\0627\0646\0629 \062A\0648\0642\064A\0641\0627\062A \0627\0644\0645\0633\062A\0648\0631\062F\064A\0646'');')
 ,p_process_clob_language=>'PLSQL'
 ,p_error_display_location=>'INLINE_IN_NOTIFICATION'
 ,p_process_comment=>'Source: f345 (OLB block TITLE) / spec 8'
@@ -1275,7 +1275,7 @@ wwv_flow_api.create_page_da_action(
 ,p_action_sequence=>10
 ,p_execute_on_page_init=>'N'
 ,p_action=>'PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE'
-,p_attribute_01=>'IMPR1120.CHECK_ERROR(IMPR1120.IMPR_NBR_VALIDATION(P_PORT_CD => :P1120_PORT_CD, P_IMPR_NBR => :P1120_IMPR_NBR));'
+,p_attribute_01=>'FORMS_APX.CHECK_ERROR(IMPR1120.IMPR_NBR_VALIDATION(P_PORT_CD => :P1120_PORT_CD, P_IMPR_NBR => :P1120_IMPR_NBR));'
 ,p_attribute_02=>'P1120_PORT_CD,P1120_IMPR_NBR'
 ,p_attribute_05=>'#SQLERRM#'
 ,p_attribute_15=>'suppressChangeEvent:escape-message'
@@ -1309,7 +1309,7 @@ wwv_flow_api.create_page_da_action(
 ,p_action_sequence=>10
 ,p_execute_on_page_init=>'N'
 ,p_action=>'PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE'
-,p_attribute_01=>'IMPR1120.CHECK_ERROR(IMPR1120.SUSPN_STRT_DT_VALIDATION(SUSPN_STRT_DT => :SUSPN_STRT_DT, PORT_CD => :PORT_CD, IMPR_NBR => :IMPR_NBR, SUSPN_SEQ => :SUSPN_SEQ));'
+,p_attribute_01=>'FORMS_APX.CHECK_ERROR(IMPR1120.SUSPN_STRT_DT_VALIDATION(SUSPN_STRT_DT => :SUSPN_STRT_DT, PORT_CD => :PORT_CD, IMPR_NBR => :IMPR_NBR, SUSPN_SEQ => :SUSPN_SEQ));'
 ,p_attribute_02=>'SUSPN_STRT_DT,PORT_CD,IMPR_NBR,SUSPN_SEQ'
 ,p_attribute_05=>'#SQLERRM#'
 ,p_attribute_15=>'suppressChangeEvent:escape-message'
@@ -1333,7 +1333,7 @@ wwv_flow_api.create_page_da_action(
 ,p_action_sequence=>10
 ,p_execute_on_page_init=>'N'
 ,p_action=>'PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE'
-,p_attribute_01=>'IMPR1120.CHECK_ERROR(IMPR1120.SUSPN_END_DT_VALIDATION(SUSPN_STRT_DT => :SUSPN_STRT_DT, SUSPN_END_DT => :SUSPN_END_DT, PORT_CD => :PORT_CD, IMPR_NBR => :IMPR_NBR, SUSPN_SEQ => :SUSPN_SEQ));'
+,p_attribute_01=>'FORMS_APX.CHECK_ERROR(IMPR1120.SUSPN_END_DT_VALIDATION(SUSPN_STRT_DT => :SUSPN_STRT_DT, SUSPN_END_DT => :SUSPN_END_DT, PORT_CD => :PORT_CD, IMPR_NBR => :IMPR_NBR, SUSPN_SEQ => :SUSPN_SEQ));'
 ,p_attribute_02=>'SUSPN_STRT_DT,SUSPN_END_DT,PORT_CD,IMPR_NBR,SUSPN_SEQ'
 ,p_attribute_05=>'#SQLERRM#'
 ,p_attribute_15=>'suppressChangeEvent:escape-message'
@@ -1382,7 +1382,7 @@ wwv_flow_api.create_page_da_action(
 ,p_action_sequence=>10
 ,p_execute_on_page_init=>'N'
 ,p_action=>'PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE'
-,p_attribute_01=>'IMPR1120.CHECK_ERROR(IMPR1120.SUSPN_SIDE_CD_VALIDATION(SUSPN_SIDE_CD => :SUSPN_SIDE_CD, P_CURRENT_SIDE => :P1120_P_CURRENT_SIDE, P_CURR_PORT_CD => :P_CURR_PORT_CD, PORT_CD => :PORT_CD, IMPR_NBR => :IMPR_NBR, SUSPN_SEQ => :SUSPN_SEQ));'
+,p_attribute_01=>'FORMS_APX.CHECK_ERROR(IMPR1120.SUSPN_SIDE_CD_VALIDATION(SUSPN_SIDE_CD => :SUSPN_SIDE_CD, P_CURRENT_SIDE => :P1120_P_CURRENT_SIDE, P_CURR_PORT_CD => :P_CURR_PORT_CD, PORT_CD => :PORT_CD, IMPR_NBR => :IMPR_NBR, SUSPN_SEQ => :SUSPN_SEQ));'
 ,p_attribute_02=>'SUSPN_SIDE_CD,P1120_P_CURRENT_SIDE,PORT_CD,IMPR_NBR,SUSPN_SEQ'
 ,p_attribute_05=>'#SQLERRM#'
 ,p_attribute_15=>'suppressChangeEvent:escape-message'

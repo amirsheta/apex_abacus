@@ -3,9 +3,9 @@
  "ui_calls_replaced": 130,
  "entries": 76,
  "rules": 27,
- "helpers": 12,
- "renamed_parameters": 163,
- "qualified_in_sql": 5,
- "spec_lines": 1306,
- "body_lines": 9208
+ "helpers": 7,
+ "renamed_parameters": 159,
+ "qualified_in_sql": 4,
+ "spec_lines": 1284,
+ "body_lines": 9134
 }

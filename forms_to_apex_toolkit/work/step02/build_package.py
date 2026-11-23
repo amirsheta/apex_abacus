@@ -19,12 +19,13 @@ Re-run after changing the rules or the entry table. Usage: python3 -I work/step0
 import re, json, collections, sys, os
 sys.path.insert(0, 'scripts')
 import parameter_names
+import forms_apx_helpers
 
 SRC_SPEC = 'rollback/IMPR1110/step02_rev1/impr1110_spec.sql'
 SRC_BODY = 'rollback/IMPR1110/step02_rev1/impr1110_body.sql'
 OUT_SPEC = 'plsql/IMPR1110/impr1110_spec.sql'
 OUT_BODY = 'plsql/IMPR1110/impr1110_body.sql'
-DATE = '23-11-2026'
+DATE = '24-11-2026'
 PAGE = 'P1110_'
 
 spec_src = open(SRC_SPEC, encoding='utf-8').read()
@@ -300,7 +301,7 @@ add('PAGE 111002 (LOV_UPDATE_IMPR_MOBILE)', 'CENTRAL_MOBILE', 'N', 'PU LOV_UPDAT
     'Computation P111002_CENTRAL_MOBILE (Before Header)', [], ret='CENTRAL_MOBILE(r, c)', prefix='P111002_')
 
 # ------------------------------------------------------------------ generate entries
-DATE_MASK = {'BUS_ID_EXPRD_DT': 'HIJRI_DATE_FORMAT', 'BUS_ID_ISSUE_DT': 'HIJRI_DATE_FORMAT', 'LST_TRAN_DT': 'c_date_time_mask'}
+DATE_MASK = {'BUS_ID_EXPRD_DT': 'FORMS_APX.HIJRI_DATE_FORMAT', 'BUS_ID_ISSUE_DT': 'FORMS_APX.HIJRI_DATE_FORMAT', 'LST_TRAN_DT': 'c_date_time_mask'}
 def ptype(t):
     return re.sub(r'\(\d+\)', '', t)          # no length in a parameter type
 LOGIC_CALL = re.compile(r'(?<![\w.$#])([A-Za-z][A-Za-z0-9_$#]*)\s*[(;]')
@@ -398,7 +399,7 @@ def spec_decl(m):
 
 # ------------------------------------------------------------------ assemble the spec
 vb = re.search(r'(?s)(   V_PKG_VERSION .*?\|\| V_MODIFIED_BY;\n)', spec_src).group(1)
-vb = re.sub(r"'VERSION NO\. IS:' \|\| '\d+'", "'VERSION NO. IS:' || '010'", vb, count=1)
+vb = re.sub(r"'VERSION NO\. IS:' \|\| '\d+'", "'VERSION NO. IS:' || '011'", vb, count=1)
 vb = re.sub(r"V_LAST_MODIFY_DT    VARCHAR2 \(10\) := '[^']*'", "V_LAST_MODIFY_DT    VARCHAR2 (10) := '%s'" % DATE, vb)
 grants = spec_src[spec_src.index('\n-- -----------------------------------------------------------------------------\n-- Synonym and grants'):]
 def banner(t):
@@ -419,13 +420,16 @@ order += [s for s in sections if s not in order]
 spec = ['-- =============================================================================',
         '-- Package     : IMPR1110  (form IMPR1110.fmb "إضافة وتعديل بيانات مستورد")',
         '-- Owner       : LIB_APX_USR (public synonym IMPR1110; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)',
-        '-- Version     : 010 (%s: 006 = step 02 revision 2 + step 03 changes (DATE items as text, ROWID page key);' % DATE,
+        '-- Version     : 011 (%s: 006 = step 02 revision 2 + step 03 changes (DATE items as text, ROWID page key);' % DATE,
         '--               007 = parameter names by scripts/parameter_names.py; 008 = no doubled P_P_ (P_CODE => :P1110_P_CODE),',
         '--               APP_P_PRSNL_IMPR / APP_P_LETTER_NBR in PARAMETERS_ENTRY. No logic change. 007: rollback/IMPR1110/step04_v007/;',
         "--               009 = P0_PAGE_PK_CHECK restores the URL-safe ROWID of page 111001 ('-' / '_' -> '+' / '/'; a '+'",
         '--               in f?p arrived as a space: checksum error). 008: rollback/IMPR1110/step04_v008/;',
         '--               010 = Hijri date format from one place: HIJRI_DATE_FORMAT reads the Application Setting',
-        '--               HIJRI_DATE_FORMAT (default YYYY-MM-MI, was the constant MI-MM-YYYY). 009: rollback/IMPR1110/step04_v009/)',
+        '--               HIJRI_DATE_FORMAT (default YYYY-MM-MI, was the constant MI-MM-YYYY). 009: rollback/IMPR1110/step04_v009/;',
+        '--               011 = common helpers in FORMS_APX 004 (CHECK_ERROR, REQUIRED_VALIDATION, HIJRI_DATE_FORMAT, GET_MODULE_ID,',
+        '--               HEADER_TITLE, ARABIC_MESSAGE, CG_MESSAGE, cur_hij_date ...), called as FORMS_APX.<NAME>; pages call',
+        '--               FORMS_APX directly. No logic change except REQUIRED_VALIDATION text. 010: rollback/IMPR1110/step04_v010/)',
         '-- Author      : Claude Code',
         '-- Status      : NOT COMPILED.',
         '-- Layout      : VERSION -> f345 HELPERS -> FORM LEVEL -> BLOCK IMPORTERS (query, record, items in Forms',
@@ -450,7 +454,7 @@ spec_text = '\n'.join(spec)
 # ------------------------------------------------------------------ assemble the body
 logic_fwd = ['    ' + m['header'] + ';' for m, _ in logic_text]
 body = ['-- =============================================================================',
-        '-- Package body: IMPR1110 (version 010, %s) - see the spec header. NOT COMPILED.' % DATE,
+        '-- Package body: IMPR1110 (version 011, %s) - see the spec header. NOT COMPILED.' % DATE,
         '-- Layout      : 1 private types and declarations, 2 forward declarations, 3 private helpers and the',
         '--               converted Forms logic (record based, Forms order, UI calls replaced by "NULL; -- APEX ..."),',
         '--               4 read-only / required rules, 5 f345 helpers, 6 APEX entry points (spec order), 7 version.',
@@ -459,10 +463,7 @@ body = ['-- ====================================================================
         'SET DEFINE OFF', '', 'CREATE OR REPLACE PACKAGE BODY LIB_APX_USR.IMPR1110', 'AS',
         banner('1 PRIVATE TYPES AND DECLARATIONS').rstrip('\n'),
         t_record_txt.strip('\n'), '', t_context_txt.strip('\n'), '',
-        "    c_hijri_date_format CONSTANT VARCHAR2(30) := 'YYYY-MM-MI';   -- default of the Application Setting HIJRI_DATE_FORMAT (f345 Hijri picker); day kept in the minutes (Feb 30 is no DATE); Forms used MI-MM-YYYY",
         "    c_date_time_mask CONSTANT VARCHAR2(30) := 'YYYY/MM/DD HH24:MI:SS';   -- Forms PLSQL_DATE_FORMAT (PRE-FORM), LST_TRAN_DT",
-        '    c_err        CONSTANT PLS_INTEGER   := -20001;',
-        "    c_hero_title CONSTANT VARCHAR2(200) := 'إضافة وتعديل بيانات مستورد';",
         '    TYPE t_vc_tab IS TABLE OF VARCHAR2(4000) INDEX BY PLS_INTEGER;',
         '    g_fun_cd     t_vc_tab;     -- function codes switched by ADJ_FUNS (TMPLT.ENABLE_FUN / DISABLE_FUN)',
         '    g_fun_on     t_vc_tab;     -- Y / N',
@@ -483,6 +484,19 @@ body += [banner('7 PACKAGE VERSION   (SELECT IMPR1110.PKG_VERSION FROM dual;)').
          '    FUNCTION PKG_VERSION', '       RETURN VARCHAR2', '    IS', '    BEGIN', '       RETURN V_INFO;', '    END PKG_VERSION;', '',
          'END IMPR1110;', '/', 'SHOW ERRORS', '']
 body_text = '\n'.join(body)
+# ---- common helpers live in FORMS_APX 004 (scripts/forms_apx_helpers.py, user decision 2026-11-24): the converted
+# CIC_LIB helpers (ARABIC_MESSAGE, CG_MESSAGE, cur_hij_date, DISPLAY_ARABIC_*) and the one-line FORMS_APX aliases
+# (FORM_TRIGGER_FAILURE, INFO, GET_GLOBAL, SET_GLOBAL) are dropped here and every call is FORMS_APX.<NAME>
+MOVED_HERE = ['ARABIC_MESSAGE', 'DISPLAY_ARABIC_ERROR', 'DISPLAY_ARABIC_INFO', 'CG_MESSAGE', 'cur_hij_date',
+              'FORM_TRIGGER_FAILURE', 'INFO', 'GET_GLOBAL', 'SET_GLOBAL']
+spec_text = forms_apx_helpers.qualify(forms_apx_helpers.remove_members(spec_text, MOVED_HERE))
+body_text = forms_apx_helpers.qualify(forms_apx_helpers.remove_members(body_text, MOVED_HERE))
+moved_left = forms_apx_helpers.leftovers(spec_text + body_text)
+if moved_left:
+    sys.exit('common helpers still defined in IMPR1110 (belong to FORMS_APX): %s' % moved_left)
+unknown = forms_apx_helpers.unknown_calls(spec_text + body_text)
+if unknown:
+    sys.exit('FORMS_APX members not in plsql_templates/forms_apx.sql: %s' % unknown)
 # ---- parameter names (scripts/parameter_names.py): rename, then qualify inside SQL
 RENAMES = parameter_names.mapping_from_spec(spec_text)
 # {member: {new name: original name}}: build_spec.py derives each bind from the original name

@@ -1,7 +1,7 @@
 {
- "spec_members": 110,
- "body_implementations": 210,
- "forward_declarations": 94,
+ "spec_members": 105,
+ "body_implementations": 196,
+ "forward_declarations": 85,
  "findings": {},
  "members_over_80_lines": [
   [

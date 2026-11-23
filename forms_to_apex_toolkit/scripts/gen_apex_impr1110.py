@@ -414,7 +414,7 @@ def gen():
 -- Target      : Oracle APEX 21.2 (export version 2021.10.15), Oracle Database 12.1.0.2,
 --               reference application f345 (apex/Reference/f345.sql)
 -- Standard    : CLAUDE.md 4b / 4c, docs/f345_reference_standard.md 3-9: native Form region (ROWID),
---               FOS + native dynamic actions, one-line calls into package IMPR1110 (version 010).
+--               FOS + native dynamic actions, one-line calls into package IMPR1110 (version 011) and FORMS_APX (004, common helpers).
 --               No JavaScript file, no AJAX callback process.
 -- Contents    : component export INTO the application installed from f345: pages 1110 (main),
 --               111001 (search), 111002 (mobile) + the shared components they need.
@@ -458,8 +458,8 @@ end;
         body.append(call('create_flow_item', [('p_id', ref('9000:ai:' + n)), ('p_name', q(n)), ('p_protection_level', q('I')),
                                               ('p_item_comment', src(s + ' / spec 13.2'))]))
     W(block('application/shared_components/logic/application_items', '\n'.join(body)))
-    # one place for the Hijri date format of the forms (user request 2026-11-23): read by IMPR1110.HIJRI_DATE_FORMAT
-    # and IMPR1120.HIJRI_DATE_FORMAT (default YYYY-MM-MI = the f345 Hijri picker output); change it here or with
+    # one place for the Hijri date format of the forms (user request 2026-11-23): read by FORMS_APX.HIJRI_DATE_FORMAT
+    # (FORMS_APX 004; default YYYY-MM-MI = the f345 Hijri picker output); change it here or with
     # APEX_APP_SETTING.SET_VALUE, no recompile
     nid('9000:set:HIJRI_DATE_FORMAT', 7)
     W(block('application/shared_components/app_settings/hijri_date_format',
@@ -862,7 +862,18 @@ def selfcheck(text):
     if re.search(r'password|pwd', text, re.I): problems.append('password text found')
     code = '\n'.join(l for l in text.splitlines() if not l.startswith('--') and not re.match(r'^[ ,]p_\w*comment=>', l))
     if re.search(r'\bAI_[A-Z]', code): problems.append('AI_ item name found')
-    if re.search(r'pkg_|IMPR1110_APX\.|FORMS_APX\.', code, re.I): problems.append('page calls pkg_ / IMPR1110_APX / FORMS_APX')
+    if re.search(r'pkg_|IMPR1110_APX\.', code, re.I): problems.append('page calls pkg_ / IMPR1110_APX')
+    # common helpers: FORMS_APX 004 (plsql_templates/forms_apx.sql); members and named parameters must exist
+    sys.path.insert(0, os.path.join(ROOT, 'scripts'))
+    import forms_apx_helpers
+    fx = forms_apx_helpers.forms_apx_members(ROOT)
+    for name in set(re.findall(r'FORMS_APX\.([A-Z0-9_$]+)', code)):
+        if name not in fx: problems.append('FORMS_APX.%s not in forms_apx.sql' % name)
+    for m in re.finditer(r'FORMS_APX\.([A-Z0-9_$]+)\(([^()]*(?:\([^()]*\)[^()]*)*)\)', code):
+        name, args = m.groups()
+        given = set(re.findall(r'(?<![.\w])([A-Z0-9_$]+)\s*=>', re.sub(r'\([^()]*\)', '()', args)))
+        if name in fx and given and not given <= fx[name]:
+            problems.append('call FORMS_APX.%s: unknown parameters %s' % (name, sorted(given - fx[name])))
     for bad in ('ON_DEMAND', 'p_javascript_file_urls', 'AJAX_FUNCTION', 'impr1110.js'):
         if bad in code: problems.append('not allowed: ' + bad)
     defined = re.findall(r'[ ,]p_id=>wwv_flow_api\.id\((\d+)\)', text)

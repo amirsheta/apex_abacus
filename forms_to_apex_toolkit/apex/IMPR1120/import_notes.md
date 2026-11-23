@@ -21,7 +21,7 @@
 | `apex/IMPR1120/f345_impr1120.sql` | The export: a 2237-line `wwv_flow_api` component export with the four `__…__` placeholders and the `-- REVIEW BEFORE IMPORT` header |
 | `apex/IMPR1120/f202530_impr1120_import.sql` | Import-ready copy for application **202530**: the same export with workspace 23232323, application 202530, ID offset 460632461717563830 and schema `CUSTOMS` filled in. For any other application, regenerate it |
 | `apex/f202530_full.sql` | Full application export of 202530: f345 + IMPR1110 + IMPR1120, IDs shifted by 460632461717563830, header offset 0 (the way the IMPR1110 import succeeded on 2026-11-18). Rebuilt with `python3 -I scripts/build_full_app.py --app-id=202530 --shift-ids=460632461717563830 apex/IMPR1110/f345_impr1110.sql apex/IMPR1120/f345_impr1120.sql`. Checked: 1833 IDs, no duplicate, no undefined ID, no placeholder. Rebuilding from IMPR1110 alone reproduces the previous file byte for byte |
-| `plsql/IMPR1120/impr1120_spec.sql` + `impr1120_body.sql` | Package `IMPR1120` version **008**, which holds all the logic (008 = Hijri date format from the Application Setting `HIJRI_DATE_FORMAT`; 007 = URL-safe ROWID key from the search page; 006 = compile fix: no private function inside SQL; 003 = 002 without the `I_` / `IO_` / `O_` prefix; 004 = page items passed as `P_<ITEM>`, e.g. `P_PORT_CD => :P1120_PORT_CD`; 005 = no doubled `P_P_` (`P_CURRENT_SIDE => :P1120_P_CURRENT_SIDE`) and helper `hijri_text_to_date`; rule in `scripts/parameter_names.py`) |
+| `plsql/IMPR1120/impr1120_spec.sql` + `impr1120_body.sql` | Package `IMPR1120` version **009**, which holds the logic of this form (009 = common helpers moved to `FORMS_APX` 004; 008 = Hijri date format from the Application Setting `HIJRI_DATE_FORMAT`; 007 = URL-safe ROWID key from the search page; 006 = compile fix: no private function inside SQL; 003 = 002 without the `I_` / `IO_` / `O_` prefix; 004 = page items passed as `P_<ITEM>`, e.g. `P_PORT_CD => :P1120_PORT_CD`; 005 = no doubled `P_P_` (`P_CURRENT_SIDE => :P1120_P_CURRENT_SIDE`) and helper `hijri_text_to_date`; rule in `scripts/parameter_names.py`) |
 | `scripts/gen_apex_impr1120.py` | The generator. The design data is in the script (sections marked "spec N"). Re-run it after a spec change; do not edit the `.sql` by hand |
 
 Generator summary (`python3 -I scripts/gen_apex_impr1120.py`):
@@ -64,15 +64,16 @@ The script has `set define off`. There are four tokens:
 ## 3. Prerequisites
 
 1. **Application 202530 contains the IMPR1110 export.** This export reuses its page group `IMPR` (`wwv_flow_api.id(900001000010)`) and its LOVs `LOV_SD_PORTS` and `LOV_ALLOWED_EXPORT` (by name). Without them the component import fails (page group: ORA-02291) or the items have no LOV. The full-application file (option B) contains both forms, so it has no such dependency.
-2. **Package `IMPR1120` version 008 compiled** as `LIB_APX_USR.IMPR1120`:
+2. **Package `FORMS_APX` version 004 compiled first** (`plsql_templates/forms_apx.sql`, owner `LIB_APX_USR`, public synonym and grants at the end): since 2026-11-24 it holds the helpers common to every form (`CHECK_ERROR`, `REQUIRED_VALIDATION`, `GET_MODULE_ID`, `HEADER_TITLE`, `ROWID_FROM_URL`, `HIJRI_DATE_FORMAT` and the Hijri date helpers, `ARABIC_MESSAGE`, `CG_MESSAGE`, `CUR_HIJ_DATE` ...); the form packages and the pages call `FORMS_APX.<NAME>`. It now needs `STR_DB`, `HIJDATE_DB` and `SC_SYSTEM_OBJECTS` (as the form packages did). `SELECT FORMS_APX.PKG_VERSION FROM dual` shows `004`.
+3. **Package `IMPR1120` version 009 compiled** as `LIB_APX_USR.IMPR1120`:
    - Run `plsql/IMPR1120/impr1120_spec.sql`, then `impr1120_body.sql`.
    - The spec ends with the public synonym and `GRANT EXECUTE` to `LIB_USR`, `SECURITY_DEFAULT`, `SECURITY_PROD` and `CUSTOMS`; run it as a user allowed to create public synonyms.
-   - `SELECT IMPR1120.PKG_VERSION FROM dual` must show `VERSION NO. IS:008`.
+   - `SELECT IMPR1120.PKG_VERSION FROM dual` must show `VERSION NO. IS:009`.
    - The body needs the direct grants listed in the extraction report §8 (tables `IMPR_SUSPNS` (SELECT, UPDATE), `IMPORTERS`, `IMPORTER_BASIC_DATA`, `SD_PORTS`, `CG_REF_CODES`, lookup tables, `SC_SYSTEM_OBJECTS`, `SC_PORT_SETTING`; packages `ACTIVITY_DB`, `HIJDATE_DB`, `STR_DB`, `GNRL`, `SMS_MESSAGE`, `FORMS_APX`).
    - `STR_DB`, `GNRL`, `SMS_MESSAGE` and `LIB_APX_USR.APEX_NOTIFICATIONS` have no source in the repository, so check that they exist with the signatures the Forms code used.
-3. **Grid DML runs as the package**, so `CUSTOMS` needs no DML grant on `IMPR_SUSPNS`. The grid process calls `IMPR1120.IMPR_SUSPN_SAVE_ROW`, which inserts and updates with definer rights (`LIB_APX_USR`). The two region queries do need SELECT for `CUSTOMS` on `IMPR_SUSPNS`, `IMPORTERS`, `SD_PORTS`, `IMPR_TYPES` and `COUNTRIES`.
-4. **FOS *Execute PL/SQL Code*** plug-in from f345 (`COM.FOS.EXECUTE_PLSQL_CODE`), used by the 5 FOS actions.
-5. **Shared components this export creates:** LOVs `LOV_IMPR_SUSPN_RSN_CD` and `LOV_SUSPN_SIDE_CD`, and Text Message `IS_1_IMP_FK` (ar-sa). No application item, no security scheme, no page group.
+4. **Grid DML runs as the package**, so `CUSTOMS` needs no DML grant on `IMPR_SUSPNS`. The grid process calls `IMPR1120.IMPR_SUSPN_SAVE_ROW`, which inserts and updates with definer rights (`LIB_APX_USR`). The two region queries do need SELECT for `CUSTOMS` on `IMPR_SUSPNS`, `IMPORTERS`, `SD_PORTS`, `IMPR_TYPES` and `COUNTRIES`.
+5. **FOS *Execute PL/SQL Code*** plug-in from f345 (`COM.FOS.EXECUTE_PLSQL_CODE`), used by the 5 FOS actions.
+6. **Shared components this export creates:** LOVs `LOV_IMPR_SUSPN_RSN_CD` and `LOV_SUSPN_SIDE_CD`, and Text Message `IS_1_IMP_FK` (ar-sa). No application item, no security scheme, no page group.
 
 ## 4. Import
 
@@ -83,6 +84,8 @@ Choose **one** option.
 - `sql CUSTOMS@<tns> @apex/IMPR1120/f202530_impr1120_import.sql`.
 
 It removes and re-creates pages 1120 and 112001 only (`remove_page`). It also creates the two LOVs and the Text Message with fixed IDs. On a second import they normally replace the same components. If APEX reports a duplicate LOV or message name instead, delete `LOV_IMPR_SUSPN_RSN_CD`, `LOV_SUSPN_SIDE_CD` and `IS_1_IMP_FK` first (not verified).
+
+Change 2026-11-24 (user request): the common helpers are in `FORMS_APX` 004 only. Page 1120 calls `FORMS_APX.CHECK_ERROR(IMPR1120.<ITEM>_VALIDATION(...))` in the FOS dynamic actions, `FORMS_APX.GET_MODULE_ID(..., FORM_NAME => 'IMPR1120')`, `FORMS_APX.HEADER_TITLE(..., DEFAULT_TITLE => 'صيانة توقيفات المستوردين')` and `FORMS_APX.HIJRI_DATE_FORMAT` in the grid SQL. Package 009 has no logic change (previous: `rollback/IMPR1120/step04_v008/`).
 
 Change 2026-11-23 (user request): the Hijri date format comes from one place, the APEX **Application Setting `HIJRI_DATE_FORMAT`** (Shared Components > Application Settings), value `YYYY-MM-MI`: the output of the f345 Hijri picker (`hijri-date-default`, iYYYY-iMM-iDD), with the day kept in the minutes. The IMPR1110 export creates the setting; `IMPR1110.HIJRI_DATE_FORMAT` and `IMPR1120.HIJRI_DATE_FORMAT` read it (default `YYYY-MM-MI` when it is missing). To change the format, change the setting (or `APEX_APP_SETTING.SET_VALUE`), no recompile; it must stay a mask that the picker writes. Existing data needs no change (only the text form changes). The grid SQL uses `(SELECT IMPR1120.HIJRI_DATE_FORMAT FROM dual)`. Import IMPR1110 (or the full app) first, so that the setting exists; without it the default is used.
 

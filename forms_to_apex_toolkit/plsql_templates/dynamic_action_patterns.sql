@@ -21,7 +21,7 @@
 -- APEX 2  : DA "CUSTOMER_ID WHEN-VALIDATE-ITEM" - Event Change, Item P120_CUSTOMER_ID
 --           True action: FOS - Execute PL/SQL Code
 --             Code (p_attribute_01):
---               ORDERS.CHECK_ERROR(ORDERS.CUSTOMER_ID_VALIDATION(P_CUSTOMER_ID => :P120_CUSTOMER_ID));
+--               FORMS_APX.CHECK_ERROR(ORDERS.CUSTOMER_ID_VALIDATION(P_CUSTOMER_ID => :P120_CUSTOMER_ID));
 --             Items to Submit (p_attribute_02): P120_CUSTOMER_ID
 --             Error message  (p_attribute_05): #SQLERRM#
 --           The user sees the error at once; the validation still enforces it at submit.
@@ -86,7 +86,7 @@
 -- Forms: SET_ITEM_PROPERTY('ORDERS.PO_NUMBER', REQUIRED, PROPERTY_TRUE) when PAY_TYPE = 'INVOICE'
 -- Package : FUNCTION PO_NUMBER_IS_REQUIRED (P_PAY_TYPE IN VARCHAR2) RETURN BOOLEAN
 -- APEX    : Validation "PO_NUMBER REQUIRED" - PL/SQL Function Body returning Error Text
---             return ORDERS.REQUIRED_VALIDATION(:P120_PO_NUMBER, '<label>');
+--             return FORMS_APX.REQUIRED_VALIDATION(ITEM_VALUE => :P120_PO_NUMBER, ITEM_LABEL => '<label>');
 --           Server-side Condition: PL/SQL Expression
 --             ORDERS.PO_NUMBER_IS_REQUIRED(P_PAY_TYPE => :P120_PAY_TYPE)
 --           No client-side script for the "required" marker.

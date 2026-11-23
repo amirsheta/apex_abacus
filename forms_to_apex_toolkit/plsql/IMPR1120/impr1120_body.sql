@@ -1,10 +1,11 @@
 -- =============================================================================
 -- Package body: IMPR1120   (matches impr1120_spec.sql - f345 standard)
--- Source form : IMPR1120.fmb   Target: APEX 21.2 / DB 12.1.0.2   Version: 008
+-- Source form : IMPR1120.fmb   Target: APEX 21.2 / DB 12.1.0.2   Version: 009
 -- Author      : Claude Code     Created: 2026-11-23   (see the spec history)
 -- Rules: no Forms built-ins (FORMS_APX instead), no COMMIT / ROLLBACK,
 --        parameters named after their binds without I_ / IO_ / O_; page items P<page>_X -> P_X;
 --        inside SQL every parameter is qualified with its member name; identifiers <= 30 bytes.
+-- Common helpers: FORMS_APX (version 004), called as FORMS_APX.<NAME>.
 -- Layout (docs/f345_reference_standard.md §10): PRIVATE HELPERS (top, used by the members below)
 -- -> VERSION -> f345 HELPERS -> FORM LEVEL -> BLOCK IMPORTERS -> BLOCK IMPR_SUSPN -> PROGRAM UNITS
 -- -> UI LOGIC FOR APEX DYNAMIC ACTIONS (comments only).
@@ -15,18 +16,12 @@ SET DEFINE OFF
 
 CREATE OR REPLACE PACKAGE BODY LIB_APX_USR.IMPR1120
 AS
-    c_err              CONSTANT PLS_INTEGER  := -20001;
-    c_hero_title       CONSTANT VARCHAR2(100) := 'صيانة توقيفات المستوردين';
     c_head_office_port CONSTANT NUMBER       := 99;     -- :PARAMETER.P_CURR_PORT_CD = 99
     c_sysobj_importers CONSTANT NUMBER       := 9;      -- ACTIVITY.ADD_ACTIVITY(9, ...)
     c_subject_suspn    CONSTANT NUMBER       := 3;      -- ACTIVITY.ADD_ACTIVITY(9, 3, ...)
     c_activity_insert  CONSTANT NUMBER       := 1;
     c_activity_update  CONSTANT NUMBER       := 2;
     c_activity_delete  CONSTANT NUMBER       := 3;
-    -- Default Hijri date format when the Application Setting HIJRI_DATE_FORMAT is missing (or outside APEX):
-    -- the output of the f345 Hijri picker; the day is kept in the minutes, so every Hijri day (e.g. 30-02)
-    -- fits in a DATE. Forms used MI-MM-RRRR (OLB property class CGSO$HDATE_ARB).
-    c_hijri_date_format CONSTANT VARCHAR2(30) := 'YYYY-MM-MI';
 
     -- Texts the Forms code did not have (it raised FORM_TRIGGER_FAILURE without a message, or
     -- made the rows unreachable with NEXT_RECORD). TODO: agree the texts (inventory §15 #12).
@@ -37,85 +32,6 @@ AS
     -- =========================================================================
     -- PRIVATE HELPERS
     -- =========================================================================
-    -- Text of STR.DispArbMsg(sys, nbr, type) (CIC_LIB.pld): STR_DB.GetArbMsg(sys, nbr) shown as
-    -- '<sys>-<nbr> : <text>'; '-1' = unknown message number. (Same as IMPR1110.ARABIC_MESSAGE.)
-    FUNCTION arabic_message (p_sys IN NUMBER, p_nbr IN NUMBER) RETURN VARCHAR2
-    IS
-        v_txt VARCHAR2(4000);
-    BEGIN
-        v_txt := str_db.getarbmsg(p_sys, p_nbr);
-        IF v_txt = '-1' THEN
-            RETURN 'خطأ فى رقم الرسالة ' || p_sys || '-' || p_nbr || 'إتصل بالمسانده الفنيه';
-        END IF;
-        RETURN p_sys || '-' || p_nbr || ' : ' || v_txt;
-    END arabic_message;
-
-    -- HIJDATE.Cur_Hij_Date (CIC_LIB.pld): HIJDATE_DB.Cur_Hij_Date(V_MSG); NULL -> DispAlert + FAILURE
-    FUNCTION cur_hij_date RETURN DATE
-    IS
-        v_msg VARCHAR2(2000);
-        v_ret DATE;
-    BEGIN
-        v_ret := hijdate_db.cur_hij_date(v_msg);
-        IF v_ret IS NULL THEN
-            FORMS_APX.FORM_TRIGGER_FAILURE(v_msg);
-        END IF;
-        RETURN v_ret;
-    END cur_hij_date;
-
-    -- Forms FRM-50026 "Date must be entered in a format like <mask>", in the format of the setting
-    -- (YYYY-MM-MI -> سنة-شهر-يوم). TODO: confirm the Arabic text.
-    FUNCTION date_format_message RETURN VARCHAR2
-    IS
-        v_format VARCHAR2(30) := HIJRI_DATE_FORMAT;
-    BEGIN
-        RETURN 'يجب إدخال التاريخ بالصيغة '
-               || REPLACE(REPLACE(REPLACE(REPLACE(UPPER(v_format), 'YYYY', 'سنة'), 'RRRR', 'سنة'), 'MI', 'يوم'), 'MM', 'شهر')
-               || ' (' || v_format || ')';
-    END date_format_message;
-
-    -- Hijri date text (format HIJRI_DATE_FORMAT) -> DATE. No calendar conversion: the text is already Hijri
-    -- (HIJDATE_DB.TO_HIJRI would convert a Gregorian date). A wrong format raises the FRM-50026 equivalent.
-    FUNCTION hijri_text_to_date (p_text IN VARCHAR2) RETURN DATE
-    IS
-    BEGIN
-        RETURN TO_DATE(p_text, HIJRI_DATE_FORMAT);
-    EXCEPTION
-        WHEN OTHERS THEN               -- ORA-01821 / ORA-01843 / ORA-01847 ...: not in the mask
-            FORMS_APX.FORM_TRIGGER_FAILURE(date_format_message);
-            RETURN NULL;               -- not reached
-    END hijri_text_to_date;
-
-    -- DATE -> Hijri date text in the format HIJRI_DATE_FORMAT
-    FUNCTION hijri_text (p_date IN DATE) RETURN VARCHAR2
-    IS
-    BEGIN
-        RETURN TO_CHAR(p_date, HIJRI_DATE_FORMAT);
-    END hijri_text;
-
-    -- HIJDATE.VALID_HIJ_DATE (CIC_LIB.pld): HIJDATE_DB.VALID_HIJ_DATE(HDate, V_MSG) = 0 ->
-    -- DispAlert(V_MSG, 'ERROR') and the caller raises FORM_TRIGGER_FAILURE.
-    -- Here the alert text is returned, for the validation functions. NULL = valid or empty.
-    -- p_text is the item text: a wrong format gives the FRM-50026 text, as Forms does before WVI.
-    FUNCTION hijri_date_error (p_text IN VARCHAR2) RETURN VARCHAR2
-    IS
-        v_msg  VARCHAR2(2000);
-        v_date DATE;
-    BEGIN
-        IF p_text IS NULL THEN
-            RETURN NULL;
-        END IF;
-        BEGIN
-            v_date := TO_DATE(p_text, HIJRI_DATE_FORMAT);
-        EXCEPTION
-            WHEN OTHERS THEN
-                RETURN date_format_message;
-        END;
-        IF hijdate_db.valid_hij_date(v_date, v_msg) = 0 THEN
-            RETURN NVL(v_msg, 'التاريخ غير صحيح');
-        END IF;
-        RETURN NULL;
-    END hijri_date_error;
 
     -- Stored row of a suspension (NULL fields for a new row). Forms fires WHEN-VALIDATE-ITEM only
     -- when the item value changed; an IG row validation sees every column of a changed row, so the
@@ -229,29 +145,6 @@ AS
     -- =========================================================================
     -- f345 HELPERS
     -- =========================================================================
-    PROCEDURE CHECK_ERROR (ERROR_TEXT IN VARCHAR2)
-    IS
-    BEGIN
-        IF ERROR_TEXT IS NOT NULL THEN
-            raise_application_error(c_err, ERROR_TEXT);
-        END IF;
-    END CHECK_ERROR;
-
-    FUNCTION REQUIRED_VALIDATION (ITEM_VALUE IN VARCHAR2, ITEM_LABEL IN VARCHAR2) RETURN VARCHAR2
-    IS
-    BEGIN
-        -- Source: FRM-40202 "Field must be entered"
-        RETURN CASE WHEN TRIM(ITEM_VALUE) IS NULL THEN 'يجب إدخال ' || ITEM_LABEL END;
-    END REQUIRED_VALIDATION;
-
-    FUNCTION HIJRI_DATE_FORMAT RETURN VARCHAR2
-    IS
-    BEGIN
-        RETURN NVL(APEX_APP_SETTING.GET_VALUE(p_name => 'HIJRI_DATE_FORMAT'), c_hijri_date_format);
-    EXCEPTION
-        WHEN OTHERS THEN               -- no APEX session / setting missing: the default format
-            RETURN c_hijri_date_format;
-    END HIJRI_DATE_FORMAT;
 
     -- P0_PAGE_PK = ROWID of the importer. Outside port 99 it must belong to the user's port
     -- (IMPORTERS.PRE-QUERY forces PORT_CD := :PARAMETER.P_CURR_PORT_CD).
@@ -263,7 +156,7 @@ AS
         IF P_PAGE_PK IS NULL THEN
             RETURN;
         END IF;
-        P_PAGE_PK := TRANSLATE(P_PAGE_PK, '-_', '+/');      -- URL-safe ROWID of page 112001 -> ROWID
+        P_PAGE_PK := FORMS_APX.ROWID_FROM_URL(P_PAGE_PK);   -- URL-safe ROWID of page 112001 -> ROWID
         SELECT COUNT(*)
           INTO v_cnt
           FROM importers i
@@ -276,37 +169,6 @@ AS
         WHEN OTHERS THEN               -- ORA-01410 invalid ROWID ...: not a key of this page
             P_PAGE_PK := NULL;
     END P0_PAGE_PK_CHECK;
-
-    FUNCTION GET_MODULE_ID (P_MODULE_ID IN VARCHAR2) RETURN VARCHAR2
-    IS
-        v_id VARCHAR2(40);
-    BEGIN
-        IF P_MODULE_ID IS NOT NULL THEN
-            RETURN P_MODULE_ID;
-        END IF;
-        SELECT TO_CHAR(MIN(o.sysobj_id))
-          INTO v_id
-          FROM sc_system_objects o
-         WHERE UPPER(REGEXP_REPLACE(o.sys_os_file_name, '\..*$', '')) = 'IMPR1120';
-        RETURN v_id;
-    END GET_MODULE_ID;
-
-    PROCEDURE HEADER_TITLE (P_MODULE_ID   IN     VARCHAR2,
-                            P_HERO_TITLE IN OUT VARCHAR2)
-    IS
-        v_name VARCHAR2(400);
-    BEGIN
-        IF P_MODULE_ID IS NOT NULL THEN
-            SELECT MAX(o.sys_aname)
-              INTO v_name
-              FROM sc_system_objects o
-             WHERE o.sysobj_id = TO_NUMBER(HEADER_TITLE.P_MODULE_ID);
-        END IF;
-        P_HERO_TITLE := NVL(v_name, c_hero_title);
-    EXCEPTION
-        WHEN VALUE_ERROR THEN          -- module id is not a number
-            P_HERO_TITLE := c_hero_title;
-    END HEADER_TITLE;
 
     -- =========================================================================
     -- FORM LEVEL
@@ -504,7 +366,7 @@ AS
             RETURN NULL;
         END IF;
         IF importer_row_id(P_PORT_CD, P_IMPR_NBR) IS NULL THEN
-            RETURN arabic_message(9, 150);
+            RETURN FORMS_APX.ARABIC_MESSAGE(9, 150);
         END IF;
         RETURN NULL;
     END IMPR_NBR_VALIDATION;
@@ -522,7 +384,7 @@ AS
                                            P_PAGE_PK    IN OUT VARCHAR2)
     IS
     BEGIN
-        CHECK_ERROR(IMPR_NBR_VALIDATION(P_PORT_CD, P_IMPR_NBR));
+        FORMS_APX.CHECK_ERROR(IMPR_NBR_VALIDATION(P_PORT_CD, P_IMPR_NBR));
         IF P_IMPR_NBR IS NOT NULL THEN
             P_PAGE_PK := importer_row_id(P_PORT_CD, P_IMPR_NBR);
         END IF;
@@ -565,7 +427,7 @@ AS
     FUNCTION SUSPN_STRT_DT_DEFAULT RETURN VARCHAR2
     IS
     BEGIN
-        RETURN hijri_text(cur_hij_date);
+        RETURN FORMS_APX.HIJRI_TEXT(FORMS_APX.CUR_HIJ_DATE);
     END SUSPN_STRT_DT_DEFAULT;
 
     -- Source: IMPR_SUSPN.SUSPN_STRT_DT.WHEN-VALIDATE-ITEM
@@ -586,15 +448,15 @@ AS
         v_err VARCHAR2(2000);
     BEGIN
         IF SUSPN_STRT_DT IS NULL
-           OR SUSPN_STRT_DT = hijri_text(stored_suspension(PORT_CD, IMPR_NBR, SUSPN_SEQ).suspn_strt_dt) THEN
+           OR SUSPN_STRT_DT = FORMS_APX.HIJRI_TEXT(stored_suspension(PORT_CD, IMPR_NBR, SUSPN_SEQ).suspn_strt_dt) THEN
             RETURN NULL;
         END IF;
-        v_err := hijri_date_error(SUSPN_STRT_DT);
+        v_err := FORMS_APX.HIJRI_DATE_ERROR(SUSPN_STRT_DT);
         IF v_err IS NOT NULL THEN
             RETURN v_err;
         END IF;
-        IF hijdate_db.compare_hij_dates(hijri_text_to_date(SUSPN_STRT_DT), cur_hij_date) = -1 THEN
-            RETURN arabic_message(9, 100);
+        IF hijdate_db.compare_hij_dates(FORMS_APX.HIJRI_TEXT_TO_DATE(SUSPN_STRT_DT), FORMS_APX.CUR_HIJ_DATE) = -1 THEN
+            RETURN FORMS_APX.ARABIC_MESSAGE(9, 100);
         END IF;
         RETURN NULL;
     END SUSPN_STRT_DT_VALIDATION;
@@ -615,18 +477,18 @@ AS
         v_err VARCHAR2(2000);
     BEGIN
         IF SUSPN_END_DT IS NULL
-           OR SUSPN_END_DT = hijri_text(stored_suspension(PORT_CD, IMPR_NBR, SUSPN_SEQ).suspn_end_dt) THEN
+           OR SUSPN_END_DT = FORMS_APX.HIJRI_TEXT(stored_suspension(PORT_CD, IMPR_NBR, SUSPN_SEQ).suspn_end_dt) THEN
             RETURN NULL;
         END IF;
-        v_err := hijri_date_error(SUSPN_END_DT);
+        v_err := FORMS_APX.HIJRI_DATE_ERROR(SUSPN_END_DT);
         IF v_err IS NOT NULL THEN
             RETURN v_err;
         END IF;
         -- HIJDATE.COMPARE_HIJ_DATES returns NULL when one date is NULL (CIC_LIB.pld)
-        IF SUSPN_STRT_DT IS NOT NULL AND hijri_date_error(SUSPN_STRT_DT) IS NULL
-           AND hijdate_db.compare_hij_dates(hijri_text_to_date(SUSPN_END_DT),
-                                            hijri_text_to_date(SUSPN_STRT_DT)) = -1 THEN
-            RETURN arabic_message(9, 110);
+        IF SUSPN_STRT_DT IS NOT NULL AND FORMS_APX.HIJRI_DATE_ERROR(SUSPN_STRT_DT) IS NULL
+           AND hijdate_db.compare_hij_dates(FORMS_APX.HIJRI_TEXT_TO_DATE(SUSPN_END_DT),
+                                            FORMS_APX.HIJRI_TEXT_TO_DATE(SUSPN_STRT_DT)) = -1 THEN
+            RETURN FORMS_APX.ARABIC_MESSAGE(9, 110);
         END IF;
         RETURN NULL;
     END SUSPN_END_DT_VALIDATION;
@@ -677,7 +539,7 @@ AS
     IS
     BEGIN
         IF SUSPN_RSN_CD IS NULL THEN
-            RETURN REQUIRED_VALIDATION(NULL, 'السبب');
+            RETURN FORMS_APX.REQUIRED_VALIDATION(NULL, 'السبب');
         END IF;
         IF SUSPN_RSN_CD = stored_suspension(PORT_CD, IMPR_NBR, SUSPN_SEQ).suspn_rsn_cd THEN
             RETURN NULL;
@@ -703,7 +565,7 @@ AS
                                           SUSPN_RSN_TEXT      IN OUT VARCHAR2)
     IS
     BEGIN
-        CHECK_ERROR(SUSPN_RSN_CD_VALIDATION(SUSPN_RSN_CD, P_CURRENT_SIDE,
+        FORMS_APX.CHECK_ERROR(SUSPN_RSN_CD_VALIDATION(SUSPN_RSN_CD, P_CURRENT_SIDE,
                                             PORT_CD, IMPR_NBR, SUSPN_SEQ));
         SELECT c.rv_meaning
           INTO SUSPN_RSN_CD_VALIDATE_ITEM.SUSPN_RSN_TEXT
@@ -771,7 +633,7 @@ AS
     IS
     BEGIN
         IF SUSPN_SIDE_CD IS NULL THEN
-            RETURN REQUIRED_VALIDATION(NULL, 'الجهة');
+            RETURN FORMS_APX.REQUIRED_VALIDATION(NULL, 'الجهة');
         END IF;
         IF SUSPN_SIDE_CD = stored_suspension(PORT_CD, IMPR_NBR, SUSPN_SEQ).suspn_side_cd THEN
             RETURN NULL;
@@ -898,8 +760,8 @@ AS
         IF NVL(gnrl.get_customs_setting(PORT_CD, 'NE_INTEGRATION', 21), 0) = 1 THEN
             v_ne_in_send :=    'P_PORT_NAME='       || P_PORT_NAME
                             || ',P_BUS_ID='         || P_BUS_ID
-                            || ',P_SUSPN_STRT_DT='  || TO_CHAR(hijri_text_to_date(SUSPN_STRT_DT), 'MI-MM-YYYY')
-                            || ',P_SUSPN_END_DT='   || TO_CHAR(hijri_text_to_date(SUSPN_END_DT), 'MI-MM-YYYY')
+                            || ',P_SUSPN_STRT_DT='  || TO_CHAR(FORMS_APX.HIJRI_TEXT_TO_DATE(SUSPN_STRT_DT), 'MI-MM-YYYY')
+                            || ',P_SUSPN_END_DT='   || TO_CHAR(FORMS_APX.HIJRI_TEXT_TO_DATE(SUSPN_END_DT), 'MI-MM-YYYY')
                             || ',P_SUSPN_RSN_TEXT=' || SUSPN_RSN_TEXT
                             || ',ORG_HOTLINE='      || c_org_hotline
                             || ',ORG_NAME='         || c_org_name;
@@ -922,8 +784,8 @@ AS
         ELSE
             v_sms_msg_body :=    ' تم الايقاف من قبل ' || P_PORT_NAME
                               || ' للسجل التجاري '     || P_BUS_ID
-                              || ' من تاريخ '          || TO_CHAR(hijri_text_to_date(SUSPN_STRT_DT), 'MI-MM-YYYY')
-                              || ' الى تاريخ '         || TO_CHAR(hijri_text_to_date(SUSPN_END_DT), 'MI-MM-YYYY')
+                              || ' من تاريخ '          || TO_CHAR(FORMS_APX.HIJRI_TEXT_TO_DATE(SUSPN_STRT_DT), 'MI-MM-YYYY')
+                              || ' الى تاريخ '         || TO_CHAR(FORMS_APX.HIJRI_TEXT_TO_DATE(SUSPN_END_DT), 'MI-MM-YYYY')
                               || ' بسبب '              || SUSPN_RSN_TEXT;
             sms_message.send_sms_message(9, 3, 1, P_CURR_PORT_CD, NULL, v_mobile_nbr, v_sms_msg_body,
                                          PORT_CD || '|' || IMPR_NBR || '|' || SUSPN_SEQ);
@@ -962,9 +824,9 @@ AS
                      P_CURR_PORT_CD, SSO_APP_USER, P_GLOBAL_V_WS_ID);
         BEGIN
             v_today  := hijdate_db.cur_hij_date;
-            v_end_dt := TO_DATE(SUSPN_END_DT, HIJRI_DATE_FORMAT);
+            v_end_dt := TO_DATE(SUSPN_END_DT, FORMS_APX.HIJRI_DATE_FORMAT);
             IF v_end_dt <= v_today THEN
-                SUSPN_RLSE_DT := hijri_text(v_end_dt);
+                SUSPN_RLSE_DT := FORMS_APX.HIJRI_TEXT(v_end_dt);
             END IF;
             IF v_end_dt > v_today THEN
                 SUSPN_RLSE_DT := NULL;
@@ -999,7 +861,7 @@ AS
     BEGIN
         check_row_of_current_site(PORT_CD, IMPR_NBR, SUSPN_SEQ,
                                   P_CURRENT_SIDE, P_CURR_PORT_CD);
-        v_today := cur_hij_date;
+        v_today := FORMS_APX.CUR_HIJ_DATE;
         UPDATE impr_suspns s
            SET s.suspn_rlse_dt = v_today
          WHERE s.impr_nbr  = IMPR_SUSPN_ON_DELETE.IMPR_NBR
@@ -1044,8 +906,8 @@ AS
         IF APEX$ROW_STATUS = 'C' THEN
             IMPR_SUSPN_PRE_INSERT(SUSPN_SEQ, PORT_CD, IMPR_NBR,
                                   P_CURR_PORT_CD, SSO_APP_USER, P_GLOBAL_V_WS_ID);
-            v_strt_dt := hijri_text_to_date(SUSPN_STRT_DT);
-            v_end_dt  := hijri_text_to_date(SUSPN_END_DT);
+            v_strt_dt := FORMS_APX.HIJRI_TEXT_TO_DATE(SUSPN_STRT_DT);
+            v_end_dt  := FORMS_APX.HIJRI_TEXT_TO_DATE(SUSPN_END_DT);
             INSERT INTO impr_suspns (port_cd, impr_nbr, suspn_seq, suspn_strt_dt, suspn_end_dt,
                                      suspn_rsn_cd, suspn_rsn_text, suspn_side_cd, suspn_rlse_dt)
             VALUES (IMPR_SUSPN_SAVE_ROW.PORT_CD, IMPR_SUSPN_SAVE_ROW.IMPR_NBR, IMPR_SUSPN_SAVE_ROW.SUSPN_SEQ, v_strt_dt,
@@ -1054,12 +916,12 @@ AS
                                    SUSPN_RSN_TEXT, P_HQ_IMPR_NBR, P_PORT_NAME,
                                    P_BUS_ID, P_CURR_PORT_CD);
         ELSIF APEX$ROW_STATUS = 'U' THEN
-            v_rlse_dt := hijri_text(stored_suspension(PORT_CD, IMPR_NBR, SUSPN_SEQ).suspn_rlse_dt);
+            v_rlse_dt := FORMS_APX.HIJRI_TEXT(stored_suspension(PORT_CD, IMPR_NBR, SUSPN_SEQ).suspn_rlse_dt);
             IMPR_SUSPN_PRE_UPDATE(PORT_CD, IMPR_NBR, SUSPN_SEQ, SUSPN_END_DT, v_rlse_dt,
                                   P_CURRENT_SIDE, P_CURR_PORT_CD, SSO_APP_USER, P_GLOBAL_V_WS_ID);
-            v_strt_dt := hijri_text_to_date(SUSPN_STRT_DT);
-            v_end_dt  := hijri_text_to_date(SUSPN_END_DT);
-            v_rlse    := hijri_text_to_date(v_rlse_dt);
+            v_strt_dt := FORMS_APX.HIJRI_TEXT_TO_DATE(SUSPN_STRT_DT);
+            v_end_dt  := FORMS_APX.HIJRI_TEXT_TO_DATE(SUSPN_END_DT);
+            v_rlse    := FORMS_APX.HIJRI_TEXT_TO_DATE(v_rlse_dt);
             UPDATE impr_suspns s
                SET s.suspn_strt_dt  = v_strt_dt,
                    s.suspn_end_dt   = v_end_dt,
@@ -1147,7 +1009,7 @@ AS
     -- =========================================================================
     -- APEX-DA: [Source: IMPORTERS.IMPR_NBR.WHEN-VALIDATE-ITEM] -> DA "IMPR_NBR WHEN-VALIDATE-ITEM"
     -- Original : :global.Exec_Query_Now := 1;  (IMPR_TYPE_CD.WHEN-NEW-ITEM-INSTANCE: Clear_Block + execute_query)
-    -- Implement: change of P1120_IMPR_NBR -> FOS IMPR1120.CHECK_ERROR(IMPR1120.IMPR_NBR_VALIDATION(
+    -- Implement: change of P1120_IMPR_NBR -> FOS FORMS_APX.CHECK_ERROR(IMPR1120.IMPR_NBR_VALIDATION(
     --            P_PORT_CD => :P1120_PORT_CD, P_IMPR_NBR => :P1120_IMPR_NBR))
     --            -> Submit Page, request EXECUTE_QUERY (process "EXECUTE-QUERY" sets P0_PAGE_PK).
     --
@@ -1172,11 +1034,11 @@ AS
     --
     -- APEX-DA: [Source: IMPR_SUSPN.SUSPN_STRT_DT.WHEN-VALIDATE-ITEM] -> DA "IMPR_SUSPN SUSPN_STRT_DT WHEN-VALIDATE-ITEM"
     -- Original : error 9-100 and :SUSPN_STRT_DT := HIJDATE.Cur_Hij_Date
-    -- Implement: FOS IMPR1120.CHECK_ERROR(IMPR1120.SUSPN_STRT_DT_VALIDATION(:SUSPN_STRT_DT, :PORT_CD, :IMPR_NBR, :SUSPN_SEQ)).
+    -- Implement: FOS FORMS_APX.CHECK_ERROR(IMPR1120.SUSPN_STRT_DT_VALIDATION(:SUSPN_STRT_DT, :PORT_CD, :IMPR_NBR, :SUSPN_SEQ)).
     --            The reset to today is not repeated: the error keeps the user on the value (step 03 to confirm).
     --
     -- APEX-DA: [Source: IMPR_SUSPN.SUSPN_END_DT.WHEN-VALIDATE-ITEM] -> DA "IMPR_SUSPN SUSPN_END_DT WHEN-VALIDATE-ITEM"
-    -- Implement: FOS IMPR1120.CHECK_ERROR(IMPR1120.SUSPN_END_DT_VALIDATION(:SUSPN_STRT_DT, :SUSPN_END_DT,
+    -- Implement: FOS FORMS_APX.CHECK_ERROR(IMPR1120.SUSPN_END_DT_VALIDATION(:SUSPN_STRT_DT, :SUSPN_END_DT,
     --            :PORT_CD, :IMPR_NBR, :SUSPN_SEQ)).
     --
     -- APEX-DA: [Source: IMPR_SUSPN.SUSPN_RSN_CD.WHEN-VALIDATE-ITEM] -> DA "IMPR_SUSPN SUSPN_RSN_CD WHEN-VALIDATE-ITEM"
@@ -1186,7 +1048,7 @@ AS
     --            Items to Return SUSPN_RSN_TEXT. The Forms reset of the code to the site's reason is dropped.
     --
     -- APEX-DA: [Source: IMPR_SUSPN.SUSPN_SIDE_CD.WHEN-LIST-CHANGED] -> DA "IMPR_SUSPN SUSPN_SIDE_CD WHEN-LIST-CHANGED"
-    -- Implement: FOS IMPR1120.CHECK_ERROR(IMPR1120.SUSPN_SIDE_CD_VALIDATION(:SUSPN_SIDE_CD,
+    -- Implement: FOS FORMS_APX.CHECK_ERROR(IMPR1120.SUSPN_SIDE_CD_VALIDATION(:SUSPN_SIDE_CD,
     --            :P1120_P_CURRENT_SIDE, :P_CURR_PORT_CD, :PORT_CD, :IMPR_NBR, :SUSPN_SEQ)).
     --            The Forms reset of the value is dropped.
     --

@@ -1,5 +1,5 @@
 -- =============================================================================
--- Package body: IMPR1110 (version 010, 23-11-2026) - see the spec header. NOT COMPILED.
+-- Package body: IMPR1110 (version 011, 24-11-2026) - see the spec header. NOT COMPILED.
 -- Layout      : 1 private types and declarations, 2 forward declarations, 3 private helpers and the
 --               converted Forms logic (record based, Forms order, UI calls replaced by "NULL; -- APEX ..."),
 --               4 read-only / required rules, 5 f345 helpers, 6 APEX entry points (spec order), 7 version.
@@ -105,10 +105,7 @@ AS
         brkr_nbr      NUMBER           -- :PARAMETER.P_BRKR_NBR
     );
 
-    c_hijri_date_format CONSTANT VARCHAR2(30) := 'YYYY-MM-MI';   -- default of the Application Setting HIJRI_DATE_FORMAT (f345 Hijri picker); day kept in the minutes (Feb 30 is no DATE); Forms used MI-MM-YYYY
     c_date_time_mask CONSTANT VARCHAR2(30) := 'YYYY/MM/DD HH24:MI:SS';   -- Forms PLSQL_DATE_FORMAT (PRE-FORM), LST_TRAN_DT
-    c_err        CONSTANT PLS_INTEGER   := -20001;
-    c_hero_title CONSTANT VARCHAR2(200) := 'إضافة وتعديل بيانات مستورد';
     TYPE t_vc_tab IS TABLE OF VARCHAR2(4000) INDEX BY PLS_INTEGER;
     g_fun_cd     t_vc_tab;     -- function codes switched by ADJ_FUNS (TMPLT.ENABLE_FUN / DISABLE_FUN)
     g_fun_on     t_vc_tab;     -- Y / N
@@ -120,16 +117,7 @@ AS
     -- =========================================================================
     PROCEDURE SET_FUNCTION_ENABLED (p_fun IN VARCHAR2, p_on IN BOOLEAN);
     FUNCTION FUNCTION_STATE (p_fun IN VARCHAR2) RETURN VARCHAR2;
-    PROCEDURE info (p_text IN VARCHAR2);
-    PROCEDURE FORM_TRIGGER_FAILURE (p_text IN VARCHAR2 DEFAULT NULL);
-    FUNCTION GET_GLOBAL (p_name IN VARCHAR2) RETURN VARCHAR2;
-    PROCEDURE SET_GLOBAL (p_name IN VARCHAR2, p_val IN VARCHAR2);
-    FUNCTION ARABIC_MESSAGE (p_sys IN NUMBER, p_nbr IN NUMBER) RETURN VARCHAR2;
-    PROCEDURE DISPLAY_ARABIC_ERROR (p_sys IN NUMBER, p_nbr IN NUMBER);
-    PROCEDURE DISPLAY_ARABIC_INFO (p_sys IN NUMBER, p_nbr IN NUMBER);
-    FUNCTION CG_MESSAGE (p_default IN VARCHAR2, p1 IN VARCHAR2) RETURN VARCHAR2;
     PROCEDURE add_activity (p_act IN NUMBER, p_rec IN T_RECORD, p_ctx IN T_CONTEXT);
-    FUNCTION cur_hij_date RETURN DATE;
     FUNCTION valid_hij_date (p_dt IN DATE) RETURN BOOLEAN;
     PROCEDURE ctry_100_defaults (p_rec IN OUT NOCOPY T_RECORD);
     PROCEDURE CGSF$CLRLU_IMPORTERS_IMP_BUS_I (p_rec IN OUT NOCOPY T_RECORD);
@@ -253,67 +241,6 @@ AS
         RETURN v;
     END FUNCTION_STATE;
 
-    -- MESSAGE / STR.DispAlert(..., 'INFORMATION') that does not stop the trigger
-    PROCEDURE INFO (p_text IN VARCHAR2)
-    IS
-    BEGIN
-        FORMS_APX.MESSAGE(p_text);
-    END INFO;
-
-    PROCEDURE FORM_TRIGGER_FAILURE (p_text IN VARCHAR2 DEFAULT NULL)
-    IS
-    BEGIN
-        FORMS_APX.FORM_TRIGGER_FAILURE(p_text);
-    END FORM_TRIGGER_FAILURE;
-
-    FUNCTION GET_GLOBAL (p_name IN VARCHAR2) RETURN VARCHAR2
-    IS
-    BEGIN
-        RETURN FORMS_APX.get_global(p_name);
-    END GET_GLOBAL;
-
-    PROCEDURE SET_GLOBAL (p_name IN VARCHAR2, p_val IN VARCHAR2)
-    IS
-    BEGIN
-        FORMS_APX.set_global(p_name, p_val);
-    END SET_GLOBAL;
-
-    -- Text of Str.DispArbMsg(sys, nbr). STR.pll is MISSING SOURCE; the format below is the one
-    -- the form itself builds inline for message 9-120 (IMPORTERS.BUS_ID.WHEN-VALIDATE-ITEM).
-    -- TODO: verify against STR.DispArbMsg once STR.pll is available.
-    FUNCTION ARABIC_MESSAGE (p_sys IN NUMBER, p_nbr IN NUMBER) RETURN VARCHAR2
-    IS
-        v_txt VARCHAR2(4000);
-    BEGIN
-        v_txt := str_db.getarbmsg(p_sys, p_nbr);
-        IF v_txt = '-1' THEN
-            RETURN 'خطأ فى رقم الرسالة  ' || p_sys || '-' || p_nbr || 'إتصل بالمسانده الفنيه';
-        END IF;
-        RETURN p_sys || '-' || p_nbr || ' : ' || v_txt;
-    END ARABIC_MESSAGE;
-
-    -- ret := Str.DispArbMsg(s, n, ...); RAISE FORM_TRIGGER_FAILURE;
-    PROCEDURE DISPLAY_ARABIC_ERROR (p_sys IN NUMBER, p_nbr IN NUMBER)
-    IS
-    BEGIN
-        FORM_TRIGGER_FAILURE(ARABIC_MESSAGE(p_sys, p_nbr));
-    END DISPLAY_ARABIC_ERROR;
-
-    -- ret := Str.DispArbMsg(s, n, ...);   (no raise)
-    PROCEDURE DISPLAY_ARABIC_INFO (p_sys IN NUMBER, p_nbr IN NUMBER)
-    IS
-    BEGIN
-        info(ARABIC_MESSAGE(p_sys, p_nbr));
-    END DISPLAY_ARABIC_INFO;
-
-    -- Des$Form_errors.MSGGETTEXT(n, '<p1> ...', p1)   -- TODO: MISSING SOURCE Des$Form_errors
-    -- (CG library). English default text with <p1> replaced; verify the Arabic text it returns.
-    FUNCTION CG_MESSAGE (p_default IN VARCHAR2, p1 IN VARCHAR2) RETURN VARCHAR2
-    IS
-    BEGIN
-        RETURN REPLACE(p_default, '<p1>', p1);
-    END CG_MESSAGE;
-
     -- Forms: IF NOT ACTIVITY.ADD_ACTIVITY(9, 2, n, :IMPORTERS.Port_Cd||'!'||:IMPORTERS.Impr_Nbr) THEN
     --            RAISE FORM_TRIGGER_FAILURE;
     -- ACTIVITY is the client library CIC_LIB.pld; its ADD_ACTIVITY calls the DB package
@@ -327,23 +254,9 @@ AS
     BEGIN
         IF activity_db.add_activity(9, 2, p_act, p_rec.port_cd || '!' || p_rec.impr_nbr,
                                     p_ctx.curr_port_cd, p_ctx.user_id, p_ctx.ws_id, v_msg) = 0 THEN
-            FORM_TRIGGER_FAILURE(v_msg);                                -- DISPALERT(V_MSG_TXT) + FORM_TRIGGER_FAILURE
+            FORMS_APX.FORM_TRIGGER_FAILURE(v_msg);                                -- DISPALERT(V_MSG_TXT) + FORM_TRIGGER_FAILURE
         END IF;
     END add_activity;
-
-    -- HIJDATE.Cur_Hij_Date (client library CIC_LIB.pld):
-    --   V_RET := HIJDATE_DB.Cur_Hij_Date(V_MSG); IF V_RET IS NULL THEN DISPALERT(V_MSG); RAISE FORM_TRIGGER_FAILURE;
-    FUNCTION cur_hij_date RETURN DATE
-    IS
-        v_msg VARCHAR2(2000);
-        v_ret DATE;
-    BEGIN
-        v_ret := hijdate_db.cur_hij_date(v_msg);
-        IF v_ret IS NULL THEN
-            FORM_TRIGGER_FAILURE(v_msg);
-        END IF;
-        RETURN v_ret;
-    END cur_hij_date;
 
     -- HIJDATE.VALID_HIJ_DATE (client library CIC_LIB.pld):
     --   IF HDATE IS NULL THEN RETURN NULL; END IF;
@@ -361,7 +274,7 @@ AS
         END IF;
         v_ret := hijdate_db.valid_hij_date(p_dt, v_msg);
         IF v_ret = 0 THEN
-            FORM_TRIGGER_FAILURE(v_msg);                                -- DISPALERT(V_MSG, 'ERROR') + caller's FORM_TRIGGER_FAILURE
+            FORMS_APX.FORM_TRIGGER_FAILURE(v_msg);                                -- DISPALERT(V_MSG, 'ERROR') + caller's FORM_TRIGGER_FAILURE
         END IF;
         RETURN TRUE;
     END valid_hij_date;
@@ -386,7 +299,7 @@ AS
          WHERE ctry_cd = 100;
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
-            DISPLAY_ARABIC_ERROR(18, 15);
+            FORMS_APX.DISPLAY_ARABIC_ERROR(18, 15);
     END ctry_100_defaults;
 
     -- CGSF$CLRLU_IMPORTERS_IMP_BUS_I : clear the BUS_ID city lookup items
@@ -508,45 +421,45 @@ AS
         IF p_ctx.class_cd = 1 AND p_ctx.user_type = 3 THEN
             broker_int(p_rec);
         END IF;
-        SET_GLOBAL('FLAGUPDATE', '0');
-        SET_GLOBAL('EXEC_QUERY_NOW', '0');
-        SET_GLOBAL('PORT_CD', NULL);
-        SET_GLOBAL('IMPR_NBR', NULL);
-        SET_GLOBAL('EXE_DETAIL_QUERY', '0');
-        SET_GLOBAL('LETTER_NBR', NULL);
-        SET_GLOBAL('CHK_DUP_BUSID', '0');
-        SET_GLOBAL('OLD_IMPR_TYPE_CD', '0');
+        FORMS_APX.SET_GLOBAL('FLAGUPDATE', '0');
+        FORMS_APX.SET_GLOBAL('EXEC_QUERY_NOW', '0');
+        FORMS_APX.SET_GLOBAL('PORT_CD', NULL);
+        FORMS_APX.SET_GLOBAL('IMPR_NBR', NULL);
+        FORMS_APX.SET_GLOBAL('EXE_DETAIL_QUERY', '0');
+        FORMS_APX.SET_GLOBAL('LETTER_NBR', NULL);
+        FORMS_APX.SET_GLOBAL('CHK_DUP_BUSID', '0');
+        FORMS_APX.SET_GLOBAL('OLD_IMPR_TYPE_CD', '0');
         IF p_ctx.letter_nbr IS NULL THEN
             NULL;  -- APEX (read_only_rules.md): ui_focus('IMPR_NBR');
         END IF;
         NULL;  -- APEX (read_only_rules.md): ui('PORT_CD', 'ENABLED', FALSE);
-        SET_GLOBAL('VALID', '0');
-        SET_GLOBAL('IMP0F4', '0');
-        SET_GLOBAL('STAT_QUE', '0');
-        SET_GLOBAL('STAT_CLR', '0');
-        SET_GLOBAL('FUNS_IMP', '0');
-        SET_GLOBAL('FUNS_BUSID', '0');
-        SET_GLOBAL('MINS_COMM_CD', NULL);
-        SET_GLOBAL('CHK_IMP_TYP', '0');
-        SET_GLOBAL('ALLOW_MCI', '0');
-        SET_GLOBAL('ALLOW_MOI', '0');
+        FORMS_APX.SET_GLOBAL('VALID', '0');
+        FORMS_APX.SET_GLOBAL('IMP0F4', '0');
+        FORMS_APX.SET_GLOBAL('STAT_QUE', '0');
+        FORMS_APX.SET_GLOBAL('STAT_CLR', '0');
+        FORMS_APX.SET_GLOBAL('FUNS_IMP', '0');
+        FORMS_APX.SET_GLOBAL('FUNS_BUSID', '0');
+        FORMS_APX.SET_GLOBAL('MINS_COMM_CD', NULL);
+        FORMS_APX.SET_GLOBAL('CHK_IMP_TYP', '0');
+        FORMS_APX.SET_GLOBAL('ALLOW_MCI', '0');
+        FORMS_APX.SET_GLOBAL('ALLOW_MOI', '0');
         BEGIN
             SELECT var_value INTO v_val
               FROM sc_port_setting
              WHERE sysobj_id = 24 AND var_name = 'ALLOW_MCI'
                AND port_cd = p_ctx.curr_port_cd;
-            SET_GLOBAL('ALLOW_MCI', v_val);
+            FORMS_APX.SET_GLOBAL('ALLOW_MCI', v_val);
             SELECT var_value INTO v_val
               FROM sc_port_setting
              WHERE sysobj_id = 24 AND var_name = 'ALLOW_MOI'
                AND port_cd = p_ctx.curr_port_cd;
-            SET_GLOBAL('ALLOW_MOI', v_val);
+            FORMS_APX.SET_GLOBAL('ALLOW_MOI', v_val);
         EXCEPTION
             WHEN OTHERS THEN
                 NULL;
         END;
-        SET_GLOBAL('ALLOW_MCI', NVL(GET_GLOBAL('ALLOW_MCI'), '0'));
-        SET_GLOBAL('ALLOW_MOI', NVL(GET_GLOBAL('ALLOW_MOI'), '0'));
+        FORMS_APX.SET_GLOBAL('ALLOW_MCI', NVL(FORMS_APX.GET_GLOBAL('ALLOW_MCI'), '0'));
+        FORMS_APX.SET_GLOBAL('ALLOW_MOI', NVL(FORMS_APX.GET_GLOBAL('ALLOW_MOI'), '0'));
         ctry_100_defaults(p_rec);
     END WHEN_NEW_FORM_INSTANCE;
 
@@ -603,7 +516,7 @@ AS
         END IF;
         NULL;  -- APEX (read_only_rules.md): entrable('CTRY_CD', TRUE);
         NULL;  -- APEX (read_only_rules.md): entrable('ADD_CTRY_CD', TRUE);
-        SET_GLOBAL('INS', '0');
+        FORMS_APX.SET_GLOBAL('INS', '0');
     END IMPORTERS_WHEN_CREATE_RECORD;
 
     -- Shared by IMPR1110F1 / IMPR1110F5: count + name from COMM_IMPR_RGSTR
@@ -891,9 +804,9 @@ AS
         NULL;  -- APEX (read_only_rules.md): entrable('COMM_RGSTRTN_TYPE', FALSE);
         NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID_EXPRD_DT', FALSE);
         NULL;  -- APEX (read_only_rules.md): entrable('CITY_CODE_OF_ID', FALSE);
-        SET_GLOBAL('FUNS_BUSID', '0');
-        SET_GLOBAL('FUNS_IMP', '0');
-        SET_GLOBAL('CHK_IMP_TYP', '0');
+        FORMS_APX.SET_GLOBAL('FUNS_BUSID', '0');
+        FORMS_APX.SET_GLOBAL('FUNS_IMP', '0');
+        FORMS_APX.SET_GLOBAL('CHK_IMP_TYP', '0');
         IF p_rec.impr_nbr IS NULL THEN
             NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID', TRUE);
             NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID_EXPRD_DT', TRUE);
@@ -927,7 +840,7 @@ AS
         END IF;
 
         IF p_ctx.code = 'IMPR1110F2' THEN
-            SET_GLOBAL('FUNS_BUSID', '1');
+            FORMS_APX.SET_GLOBAL('FUNS_BUSID', '1');
             NULL;  -- APEX (read_only_rules.md): entrable('COMM_RGSTRTN_TYPE', TRUE);
             NULL;  -- APEX (read_only_rules.md): entrable('CITY_CODE_OF_ID', TRUE);
             NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID', TRUE);
@@ -941,7 +854,7 @@ AS
                     COMMERCIAL_REGISTER_NAME(p_rec, v_cnt, v_impr_name);
                     IF v_cnt > 1 THEN
                         p_ctx.code := NULL;
-                        FORM_TRIGGER_FAILURE(c_no_rename);
+                        FORMS_APX.FORM_TRIGGER_FAILURE(c_no_rename);
                     ELSIF v_cnt = 1 THEN
                         IF p_answer = c_yes THEN       -- CONFIRM: NEW_RECORD_CONFIRM_TEXT
                             p_rec.arbc_impr_name := v_impr_name;
@@ -949,11 +862,11 @@ AS
                         p_ctx.code := NULL;
                     ELSE
                         p_ctx.code := NULL;
-                        FORM_TRIGGER_FAILURE(c_no_rename);
+                        FORMS_APX.FORM_TRIGGER_FAILURE(c_no_rename);
                     END IF;
                 ELSE
                     p_ctx.code := NULL;
-                    FORM_TRIGGER_FAILURE(c_no_rename);
+                    FORMS_APX.FORM_TRIGGER_FAILURE(c_no_rename);
                 END IF;
             ELSE
                 p_ctx.code := NULL;
@@ -967,7 +880,7 @@ AS
                     COMMERCIAL_REGISTER_NAME(p_rec, v_cnt, v_impr_name);
                     IF v_cnt > 1 THEN
                         p_ctx.code := NULL;
-                        FORM_TRIGGER_FAILURE(c_no_rename);
+                        FORMS_APX.FORM_TRIGGER_FAILURE(c_no_rename);
                     ELSIF v_cnt = 1 THEN
                         IF p_answer = c_yes THEN       -- CONFIRM: NEW_RECORD_CONFIRM_TEXT
                             p_rec.arbc_impr_name := v_impr_name;
@@ -993,8 +906,8 @@ AS
             END IF;
             p_ctx.code := NULL;
         ELSIF p_ctx.code = 'IMPR1110F3' THEN
-            SET_GLOBAL('FUNS_IMP', '1');
-            SET_GLOBAL('CHK_IMP_TYP', '1');
+            FORMS_APX.SET_GLOBAL('FUNS_IMP', '1');
+            FORMS_APX.SET_GLOBAL('CHK_IMP_TYP', '1');
             NULL;  -- APEX (read_only_rules.md): entrable('IMPR_TYPE_CD', TRUE);
             NULL;  -- APEX (read_only_rules.md): ui_focus('IMPR_TYPE_CD');
             IF p_ctx.class_cd = 19 AND p_ctx.user_type = 1 THEN
@@ -1002,13 +915,13 @@ AS
                     -- INTRFACE.MAKE_BLOCK_FULL_OPERATION('IMPORTERS',FALSE,TRUE,FALSE): update only
                     NULL;  -- APEX (read_only_rules.md): ui('IMPORTERS', 'BLOCK_UPDATE_ONLY', TRUE);
                     p_rec.impr_type_cd := 19;
-                    info(' تم تعديل النشاط التجاري الى "مؤسسة/شركة/استثمارية "  ');
+                    FORMS_APX.MESSAGE(' تم تعديل النشاط التجاري الى "مؤسسة/شركة/استثمارية "  ');
                     -- HIGH: Forms COMMIT here (fires PRE-UPDATE/UPDATE/POST-UPDATE). Recorded as
                     -- DO_COMMIT: the page must submit with request SAVE right after this call.
                     NULL;  -- APEX (read_only_rules.md): ui('IMPORTERS', 'DO_COMMIT', TRUE);
                 END IF;
                 IF p_rec.impr_type_cd = 4 THEN
-                    info('لا يمكن التعديل  للمستورد الشخصي الا من خلال الدعم الفني التطبيقات');
+                    FORMS_APX.MESSAGE('لا يمكن التعديل  للمستورد الشخصي الا من خلال الدعم الفني التطبيقات');
                 END IF;
             END IF;
             p_ctx.code := NULL;
@@ -1060,7 +973,7 @@ AS
             OPEN c_p_name;
             FETCH c_p_name INTO p_rec.impr_name_parent;
             IF c_p_name%NOTFOUND THEN
-                DISPLAY_ARABIC_INFO(9, 150);
+                FORMS_APX.DISPLAY_ARABIC_INFO(9, 150);
             END IF;
             CLOSE c_p_name;
         END IF;
@@ -1070,7 +983,7 @@ AS
     PROCEDURE IMPORTERS_WHEN_CLEAR_BLOCK
     IS
     BEGIN
-        SET_GLOBAL('STAT_CLR', '1');
+        FORMS_APX.SET_GLOBAL('STAT_CLR', '1');
     END IMPORTERS_WHEN_CLEAR_BLOCK;
 
     -- Source: IMPORTERS.POST-QUERY
@@ -1414,11 +1327,11 @@ AS
         v_expiry_date  DATE;
         v_dummy        NUMBER(1);
     BEGIN
-        SET_GLOBAL('OLD_IMPR_TYPE_CD', p_rec.impr_type_cd);
-        SET_GLOBAL('OLD_PORT_CD', p_rec.port_cd);
+        FORMS_APX.SET_GLOBAL('OLD_IMPR_TYPE_CD', p_rec.impr_type_cd);
+        FORMS_APX.SET_GLOBAL('OLD_PORT_CD', p_rec.port_cd);
         IF p_rec.impr_nbr IS NOT NULL THEN
             BEGIN
-                xdt := cur_hij_date;
+                xdt := FORMS_APX.CUR_HIJ_DATE;
                 SELECT COUNT(*) INTO v_count
                   FROM importers imp, impr_suspns is_1
                  WHERE imp.port_cd  = p_rec.port_cd
@@ -1500,7 +1413,7 @@ AS
         p_rec.b_mobile_no := p_rec.mobile_no;
         p_rec.b_id_nbr    := p_rec.id_nbr;
         p_rec.b_email     := p_rec.email;
-        SET_GLOBAL('STAT_QUE', '1');
+        FORMS_APX.SET_GLOBAL('STAT_QUE', '1');
         NULL;  -- APEX (read_only_rules.md): TYPE_ENTRABLE_QUERY(p_rec);
         IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
             IF p_rec.bus_id_brnch IS NOT NULL THEN
@@ -1569,7 +1482,7 @@ AS
                  WHERE l_sdp.port_cd = p_rec.port_cd;
             EXCEPTION
                 WHEN NO_DATA_FOUND THEN
-                    info(CG_MESSAGE('This <p1> does not exist', 'رمز الجمــــــــــــــرك'));
+                    FORMS_APX.MESSAGE(FORMS_APX.CG_MESSAGE('This <p1> does not exist', 'رمز الجمــــــــــــــرك'));
             END;
         END IF;
         IF p_rec.impr_type_cd IS NOT NULL AND p_rec.bus_id_type_cd IS NOT NULL THEN
@@ -1584,10 +1497,10 @@ AS
                    AND ROWNUM = 1;
             EXCEPTION
                 WHEN NO_DATA_FOUND THEN
-                    info('رمز النشاط التجاري غير صحيح - أعد إدخال البيانات');
+                    FORMS_APX.MESSAGE('رمز النشاط التجاري غير صحيح - أعد إدخال البيانات');
             END;
         ELSE
-            FORM_TRIGGER_FAILURE(CG_MESSAGE('<p1> must be entered', 'رمز النشاط التجارى'));
+            FORMS_APX.FORM_TRIGGER_FAILURE(FORMS_APX.CG_MESSAGE('<p1> must be entered', 'رمز النشاط التجارى'));
         END IF;
         IF p_rec.ctry_cd IS NOT NULL THEN
             BEGIN
@@ -1597,7 +1510,7 @@ AS
                  WHERE ctry.ctry_cd = p_rec.ctry_cd;
             EXCEPTION
                 WHEN NO_DATA_FOUND THEN
-                    info('رمز الدولة غير صحيح - أعد ادخال البيانات');
+                    FORMS_APX.MESSAGE('رمز الدولة غير صحيح - أعد ادخال البيانات');
             END;
         END IF;
         IF p_rec.city_code_of_id IS NOT NULL AND p_rec.ctry_cd_of_id IS NOT NULL THEN
@@ -1610,7 +1523,7 @@ AS
                    AND ROWNUM = 1;
             EXCEPTION
                 WHEN NO_DATA_FOUND THEN
-                    info('خطأ في رمز مدينة مصدر الرقم الإستدلالي');
+                    FORMS_APX.MESSAGE('خطأ في رمز مدينة مصدر الرقم الإستدلالي');
             END;
         END IF;
         IF p_rec.add_ctry_cd IS NOT NULL AND p_rec.city_code IS NOT NULL THEN
@@ -1624,10 +1537,10 @@ AS
                    AND ROWNUM = 1;
             EXCEPTION
                 WHEN NO_DATA_FOUND THEN
-                    info('خطأ في رمز مدينة عنوان المستورد');
+                    FORMS_APX.MESSAGE('خطأ في رمز مدينة عنوان المستورد');
             END;
         ELSE
-            FORM_TRIGGER_FAILURE(CG_MESSAGE('<p1> must be entered', 'دولــــــــة الإقامـــــة,المدينـة'));
+            FORMS_APX.FORM_TRIGGER_FAILURE(FORMS_APX.CG_MESSAGE('<p1> must be entered', 'دولــــــــة الإقامـــــة,المدينـة'));
         END IF;
 
         IF NVL(gnrl.get_customs_setting(p_ctx.curr_port_cd, 'CR-6730', 9), 0) = 1 THEN
@@ -1871,35 +1784,35 @@ AS
     BEGIN
         -- SET_BLOCK_PROPERTY('IMPORTERS',UPDATE_ALLOWED,PROPERTY_FALSE): UI only
         IF p_rec.b_mobile_no IS NULL THEN
-            FORM_TRIGGER_FAILURE('يجب إدخال رقم المحمول');
+            FORMS_APX.FORM_TRIGGER_FAILURE('يجب إدخال رقم المحمول');
         END IF;
         IF p_rec.city_code IS NULL THEN
-            FORM_TRIGGER_FAILURE('يجب إدخال المدينة');
+            FORMS_APX.FORM_TRIGGER_FAILURE('يجب إدخال المدينة');
         END IF;
 
         chk_dupl_imp_brkr(p_rec, p_ctx);
         IF p_rec.impr_tel_nbr IS NULL THEN
             NULL;  -- APEX (read_only_rules.md): entrable('IMPR_TEL_NBR', TRUE);
-            FORM_TRIGGER_FAILURE('يجب ادخال رقم الهاتف');
+            FORMS_APX.FORM_TRIGGER_FAILURE('يجب ادخال رقم الهاتف');
         END IF;
         IF ((p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd IN (1, 3, 5, 6, 8, 12))
             OR (p_rec.bus_id_type_cd = 3 AND p_rec.impr_type_cd = 4)
             OR (p_rec.bus_id_type_cd = 4 AND p_rec.impr_type_cd = 4)) THEN
             IF p_rec.bus_id_exprd_dt IS NULL THEN
                 NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID_EXPRD_DT', TRUE);
-                DISPLAY_ARABIC_ERROR(9, 220);
+                FORMS_APX.DISPLAY_ARABIC_ERROR(9, 220);
             END IF;
         END IF;
         chk_impr_dupl(p_rec);
         IF NVL(p_rec.activity_entr, 'N') = 'Y' AND p_rec.activity IS NULL THEN
-            FORM_TRIGGER_FAILURE('يجب إدخال حقل نشاط المستورد');
+            FORMS_APX.FORM_TRIGGER_FAILURE('يجب إدخال حقل نشاط المستورد');
         END IF;
         IF p_ctx.class_cd = 1 AND p_ctx.user_type = 3 THEN
             -- CONFIRM 'يجب مراجعة البيانات والتأكد من صحتها قبل التخزين، لايمكن التعديل إلا من قبل شئون المستوردين! هل ترغب بالاستمرار؟'
             IF p_answer = c_yes THEN
                 NULL;
             ELSE
-                FORM_TRIGGER_FAILURE;
+                FORMS_APX.FORM_TRIGGER_FAILURE;
             END IF;
         END IF;
         add_activity(1, p_rec, p_ctx);
@@ -1914,7 +1827,7 @@ AS
                     IF v_cnt = 0 THEN
                         v_ret := lib_usr.gnrl.get_customs_setting(p_ctx.curr_port_cd, 'COMM_TABLE_UNCHECK', 9);
                         IF NVL(v_ret, 0) = 0 THEN
-                            DISPLAY_ARABIC_ERROR(9, 190);
+                            FORMS_APX.DISPLAY_ARABIC_ERROR(9, 190);
                         ELSE
                             v_customs_entered := 1;
                         END IF;
@@ -1922,7 +1835,7 @@ AS
                         v_customs_entered := 0;
                     END IF;
                 ELSE
-                    DISPLAY_ARABIC_ERROR(9, 250);
+                    FORMS_APX.DISPLAY_ARABIC_ERROR(9, 250);
                 END IF;
             ELSIF p_rec.comm_rgstrtn_type = 2 THEN
                 IF p_rec.bus_id IS NOT NULL AND p_rec.bus_id_brnch IS NOT NULL THEN
@@ -1933,7 +1846,7 @@ AS
                     IF v_cnt = 0 THEN
                         v_ret := lib_usr.gnrl.get_customs_setting(p_ctx.curr_port_cd, 'COMM_TABLE_UNCHECK', 9);
                         IF NVL(v_ret, 0) = 0 THEN
-                            DISPLAY_ARABIC_ERROR(9, 190);
+                            FORMS_APX.DISPLAY_ARABIC_ERROR(9, 190);
                         ELSE
                             v_customs_entered := 1;
                         END IF;
@@ -1941,17 +1854,17 @@ AS
                         v_customs_entered := 0;
                     END IF;
                 ELSE
-                    DISPLAY_ARABIC_ERROR(9, 230);
+                    FORMS_APX.DISPLAY_ARABIC_ERROR(9, 230);
                 END IF;
             ELSE
                 NULL;  -- APEX (read_only_rules.md): entrable('COMM_RGSTRTN_TYPE', TRUE);
-                DISPLAY_ARABIC_ERROR(9, 240);
+                FORMS_APX.DISPLAY_ARABIC_ERROR(9, 240);
             END IF;
         END IF;
-        IF GET_GLOBAL('CHK_DUP_BUSID') = '1' THEN
+        IF FORMS_APX.GET_GLOBAL('CHK_DUP_BUSID') = '1' THEN
             -- Note: only the unused PU VIEW_SAME_BUSID sets this global to 1 -> never true today.
             add_activity(3, p_rec, p_ctx);
-            SET_GLOBAL('CHK_DUP_BUSID', '0');
+            FORMS_APX.SET_GLOBAL('CHK_DUP_BUSID', '0');
         END IF;
 
         -- RECORD IMPORTER IN HQ AND PORT (Bassam Mansour 09/01/2019)
@@ -1999,15 +1912,15 @@ AS
             p_ctx.user_id,
             p_ctx.ws_id);
         IF v_result = 1 THEN
-            info(v_msg_txt);
-            info('رقم المستورد' || ' = ' || v_impr_nbr);
-            SET_GLOBAL('SET', v_impr_nbr);
-            IF GET_GLOBAL('SET') IS NOT NULL THEN
-                p_rec.hq_impr_nbr := GET_GLOBAL('SET');
+            FORMS_APX.MESSAGE(v_msg_txt);
+            FORMS_APX.MESSAGE('رقم المستورد' || ' = ' || v_impr_nbr);
+            FORMS_APX.SET_GLOBAL('SET', v_impr_nbr);
+            IF FORMS_APX.GET_GLOBAL('SET') IS NOT NULL THEN
+                p_rec.hq_impr_nbr := FORMS_APX.GET_GLOBAL('SET');
                 NULL;  -- APEX (read_only_rules.md): lock_key_items;
             END IF;
         ELSE
-            FORM_TRIGGER_FAILURE(v_msg_txt);
+            FORMS_APX.FORM_TRIGGER_FAILURE(v_msg_txt);
         END IF;
 
         -- CGFK$CLR_FK_ON_INS
@@ -2052,7 +1965,7 @@ AS
     PROCEDURE IMPORTERS_POST_INSERT (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)
     IS
     BEGIN
-        IF GET_GLOBAL('CHEK') = '1' THEN
+        IF FORMS_APX.GET_GLOBAL('CHEK') = '1' THEN
             -- SET_BLOCK_PROPERTY('IMPORTERS',UPDATE_ALLOWED,PROPERTY_TRUE): UI only
             -- (:GLOBAL.CHEK is never set in this form - set by another form or the OLB)
             NULL;
@@ -2062,9 +1975,9 @@ AS
         IF p_ctx.class_cd = 1 AND p_ctx.user_type = 3 THEN
             create_brkr_impr_auth(p_rec, p_ctx);
         END IF;
-        IF GET_GLOBAL('SET') IS NOT NULL THEN
-            p_rec.impr_nbr    := GET_GLOBAL('SET');
-            p_rec.hq_impr_nbr := GET_GLOBAL('SET');
+        IF FORMS_APX.GET_GLOBAL('SET') IS NOT NULL THEN
+            p_rec.impr_nbr    := FORMS_APX.GET_GLOBAL('SET');
+            p_rec.hq_impr_nbr := FORMS_APX.GET_GLOBAL('SET');
             NULL;  -- APEX (read_only_rules.md): lock_key_items;
             NULL;  -- APEX (read_only_rules.md): entrable('IMPR_TEL_NBR', FALSE);
         END IF;
@@ -2220,7 +2133,7 @@ AS
     BEGIN
         chk_personal(p_rec, p_ctx, p_rec.impr_type_cd, p_rec.hq_impr_nbr);
         IF p_rec.b_mobile_no IS NULL THEN
-            FORM_TRIGGER_FAILURE('يجب إدخال رقم المحمول');
+            FORMS_APX.FORM_TRIGGER_FAILURE('يجب إدخال رقم المحمول');
         END IF;
 
         chk_dupl_imp_brkr(p_rec, p_ctx);
@@ -2229,7 +2142,7 @@ AS
             OR (p_rec.bus_id_type_cd = 4 AND p_rec.impr_type_cd = 4)) THEN
             IF p_rec.bus_id_exprd_dt IS NULL THEN
                 NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID_EXPRD_DT', TRUE);
-                DISPLAY_ARABIC_ERROR(9, 220);
+                FORMS_APX.DISPLAY_ARABIC_ERROR(9, 220);
             END IF;
         END IF;
         IF p_ctx.letter_nbr IS NOT NULL THEN
@@ -2250,9 +2163,9 @@ AS
             CLOSE c1_hq_nbr;
         END IF;
         add_activity(2, p_rec, p_ctx);
-        IF GET_GLOBAL('LETTER_NBR') IS NOT NULL THEN
-            db_journal.journaling_on(GET_GLOBAL('PORT_CD'), GET_GLOBAL('SUPP_TITLE_CD'),
-                                     GET_GLOBAL('LETTER_NBR'), GET_GLOBAL('LETTER_DT'));
+        IF FORMS_APX.GET_GLOBAL('LETTER_NBR') IS NOT NULL THEN
+            db_journal.journaling_on(FORMS_APX.GET_GLOBAL('PORT_CD'), FORMS_APX.GET_GLOBAL('SUPP_TITLE_CD'),
+                                     FORMS_APX.GET_GLOBAL('LETTER_NBR'), FORMS_APX.GET_GLOBAL('LETTER_DT'));
         END IF;
 
         p_rec.arbc_impr_name  := LTRIM(RTRIM(p_rec.arbc_impr_name));
@@ -2269,7 +2182,7 @@ AS
                     IF v_cnt = 0 THEN
                         v_ret := lib_usr.gnrl.get_customs_setting(p_ctx.curr_port_cd, 'COMM_TABLE_UNCHECK', 9);
                         IF NVL(v_ret, 0) = 0 THEN
-                            DISPLAY_ARABIC_ERROR(9, 190);
+                            FORMS_APX.DISPLAY_ARABIC_ERROR(9, 190);
                         ELSE
                             p_rec.customs_entered := 1;
                         END IF;
@@ -2277,7 +2190,7 @@ AS
                         p_rec.customs_entered := 0;
                     END IF;
                 ELSE
-                    DISPLAY_ARABIC_ERROR(9, 250);
+                    FORMS_APX.DISPLAY_ARABIC_ERROR(9, 250);
                 END IF;
             ELSIF p_rec.comm_rgstrtn_type = 2 THEN
                 IF p_rec.bus_id IS NOT NULL AND p_rec.bus_id_brnch IS NOT NULL THEN
@@ -2288,7 +2201,7 @@ AS
                     IF v_cnt = 0 THEN
                         v_ret := lib_usr.gnrl.get_customs_setting(p_ctx.curr_port_cd, 'COMM_TABLE_UNCHECK', 9);
                         IF NVL(v_ret, 0) = 0 THEN
-                            DISPLAY_ARABIC_ERROR(9, 190);
+                            FORMS_APX.DISPLAY_ARABIC_ERROR(9, 190);
                         ELSE
                             p_rec.customs_entered := 1;
                         END IF;
@@ -2296,11 +2209,11 @@ AS
                         p_rec.customs_entered := 0;
                     END IF;
                 ELSE
-                    DISPLAY_ARABIC_ERROR(9, 230);
+                    FORMS_APX.DISPLAY_ARABIC_ERROR(9, 230);
                 END IF;
             ELSE
                 NULL;  -- APEX (read_only_rules.md): entrable('COMM_RGSTRTN_TYPE', TRUE);
-                DISPLAY_ARABIC_ERROR(9, 240);
+                FORMS_APX.DISPLAY_ARABIC_ERROR(9, 240);
             END IF;
         END IF;
         p_rec.mobile_no := p_rec.b_mobile_no;
@@ -2337,9 +2250,9 @@ AS
         IF db_journal.is_journaling_on THEN
             db_journal.journaling_off;
         END IF;
-        IF GET_GLOBAL('FLAGUPDATE') = '1' THEN
+        IF FORMS_APX.GET_GLOBAL('FLAGUPDATE') = '1' THEN
             update_basic_importer(p_rec);
-            SET_GLOBAL('FLAGUPDATE', '0');
+            FORMS_APX.SET_GLOBAL('FLAGUPDATE', '0');
         END IF;
     END IMPORTERS_POST_UPDATE;
 
@@ -2563,11 +2476,11 @@ AS
             IF constraint_name IN ('IMP_PK', 'IMP_BUSID_UK', 'ITIDT_PK', 'IT_PK', 'BIT_PK') THEN
                 RETURN 'هذا السجل مدخل سابقاً - أعد ادخال البيانات';
             ELSIF constraint_name = 'SDP_PK' THEN
-                RETURN CG_MESSAGE('Row exists already with same <p1>', 'رمز الجمرك');
+                RETURN FORMS_APX.CG_MESSAGE('Row exists already with same <p1>', 'رمز الجمرك');
             ELSIF constraint_name = 'CT_PK' THEN
-                RETURN CG_MESSAGE('Row exists already with same <p1>', 'City Cd,رمز الدولة');
+                RETURN FORMS_APX.CG_MESSAGE('Row exists already with same <p1>', 'City Cd,رمز الدولة');
             ELSIF constraint_name = 'CTRY_PK' THEN
-                RETURN CG_MESSAGE('Row exists already with same <p1>', 'رمز الدولة');
+                RETURN FORMS_APX.CG_MESSAGE('Row exists already with same <p1>', 'رمز الدولة');
             END IF;
             RETURN p_sqlerrm;
         ELSIF server_err = 2290 THEN
@@ -2576,13 +2489,13 @@ AS
         -- FK - parent key not found
         IF server_err = 2291 THEN
             IF constraint_name = 'IMP_SDP_FK' THEN
-                RETURN CG_MESSAGE('This <p1> does not exist', 'رمز الجمــــــــــــــرك');
+                RETURN FORMS_APX.CG_MESSAGE('This <p1> does not exist', 'رمز الجمــــــــــــــرك');
             ELSIF constraint_name = 'IMP_NATIONALITY_FK' THEN
-                RETURN CG_MESSAGE('This <p1> does not exist', 'NATIONALITY');
+                RETURN FORMS_APX.CG_MESSAGE('This <p1> does not exist', 'NATIONALITY');
             ELSIF constraint_name = 'IMP_ITIDT_FK' THEN
                 RETURN 'رمز النشاط التجاري غير صحيح - أعد إدخال البيانات';
             ELSIF constraint_name = 'IMP_IMP_FK' THEN
-                RETURN CG_MESSAGE('This <p1> does not exist', 'IMPR_NBR_PARENT,PORT_CD');
+                RETURN FORMS_APX.CG_MESSAGE('This <p1> does not exist', 'IMPR_NBR_PARENT,PORT_CD');
             ELSIF constraint_name = 'IMP_CTRY_FK' THEN
                 RETURN 'رمز الدولة غير صحيح - أعد ادخال البيانات';
             ELSIF constraint_name = 'IMP_BUS_ID_CITY_FK' THEN
@@ -2633,14 +2546,14 @@ AS
         END IF;
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
-            FORM_TRIGGER_FAILURE(CG_MESSAGE('This <p1> does not exist', 'رمز الجمــــــــــــــرك'));
+            FORMS_APX.FORM_TRIGGER_FAILURE(FORMS_APX.CG_MESSAGE('This <p1> does not exist', 'رمز الجمــــــــــــــرك'));
     END PORT_CD_WHEN_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.HQ_IMPR_NBR.POST-CHANGE (same body: BUS_ID, BUS_ID_BRNCH, IMPR_EXPR_TYPE)
     PROCEDURE HQ_IMPR_NBR_POST_CHANGE
     IS
     BEGIN
-        SET_GLOBAL('FLAGUPDATE', '1');
+        FORMS_APX.SET_GLOBAL('FLAGUPDATE', '1');
     END HQ_IMPR_NBR_POST_CHANGE;
 
     -- Source: IMPORTERS.IMPR_NBR.WHEN-VALIDATE-ITEM
@@ -2677,11 +2590,11 @@ AS
              WHERE port_cd  = p_rec.port_cd
                AND impr_nbr = p_rec.impr_nbr;
             IF rec_count <> 0 THEN
-                SET_GLOBAL('PORT_CD', p_rec.port_cd);
-                SET_GLOBAL('IMPR_NBR', p_rec.impr_nbr);
-                SET_GLOBAL('EXEC_QUERY_NOW', '1');
+                FORMS_APX.SET_GLOBAL('PORT_CD', p_rec.port_cd);
+                FORMS_APX.SET_GLOBAL('IMPR_NBR', p_rec.impr_nbr);
+                FORMS_APX.SET_GLOBAL('EXEC_QUERY_NOW', '1');
             ELSE
-                DISPLAY_ARABIC_ERROR(9, 150);
+                FORMS_APX.DISPLAY_ARABIC_ERROR(9, 150);
             END IF;
         END IF;
     END IMPR_NBR_WHEN_VALIDATE_ITEM;
@@ -2906,11 +2819,11 @@ AS
         IF p_rec.impr_nbr IS NOT NULL THEN
             IF NVL(p_rec.impr_type_cd, 0) NOT IN (4, 9)
                AND p_rec.impr_nbr > TO_NUMBER(NVL(gnrl.get_customs_setting('CREATE_IMPR_NBR', 9), 5000000)) THEN
-                DISPLAY_ARABIC_ERROR(9, 332);
+                FORMS_APX.DISPLAY_ARABIC_ERROR(9, 332);
             END IF;
         ELSE
             IF NVL(p_rec.impr_type_cd, 0) NOT IN (4, 9) THEN
-                DISPLAY_ARABIC_ERROR(9, 332);
+                FORMS_APX.DISPLAY_ARABIC_ERROR(9, 332);
             END IF;
         END IF;
 
@@ -2921,11 +2834,11 @@ AS
                AND bus_id_type_cd = 2
                AND status         = 1;
             IF v_count_impr_type_cd > 0 THEN
-                DISPLAY_ARABIC_ERROR(9, 331);
+                FORMS_APX.DISPLAY_ARABIC_ERROR(9, 331);
             END IF;
         END IF;
 
-        IF GET_GLOBAL('VALID') = '0' THEN
+        IF FORMS_APX.GET_GLOBAL('VALID') = '0' THEN
             IF p_rec.impr_type_cd IS NOT NULL THEN
                 SELECT COUNT(*)
                   INTO bus_id_count
@@ -2943,11 +2856,11 @@ AS
                     NULL;  -- APEX (read_only_rules.md): ui('IMPR_TYPE_CD', 'OPEN_LOV', TRUE);
                 ELSE
                     p_rec.impr_type_cd := NULL;
-                    DISPLAY_ARABIC_ERROR(2, 170);
+                    FORMS_APX.DISPLAY_ARABIC_ERROR(2, 170);
                 END IF;
             END IF;
         END IF;
-        SET_GLOBAL('VALID', '0');
+        FORMS_APX.SET_GLOBAL('VALID', '0');
         IF p_rec.impr_type_cd IS NOT NULL THEN
             SELECT impr_type_name
               INTO p_rec.impr_type_name
@@ -2955,7 +2868,7 @@ AS
              WHERE impr_type_cd = p_rec.impr_type_cd;
         END IF;
 
-        IF GET_GLOBAL('FUNS_IMP') = '0' THEN
+        IF FORMS_APX.GET_GLOBAL('FUNS_IMP') = '0' THEN
             IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
                 NULL;  -- APEX (read_only_rules.md): entrable('COMM_RGSTRTN_TYPE', TRUE);
                 NULL;  -- APEX (read_only_rules.md): ui('COMM_RGSTRTN_TYPE', 'REQUIRED', TRUE);
@@ -2993,7 +2906,7 @@ AS
                        AND ctry_grp_stat = 1
                        AND ctry_grp_nbr  = 1;
                     IF v_count = 0 THEN
-                        FORM_TRIGGER_FAILURE('لابد أن تكون دولة المستورد الخليجي تابعة لدول مجلس التعاون');
+                        FORMS_APX.FORM_TRIGGER_FAILURE('لابد أن تكون دولة المستورد الخليجي تابعة لدول مجلس التعاون');
                     END IF;
                 END IF;
             ELSIF p_rec.impr_type_cd IN (13, 14, 16, 17, 18, 20) THEN
@@ -3043,7 +2956,7 @@ AS
                    AND ROWNUM = 1;
             EXCEPTION
                 WHEN NO_DATA_FOUND THEN
-                    FORM_TRIGGER_FAILURE('رمز النشاط التجاري غير صحيح - أعد إدخال البيانات');
+                    FORMS_APX.FORM_TRIGGER_FAILURE('رمز النشاط التجاري غير صحيح - أعد إدخال البيانات');
             END;
         END IF;
     END IMPR_TYPE_CD_VALIDATE_ITEM;
@@ -3062,7 +2975,7 @@ AS
     PROCEDURE IMPR_TYPE_CD_POST_CHANGE (p_rec IN T_RECORD)
     IS
     BEGIN
-        SET_GLOBAL('FLAGUPDATE', '1');
+        FORMS_APX.SET_GLOBAL('FLAGUPDATE', '1');
         IF p_rec.impr_type_cd IN (1, 3, 5, 6, 8, 19) THEN
             NULL;  -- APEX (read_only_rules.md): ui('CITY_CODE_OF_ID', 'REQUIRED', TRUE);
         END IF;
@@ -3104,7 +3017,7 @@ AS
     PROCEDURE IMPR_TYPE_CD_NEW_ITEM_INSTANCE (p_rec IN OUT NOCOPY T_RECORD)
     IS
     BEGIN
-        IF GET_GLOBAL('EXEC_QUERY_NOW') = '1' THEN
+        IF FORMS_APX.GET_GLOBAL('EXEC_QUERY_NOW') = '1' THEN
             NULL;  -- APEX (read_only_rules.md): ui('IMPORTERS', 'REQUERY', TRUE);
         END IF;
         ctry_100_defaults(p_rec);
@@ -3117,7 +3030,7 @@ AS
     IS
     BEGIN
         IF p_rec.impr_type_cd IS NOT NULL THEN
-            SET_GLOBAL('VALID', '1');
+            FORMS_APX.SET_GLOBAL('VALID', '1');
             ctry_100_defaults(p_rec);
         ELSE
             p_rec.impr_type_cd     := NULL;
@@ -3159,13 +3072,13 @@ AS
         IF p_from_item THEN
             IF p_rec.bus_id_exprd_dt IS NOT NULL THEN
                 IF NOT valid_hij_date(p_rec.bus_id_exprd_dt) THEN
-                    FORM_TRIGGER_FAILURE;
+                    FORMS_APX.FORM_TRIGGER_FAILURE;
                 END IF;
             END IF;
         END IF;
         IF p_from_item THEN
-            IF p_rec.bus_id_exprd_dt < cur_hij_date THEN
-                DISPLAY_ARABIC_ERROR(1, 10);
+            IF p_rec.bus_id_exprd_dt < FORMS_APX.CUR_HIJ_DATE THEN
+                FORMS_APX.DISPLAY_ARABIC_ERROR(1, 10);
             END IF;
         END IF;
     END BUS_ID_EXPRD_DT_VALIDATE_ITEM;
@@ -3203,7 +3116,7 @@ AS
     PROCEDURE BUS_ID_TYPE_CD_POST_CHANGE (p_rec IN OUT NOCOPY T_RECORD)
     IS
     BEGIN
-        SET_GLOBAL('FLAGUPDATE', '1');
+        FORMS_APX.SET_GLOBAL('FLAGUPDATE', '1');
         BEGIN
             IF p_rec.impr_type_cd = 4 AND p_rec.bus_id_type_cd = 3
                OR p_rec.impr_type_cd = 4 AND p_rec.bus_id_type_cd = 5 THEN
@@ -3220,7 +3133,7 @@ AS
              WHERE ctry_cd = 100;
         EXCEPTION
             WHEN NO_DATA_FOUND THEN
-                DISPLAY_ARABIC_ERROR(18, 15);
+                FORMS_APX.DISPLAY_ARABIC_ERROR(18, 15);
         END;
     END BUS_ID_TYPE_CD_POST_CHANGE;
 
@@ -3373,7 +3286,7 @@ AS
                    AND ROWNUM = 1;
             EXCEPTION
                 WHEN NO_DATA_FOUND THEN
-                    info('خطأ في رمز مدينة مصدر الرقم الإستدلالي');
+                    FORMS_APX.MESSAGE('خطأ في رمز مدينة مصدر الرقم الإستدلالي');
             END;
         END IF;
     END CITY_CODE_OF_ID_VALIDATE_ITEM;
@@ -3396,7 +3309,7 @@ AS
         v_hijdt    DATE;
     BEGIN
         IF (p_rec.bus_id_brnch IS NULL) AND (p_rec.comm_rgstrtn_type = 1 OR p_rec.comm_rgstrtn_type IS NULL) THEN
-            v_hijdt := cur_hij_date;
+            v_hijdt := FORMS_APX.CUR_HIJ_DATE;
             SELECT COUNT(*) INTO v_count
               FROM importers
              WHERE port_cd        = p_rec.port_cd
@@ -3657,23 +3570,23 @@ AS
     BEGIN
         chk_impr_dupl(p_rec);
         IF (p_rec.impr_type_cd IN (1, 3, 5, 6, 8, 19) AND LENGTH(p_rec.bus_id) != 10) THEN
-            FORM_TRIGGER_FAILURE(' يجب أن يكون الرقم الاستدلالي مكونا من عشرة ارقام ');
+            FORMS_APX.FORM_TRIGGER_FAILURE(' يجب أن يكون الرقم الاستدلالي مكونا من عشرة ارقام ');
         END IF;
         IF p_rec.bus_id_type_cd IN (5, 3) AND p_rec.impr_type_cd = 4 THEN
             p_rec.bus_id := LTRIM(RTRIM(p_rec.bus_id));
             IF LENGTH(p_rec.bus_id) != 10 THEN
-                FORM_TRIGGER_FAILURE(' يجب أن يكون الرقم الاستدلالي مكونا من عشرة ارقام ');
+                FORMS_APX.FORM_TRIGGER_FAILURE(' يجب أن يكون الرقم الاستدلالي مكونا من عشرة ارقام ');
             END IF;
             IF is_digit(p_rec.bus_id) = FALSE THEN
-                DISPLAY_ARABIC_ERROR(9, 270);
+                FORMS_APX.DISPLAY_ARABIC_ERROR(9, 270);
             END IF;
         END IF;
         IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
             IF is_digit(p_rec.bus_id) = FALSE THEN
-                DISPLAY_ARABIC_ERROR(9, 270);
+                FORMS_APX.DISPLAY_ARABIC_ERROR(9, 270);
             END IF;
             IF NOT (LENGTH(p_rec.bus_id) <= 6 OR LENGTH(p_rec.bus_id) = 10) THEN
-                DISPLAY_ARABIC_ERROR(9, 260);
+                FORMS_APX.DISPLAY_ARABIC_ERROR(9, 260);
             END IF;
             IF p_rec.city_code_of_id IS NOT NULL THEN
                 IF LENGTH(p_rec.bus_id) <= 6 THEN
@@ -3688,27 +3601,27 @@ AS
                     alert_txt := str_db.getarbmsg(9, 120);
                     IF alert_txt = '-1' THEN
                         alert_txt := 'خطأ فى رقم الرسالة  ' || 9 || '-' || 120 || 'إتصل بالمسانده الفنيه';
-                        info(alert_txt);
+                        FORMS_APX.MESSAGE(alert_txt);
                     ELSE
                         alert_txt := 9 || '-' || 120 || ' : ' || alert_txt || ' ' || v_all_bus_id;
-                        info(alert_txt);
+                        FORMS_APX.MESSAGE(alert_txt);
                         IF p_cr_answer = c_yes THEN
                             p_rec.bus_id := v_all_bus_id;
                         ELSIF p_cr_answer = c_no THEN
-                            FORM_TRIGGER_FAILURE;
+                            FORMS_APX.FORM_TRIGGER_FAILURE;
                         END IF;
                     END IF;
                 ELSIF LENGTH(p_rec.bus_id) = 10 THEN
                     v_user_bus_id := SUBSTR(p_rec.bus_id, 1, 4);
                     IF TO_NUMBER(v_user_bus_id) <> p_rec.id_mins_comm_cd THEN
-                        DISPLAY_ARABIC_ERROR(9, 130);
+                        FORMS_APX.DISPLAY_ARABIC_ERROR(9, 130);
                     END IF;
                 END IF;
             END IF;
         END IF;
 
         IF (p_rec.bus_id_brnch IS NULL) AND (p_rec.comm_rgstrtn_type = 1 OR p_rec.comm_rgstrtn_type IS NULL) THEN
-            v_hijdt := cur_hij_date;
+            v_hijdt := FORMS_APX.CUR_HIJ_DATE;
             SELECT COUNT(*) INTO v_count
               FROM importers
              WHERE port_cd        = p_rec.port_cd
@@ -3729,7 +3642,7 @@ AS
                    AND ((p_rec.impr_nbr IS NULL) OR (p_rec.impr_nbr IS NOT NULL AND impr_nbr <> p_rec.impr_nbr))
                    AND lib_usr.impr.impr_suspended(p_rec.port_cd, impr_nbr, v_hijdt) <> 1;
                 IF v_impr_nbr <> 0 THEN
-                    FORM_TRIGGER_FAILURE(' لا يمكن تكرار الرقم الإستدلالي - الرقم الإستدلالي مستخدم لمستورد آخر مسلسله بالجمرك رقم : ' || v_impr_nbr);
+                    FORMS_APX.FORM_TRIGGER_FAILURE(' لا يمكن تكرار الرقم الإستدلالي - الرقم الإستدلالي مستخدم لمستورد آخر مسلسله بالجمرك رقم : ' || v_impr_nbr);
                 ELSE
                     -- WARNING 'يوجد مستورد'||V_IMPR_NBR||' موقوف له نفس الرقم الإستدلالي" هل تريد تعديل الرقم الاستدلالي بالرغم من ذلك ؟'
                     -- -> Confirm DA before this call (number from BUS_ID_SUSPENDED_IMPORTER)
@@ -3742,7 +3655,7 @@ AS
             END IF;
         END IF;
 
-        IF GET_GLOBAL('FUNS_BUSID') = '0' THEN
+        IF FORMS_APX.GET_GLOBAL('FUNS_BUSID') = '0' THEN
             IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
                 IF p_rec.comm_rgstrtn_type = 1 THEN
                     SELECT COUNT(bus_id) INTO v_cnt
@@ -3750,7 +3663,7 @@ AS
                      WHERE bus_id   = p_rec.bus_id
                        AND brnchreg = 0;
                     IF v_cnt > 1 THEN
-                        DISPLAY_ARABIC_ERROR(9, 290);
+                        FORMS_APX.DISPLAY_ARABIC_ERROR(9, 290);
                     ELSIF v_cnt = 1 THEN
                         SELECT arbc_impr_name, arbc_name_std, bus_id_exprd_dt, impr_tel_nbr, impr_pob_nbr,
                                impr_zip_cd, impr_fax_nbr, impr_telex_nbr, activity
@@ -3764,7 +3677,7 @@ AS
                     ELSE
                         v_ret := lib_usr.gnrl.get_customs_setting('COMM_TABLE_UNCHECK', 9);
                         IF NVL(v_ret, 0) = 0 THEN
-                            DISPLAY_ARABIC_ERROR(9, 190);
+                            FORMS_APX.DISPLAY_ARABIC_ERROR(9, 190);
                         ELSE
                             NULL;  -- APEX (read_only_rules.md): cr_fields_entrable(TRUE, TRUE);
                         END IF;
@@ -3788,13 +3701,13 @@ AS
         END IF;
         IF p_rec.impr_type_cd = 4 AND p_rec.bus_id_type_cd IN (5, 3) THEN
             IF NOT check_idno(p_rec.bus_id) THEN
-                FORM_TRIGGER_FAILURE('رقم الهوية المدخل غير صحيح.. يجب إدخال رقم هوية صحيح');
+                FORMS_APX.FORM_TRIGGER_FAILURE('رقم الهوية المدخل غير صحيح.. يجب إدخال رقم هوية صحيح');
             END IF;
         END IF;
 
         IF p_rec.rec_status IN ('NEW', 'INSERT')
            AND p_rec.impr_type_cd IN (1, 3, 5, 6, 19) AND p_rec.bus_id_type_cd = 2
-           AND GET_GLOBAL('ALLOW_MCI') = '1' THEN
+           AND FORMS_APX.GET_GLOBAL('ALLOW_MCI') = '1' THEN
             IF p_rec.comm_rgstrtn_type = 1 AND p_rec.bus_id IS NOT NULL THEN
                 get_main_cr_data(p_rec);
             ELSIF p_rec.comm_rgstrtn_type = 2 AND p_rec.bus_id_brnch IS NOT NULL THEN
@@ -3809,7 +3722,7 @@ AS
     PROCEDURE BUS_ID_POST_CHANGE
     IS
     BEGIN
-        SET_GLOBAL('FLAGUPDATE', '1');
+        FORMS_APX.SET_GLOBAL('FLAGUPDATE', '1');
     END BUS_ID_POST_CHANGE;
 
     -- Source: IMPORTERS.BUS_ID.WHEN-NEW-ITEM-INSTANCE
@@ -3842,7 +3755,7 @@ AS
         IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
             IF p_rec.comm_rgstrtn_type IS NULL THEN
                 NULL;  -- APEX (read_only_rules.md): ui('BUS_ID', 'REQUIRED', FALSE);
-                DISPLAY_ARABIC_INFO(9, 240);
+                FORMS_APX.DISPLAY_ARABIC_INFO(9, 240);
                 NULL;  -- APEX (read_only_rules.md): ui_focus('COMM_RGSTRTN_TYPE');
             END IF;
             IF p_rec.comm_rgstrtn_type = 2 THEN
@@ -3851,10 +3764,10 @@ AS
             END IF;
         END IF;
         IF p_rec.city_code_of_id IS NOT NULL
-           AND (GET_GLOBAL('MINS_COMM_CD') IS NOT NULL OR p_rec.id_mins_comm_cd IS NOT NULL)
+           AND (FORMS_APX.GET_GLOBAL('MINS_COMM_CD') IS NOT NULL OR p_rec.id_mins_comm_cd IS NOT NULL)
            AND p_rec.bus_id IS NULL THEN
-            info('الرمز التجاري للمدينة المحددة :  ' || NVL(GET_GLOBAL('MINS_COMM_CD'), p_rec.id_mins_comm_cd));
-            SET_GLOBAL('MINS_COMM_CD', NULL);
+            FORMS_APX.MESSAGE('الرمز التجاري للمدينة المحددة :  ' || NVL(FORMS_APX.GET_GLOBAL('MINS_COMM_CD'), p_rec.id_mins_comm_cd));
+            FORMS_APX.SET_GLOBAL('MINS_COMM_CD', NULL);
         END IF;
     END BUS_ID_WHEN_NEW_ITEM_INSTANCE;
 
@@ -3887,7 +3800,7 @@ AS
         END IF;
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
-            DISPLAY_ARABIC_ERROR(1, 120);
+            FORMS_APX.DISPLAY_ARABIC_ERROR(1, 120);
     END BRNH_CITY_CD_VALIDATE_ITEM;
 
     -- Source: IMPORTERS.BRNH_CITY_CD.WHEN-NEW-ITEM-INSTANCE
@@ -4055,14 +3968,14 @@ AS
     BEGIN
         IF NVL(p_rec.bus_id_brnch_entr, 'Y') = 'Y' THEN      -- GET_ITEM_PROPERTY(...,ENABLED) = 'TRUE'
             IF p_rec.bus_id_brnch = '0' THEN
-                DISPLAY_ARABIC_ERROR(1, 220);
+                FORMS_APX.DISPLAY_ARABIC_ERROR(1, 220);
             END IF;
             IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
                 IF is_digit(p_rec.bus_id_brnch) = FALSE THEN
-                    DISPLAY_ARABIC_ERROR(9, 270);
+                    FORMS_APX.DISPLAY_ARABIC_ERROR(9, 270);
                 END IF;
                 IF NOT (LENGTH(p_rec.bus_id_brnch) = 6 OR LENGTH(p_rec.bus_id_brnch) = 10) THEN
-                    DISPLAY_ARABIC_ERROR(9, 260);
+                    FORMS_APX.DISPLAY_ARABIC_ERROR(9, 260);
                 END IF;
                 IF p_rec.brnh_city_cd IS NOT NULL THEN
                     SELECT mins_comm_cd
@@ -4076,20 +3989,20 @@ AS
                         alert_txt := str_db.getarbmsg(9, 120);
                         IF alert_txt = '-1' THEN
                             alert_txt := 'خطأ فى رقم الرسالة  ' || 9 || '-' || 120 || 'إتصل بالمسانده الفنيه';
-                            info(alert_txt);
+                            FORMS_APX.MESSAGE(alert_txt);
                         ELSE
                             alert_txt := 'سيتم تحويل الرقم الفرعي إلى الرقم ' || v_all_bus_id;
-                            info(alert_txt);
+                            FORMS_APX.MESSAGE(alert_txt);
                             IF p_cr_answer = c_yes THEN
                                 p_rec.bus_id_brnch := v_all_bus_id;
                             ELSIF p_cr_answer = c_no THEN
-                                FORM_TRIGGER_FAILURE;
+                                FORMS_APX.FORM_TRIGGER_FAILURE;
                             END IF;
                         END IF;
                     ELSIF LENGTH(p_rec.bus_id) = 10 THEN
                         v_user_bus_id := SUBSTR(p_rec.bus_id_brnch, 1, 4);
                         IF TO_NUMBER(v_user_bus_id) <> v_id_mins_comm_cd THEN
-                            DISPLAY_ARABIC_ERROR(9, 130);
+                            FORMS_APX.DISPLAY_ARABIC_ERROR(9, 130);
                         END IF;
                     END IF;
                 END IF;
@@ -4097,7 +4010,7 @@ AS
                 NULL;  -- APEX (read_only_rules.md): ui('BUS_ID_BRNCH', 'REQUIRED', FALSE);
             END IF;
             chk_impr_dupl(p_rec);
-            IF GET_GLOBAL('FUNS_BUSID') = '0' THEN
+            IF FORMS_APX.GET_GLOBAL('FUNS_BUSID') = '0' THEN
                 IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
                     IF p_rec.comm_rgstrtn_type = 2 THEN
                         IF p_rec.bus_id IS NOT NULL AND p_rec.bus_id_brnch IS NOT NULL THEN
@@ -4106,7 +4019,7 @@ AS
                              WHERE bus_id       = p_rec.bus_id
                                AND brnch_bus_id = p_rec.bus_id_brnch;
                             IF v_cnt > 1 THEN
-                                DISPLAY_ARABIC_ERROR(9, 290);
+                                FORMS_APX.DISPLAY_ARABIC_ERROR(9, 290);
                             ELSIF v_cnt = 1 THEN
                                 SELECT arbc_impr_name, arbc_name_std, bus_id_exprd_dt, impr_tel_nbr,
                                        impr_pob_nbr, impr_zip_cd, impr_fax_nbr, impr_telex_nbr
@@ -4120,7 +4033,7 @@ AS
                             ELSE
                                 v_ret := lib_usr.gnrl.get_customs_setting('COMM_TABLE_UNCHECK', 9);
                                 IF NVL(v_ret, 0) = 0 THEN
-                                    DISPLAY_ARABIC_ERROR(9, 190);
+                                    FORMS_APX.DISPLAY_ARABIC_ERROR(9, 190);
                                 ELSE
                                     NULL;  -- APEX (read_only_rules.md): cr_fields_entrable(TRUE, FALSE);
                                 END IF;
@@ -4133,7 +4046,7 @@ AS
 
         IF p_rec.rec_status IN ('NEW', 'INSERT')
            AND p_rec.impr_type_cd IN (1, 3, 5, 6, 19) AND p_rec.bus_id_type_cd = 2
-           AND GET_GLOBAL('ALLOW_MCI') = '1' THEN
+           AND FORMS_APX.GET_GLOBAL('ALLOW_MCI') = '1' THEN
             IF p_rec.comm_rgstrtn_type = 1 AND p_rec.bus_id IS NOT NULL THEN
                 get_main_cr_data(p_rec);
             ELSIF p_rec.comm_rgstrtn_type = 2 AND p_rec.bus_id_brnch IS NOT NULL THEN
@@ -4148,7 +4061,7 @@ AS
     PROCEDURE BUS_ID_BRNCH_POST_CHANGE
     IS
     BEGIN
-        SET_GLOBAL('FLAGUPDATE', '1');
+        FORMS_APX.SET_GLOBAL('FLAGUPDATE', '1');
     END BUS_ID_BRNCH_POST_CHANGE;
 
     -- Source: IMPORTERS.BUS_ID_BRNCH.WHEN-NEW-ITEM-INSTANCE
@@ -4205,10 +4118,10 @@ AS
                     WHEN OTHERS THEN
                         NULL;
                 END;
-                IF (GET_GLOBAL('MINS_COMM_CD') IS NOT NULL OR v_mins_comm_cd IS NOT NULL)
+                IF (FORMS_APX.GET_GLOBAL('MINS_COMM_CD') IS NOT NULL OR v_mins_comm_cd IS NOT NULL)
                    AND p_rec.bus_id_brnch IS NULL THEN
-                    info('الرمز التجاري للمدينة المحددة :  ' || NVL(GET_GLOBAL('MINS_COMM_CD'), v_mins_comm_cd));
-                    SET_GLOBAL('MINS_COMM_CD', NULL);
+                    FORMS_APX.MESSAGE('الرمز التجاري للمدينة المحددة :  ' || NVL(FORMS_APX.GET_GLOBAL('MINS_COMM_CD'), v_mins_comm_cd));
+                    FORMS_APX.SET_GLOBAL('MINS_COMM_CD', NULL);
                 END IF;
             END IF;
         END IF;
@@ -4270,7 +4183,7 @@ AS
                AND ctry_grp_stat = 1
                AND ctry_grp_nbr  = 1;
             IF v_count = 0 THEN
-                FORM_TRIGGER_FAILURE('لابد أن تكون دولة المستورد الخليجي تابعة لدول مجلس التعاون');
+                FORMS_APX.FORM_TRIGGER_FAILURE('لابد أن تكون دولة المستورد الخليجي تابعة لدول مجلس التعاون');
             END IF;
         END IF;
         IF p_rec.impr_type_cd = 3 AND p_rec.bus_id_type_cd = 2 THEN
@@ -4288,7 +4201,7 @@ AS
                    AND ctry.ctry_status = 1;
             EXCEPTION
                 WHEN NO_DATA_FOUND THEN
-                    FORM_TRIGGER_FAILURE('رمز الدولة غير صحيح - أعد ادخال البيانات');
+                    FORMS_APX.FORM_TRIGGER_FAILURE('رمز الدولة غير صحيح - أعد ادخال البيانات');
             END;
         END IF;
     END CTRY_CD_WHEN_VALIDATE_ITEM;
@@ -4297,7 +4210,7 @@ AS
     PROCEDURE IMPR_EXPR_TYPE_POST_CHANGE
     IS
     BEGIN
-        SET_GLOBAL('FLAGUPDATE', '1');
+        FORMS_APX.SET_GLOBAL('FLAGUPDATE', '1');
     END IMPR_EXPR_TYPE_POST_CHANGE;
 
     -- Source: IMPORTERS.ARBC_IMPR_NAME.WHEN-VALIDATE-ITEM
@@ -4439,7 +4352,7 @@ AS
                    OR (v = ' ') THEN
                     NULL;
                 ELSE
-                    FORM_TRIGGER_FAILURE('فضلا .. يجب إدخال اسم المستورد باللغة الانجليزية');
+                    FORMS_APX.FORM_TRIGGER_FAILURE('فضلا .. يجب إدخال اسم المستورد باللغة الانجليزية');
                 END IF;
             END LOOP;
         END IF;
@@ -4467,7 +4380,7 @@ AS
         IF p_from_item THEN
             IF p_rec.bus_id_issue_dt IS NOT NULL THEN
                 IF NOT valid_hij_date(p_rec.bus_id_issue_dt) THEN
-                    FORM_TRIGGER_FAILURE;
+                    FORMS_APX.FORM_TRIGGER_FAILURE;
                 END IF;
             END IF;
         END IF;
@@ -4504,7 +4417,7 @@ AS
             OPEN c_p_name;
             FETCH c_p_name INTO p_rec.impr_name_parent;
             IF c_p_name%NOTFOUND THEN
-                DISPLAY_ARABIC_INFO(9, 160);
+                FORMS_APX.DISPLAY_ARABIC_INFO(9, 160);
             END IF;
             CLOSE c_p_name;
         END IF;
@@ -4551,7 +4464,7 @@ AS
              WHERE ctry_cd = p_rec.add_ctry_cd;
         EXCEPTION
             WHEN NO_DATA_FOUND THEN
-                DISPLAY_ARABIC_ERROR(18, 15);
+                FORMS_APX.DISPLAY_ARABIC_ERROR(18, 15);
         END;
         -- CGFK$VALDIDATE_FK_OVF (CGFK$CHK_IMPORTERS_IMP_ADD_CIT) - warning only
         IF p_rec.add_ctry_cd IS NOT NULL AND p_rec.city_code IS NOT NULL THEN
@@ -4566,7 +4479,7 @@ AS
                    AND ROWNUM = 1;
             EXCEPTION
                 WHEN NO_DATA_FOUND THEN
-                    info('خطأ في رمز مدينة عنوان المستورد');
+                    FORMS_APX.MESSAGE('خطأ في رمز مدينة عنوان المستورد');
             END;
         END IF;
     END ADD_CTRY_CD_WHEN_VALIDATE_ITEM;
@@ -4613,7 +4526,7 @@ AS
     BEGIN
         BEGIN
             IF p_rec.city_code IS NULL THEN
-                FORM_TRIGGER_FAILURE('يجب إدخال المدينة');
+                FORMS_APX.FORM_TRIGGER_FAILURE('يجب إدخال المدينة');
             END IF;
             SELECT city_arb_name INTO p_rec.city_name
               FROM cities
@@ -4621,7 +4534,7 @@ AS
                AND city_cd = p_rec.city_code;
         EXCEPTION
             WHEN NO_DATA_FOUND THEN
-                DISPLAY_ARABIC_ERROR(18, 282);
+                FORMS_APX.DISPLAY_ARABIC_ERROR(18, 282);
         END;
         -- CGFK$VALDIDATE_FK_OVF (CGFK$CHK_IMPORTERS_IMP_ADD_CIT) - warning only
         IF p_rec.add_ctry_cd IS NOT NULL AND p_rec.city_code IS NOT NULL THEN
@@ -4636,7 +4549,7 @@ AS
                    AND ROWNUM = 1;
             EXCEPTION
                 WHEN NO_DATA_FOUND THEN
-                    info('خطأ في رمز مدينة عنوان المستورد');
+                    FORMS_APX.MESSAGE('خطأ في رمز مدينة عنوان المستورد');
             END;
         END IF;
     END CITY_CODE_WHEN_VALIDATE_ITEM;
@@ -4664,13 +4577,13 @@ AS
     IS
     BEGIN
         IF p_rec.impr_tel_nbr IS NULL THEN
-            FORM_TRIGGER_FAILURE('يجب إدخال الهاتف');
+            FORMS_APX.FORM_TRIGGER_FAILURE('يجب إدخال الهاتف');
         END IF;
         IF LENGTH(p_rec.impr_tel_nbr) < 10 OR LENGTH(p_rec.impr_tel_nbr) > 10 THEN
-            FORM_TRIGGER_FAILURE('رقم الهاتف يجب أن يتكون من 10 أرقام');
+            FORMS_APX.FORM_TRIGGER_FAILURE('رقم الهاتف يجب أن يتكون من 10 أرقام');
         END IF;
         IF TO_NUMBER(p_rec.impr_tel_nbr) = 0 THEN
-            FORM_TRIGGER_FAILURE('يجب أن يكون رقم الهاتف المدخل أرقام');
+            FORMS_APX.FORM_TRIGGER_FAILURE('يجب أن يكون رقم الهاتف المدخل أرقام');
         END IF;
     END IMPR_TEL_NBR_VALIDATE_ITEM;
 
@@ -4683,7 +4596,7 @@ AS
             IF (LENGTH(p_email) > 0) THEN
                 at_pos := INSTR(p_email, '@');
                 IF (at_pos <= 0 OR at_pos = 1) THEN
-                    FORM_TRIGGER_FAILURE('خطأ فى صيغة البريد الالكتروني');
+                    FORMS_APX.FORM_TRIGGER_FAILURE('خطأ فى صيغة البريد الالكتروني');
                 END IF;
             END IF;
         END IF;
@@ -4738,7 +4651,7 @@ AS
     PROCEDURE B_EMAIL_POST_CHANGE (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT)
     IS
     BEGIN
-        SET_GLOBAL('FLAGUPDATE', '1');
+        FORMS_APX.SET_GLOBAL('FLAGUPDATE', '1');
         p_rec.port_cd := p_ctx.curr_port_cd;
     END B_EMAIL_POST_CHANGE;
 
@@ -4780,8 +4693,8 @@ AS
         v                VARCHAR2(1);
     BEGIN
         IF p_ctx.curr_port_cd = 99 THEN
-            IF GET_GLOBAL('OLD_PORT_CD') <> 99 AND p_rec.impr_nbr IS NOT NULL THEN
-                FORM_TRIGGER_FAILURE('لا يمكن تعديل رقم الجوال, الرجاء استخدام الوظيفة الخاصة بتعديل رقم الجوال');
+            IF FORMS_APX.GET_GLOBAL('OLD_PORT_CD') <> 99 AND p_rec.impr_nbr IS NOT NULL THEN
+                FORMS_APX.FORM_TRIGGER_FAILURE('لا يمكن تعديل رقم الجوال, الرجاء استخدام الوظيفة الخاصة بتعديل رقم الجوال');
             END IF;
         END IF;
         mobile_no_length := LENGTH(p_rec.b_mobile_no);
@@ -4790,12 +4703,12 @@ AS
             IF (v BETWEEN '0' AND '9') THEN
                 NULL;
             ELSE
-                FORM_TRIGGER_FAILURE('يجب أن يكون رقم الجوال المدخل أرقام');
+                FORMS_APX.FORM_TRIGGER_FAILURE('يجب أن يكون رقم الجوال المدخل أرقام');
             END IF;
         END LOOP;
         IF p_rec.b_mobile_no IS NOT NULL
            AND (LENGTH(p_rec.b_mobile_no) != 9 OR SUBSTR(p_rec.b_mobile_no, 1, 1) != 5) THEN
-            FORM_TRIGGER_FAILURE('رقم الجوال المدخل غير صحيح .. الرجاء اعادة الادخال ');
+            FORMS_APX.FORM_TRIGGER_FAILURE('رقم الجوال المدخل غير صحيح .. الرجاء اعادة الادخال ');
         END IF;
     END B_MOBILE_NO_WHEN_VALIDATE_ITEM;
 
@@ -4832,7 +4745,7 @@ AS
             p_rec.bank_iban := 'SA' || p_rec.bank_iban;
         END IF;
         IF p_rec.bank_iban IS NOT NULL AND LENGTH(p_rec.bank_iban) != 24 THEN
-            FORM_TRIGGER_FAILURE(' رقم الآيبان المدخل غير صحيح..الرجاء إعادة الإدخال ');
+            FORMS_APX.FORM_TRIGGER_FAILURE(' رقم الآيبان المدخل غير صحيح..الرجاء إعادة الإدخال ');
         END IF;
     END BANK_IBAN_WHEN_VALIDATE_ITEM;
 
@@ -4875,11 +4788,11 @@ AS
             END IF;
         EXCEPTION
             WHEN OTHERS THEN
-                FORM_TRIGGER_FAILURE('يجب إدخال رقم الهوية بشكل صحيح');
+                FORMS_APX.FORM_TRIGGER_FAILURE('يجب إدخال رقم الهوية بشكل صحيح');
         END;
         IF p_rec.b_id_nbr IS NOT NULL THEN
             IF NOT check_idno(p_rec.b_id_nbr) THEN
-                FORM_TRIGGER_FAILURE('رقم الهوية المدخل غير صحيح.. يجب إدخال رقم هوية صحيح');
+                FORMS_APX.FORM_TRIGGER_FAILURE('رقم الهوية المدخل غير صحيح.. يجب إدخال رقم هوية صحيح');
             END IF;
         END IF;
     END B_ID_NBR_WHEN_VALIDATE_ITEM;
@@ -5007,7 +4920,7 @@ AS
     IS
     BEGIN
         IF p_rec.bus_id_brnch = p_rec.bus_id THEN
-            FORM_TRIGGER_FAILURE('غير مسموح بادخال رقم السجل الرئيسي مساوي لرقم السجل الفرعي .. أعد الادخال');
+            FORMS_APX.FORM_TRIGGER_FAILURE('غير مسموح بادخال رقم السجل الرئيسي مساوي لرقم السجل الفرعي .. أعد الادخال');
         END IF;
     END chk_bus_id_brnch;
 
@@ -5075,7 +4988,7 @@ AS
                    AND bus_id_brnch   = p_rec.bus_id_brnch
                    AND ((p_rec.impr_nbr IS NULL) OR (p_rec.impr_nbr IS NOT NULL AND impr_nbr <> p_rec.impr_nbr))
                    AND ROWNUM <= 1;
-                FORM_TRIGGER_FAILURE(' لايمكن الإدخال، يوجد مستورد مدخل بنفس نوع المستورد ونفس الرقم الإستدلالي الرئيسي والفرعي ورقمه:  '
+                FORMS_APX.FORM_TRIGGER_FAILURE(' لايمكن الإدخال، يوجد مستورد مدخل بنفس نوع المستورد ونفس الرقم الإستدلالي الرئيسي والفرعي ورقمه:  '
                     || v_impr_nbr || ' اسمه ' || v_impr_name);
             END IF;
         END IF;
@@ -5136,7 +5049,7 @@ AS
                                                        p_rec.comm_rgstrtn_type, p_rec.bus_id,
                                                        p_rec.bus_id_brnch, v_msg);
                 IF v_chk = 1 THEN
-                    FORM_TRIGGER_FAILURE(v_msg);
+                    FORMS_APX.FORM_TRIGGER_FAILURE(v_msg);
                 END IF;
             END IF;
         END IF;
@@ -5209,15 +5122,15 @@ AS
         END IF;
     EXCEPTION
         WHEN ex_personal_vs_others THEN
-            p_rec.impr_type_cd := GET_GLOBAL('OLD_IMPR_TYPE_CD');
+            p_rec.impr_type_cd := FORMS_APX.GET_GLOBAL('OLD_IMPR_TYPE_CD');
             SELECT impr_type_name
               INTO p_rec.impr_type_name
               FROM impr_types
              WHERE impr_type_cd = p_rec.impr_type_cd;
             IF p_stop = 1 THEN
-                FORM_TRIGGER_FAILURE('لا يمكن تغيير نوع المستورد من شخصي الي نوع آخر أو العكس , يتم ذلك من خلال الدعم الفني التطبيقات فقط');
+                FORMS_APX.FORM_TRIGGER_FAILURE('لا يمكن تغيير نوع المستورد من شخصي الي نوع آخر أو العكس , يتم ذلك من خلال الدعم الفني التطبيقات فقط');
             ELSE
-                info('لا يمكن تغيير نوع المستورد من شخصي الي نوع آخر أو العكس , يتم ذلك من خلال الدعم الفني التطبيقات فقط');
+                FORMS_APX.MESSAGE('لا يمكن تغيير نوع المستورد من شخصي الي نوع آخر أو العكس , يتم ذلك من خلال الدعم الفني التطبيقات فقط');
             END IF;
     END chk_personal;
 
@@ -5316,7 +5229,7 @@ AS
                 p_rec.express_post, p_rec.id_nbr, p_rec.bus_id_issue_dt, p_rec.bus_id_status,
                 p_rec.creation_flag, p_rec.impr_address, v_impr_master_nbr, v_act_status);
         ELSE
-            DISPLAY_ARABIC_ERROR(9, 140);
+            FORMS_APX.DISPLAY_ARABIC_ERROR(9, 140);
         END IF;
     END insert_audit_record;
 
@@ -5394,8 +5307,8 @@ AS
     IS
     BEGIN
         IF p_ctx.user_type = 2 AND p_ctx.class_cd = 23 THEN
-            SET_GLOBAL('IMPR_NBR_B', p_rec.impr_nbr);
-            SET_GLOBAL('IMPR_NAME_B', p_rec.arbc_impr_name);
+            FORMS_APX.SET_GLOBAL('IMPR_NBR_B', p_rec.impr_nbr);
+            FORMS_APX.SET_GLOBAL('IMPR_NAME_B', p_rec.arbc_impr_name);
         END IF;
     END return_impr_id;
 
@@ -5478,8 +5391,8 @@ AS
                 SET_FUNCTION_ENABLED('IMPR1110F3', FALSE);
             END IF;
         END IF;
-        IF (NVL(p_rec.bus_id_type_cd, 0) = 2 AND GET_GLOBAL('ALLOW_MCI') = '1' AND p_rec.impr_type_cd <> 12)
-           OR (p_rec.impr_type_cd = 4 AND p_rec.bus_id_type_cd IN (3, 5) AND GET_GLOBAL('ALLOW_MOI') = '1') THEN
+        IF (NVL(p_rec.bus_id_type_cd, 0) = 2 AND FORMS_APX.GET_GLOBAL('ALLOW_MCI') = '1' AND p_rec.impr_type_cd <> 12)
+           OR (p_rec.impr_type_cd = 4 AND p_rec.bus_id_type_cd IN (3, 5) AND FORMS_APX.GET_GLOBAL('ALLOW_MOI') = '1') THEN
             SET_FUNCTION_ENABLED('IMPR_MCI_SERVICE', TRUE);
         ELSE
             SET_FUNCTION_ENABLED('IMPR_MCI_SERVICE', FALSE);
@@ -5880,7 +5793,7 @@ AS
         v_bus_id_status    importers.bus_id_status%TYPE;
         v_city_code_of_id  importers.city_code_of_id%TYPE;
     BEGIN
-        info('سيتم الحصول على بيانات المستورد من وزارة التجارة.....الرجاء الإنتظار');
+        FORMS_APX.MESSAGE('سيتم الحصول على بيانات المستورد من وزارة التجارة.....الرجاء الإنتظار');
         string_result := p_string_result;
         IF string_result IS NOT NULL THEN
             string_result := LTRIM(RTRIM(string_result));
@@ -6111,10 +6024,10 @@ AS
                 add_activity(6, p_rec, p_ctx);
             END IF;
             -- STANDARD.COMMIT;   -- removed, see header
-            info('تم أنشاء التفويض');
-            SET_GLOBAL('IMPR_NBR_B', p_rec.impr_nbr);
-            SET_GLOBAL('IMPR_NAME_B', p_rec.arbc_impr_name);
-            SET_GLOBAL('BRKR_ATHRZTN_NBR_B', v_athrztn_seq_nbr);
+            FORMS_APX.MESSAGE('تم أنشاء التفويض');
+            FORMS_APX.SET_GLOBAL('IMPR_NBR_B', p_rec.impr_nbr);
+            FORMS_APX.SET_GLOBAL('IMPR_NAME_B', p_rec.arbc_impr_name);
+            FORMS_APX.SET_GLOBAL('BRKR_ATHRZTN_NBR_B', v_athrztn_seq_nbr);
         END IF;
     END create_brkr_impr_auth;
 
@@ -6212,7 +6125,7 @@ AS
         IF p_rec.port_cd IS NOT NULL AND p_rec.impr_nbr IS NOT NULL THEN
             BEGIN
                 lib_usr.impr_utilities.update_importers_names(p_rec.port_cd, p_rec.impr_nbr, msg_cd, v_msg);
-                info(v_msg);
+                FORMS_APX.MESSAGE(v_msg);
             EXCEPTION
                 WHEN OTHERS THEN
                     NULL;
@@ -6300,15 +6213,15 @@ AS
         p_result_cd NUMBER;
         p_msg       VARCHAR2(50);
     BEGIN
-        IF GET_GLOBAL('MOBILE_NO') IS NOT NULL THEN
-            impr.chk_mobile_format(GET_GLOBAL('MOBILE_NO'), v_result);
+        IF FORMS_APX.GET_GLOBAL('MOBILE_NO') IS NOT NULL THEN
+            impr.chk_mobile_format(FORMS_APX.GET_GLOBAL('MOBILE_NO'), v_result);
             IF v_result = 0 THEN
-                FORM_TRIGGER_FAILURE('رقم الجوال المدخل غير صحيح');
+                FORMS_APX.FORM_TRIGGER_FAILURE('رقم الجوال المدخل غير صحيح');
             END IF;
-            impr_utilities.update_impr_mobile_no(p_rec.impr_nbr, GET_GLOBAL('MOBILE_NO'), p_result_cd, p_msg);
+            impr_utilities.update_impr_mobile_no(p_rec.impr_nbr, FORMS_APX.GET_GLOBAL('MOBILE_NO'), p_result_cd, p_msg);
             IF p_result_cd = 1 THEN
                 -- STANDARD.COMMIT;   -- removed, see header
-                info('تمت العملية بنجاح');
+                FORMS_APX.MESSAGE('تمت العملية بنجاح');
             END IF;
         END IF;
     END lov_update_moblie;
@@ -6406,9 +6319,9 @@ AS
         IF cd IN ('IMPR1110F2', 'IMPR1110F1', 'IMPR1110F3', 'IMPR1110F5') THEN
             -- APEX-DA: modal dialog SUPPORT_ENTRY (P_MODE=0, P_CURR_PORT_CD=PORT_CD) is opened by
             -- the page first; this part runs after the dialog closed and set :GLOBAL.LETTER_NBR.
-            IF GET_GLOBAL('LETTER_NBR') IS NOT NULL THEN
+            IF FORMS_APX.GET_GLOBAL('LETTER_NBR') IS NOT NULL THEN
                 p_ctx.code       := cd;
-                p_ctx.letter_nbr := GET_GLOBAL('LETTER_NBR');
+                p_ctx.letter_nbr := FORMS_APX.GET_GLOBAL('LETTER_NBR');
             END IF;
         END IF;
         IF cd IN ('IMPR_CAR_AGENT') THEN
@@ -6424,13 +6337,13 @@ AS
                 lib_usr.web_services_gazt.pr_import_impr_certificate(p_rec.bus_id, p_rec.bus_id_brnch,
                                                                     p_result, p_result_msg);
                 IF p_result = 3 THEN
-                    info('تم التحديث بنجاح');
+                    FORMS_APX.MESSAGE('تم التحديث بنجاح');
                 ELSIF p_result = '00' THEN
-                    info('رقم استدلالي غير صحيح');
+                    FORMS_APX.MESSAGE('رقم استدلالي غير صحيح');
                 ELSIF p_result = '02' THEN
-                    info('رقم شهادة غير صحيح');
+                    FORMS_APX.MESSAGE('رقم شهادة غير صحيح');
                 ELSIF p_result = '04' THEN
-                    info('لا يوجد بيانات');
+                    FORMS_APX.MESSAGE('لا يوجد بيانات');
                 END IF;
             EXCEPTION
                 WHEN OTHERS THEN
@@ -6441,11 +6354,10 @@ AS
             IF p_rec.impr_nbr > 3000000 THEN
                 NULL;   -- APEX-DA: open dialog LOV_UPDATE_IMPR_MOBILE, then lov_update_moblie
             ELSE
-                FORM_TRIGGER_FAILURE('رقم المستورد غير محدث ,, الرجاء مراجعة الدعم');
+                FORMS_APX.FORM_TRIGGER_FAILURE('رقم المستورد غير محدث ,, الرجاء مراجعة الدعم');
             END IF;
         END IF;
     END exec_funs;
-
 
     -- =========================================================================
     -- 4 READ-ONLY / REQUIRED / VISIBLE RULES (work/step02/read_only_rules.md)
@@ -6856,7 +6768,6 @@ AS
         CAR_AGENT_FLAG_LOCKED    := YES_NO(CAR_AGENT_FLAG_IS_READ_ONLY(P_IMPR_NBR, P_CODE));
     END READ_ONLY_FLAGS;
 
-
     -- =========================================================================
     -- 5 f345 HELPERS AND SMALL ENTRY POINTS
     -- =========================================================================
@@ -6892,46 +6803,10 @@ AS
     END PRIVATE_ENABLED_FUNCTIONS;
 
     -- Section: f345 HELPERS
-    -- f345 CHECK_ERROR: raise the text returned by a <ITEM>_VALIDATION function (used by the FOS DAs)
-    PROCEDURE CHECK_ERROR (ERROR_TEXT IN VARCHAR2)
-    IS
-    BEGIN
-        IF ERROR_TEXT IS NOT NULL THEN
-            raise_application_error(c_err, ERROR_TEXT);
-        END IF;
-    END CHECK_ERROR;
-
-    -- Section: f345 HELPERS
-    -- Validation "<ITEM> REQUIRED" (server-side condition <ITEM>_IS_REQUIRED): Forms FRM-40202
-    FUNCTION REQUIRED_VALIDATION (ITEM_VALUE IN VARCHAR2, ITEM_LABEL IN VARCHAR2) RETURN VARCHAR2
-    IS
-    BEGIN
-        IF ITEM_VALUE IS NULL THEN
-            RETURN CG_MESSAGE('<p1> must be entered', ITEM_LABEL);
-        END IF;
-        RETURN NULL;
-    END REQUIRED_VALIDATION;
-
-    -- Section: f345 HELPERS
-    -- Hijri date format of the application: APEX Application Setting HIJRI_DATE_FORMAT, default YYYY-MM-MI
-    -- (the f345 Hijri picker writes iYYYY-iMM-iDD; the day is kept in the minutes). Change the setting
-    -- (Shared Components > Application Settings, or APEX_APP_SETTING.SET_VALUE) to change it.
-    -- APEX  : computation P1110_HIJRI_DATE_FORMAT (Before Header) = format mask &P1110_HIJRI_DATE_FORMAT.
-    --         of the Hijri date items; the package converts the item texts with the same function.
-    FUNCTION HIJRI_DATE_FORMAT RETURN VARCHAR2
-    IS
-    BEGIN
-        RETURN NVL(APEX_APP_SETTING.GET_VALUE(p_name => 'HIJRI_DATE_FORMAT'), c_hijri_date_format);
-    EXCEPTION
-        WHEN OTHERS THEN               -- no APEX session / setting missing: the default format
-            RETURN c_hijri_date_format;
-    END HIJRI_DATE_FORMAT;
-
-    -- Section: f345 HELPERS
     -- Process "P0_PAGE_PK CHECK" (Before Header): P0_PAGE_PK holds the ROWID of the importer (Forms key
     -- mode ROWID); forget a key that is not a row of IMPORTERS of this port (block WHERE clause).
     -- The search page 111001 passes the ROWID URL-safe (TRANSLATE(ROWID, '+/', '-_'): a '+' in f?p arrives
-    -- as a space and the checksum fails); it is translated back first. A ROWID never contains '-' or '_'.
+    -- as a space and the checksum fails); FORMS_APX.ROWID_FROM_URL translates it back first.
     PROCEDURE P0_PAGE_PK_CHECK (P_PAGE_PK    IN OUT VARCHAR2,
                                 P_CURR_PORT_CD IN     NUMBER)
     IS
@@ -6940,7 +6815,7 @@ AS
         IF P_PAGE_PK IS NULL THEN
             RETURN;
         END IF;
-        P_PAGE_PK := TRANSLATE(P_PAGE_PK, '-_', '+/');      -- URL-safe ROWID of page 111001 -> ROWID
+        P_PAGE_PK := FORMS_APX.ROWID_FROM_URL(P_PAGE_PK);   -- URL-safe ROWID of page 111001 -> ROWID
         SELECT COUNT(*)
           INTO v_cnt
           FROM importers i
@@ -6972,22 +6847,6 @@ AS
     END IMPORTER_ROW_ID;
 
     -- Section: f345 HELPERS
-    -- Computation P1110_MODULE_ID: SC_SYSTEM_OBJECTS id of the form (f345 Page Functions list)
-    FUNCTION GET_MODULE_ID (P_MODULE_ID IN VARCHAR2) RETURN VARCHAR2
-    IS
-        v_id VARCHAR2(40);
-    BEGIN
-        IF P_MODULE_ID IS NOT NULL THEN
-            RETURN P_MODULE_ID;
-        END IF;
-        SELECT TO_CHAR(MIN(o.sysobj_id))
-          INTO v_id
-          FROM sc_system_objects o
-         WHERE UPPER(REGEXP_REPLACE(o.sys_os_file_name, '\..*$', '')) = 'IMPR1110';
-        RETURN v_id;
-    END GET_MODULE_ID;
-
-    -- Section: f345 HELPERS
     -- Process "PARAMETERS ENTRY" (f345): one-shot hand-over of :PARAMETER.PRSNL_IMPR / LETTER_NBR
     PROCEDURE PARAMETERS_ENTRY (APP_P_PRSNL_IMPR       IN OUT VARCHAR2,
                                 APP_P_LETTER_NBR       IN OUT VARCHAR2,
@@ -7000,25 +6859,6 @@ AS
         APP_P_PRSNL_IMPR       := NULL;
         APP_P_LETTER_NBR       := NULL;
     END PARAMETERS_ENTRY;
-
-    -- Section: f345 HELPERS
-    -- Process "HEADER TITLE": the form title from SC_SYSTEM_OBJECTS (Forms TITLE block)
-    PROCEDURE HEADER_TITLE (P_MODULE_ID   IN     VARCHAR2,
-                            P_HERO_TITLE IN OUT VARCHAR2)
-    IS
-        v_name VARCHAR2(400);
-    BEGIN
-        IF P_MODULE_ID IS NOT NULL THEN
-            SELECT MAX(o.sys_aname)
-              INTO v_name
-              FROM sc_system_objects o
-             WHERE o.sysobj_id = TO_NUMBER(HEADER_TITLE.P_MODULE_ID);
-        END IF;
-        P_HERO_TITLE := NVL(v_name, c_hero_title);
-    EXCEPTION
-        WHEN VALUE_ERROR OR INVALID_NUMBER THEN
-            P_HERO_TITLE := c_hero_title;
-    END HEADER_TITLE;
 
     -- Section: PAGE 111002 (LOV_UPDATE_IMPR_MOBILE)
     -- Source: LOV_UPDATE_IMPR_MOBILE.CTRL_BLK.PB_OK (:GLOBAL.OK := 1; COPY_SELECTED_VALUES)
@@ -7036,7 +6876,6 @@ AS
     BEGIN
         FORMS_APX.set_global('MOBILE_NO', NULL);
     END MOBILE_CANCEL;
-
 
     -- =========================================================================
     -- 6 APEX ENTRY POINTS (generated: IN / IN OUT parameters = items the logic reads / writes)
@@ -7552,7 +7391,7 @@ AS
     IS
         r T_RECORD;
     BEGIN
-        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, HIJRI_DATE_FORMAT);
+        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, FORMS_APX.HIJRI_DATE_FORMAT);
         BUS_ID_EXPRD_DT_VALIDATE_ITEM(r, FALSE);
         RETURN NULL;
     EXCEPTION
@@ -7566,7 +7405,7 @@ AS
     IS
         r T_RECORD;
     BEGIN
-        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, HIJRI_DATE_FORMAT);
+        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, FORMS_APX.HIJRI_DATE_FORMAT);
         BUS_ID_EXPRD_DT_VALIDATE_ITEM(r, TRUE);
     END BUS_ID_EXPRD_DT_VALIDATE_ITEM;
 
@@ -7735,7 +7574,7 @@ AS
         r.impr_nbr := P_IMPR_NBR;
         r.bus_id_status := P_BUS_ID_STATUS;
         r.impr_type_cd := P_IMPR_TYPE_CD;
-        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, HIJRI_DATE_FORMAT);
+        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, FORMS_APX.HIJRI_DATE_FORMAT);
         r.bus_id_type_cd := P_BUS_ID_TYPE_CD;
         r.comm_rgstrtn_type := P_COMM_RGSTRTN_TYPE;
         r.city_code_of_id := P_CITY_CODE_OF_ID;
@@ -7746,7 +7585,7 @@ AS
         r.impr_name_std := P_IMPR_NAME_STD;
         r.lst_tran_dt := TO_DATE(P_LST_TRAN_DT, c_date_time_mask);
         r.impr_address := P_IMPR_ADDRESS;
-        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, HIJRI_DATE_FORMAT);
+        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, FORMS_APX.HIJRI_DATE_FORMAT);
         r.impr_pob_nbr := P_IMPR_POB_NBR;
         r.impr_zip_cd := P_IMPR_ZIP_CD;
         r.impr_tel_nbr := P_IMPR_TEL_NBR;
@@ -7812,7 +7651,7 @@ AS
         r.impr_nbr := P_IMPR_NBR;
         r.bus_id_status := P_BUS_ID_STATUS;
         r.impr_type_cd := P_IMPR_TYPE_CD;
-        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, HIJRI_DATE_FORMAT);
+        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, FORMS_APX.HIJRI_DATE_FORMAT);
         r.bus_id_type_cd := P_BUS_ID_TYPE_CD;
         r.comm_rgstrtn_type := P_COMM_RGSTRTN_TYPE;
         r.city_code_of_id := P_CITY_CODE_OF_ID;
@@ -7823,7 +7662,7 @@ AS
         r.impr_name_std := P_IMPR_NAME_STD;
         r.lst_tran_dt := TO_DATE(P_LST_TRAN_DT, c_date_time_mask);
         r.impr_address := P_IMPR_ADDRESS;
-        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, HIJRI_DATE_FORMAT);
+        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, FORMS_APX.HIJRI_DATE_FORMAT);
         r.impr_pob_nbr := P_IMPR_POB_NBR;
         r.impr_zip_cd := P_IMPR_ZIP_CD;
         r.impr_tel_nbr := P_IMPR_TEL_NBR;
@@ -7842,14 +7681,14 @@ AS
         BUS_ID_POST_CHANGE;
         BUS_ID_WHEN_VALIDATE_ITEM(r, c, NVL(P_ANSWER, c_yes), NVL(P_SUSPEND_ANSWER, c_yes));
         P_BUS_ID_STATUS := r.bus_id_status;
-        P_BUS_ID_EXPRD_DT := TO_CHAR(r.bus_id_exprd_dt, HIJRI_DATE_FORMAT);
+        P_BUS_ID_EXPRD_DT := TO_CHAR(r.bus_id_exprd_dt, FORMS_APX.HIJRI_DATE_FORMAT);
         P_CITY_CODE_OF_ID := r.city_code_of_id;
         P_BUS_ID := r.bus_id;
         P_ARBC_IMPR_NAME := r.arbc_impr_name;
         P_IMPR_NAME_STD := r.impr_name_std;
         P_LST_TRAN_DT := TO_CHAR(r.lst_tran_dt, c_date_time_mask);
         P_IMPR_ADDRESS := r.impr_address;
-        P_BUS_ID_ISSUE_DT := TO_CHAR(r.bus_id_issue_dt, HIJRI_DATE_FORMAT);
+        P_BUS_ID_ISSUE_DT := TO_CHAR(r.bus_id_issue_dt, FORMS_APX.HIJRI_DATE_FORMAT);
         P_IMPR_POB_NBR := r.impr_pob_nbr;
         P_IMPR_ZIP_CD := r.impr_zip_cd;
         P_IMPR_TEL_NBR := r.impr_tel_nbr;
@@ -7985,7 +7824,7 @@ AS
         r.impr_nbr := P_IMPR_NBR;
         r.bus_id_status := P_BUS_ID_STATUS;
         r.impr_type_cd := P_IMPR_TYPE_CD;
-        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, HIJRI_DATE_FORMAT);
+        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, FORMS_APX.HIJRI_DATE_FORMAT);
         r.bus_id_type_cd := P_BUS_ID_TYPE_CD;
         r.comm_rgstrtn_type := P_COMM_RGSTRTN_TYPE;
         r.city_code_of_id := P_CITY_CODE_OF_ID;
@@ -7996,7 +7835,7 @@ AS
         r.impr_name_std := P_IMPR_NAME_STD;
         r.lst_tran_dt := TO_DATE(P_LST_TRAN_DT, c_date_time_mask);
         r.impr_address := P_IMPR_ADDRESS;
-        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, HIJRI_DATE_FORMAT);
+        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, FORMS_APX.HIJRI_DATE_FORMAT);
         r.impr_pob_nbr := P_IMPR_POB_NBR;
         r.impr_zip_cd := P_IMPR_ZIP_CD;
         r.impr_tel_nbr := P_IMPR_TEL_NBR;
@@ -8063,7 +7902,7 @@ AS
         r.impr_nbr := P_IMPR_NBR;
         r.bus_id_status := P_BUS_ID_STATUS;
         r.impr_type_cd := P_IMPR_TYPE_CD;
-        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, HIJRI_DATE_FORMAT);
+        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, FORMS_APX.HIJRI_DATE_FORMAT);
         r.bus_id_type_cd := P_BUS_ID_TYPE_CD;
         r.comm_rgstrtn_type := P_COMM_RGSTRTN_TYPE;
         r.city_code_of_id := P_CITY_CODE_OF_ID;
@@ -8074,7 +7913,7 @@ AS
         r.impr_name_std := P_IMPR_NAME_STD;
         r.lst_tran_dt := TO_DATE(P_LST_TRAN_DT, c_date_time_mask);
         r.impr_address := P_IMPR_ADDRESS;
-        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, HIJRI_DATE_FORMAT);
+        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, FORMS_APX.HIJRI_DATE_FORMAT);
         r.impr_pob_nbr := P_IMPR_POB_NBR;
         r.impr_zip_cd := P_IMPR_ZIP_CD;
         r.impr_tel_nbr := P_IMPR_TEL_NBR;
@@ -8094,14 +7933,14 @@ AS
         BUS_ID_BRNCH_POST_CHANGE;
         BUS_ID_BRNCH_VALIDATE_ITEM(r, c, NVL(P_ANSWER, c_yes));
         P_BUS_ID_STATUS := r.bus_id_status;
-        P_BUS_ID_EXPRD_DT := TO_CHAR(r.bus_id_exprd_dt, HIJRI_DATE_FORMAT);
+        P_BUS_ID_EXPRD_DT := TO_CHAR(r.bus_id_exprd_dt, FORMS_APX.HIJRI_DATE_FORMAT);
         P_CITY_CODE_OF_ID := r.city_code_of_id;
         P_BUS_ID_BRNCH := r.bus_id_brnch;
         P_ARBC_IMPR_NAME := r.arbc_impr_name;
         P_IMPR_NAME_STD := r.impr_name_std;
         P_LST_TRAN_DT := TO_CHAR(r.lst_tran_dt, c_date_time_mask);
         P_IMPR_ADDRESS := r.impr_address;
-        P_BUS_ID_ISSUE_DT := TO_CHAR(r.bus_id_issue_dt, HIJRI_DATE_FORMAT);
+        P_BUS_ID_ISSUE_DT := TO_CHAR(r.bus_id_issue_dt, FORMS_APX.HIJRI_DATE_FORMAT);
         P_IMPR_POB_NBR := r.impr_pob_nbr;
         P_IMPR_ZIP_CD := r.impr_zip_cd;
         P_IMPR_TEL_NBR := r.impr_tel_nbr;
@@ -8297,7 +8136,7 @@ AS
     IS
         r T_RECORD;
     BEGIN
-        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, HIJRI_DATE_FORMAT);
+        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, FORMS_APX.HIJRI_DATE_FORMAT);
         BUS_ID_ISSUE_DT_VALIDATE_ITEM(r, FALSE);
         RETURN NULL;
     EXCEPTION
@@ -8311,7 +8150,7 @@ AS
     IS
         r T_RECORD;
     BEGIN
-        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, HIJRI_DATE_FORMAT);
+        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, FORMS_APX.HIJRI_DATE_FORMAT);
         BUS_ID_ISSUE_DT_VALIDATE_ITEM(r, TRUE);
     END BUS_ID_ISSUE_DT_VALIDATE_ITEM;
 
@@ -8752,7 +8591,7 @@ AS
         r.hq_impr_nbr := P_HQ_IMPR_NBR;
         r.impr_nbr := P_IMPR_NBR;
         r.impr_type_cd := P_IMPR_TYPE_CD;
-        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, HIJRI_DATE_FORMAT);
+        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, FORMS_APX.HIJRI_DATE_FORMAT);
         r.bus_id_type_cd := P_BUS_ID_TYPE_CD;
         r.comm_rgstrtn_type := P_COMM_RGSTRTN_TYPE;
         r.city_code_of_id := P_CITY_CODE_OF_ID;
@@ -8766,7 +8605,7 @@ AS
         r.eng_impr_name := P_ENG_IMPR_NAME;
         r.impr_cntct_name := P_IMPR_CNTCT_NAME;
         r.impr_address := P_IMPR_ADDRESS;
-        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, HIJRI_DATE_FORMAT);
+        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, FORMS_APX.HIJRI_DATE_FORMAT);
         r.impr_nbr_parent := P_IMPR_NBR_PARENT;
         r.add_ctry_cd := P_ADD_CTRY_CD;
         r.city_code := P_CITY_CODE;
@@ -8867,7 +8706,7 @@ AS
         r.impr_nbr := P_IMPR_NBR;
         r.bus_id_status := P_BUS_ID_STATUS;
         r.impr_type_cd := P_IMPR_TYPE_CD;
-        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, HIJRI_DATE_FORMAT);
+        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, FORMS_APX.HIJRI_DATE_FORMAT);
         r.bus_id_type_cd := P_BUS_ID_TYPE_CD;
         r.comm_rgstrtn_type := P_COMM_RGSTRTN_TYPE;
         r.city_code_of_id := P_CITY_CODE_OF_ID;
@@ -8883,7 +8722,7 @@ AS
         r.eng_impr_name := P_ENG_IMPR_NAME;
         r.impr_cntct_name := P_IMPR_CNTCT_NAME;
         r.impr_address := P_IMPR_ADDRESS;
-        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, HIJRI_DATE_FORMAT);
+        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, FORMS_APX.HIJRI_DATE_FORMAT);
         r.impr_nbr_parent := P_IMPR_NBR_PARENT;
         r.add_ctry_cd := P_ADD_CTRY_CD;
         r.city_code := P_CITY_CODE;
@@ -8968,7 +8807,7 @@ AS
         r.impr_nbr := P_IMPR_NBR;
         r.bus_id_status := P_BUS_ID_STATUS;
         r.impr_type_cd := P_IMPR_TYPE_CD;
-        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, HIJRI_DATE_FORMAT);
+        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, FORMS_APX.HIJRI_DATE_FORMAT);
         r.bus_id_type_cd := P_BUS_ID_TYPE_CD;
         r.comm_rgstrtn_type := P_COMM_RGSTRTN_TYPE;
         r.city_code_of_id := P_CITY_CODE_OF_ID;
@@ -8984,7 +8823,7 @@ AS
         r.eng_impr_name := P_ENG_IMPR_NAME;
         r.impr_cntct_name := P_IMPR_CNTCT_NAME;
         r.impr_address := P_IMPR_ADDRESS;
-        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, HIJRI_DATE_FORMAT);
+        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, FORMS_APX.HIJRI_DATE_FORMAT);
         r.impr_nbr_parent := P_IMPR_NBR_PARENT;
         r.add_ctry_cd := P_ADD_CTRY_CD;
         r.city_code := P_CITY_CODE;
@@ -9162,7 +9001,7 @@ AS
     BEGIN
         r.port_cd := P_PORT_CD;
         r.impr_nbr := P_IMPR_NBR;
-        IF NVL(P_ANSWER, c_yes) = c_yes AND (GET_GLOBAL('ALLOW_MCI') = '1' OR GET_GLOBAL('ALLOW_MOI') = '1') THEN
+        IF NVL(P_ANSWER, c_yes) = c_yes AND (FORMS_APX.GET_GLOBAL('ALLOW_MCI') = '1' OR FORMS_APX.GET_GLOBAL('ALLOW_MOI') = '1') THEN
             UPDATE_IMPORTER(r);
         END IF;
     END UPDATE_IMPORTER;
@@ -9190,7 +9029,6 @@ AS
         r.impr_nbr := P_IMPR_NBR;
         RETURN CENTRAL_MOBILE(r, c);
     END CENTRAL_MOBILE;
-
 
     -- =========================================================================
     -- 7 PACKAGE VERSION   (SELECT IMPR1110.PKG_VERSION FROM dual;)

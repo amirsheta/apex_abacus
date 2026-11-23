@@ -406,8 +406,8 @@ SUSPN_SQL = '\n'.join([
     'SELECT s.port_cd,',
     '       s.impr_nbr,',
     '       s.suspn_seq,',
-    "       TO_CHAR(s.suspn_strt_dt, (SELECT IMPR1120.HIJRI_DATE_FORMAT FROM dual)) AS suspn_strt_dt,   -- Application Setting",
-    "       TO_CHAR(s.suspn_end_dt,  (SELECT IMPR1120.HIJRI_DATE_FORMAT FROM dual)) AS suspn_end_dt,    -- HIJRI_DATE_FORMAT",
+    "       TO_CHAR(s.suspn_strt_dt, (SELECT FORMS_APX.HIJRI_DATE_FORMAT FROM dual)) AS suspn_strt_dt,   -- Application Setting",
+    "       TO_CHAR(s.suspn_end_dt,  (SELECT FORMS_APX.HIJRI_DATE_FORMAT FROM dual)) AS suspn_end_dt,    -- HIJRI_DATE_FORMAT",
     '       s.suspn_rsn_cd,',
     '       s.suspn_rsn_text,',
     '       s.suspn_side_cd',
@@ -623,7 +623,7 @@ end;
         (BH, 10, 'New', NEW, ('', 'NEVER'), 'f345 session setup copied from AGR1100 (condition Never, as in AGR1100 / IMPR1110) / standard 6', {}),
         (BH, 20, 'P0_PAGE_PK CHECK', 'IMPR1120.P0_PAGE_PK_CHECK(P_PAGE_PK => :P0_PAGE_PK, P_CURR_PORT_CD => :P_CURR_PORT_CD);',
          None, 'f345; IMPORTERS.PRE-QUERY port rule / spec 8', {}),
-        (BH, 40, 'PARAMETERS', ':P1120_MODULE_ID := IMPR1120.GET_MODULE_ID(P_MODULE_ID => :P1120_MODULE_ID);', None, 'f345 / spec 8', {}),
+        (BH, 40, 'PARAMETERS', ":P1120_MODULE_ID := FORMS_APX.GET_MODULE_ID(P_MODULE_ID => :P1120_MODULE_ID, FORM_NAME => 'IMPR1120');", None, 'f345 / spec 8', {}),
         (BH, 45, 'PARAMETERS CURRENT_SIDE',
          ':P1120_P_CURRENT_SIDE := IMPR1120.GET_CURRENT_SIDE(P_MODULE_ID => :P1120_MODULE_ID, P_CURR_PORT_CD => :P_CURR_PORT_CD);',
          ('P1120_P_CURRENT_SIDE', 'ITEM_IS_NULL'), 'IMPR1120 :PARAMETER.CURRENT_SIDE (launcher SC_PORT_SETTING) / spec 8', {}),
@@ -643,7 +643,7 @@ end;
          'IMPR1120.IMPORTERS_WHEN_CREATE_RECORD(P_CURR_PORT_CD => :P_CURR_PORT_CD, P_PORT_CD => :P1120_PORT_CD, '
          'P_PORT_NAME => :P1120_PORT_NAME);',
          (':P1120_ROW_ID IS NULL AND :P1120_PORT_CD IS NULL', 'EXPRESSION', 'PLSQL'), 'IMPR1120.IMPORTERS.WHEN-CREATE-RECORD / spec 8', {}),
-        (BH, 100, 'HEADER TITLE', 'IMPR1120.HEADER_TITLE(P_MODULE_ID => :P1120_MODULE_ID, P_HERO_TITLE => :P1120_HERO_TITLE);',
+        (BH, 100, 'HEADER TITLE', "FORMS_APX.HEADER_TITLE(P_MODULE_ID => :P1120_MODULE_ID, P_HERO_TITLE => :P1120_HERO_TITLE, DEFAULT_TITLE => 'صيانة توقيفات المستوردين');",
          None, 'f345 (OLB block TITLE) / spec 8', {}),
         (AS, 10, 'EXECUTE-QUERY',
          'IMPR1120.IMPR_NBR_WHEN_VALIDATE_ITEM(P_PORT_CD => :P1120_PORT_CD, P_IMPR_NBR => :P1120_IMPR_NBR, P_PAGE_PK => :P0_PAGE_PK);',
@@ -666,7 +666,7 @@ end;
                   extra=kw.get('extra'), region=kw.get('region')))
     # dynamic actions (spec 10)
     A(da(PG, 10, 'IMPR_NBR WHEN-VALIDATE-ITEM', ('ITEM', 'P1120_IMPR_NBR'), 'change', [
-        fos('IMPR1120.CHECK_ERROR(IMPR1120.IMPR_NBR_VALIDATION(P_PORT_CD => :P1120_PORT_CD, P_IMPR_NBR => :P1120_IMPR_NBR));',
+        fos('FORMS_APX.CHECK_ERROR(IMPR1120.IMPR_NBR_VALIDATION(P_PORT_CD => :P1120_PORT_CD, P_IMPR_NBR => :P1120_IMPR_NBR));',
             ['P1120_PORT_CD', 'P1120_IMPR_NBR']),
         [('p_action', q('NATIVE_SUBMIT_PAGE')), ('p_attribute_01', q('EXECUTE_QUERY')), ('p_attribute_02', q('Y'))]],
         'IMPR1120.IMPORTERS.IMPR_NBR.WHEN-VALIDATE-ITEM + IMPR_TYPE_CD.WHEN-NEW-ITEM-INSTANCE (EXECUTE_QUERY) / spec 10', cond='NOT_NULL'))
@@ -674,10 +674,10 @@ end;
     grid = '1120:plug:IMPR_SUSPN'
     for seq, name, col, code, submit, ret, s in [
         (110, 'IMPR_SUSPN SUSPN_STRT_DT WHEN-VALIDATE-ITEM', 'SUSPN_STRT_DT',
-         'IMPR1120.CHECK_ERROR(IMPR1120.SUSPN_STRT_DT_VALIDATION(SUSPN_STRT_DT => :SUSPN_STRT_DT, %s));' % KEYS,
+         'FORMS_APX.CHECK_ERROR(IMPR1120.SUSPN_STRT_DT_VALIDATION(SUSPN_STRT_DT => :SUSPN_STRT_DT, %s));' % KEYS,
          ['SUSPN_STRT_DT', 'PORT_CD', 'IMPR_NBR', 'SUSPN_SEQ'], None, 'IMPR_SUSPN.SUSPN_STRT_DT.WHEN-VALIDATE-ITEM'),
         (120, 'IMPR_SUSPN SUSPN_END_DT WHEN-VALIDATE-ITEM', 'SUSPN_END_DT',
-         'IMPR1120.CHECK_ERROR(IMPR1120.SUSPN_END_DT_VALIDATION(SUSPN_STRT_DT => :SUSPN_STRT_DT, SUSPN_END_DT => :SUSPN_END_DT, %s));' % KEYS,
+         'FORMS_APX.CHECK_ERROR(IMPR1120.SUSPN_END_DT_VALIDATION(SUSPN_STRT_DT => :SUSPN_STRT_DT, SUSPN_END_DT => :SUSPN_END_DT, %s));' % KEYS,
          ['SUSPN_STRT_DT', 'SUSPN_END_DT', 'PORT_CD', 'IMPR_NBR', 'SUSPN_SEQ'], None, 'IMPR_SUSPN.SUSPN_END_DT.WHEN-VALIDATE-ITEM'),
         (130, 'IMPR_SUSPN SUSPN_RSN_CD WHEN-VALIDATE-ITEM', 'SUSPN_RSN_CD',
          'IMPR1120.SUSPN_RSN_CD_VALIDATE_ITEM(SUSPN_RSN_CD => :SUSPN_RSN_CD, P_CURRENT_SIDE => :P1120_P_CURRENT_SIDE, '
@@ -685,7 +685,7 @@ end;
          ['SUSPN_RSN_CD', 'P1120_P_CURRENT_SIDE', 'PORT_CD', 'IMPR_NBR', 'SUSPN_SEQ'], ['SUSPN_RSN_TEXT'],
          'IMPR_SUSPN.SUSPN_RSN_CD.WHEN-VALIDATE-ITEM'),
         (140, 'IMPR_SUSPN SUSPN_SIDE_CD WHEN-LIST-CHANGED', 'SUSPN_SIDE_CD',
-         'IMPR1120.CHECK_ERROR(IMPR1120.SUSPN_SIDE_CD_VALIDATION(SUSPN_SIDE_CD => :SUSPN_SIDE_CD, %s, %s));' % (SITE, KEYS),
+         'FORMS_APX.CHECK_ERROR(IMPR1120.SUSPN_SIDE_CD_VALIDATION(SUSPN_SIDE_CD => :SUSPN_SIDE_CD, %s, %s));' % (SITE, KEYS),
          ['SUSPN_SIDE_CD', 'P1120_P_CURRENT_SIDE', 'PORT_CD', 'IMPR_NBR', 'SUSPN_SEQ'], None, 'IMPR_SUSPN.SUSPN_SIDE_CD.WHEN-LIST-CHANGED')]:
         A(da(PG, seq, name, ('COLUMN', grid, col), 'change', [fos(code, submit, ret)], 'IMPR1120.%s / spec 10' % s))
     UNCERTAIN.add('FOS Items to Return = IG column SUSPN_RSN_TEXT (AGR1100 returns only page items from column DAs)')
@@ -814,7 +814,7 @@ def selfcheck(text):
     if re.search(r'password|pwd', text, re.I): problems.append('password text found')
     code = '\n'.join(l for l in text.splitlines() if not l.startswith('--') and not re.match(r'^[ ,]p_\w*comment=>', l))
     if re.search(r'\bAI_[A-Z]', code): problems.append('AI_ item name found')
-    if re.search(r'pkg_|FORMS_APX\.', code, re.I): problems.append('page calls pkg_ / FORMS_APX')
+    if re.search(r'pkg_', code, re.I): problems.append('page calls pkg_')
     for bad in ('ON_DEMAND', 'p_javascript_file_urls', 'AJAX_FUNCTION', 'NATIVE_JAVASCRIPT_CODE', 'create_security_scheme'):
         if bad in code: problems.append('not allowed: ' + bad)
     defined = re.findall(r'[ ,]p_id=>wwv_flow_api\.id\((\d+)\)', text)
@@ -846,11 +846,22 @@ def selfcheck(text):
     plain = '\n'.join(unq(v) for v in re.findall(r"(?:unistr\('(?:[^']|'')*'\)|'(?:[^']|'')*')", code))
     for m in set(re.findall(r'IMPR1120\.([A-Z_0-9$]+)', plain)):
         if m not in sigs: problems.append('IMPR1120.%s not in impr1120_spec.sql' % m)
-    for m in re.finditer(r'IMPR1120\.(?!CHECK_ERROR)([A-Z0-9_$]+)\(([^()]*)\)', plain):
+    for m in re.finditer(r'IMPR1120\.([A-Z0-9_$]+)\(([^()]*)\)', plain):
         name, args = m.groups()
         given = re.findall(r'([A-Z0-9_$]+)\s*=>', args)
         if name in sigs and given and set(given) != sigs[name]:
             problems.append('call %s: parameters %s vs spec %s' % (name, sorted(set(given) ^ sigs[name]), ''))
+    # common helpers: FORMS_APX 004 (plsql_templates/forms_apx.sql); members and named parameters must exist
+    sys.path.insert(0, os.path.join(ROOT, 'scripts'))
+    import forms_apx_helpers
+    fx = forms_apx_helpers.forms_apx_members(ROOT)
+    for name in set(re.findall(r'FORMS_APX\.([A-Z0-9_$]+)', plain)):
+        if name not in fx: problems.append('FORMS_APX.%s not in forms_apx.sql' % name)
+    for m in re.finditer(r'FORMS_APX\.([A-Z0-9_$]+)\(([^()]*(?:\([^()]*\)[^()]*)*)\)', plain):
+        name, args = m.groups()
+        given = set(re.findall(r'(?<![.\w])([A-Z0-9_$]+)\s*=>', re.sub(r'\([^()]*\)', '()', args)))
+        if name in fx and given and not given <= fx[name]:
+            problems.append('call FORMS_APX.%s: unknown parameters %s' % (name, sorted(given - fx[name])))
     for name in re.findall(r"p_(?:name|process_name|validation_name)=>'([^']*)'", text):
         if '.' in name and ' ' not in name and not name.startswith('P'): problems.append('dot in component name ' + name)
     # binds: page items, IG columns, application items
@@ -889,6 +900,10 @@ def selfcheck(text):
         problems.append('package: private function %s called inside SQL in %s (ORA-00904)' % (hit[1], hit[0]))
     for hit in parameter_names.unqualified_in_sql(spec_raw, body_raw):
         problems.append('package: parameter %s not qualified inside SQL in %s' % (hit[1], hit[0]))
+    for name in forms_apx_helpers.leftovers(spec_raw + body_raw):
+        problems.append('package: common helper %s defined in IMPR1120 (belongs to FORMS_APX)' % name)
+    for name in forms_apx_helpers.unknown_calls(spec_raw + body_raw, ROOT):
+        problems.append('package: FORMS_APX.%s not in forms_apx.sql' % name)
     counts = {k: len(re.findall(r'wwv_flow_api\.%s\(' % k, text)) for k in [
         'create_page', 'create_page_plug', 'create_page_item', 'create_page_button', 'create_page_validation',
         'create_page_process', 'create_page_da_event', 'create_page_da_action', 'create_page_computation', 'create_page_branch',

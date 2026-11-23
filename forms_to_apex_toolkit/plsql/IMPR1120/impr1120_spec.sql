@@ -6,7 +6,7 @@
 --               main page 1120 (IMPR1120), search page 112001 (IMPR1120_SEARCH)
 -- Author      : Claude Code
 -- Created     : 2026-11-23
--- Version     : 008
+-- Version     : 009
 -- Purpose     : Business logic of the form, organised like the form itself:
 --               VERSION -> f345 HELPERS -> FORM LEVEL -> BLOCK IMPORTERS (master, query only)
 --               -> BLOCK IMPR_SUSPN (detail, Interactive Grid) -> PROGRAM UNITS
@@ -22,7 +22,9 @@
 --               f345 application items P_CURR_PORT_CD => :P_CURR_PORT_CD,
 --               SSO_APP_USER => :SSO_APP_USER, P_GLOBAL_V_WS_ID => :P_GLOBAL_V_WS_ID.
 --               Forms parameter CURRENT_SIDE -> page item P1120_P_CURRENT_SIDE.
---               Hijri dates are passed as text in the format HIJRI_DATE_FORMAT (APEX Application Setting
+--               Common helpers (CHECK_ERROR, REQUIRED_VALIDATION, GET_MODULE_ID, HEADER_TITLE, the Hijri date
+--               helpers, ARABIC_MESSAGE ...) are in FORMS_APX (version 004) and called as FORMS_APX.<NAME>.
+--               Hijri dates are passed as text in the format FORMS_APX.HIJRI_DATE_FORMAT (APEX Application Setting
 --               HIJRI_DATE_FORMAT, default YYYY-MM-MI = the output of the f345 Hijri picker; the day is kept in
 --               the minutes because e.g. 30-02 is not a valid DATE), as in IMPR1110. Forms used MI-MM-RRRR.
 --               The package never reads page items itself, so it is testable without APEX.
@@ -60,13 +62,19 @@
 --                          HIJRI_DATE_FORMAT reads the APEX Application Setting HIJRI_DATE_FORMAT (default
 --                          YYYY-MM-MI, the f345 Hijri picker format; was the constant MI-MM-RRRR); the format
 --                          error message follows it. Previous version: rollback/IMPR1120/step04_v007/
+--               2026-11-24 Claude Code 009 Common helpers moved to FORMS_APX 004 (user request): CHECK_ERROR,
+--                          REQUIRED_VALIDATION, HIJRI_DATE_FORMAT, GET_MODULE_ID, HEADER_TITLE and the private
+--                          arabic_message, cur_hij_date, hijri_text_to_date, hijri_text, hijri_date_error,
+--                          date_format_message; calls are FORMS_APX.<NAME>, pages call FORMS_APX directly.
+--                          P0_PAGE_PK_CHECK uses FORMS_APX.ROWID_FROM_URL. No logic change.
+--                          Previous version: rollback/IMPR1120/step04_v008/
 -- =============================================================================
 SET DEFINE OFF
 
 CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1120 AS
-   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '008';
-   V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '008';
-   V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '008';
+   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '009';
+   V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '009';
+   V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '009';
    FUNCTION PKG_VERSION
       RETURN VARCHAR2;
    V_PACKAGE_NAME      VARCHAR2 (50) := 'IMPR1120';
@@ -88,34 +96,16 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1120 AS
          || V_MODIFIED_BY;
 
     -- =========================================================================
-    -- f345 HELPERS                                 (every form package has these)
+    -- f345 HELPERS  (the common ones are in FORMS_APX: CHECK_ERROR, REQUIRED_VALIDATION, GET_MODULE_ID,
+    --               HEADER_TITLE, HIJRI_DATE_FORMAT ...; this form keeps its own key check)
     -- =========================================================================
-    -- Raises the error text; used by dynamic actions: IMPR1120.CHECK_ERROR(IMPR1120.<ITEM>_VALIDATION(...))
-    PROCEDURE CHECK_ERROR (ERROR_TEXT IN VARCHAR2);
-
-    -- Error text when a required value is empty, else NULL
-    -- APEX  : Validation "<ITEM> REQUIRED": return IMPR1120.REQUIRED_VALIDATION(:<ITEM>, '<label>');
-    FUNCTION  REQUIRED_VALIDATION (ITEM_VALUE IN VARCHAR2, ITEM_LABEL IN VARCHAR2) RETURN VARCHAR2;
-
-    -- Hijri date format of the application: APEX Application Setting HIJRI_DATE_FORMAT, default
-    -- YYYY-MM-MI (the f345 Hijri picker writes iYYYY-iMM-iDD; the day is kept in the minutes). Change the
-    -- setting (Shared Components > Application Settings, or APEX_APP_SETTING.SET_VALUE) to change it.
-    -- APEX  : region SQL of IMPR_SUSPN: TO_CHAR(<date>, (SELECT IMPR1120.HIJRI_DATE_FORMAT FROM dual))
-    FUNCTION  HIJRI_DATE_FORMAT RETURN VARCHAR2;
 
     -- APEX  : Process "P0_PAGE_PK CHECK" (Before Header). P0_PAGE_PK holds the ROWID of the
     --         IMPORTERS row (as IMPR1110); a key that is not an importer of this port is dropped.
     --         The search page 112001 passes the ROWID URL-safe (TRANSLATE(ROWID, '+/', '-_'): a '+' in
-    --         f?p arrives as a space); it is translated back first. A ROWID never contains '-' or '_'.
+    --         f?p arrives as a space); FORMS_APX.ROWID_FROM_URL translates it back first.
     PROCEDURE P0_PAGE_PK_CHECK (P_PAGE_PK    IN OUT VARCHAR2,
                                 P_CURR_PORT_CD IN     NUMBER);
-
-    -- APEX  : Process "PARAMETERS": :P1120_MODULE_ID := IMPR1120.GET_MODULE_ID(:P1120_MODULE_ID);
-    FUNCTION  GET_MODULE_ID (P_MODULE_ID IN VARCHAR2) RETURN VARCHAR2;
-
-    -- APEX  : Process "HEADER TITLE" (Before Header) - title of the hero region
-    PROCEDURE HEADER_TITLE (P_MODULE_ID   IN     VARCHAR2,
-                            P_HERO_TITLE IN OUT VARCHAR2);
 
     -- =========================================================================
     -- FORM LEVEL                                   (Forms: form-level triggers)

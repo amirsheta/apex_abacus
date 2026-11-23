@@ -6,7 +6,7 @@
 -- Target      : Oracle APEX 21.2 (export version 2021.10.15), Oracle Database 12.1.0.2,
 --               reference application f345 (apex/Reference/f345.sql)
 -- Standard    : CLAUDE.md 4b / 4c, docs/f345_reference_standard.md 3-9: native Form region (ROWID),
---               FOS + native dynamic actions, one-line calls into package IMPR1110 (version 010).
+--               FOS + native dynamic actions, one-line calls into package IMPR1110 (version 011) and FORMS_APX (004, common helpers).
 --               No JavaScript file, no AJAX callback process.
 -- Contents    : component export INTO the application installed from f345: pages 1110 (main),
 --               111001 (search), 111002 (mobile) + the shared components they need.
@@ -2464,7 +2464,7 @@ wwv_flow_api.create_page_computation(
 ,p_computation_point=>'BEFORE_HEADER'
 ,p_computation_type=>'EXPRESSION'
 ,p_computation_language=>'PLSQL'
-,p_computation=>'IMPR1110.HIJRI_DATE_FORMAT'
+,p_computation=>'FORMS_APX.HIJRI_DATE_FORMAT'
 ,p_computation_comment=>'Source: Hijri date format from one place: Application Setting HIJRI_DATE_FORMAT (Forms mask MI-MM-YYYY) / spec 9'
 );
 wwv_flow_api.create_page_computation(
@@ -2836,7 +2836,7 @@ wwv_flow_api.create_page_validation(
  p_id=>wwv_flow_api.id(111006000260)
 ,p_validation_name=>'BUS_ID_EXPRD_DT REQUIRED'
 ,p_validation_sequence=>260
-,p_validation=>unistr('RETURN IMPR1110.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_BUS_ID_EXPRD_DT, ITEM_LABEL => ''\0625\0646\0640\062A\0647\0640\0627\0621 \0627\0644\0640\0646\0634\0627\0637'');')
+,p_validation=>unistr('RETURN FORMS_APX.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_BUS_ID_EXPRD_DT, ITEM_LABEL => ''\0625\0646\0640\062A\0647\0640\0627\0621 \0627\0644\0640\0646\0634\0627\0637'');')
 ,p_validation2=>'PLSQL'
 ,p_validation_type=>'FUNC_BODY_RETURNING_ERR_TEXT'
 ,p_validation_condition=>':REQUEST IN (''CREATE'', ''SAVE'') AND IMPR1110.BUS_ID_EXPRD_DT_IS_REQUIRED(P_IMPR_TYPE_CD => :P1110_IMPR_TYPE_CD, P_BUS_ID_TYPE_CD => :P1110_BUS_ID_TYPE_CD)'
@@ -2850,7 +2850,7 @@ wwv_flow_api.create_page_validation(
  p_id=>wwv_flow_api.id(111006000270)
 ,p_validation_name=>'COMM_RGSTRTN_TYPE REQUIRED'
 ,p_validation_sequence=>270
-,p_validation=>unistr('RETURN IMPR1110.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_COMM_RGSTRTN_TYPE, ITEM_LABEL => ''\0646\0648\0639 \0627\0644\0633\062C\0644 \0627\0644\062A\062C\0627\0631\064A'');')
+,p_validation=>unistr('RETURN FORMS_APX.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_COMM_RGSTRTN_TYPE, ITEM_LABEL => ''\0646\0648\0639 \0627\0644\0633\062C\0644 \0627\0644\062A\062C\0627\0631\064A'');')
 ,p_validation2=>'PLSQL'
 ,p_validation_type=>'FUNC_BODY_RETURNING_ERR_TEXT'
 ,p_validation_condition=>':REQUEST IN (''CREATE'', ''SAVE'') AND IMPR1110.COMM_RGSTRTN_TYPE_IS_REQUIRED(P_IMPR_TYPE_CD => :P1110_IMPR_TYPE_CD, P_BUS_ID_TYPE_CD => :P1110_BUS_ID_TYPE_CD)'
@@ -2864,7 +2864,7 @@ wwv_flow_api.create_page_validation(
  p_id=>wwv_flow_api.id(111006000280)
 ,p_validation_name=>'CITY_CODE_OF_ID REQUIRED'
 ,p_validation_sequence=>280
-,p_validation=>unistr('RETURN IMPR1110.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_CITY_CODE_OF_ID, ITEM_LABEL => ''\0645\0635\062F\0631\0631\0642\0645 \0627\0644\0625\0633\062A\062F\0644\0627\0644\064A'');')
+,p_validation=>unistr('RETURN FORMS_APX.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_CITY_CODE_OF_ID, ITEM_LABEL => ''\0645\0635\062F\0631\0631\0642\0645 \0627\0644\0625\0633\062A\062F\0644\0627\0644\064A'');')
 ,p_validation2=>'PLSQL'
 ,p_validation_type=>'FUNC_BODY_RETURNING_ERR_TEXT'
 ,p_validation_condition=>':REQUEST IN (''CREATE'', ''SAVE'') AND IMPR1110.CITY_CODE_OF_ID_IS_REQUIRED(P_IMPR_TYPE_CD => :P1110_IMPR_TYPE_CD)'
@@ -2878,7 +2878,7 @@ wwv_flow_api.create_page_validation(
  p_id=>wwv_flow_api.id(111006000290)
 ,p_validation_name=>'BRNH_CITY_CD REQUIRED'
 ,p_validation_sequence=>290
-,p_validation=>unistr('RETURN IMPR1110.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_BRNH_CITY_CD, ITEM_LABEL => ''\0645\0635\062F\0631 \0627\0644\0631\0642\0645 \0627\0644\0641\0631\0639\064A'');')
+,p_validation=>unistr('RETURN FORMS_APX.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_BRNH_CITY_CD, ITEM_LABEL => ''\0645\0635\062F\0631 \0627\0644\0631\0642\0645 \0627\0644\0641\0631\0639\064A'');')
 ,p_validation2=>'PLSQL'
 ,p_validation_type=>'FUNC_BODY_RETURNING_ERR_TEXT'
 ,p_validation_condition=>':REQUEST IN (''CREATE'', ''SAVE'') AND IMPR1110.BRNH_CITY_CD_IS_REQUIRED(P_COMM_RGSTRTN_TYPE => :P1110_COMM_RGSTRTN_TYPE)'
@@ -2892,7 +2892,7 @@ wwv_flow_api.create_page_validation(
  p_id=>wwv_flow_api.id(111006000300)
 ,p_validation_name=>'BUS_ID_BRNCH REQUIRED'
 ,p_validation_sequence=>300
-,p_validation=>unistr('RETURN IMPR1110.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_BUS_ID_BRNCH, ITEM_LABEL => ''\0627\0644\0640\0631\0642\0645 \0627\0644\0640\0640\0641\0640\0640\0631\0639\064A'');')
+,p_validation=>unistr('RETURN FORMS_APX.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_BUS_ID_BRNCH, ITEM_LABEL => ''\0627\0644\0640\0631\0642\0645 \0627\0644\0640\0640\0641\0640\0640\0631\0639\064A'');')
 ,p_validation2=>'PLSQL'
 ,p_validation_type=>'FUNC_BODY_RETURNING_ERR_TEXT'
 ,p_validation_condition=>':REQUEST IN (''CREATE'', ''SAVE'') AND IMPR1110.BUS_ID_BRNCH_IS_REQUIRED(P_COMM_RGSTRTN_TYPE => :P1110_COMM_RGSTRTN_TYPE, P_BUS_ID => :P1110_BUS_ID, P_CITY_CODE_OF_ID => :P1110_CITY_CODE_OF_ID)'
@@ -2906,7 +2906,7 @@ wwv_flow_api.create_page_validation(
  p_id=>wwv_flow_api.id(111006000310)
 ,p_validation_name=>'ACTIVITY REQUIRED'
 ,p_validation_sequence=>310
-,p_validation=>unistr('RETURN IMPR1110.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_ACTIVITY, ITEM_LABEL => ''\0646\0634\0627\0637 \0627\0644\0645\0633\062A\0648\0631\062F'');')
+,p_validation=>unistr('RETURN FORMS_APX.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_ACTIVITY, ITEM_LABEL => ''\0646\0634\0627\0637 \0627\0644\0645\0633\062A\0648\0631\062F'');')
 ,p_validation2=>'PLSQL'
 ,p_validation_type=>'FUNC_BODY_RETURNING_ERR_TEXT'
 ,p_validation_condition=>':REQUEST IN (''CREATE'', ''SAVE'') AND IMPR1110.ACTIVITY_IS_REQUIRED(P_BUS_ID => :P1110_BUS_ID)'
@@ -2946,7 +2946,7 @@ wwv_flow_api.create_page_process(
 ,p_process_point=>'BEFORE_HEADER'
 ,p_process_type=>'NATIVE_PLSQL'
 ,p_process_name=>'PARAMETERS'
-,p_process_sql_clob=>':P1110_MODULE_ID := IMPR1110.GET_MODULE_ID(P_MODULE_ID => :P1110_MODULE_ID);'
+,p_process_sql_clob=>':P1110_MODULE_ID := FORMS_APX.GET_MODULE_ID(P_MODULE_ID => :P1110_MODULE_ID, FORM_NAME => ''IMPR1110'');'
 ,p_process_clob_language=>'PLSQL'
 ,p_error_display_location=>'INLINE_IN_NOTIFICATION'
 ,p_process_comment=>'Source: IMPR1110 f345 / spec 8'
@@ -3067,7 +3067,7 @@ wwv_flow_api.create_page_process(
 ,p_process_point=>'BEFORE_HEADER'
 ,p_process_type=>'NATIVE_PLSQL'
 ,p_process_name=>'HEADER TITLE'
-,p_process_sql_clob=>'IMPR1110.HEADER_TITLE(P_MODULE_ID => :P1110_MODULE_ID, P_HERO_TITLE => :P1110_HERO_TITLE);'
+,p_process_sql_clob=>unistr('FORMS_APX.HEADER_TITLE(P_MODULE_ID => :P1110_MODULE_ID, P_HERO_TITLE => :P1110_HERO_TITLE, DEFAULT_TITLE => ''\0625\0636\0627\0641\0629 \0648\062A\0639\062F\064A\0644 \0628\064A\0627\0646\0627\062A \0645\0633\062A\0648\0631\062F'');')
 ,p_process_clob_language=>'PLSQL'
 ,p_error_display_location=>'INLINE_IN_NOTIFICATION'
 ,p_process_comment=>'Source: IMPR1110 f345 (OLB block TITLE) / spec 8'

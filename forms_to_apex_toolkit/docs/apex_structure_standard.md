@@ -82,8 +82,8 @@ detail block, `<ITEM> <TRIGGER>` for item triggers.
 |---|---|---|
 | Form WHEN-NEW-FORM-INSTANCE | Process (Before Header) `WHEN-NEW-FORM-INSTANCE` | `INIT_FORM` |
 | Form PRE-FORM | Process (Before Header) `PRE-FORM` | `PRE_FORM` |
-| `ORDERS.CUSTOMER_ID` WHEN-VALIDATE-ITEM | Validation `CUSTOMER_ID VALIDATION` + DA `CUSTOMER_ID WHEN-VALIDATE-ITEM` (FOS: `ORDERS.CHECK_ERROR(ORDERS.CUSTOMER_ID_VALIDATION(...))`) | `CUSTOMER_ID_VALIDATION` (error text); `CUSTOMER_ID_WHEN_VALIDATE_ITEM` when it derives values |
-| Required item | Validation `CUSTOMER_ID REQUIRED` | `REQUIRED_VALIDATION` |
+| `ORDERS.CUSTOMER_ID` WHEN-VALIDATE-ITEM | Validation `CUSTOMER_ID VALIDATION` + DA `CUSTOMER_ID WHEN-VALIDATE-ITEM` (FOS: `FORMS_APX.CHECK_ERROR(ORDERS.CUSTOMER_ID_VALIDATION(...))`) | `CUSTOMER_ID_VALIDATION` (error text); `CUSTOMER_ID_WHEN_VALIDATE_ITEM` when it derives values |
+| Required item | Validation `CUSTOMER_ID REQUIRED` | `FORMS_APX.REQUIRED_VALIDATION` |
 | `LINES.QTY` WHEN-VALIDATE-ITEM (detail IG) | DA `LINES QTY WHEN-VALIDATE-ITEM` | `LINES_QTY_VALIDATION` |
 | `ORDERS` WHEN-VALIDATE-RECORD | Validation `ORDERS WHEN-VALIDATE-RECORD` | `ORDERS_WHEN_VALIDATE_RECORD` |
 | `ORDERS` WHEN-CREATE-RECORD | Item defaults / process `WHEN-CREATE-RECORD` | `WHEN_CREATE_RECORD` |
@@ -99,8 +99,9 @@ detail block, `<ITEM> <TRIGGER>` for item triggers.
 | Function (TMPLT `EXECUTE_FUNCTION`) | DA on the custom event `<SYS_OS_FILE_NAME>` fired by the *Page Functions* list | `EXEC_FUNS` |
 | Program unit `CALC_TOTAL` | — | `CALC_TOTAL` (same name) |
 
-Always present: `CHECK_ERROR(ERROR_TEXT)` (raises the error text), `REQUIRED_VALIDATION`, `P0_PAGE_PK_CHECK`,
-`GET_MODULE_ID`, `HEADER_TITLE`.
+Always present in the form package: `P0_PAGE_PK_CHECK` (the form's key check). The common helpers
+`CHECK_ERROR(ERROR_TEXT)`, `REQUIRED_VALIDATION`, `GET_MODULE_ID`, `HEADER_TITLE`, `ROWID_FROM_URL` and the Hijri
+date helpers are in `FORMS_APX` (004) and are called as `FORMS_APX.<NAME>`, also by the pages.
 
 Parameters of members called by APEX: the bind name without an `I_` / `IO_` / `O_` prefix; a page item
 `P<page>_X` is passed as `P_X` (`P_AGRMNT_NO => :P11100_AGRMNT_NO`, `MEMBER_ISN => :MEMBER_ISN`,

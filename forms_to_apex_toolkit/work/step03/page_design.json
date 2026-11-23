@@ -1963,7 +1963,7 @@
    "name": "BUS_ID_EXPRD_DT REQUIRED",
    "item": "P1110_BUS_ID_EXPRD_DT",
    "member": "REQUIRED_VALIDATION",
-   "code": "RETURN IMPR1110.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_BUS_ID_EXPRD_DT, ITEM_LABEL => 'إنـتهـاء الـنشاط');",
+   "code": "RETURN FORMS_APX.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_BUS_ID_EXPRD_DT, ITEM_LABEL => 'إنـتهـاء الـنشاط');",
    "condition": "IMPR1110.BUS_ID_EXPRD_DT_IS_REQUIRED(P_IMPR_TYPE_CD => :P1110_IMPR_TYPE_CD, P_BUS_ID_TYPE_CD => :P1110_BUS_ID_TYPE_CD)",
    "source": "SET_ITEM_PROPERTY(BUS_ID_EXPRD_DT, REQUIRED) - read_only_rules.md"
   },
@@ -1971,7 +1971,7 @@
    "name": "COMM_RGSTRTN_TYPE REQUIRED",
    "item": "P1110_COMM_RGSTRTN_TYPE",
    "member": "REQUIRED_VALIDATION",
-   "code": "RETURN IMPR1110.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_COMM_RGSTRTN_TYPE, ITEM_LABEL => 'نوع السجل التجاري');",
+   "code": "RETURN FORMS_APX.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_COMM_RGSTRTN_TYPE, ITEM_LABEL => 'نوع السجل التجاري');",
    "condition": "IMPR1110.COMM_RGSTRTN_TYPE_IS_REQUIRED(P_IMPR_TYPE_CD => :P1110_IMPR_TYPE_CD, P_BUS_ID_TYPE_CD => :P1110_BUS_ID_TYPE_CD)",
    "source": "SET_ITEM_PROPERTY(COMM_RGSTRTN_TYPE, REQUIRED) - read_only_rules.md"
   },
@@ -1979,7 +1979,7 @@
    "name": "CITY_CODE_OF_ID REQUIRED",
    "item": "P1110_CITY_CODE_OF_ID",
    "member": "REQUIRED_VALIDATION",
-   "code": "RETURN IMPR1110.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_CITY_CODE_OF_ID, ITEM_LABEL => 'مصدررقم الإستدلالي');",
+   "code": "RETURN FORMS_APX.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_CITY_CODE_OF_ID, ITEM_LABEL => 'مصدررقم الإستدلالي');",
    "condition": "IMPR1110.CITY_CODE_OF_ID_IS_REQUIRED(P_IMPR_TYPE_CD => :P1110_IMPR_TYPE_CD)",
    "source": "SET_ITEM_PROPERTY(CITY_CODE_OF_ID, REQUIRED) - read_only_rules.md"
   },
@@ -1987,7 +1987,7 @@
    "name": "BRNH_CITY_CD REQUIRED",
    "item": "P1110_BRNH_CITY_CD",
    "member": "REQUIRED_VALIDATION",
-   "code": "RETURN IMPR1110.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_BRNH_CITY_CD, ITEM_LABEL => 'مصدر الرقم الفرعي');",
+   "code": "RETURN FORMS_APX.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_BRNH_CITY_CD, ITEM_LABEL => 'مصدر الرقم الفرعي');",
    "condition": "IMPR1110.BRNH_CITY_CD_IS_REQUIRED(P_COMM_RGSTRTN_TYPE => :P1110_COMM_RGSTRTN_TYPE)",
    "source": "SET_ITEM_PROPERTY(BRNH_CITY_CD, REQUIRED) - read_only_rules.md"
   },
@@ -1995,7 +1995,7 @@
    "name": "BUS_ID_BRNCH REQUIRED",
    "item": "P1110_BUS_ID_BRNCH",
    "member": "REQUIRED_VALIDATION",
-   "code": "RETURN IMPR1110.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_BUS_ID_BRNCH, ITEM_LABEL => 'الـرقم الــفــرعي');",
+   "code": "RETURN FORMS_APX.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_BUS_ID_BRNCH, ITEM_LABEL => 'الـرقم الــفــرعي');",
    "condition": "IMPR1110.BUS_ID_BRNCH_IS_REQUIRED(P_COMM_RGSTRTN_TYPE => :P1110_COMM_RGSTRTN_TYPE, P_BUS_ID => :P1110_BUS_ID, P_CITY_CODE_OF_ID => :P1110_CITY_CODE_OF_ID)",
    "source": "SET_ITEM_PROPERTY(BUS_ID_BRNCH, REQUIRED) - read_only_rules.md"
   },
@@ -2003,7 +2003,7 @@
    "name": "ACTIVITY REQUIRED",
    "item": "P1110_ACTIVITY",
    "member": "REQUIRED_VALIDATION",
-   "code": "RETURN IMPR1110.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_ACTIVITY, ITEM_LABEL => 'نشاط المستورد');",
+   "code": "RETURN FORMS_APX.REQUIRED_VALIDATION(ITEM_VALUE => :P1110_ACTIVITY, ITEM_LABEL => 'نشاط المستورد');",
    "condition": "IMPR1110.ACTIVITY_IS_REQUIRED(P_BUS_ID => :P1110_BUS_ID)",
    "source": "SET_ITEM_PROPERTY(ACTIVITY, REQUIRED) - read_only_rules.md"
   }
@@ -2029,7 +2029,7 @@
    "seq": 40,
    "point": "Before Header",
    "name": "PARAMETERS",
-   "code": ":P1110_MODULE_ID := IMPR1110.GET_MODULE_ID(P_MODULE_ID => :P1110_MODULE_ID);",
+   "code": ":P1110_MODULE_ID := FORMS_APX.GET_MODULE_ID(P_MODULE_ID => :P1110_MODULE_ID, FORM_NAME => 'IMPR1110');",
    "condition": "-",
    "source": "f345"
   },
@@ -2109,7 +2109,7 @@
    "seq": 100,
    "point": "Before Header",
    "name": "HEADER TITLE",
-   "code": "IMPR1110.HEADER_TITLE(P_MODULE_ID => :P1110_MODULE_ID, P_HERO_TITLE => :P1110_HERO_TITLE);",
+   "code": "FORMS_APX.HEADER_TITLE(P_MODULE_ID => :P1110_MODULE_ID, P_HERO_TITLE => :P1110_HERO_TITLE, DEFAULT_TITLE => 'إضافة وتعديل بيانات مستورد');",
    "condition": "-",
    "source": "f345 (OLB block TITLE)"
   },
@@ -2198,7 +2198,7 @@
   {
    "item": "P1110_HIJRI_DATE_FORMAT",
    "point": "Before Header",
-   "expression": "IMPR1110.HIJRI_DATE_FORMAT",
+   "expression": "FORMS_APX.HIJRI_DATE_FORMAT",
    "condition": "-",
    "source": "Hijri date format from one place: Application Setting HIJRI_DATE_FORMAT (Forms mask MI-MM-YYYY)"
   },

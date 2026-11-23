@@ -145,7 +145,7 @@ Full rules: `docs/apex_structure_standard.md`. Summary:
 | Block `ORDERS` | Region with Static ID `ORDERS`, title = block/canvas title (Arabic), same display order |
 | Item `ORDERS.CUSTOMER_ID` | Page item `P<page>_CUSTOMER_ID` (IG column `CUSTOMER_ID`) — keep the Forms item name |
 | Duplicate item names across blocks | `P<page>_<BLOCK>_<ITEM>` |
-| Trigger `ORDERS.CUSTOMER_ID` WHEN-VALIDATE-ITEM | Dynamic Action `CUSTOMER_ID WHEN-VALIDATE-ITEM` (FOS plug-in: `ORDERS.CHECK_ERROR(ORDERS.CUSTOMER_ID_VALIDATION(...))`) + validation `CUSTOMER_ID VALIDATION` (`return ORDERS.CUSTOMER_ID_VALIDATION(...)`) |
+| Trigger `ORDERS.CUSTOMER_ID` WHEN-VALIDATE-ITEM | Dynamic Action `CUSTOMER_ID WHEN-VALIDATE-ITEM` (FOS plug-in: `FORMS_APX.CHECK_ERROR(ORDERS.CUSTOMER_ID_VALIDATION(...))`) + validation `CUSTOMER_ID VALIDATION` (`return ORDERS.CUSTOMER_ID_VALIDATION(...)`) |
 | Trigger PRE-INSERT on the master block | Process `PRE-INSERT` calling `ORDERS.PRE_INSERT(...)` |
 | Trigger PRE-INSERT on detail block `ORDER_LINES` | Process `ORDER_LINES PRE-INSERT` calling `ORDERS.LINES_PRE_INSERT(...)` |
 | UI trigger (WHEN-LIST-CHANGED…) | Dynamic Action `ORDER_TYPE WHEN-LIST-CHANGED` (detail block: `<BLOCK> <ITEM> <TRIGGER>`) |
@@ -161,7 +161,14 @@ Rules:
    `<BLOCK>_PRE_INSERT`, validation function `<ITEM>_VALIDATION` (returns error text), side-effect
    procedure `<ITEM>_WHEN_VALIDATE_ITEM`; all ≤ 30 bytes. Details: `docs/f345_reference_standard.md` §5.
 3. Use `FORMS_APX` (Forms-like server built-ins: `message`, `FORM_TRIGGER_FAILURE`, `alert`, `get_global`, …)
-   so converted code reads like the original trigger code.
+   so converted code reads like the original trigger code. **Common helpers live only in `FORMS_APX`**
+   (version 004, user decision 2026-11-24): `CHECK_ERROR`, `REQUIRED_VALIDATION`, `GET_MODULE_ID(P_MODULE_ID,
+   FORM_NAME)`, `HEADER_TITLE(P_MODULE_ID, P_HERO_TITLE, DEFAULT_TITLE)`, `ROWID_FROM_URL`, `HIJRI_DATE_FORMAT`,
+   `HIJRI_TEXT_TO_DATE`, `HIJRI_TEXT`, `HIJRI_DATE_ERROR`, `CUR_HIJ_DATE`, `ARABIC_MESSAGE`,
+   `DISPLAY_ARABIC_ERROR` / `_INFO`, `CG_MESSAGE`. A form package never defines its own copy (or a one-line alias
+   of a `FORMS_APX` built-in); it calls `FORMS_APX.<NAME>`, and pages call them directly
+   (`FORMS_APX.CHECK_ERROR(<FORM>.<ITEM>_VALIDATION(...))`). Form-specific helpers (key check, activity log)
+   stay in the form package. Check: `scripts/forms_apx_helpers.py` (`leftovers`, `unknown_calls`).
 4. Register every form and every mapped object in `MIG_FORM_REGISTRY` / `MIG_OBJECT_MAP`
    (`scripts/create_migration_registry.sql`) — produce the INSERT script per form.
 5. Standard buttons come from the **page 0 toolbar** of f345 (`CREATE` · `SAVE` · `DELETE` ·
@@ -284,7 +291,7 @@ Forms built-ins **must not appear** in generated PL/SQL (they do not exist in th
 | Forms built-in | APEX 21.2 replacement |
 |---|---|
 | `MESSAGE('...')` | `apex_application.g_print_success_message` / Success Message of process |
-| `SHOW_ALERT` / `SET_ALERT_PROPERTY` | Native Confirm action, `CHECK_ERROR` / `apex_error.add_error` |
+| `SHOW_ALERT` / `SET_ALERT_PROPERTY` | Native Confirm action, `FORMS_APX.CHECK_ERROR` / `apex_error.add_error` |
 | `RAISE FORM_TRIGGER_FAILURE` | `apex_error.add_error(...)` or `raise_application_error(-20xxx, ...)` |
 | `GO_BLOCK` / `GO_ITEM` / `GO_RECORD` | Native DA action "Set Focus" / region navigation |
 | `NEXT_RECORD` / `PREVIOUS_RECORD` | IG navigation, or Form region "Next/Previous" buttons |

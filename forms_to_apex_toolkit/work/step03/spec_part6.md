@@ -33,7 +33,7 @@ No JavaScript file, no AJAX callback process, no client UI-state engine. Revisio
 | CONFIRM of PRE-INSERT (brokers) | caution | Text Message **`IMPR1110_PRE_INSERT_CONFIRM`** → computation `P1110_PRE_INSERT_QUESTION` (`APEX_LANG.MESSAGE`) → DA `PRE-INSERT CONFIRM` | يجب مراجعة البيانات والتأكد من صحتها قبل التخزين، لايمكن التعديل إلا من قبل شئون المستوردين! هل ترغب بالاستمرار؟ |
 | WARNING suspended importer (BUS_ID), CONFIRM new name (F1 / F5), CONFIRM MCI update | caution, text computed | `*_CONFIRM_TEXT` functions + `apex.message.confirm` (§10.3) | from the package |
 | page 0 DELETE question | caution | page 0 `DELETE` confirm (f345) | f345 text (Forms: "هل أنت متأكد من عملية الحذف") |
-| FRM-40202 / 40350 | Forms runtime | Value Required / `REQUIRED_VALIDATION` (CG_MESSAGE "<p1> must be entered"); no-row-found is not possible (key from the search page) | **TODO** Arabic texts of `NIB.ON_ERROR` (MISSING SOURCE) |
+| FRM-40202 / 40350 | Forms runtime | Value Required / `FORMS_APX.REQUIRED_VALIDATION` ("يجب إدخال <label>", common helper since FORMS_APX 004; was CG_MESSAGE "<p1> must be entered"); no-row-found is not possible (key from the search page) | **TODO** Arabic texts of `NIB.ON_ERROR` (MISSING SOURCE) |
 
 Error handling function: the f345 `APP_ERROR_HANDLER` (application attribute, not changed).
 

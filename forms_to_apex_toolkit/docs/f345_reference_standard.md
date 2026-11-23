@@ -126,9 +126,9 @@ this in import_notes.md whenever you generate such a page.
 | Detail-block trigger | `<BLOCK>_<TRIGGER>` | `AGR1100.AGRMNT_MEMBERS_PRE_INSERT`, `AGR1100.AGRMNT_ITEMS_PRE_DELETE` |
 | Validation function (returns error text, NULL = OK) | `<ITEM>_VALIDATION` / `<BLOCK>_<ITEM>_VALIDATION` | `AGR1100.CTRY_CD_VALIDATION`, `AGR1100.MEMBERS_CTRY_CD_VALIDATION` (shortened: 33 bytes in full) |
 | WHEN-VALIDATE-ITEM side effects (procedure) | `<ITEM>_WHEN_VALIDATE_ITEM` | `AGR1100.AGRMNT_NO_WHEN_VALIDATE_ITEM` |
-| Error raiser | `<FORM>.CHECK_ERROR(ERROR_TEXT)` raises when `ERROR_TEXT` is not null | `AGR1100.CHECK_ERROR(AGR1100.CTRY_CD_VALIDATION(...))` |
-| Required check | `<FORM>.REQUIRED_VALIDATION(ITEM_VALUE, ITEM_LABEL)` | |
-| Form init / helpers | `INIT_FORM`, `P0_PAGE_PK_CHECK`, `HEADER_TITLE`, `GET_MODULE_ID`, `INFO_SAVE`, `INFO_LOAD`, `ADJ_FUNS`, `EXEC_FUNS` | |
+| Error raiser | `FORMS_APX.CHECK_ERROR(ERROR_TEXT)` raises when `ERROR_TEXT` is not null (common helper, FORMS_APX 004; AGR1100 had its own copy) | `FORMS_APX.CHECK_ERROR(AGR1100.CTRY_CD_VALIDATION(...))` |
+| Required check | `FORMS_APX.REQUIRED_VALIDATION(ITEM_VALUE, ITEM_LABEL)` ("يجب إدخال <label>") | |
+| Form init / helpers | `INIT_FORM`, `P0_PAGE_PK_CHECK`, `INFO_SAVE`, `INFO_LOAD`, `ADJ_FUNS`, `EXEC_FUNS`; common ones in `FORMS_APX`: `HEADER_TITLE`, `GET_MODULE_ID`, `HIJRI_DATE_FORMAT`, `ROWID_FROM_URL` ... (CLAUDE.md §4a rule 3) | |
 | Parameters | bind name without `:` and **without** an `I_` / `IO_` / `O_` prefix (the mode is IN / IN OUT / OUT). A page item `P<page>_X` is passed as `P_X` (`P_AGRMNT_NO => :P11100_AGRMNT_NO`); the page item of a Forms parameter `P<page>_P_X` as `P_X` too (no doubled `P_P_`; if the same member also receives the application item `P_X`, that parameter is `APP_P_X`); `P0_PAGE_PK` as `P_PAGE_PK`; application items and IG columns keep their name. Inside SQL a parameter is qualified with its member name (`PRE_DELETE.P_AGRMNT_NO`), because an unqualified name that matches a column resolves to the column. Rule and checks: `scripts/parameter_names.py` | `P_AGRMNT_NO => :P11100_AGRMNT_NO`, `MEMBER_ISN => :MEMBER_ISN`, `SSO_APP_USER => :SSO_APP_USER`, `P_PAGE_PK => :P0_PAGE_PK` |
 
 `<BLOCK>` = the **full** block name. Names are never abbreviated (CLAUDE.md §4); only when a name
@@ -161,13 +161,13 @@ All PL/SQL is a one-line call into `<FORM>`. `p_error_display_location=>'INLINE_
 |---|---|---|
 | 10 | `New` | session setup: `:SSO_APP_USER := GENERAL_UTILITY.ZATCA_SSO(:APP_USER);` plus port/user lookups (copy from AGR1100) |
 | 20 | `P0_PAGE_PK CHECK` | `<FORM>.P0_PAGE_PK_CHECK(P_PAGE_PK => :P0_PAGE_PK);` |
-| 40 | `PARAMETERS` | `:P<page>_MODULE_ID := <FORM>.GET_MODULE_ID(:P<page>_MODULE_ID);` |
+| 40 | `PARAMETERS` | `:P<page>_MODULE_ID := FORMS_APX.GET_MODULE_ID(P_MODULE_ID => :P<page>_MODULE_ID, FORM_NAME => '<FORM>');` |
 | 50 | `PARAMETERS ENTRY` | copy app items `P_<PARAM>` into `P<page>_P_<PARAM>`, when they are not null |
 | 60 | `WHEN-NEW-FORM-INSTANCE` | `<FORM>.INIT_FORM(...)`, when `P<page>_P_<KEY>` is not null |
 | 70 | `P0_PAGE_PK` | `:P<page>_<PK> := :P0_PAGE_PK;` |
 | 80 | `Initialize form` | `NATIVE_FORM_INIT` on the master region |
 | 90 | `PRE-FORM` | `<FORM>.PRE_FORM(...)` |
-| 100 | `HEADER TITLE` | `<FORM>.HEADER_TITLE(...)` |
+| 100 | `HEADER TITLE` | `FORMS_APX.HEADER_TITLE(P_MODULE_ID => :P<page>_MODULE_ID, P_HERO_TITLE => :P<page>_HERO_TITLE, DEFAULT_TITLE => '<form title>');` |
 
 **After Submit** (requests come from the page 0 toolbar: `CREATE`, `SAVE`, `DELETE`)
 | Seq | Name | Condition |
@@ -210,7 +210,7 @@ equivalent on page 0 gets the Text with Icon template, the same options, and a `
 search grids use `p_is_editable=>false`. Always set `p_add_row_if_empty=>false`, `p_submit_checked_rows=>false`,
 `p_lazy_loading=>false`, `p_toolbar_buttons=>'SEARCH_COLUMN:SEARCH_FIELD:ACTIONS_MENU:RESET'`,
 and `p_enable_save_public_report=>false`. Server calls from IG column DAs use
-`PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE` with `<FORM>.CHECK_ERROR(<FORM>.<BLOCK>_<COL>_VALIDATION(<COL> => :<COL>))`.
+`PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE` with `FORMS_APX.CHECK_ERROR(<FORM>.<BLOCK>_<COL>_VALIDATION(<COL> => :<COL>))`.
 
 ## 9. Declarative first: as little JavaScript as possible
 
@@ -218,14 +218,14 @@ Every Forms behaviour is built from native APEX components. JavaScript is the la
 
 | Forms | APEX 21.2 (in this order of preference) |
 |---|---|
-| WHEN-VALIDATE-ITEM / POST-CHANGE | Validation `<ITEM> VALIDATION` (server, at submit) **plus** DA `<ITEM> WHEN-VALIDATE-ITEM` on Change: action 1 *FOS - Execute PL/SQL Code* `<FORM>.CHECK_ERROR(<FORM>.<ITEM>_VALIDATION(P_<ITEM> => :P<page>_<ITEM>));` or, when the trigger derives values, `<FORM>.<ITEM>_WHEN_VALIDATE_ITEM(P_<ITEM> => :P<page>_<ITEM>, P_<ITEM2> => :P<page>_<ITEM2>);` |
+| WHEN-VALIDATE-ITEM / POST-CHANGE | Validation `<ITEM> VALIDATION` (server, at submit) **plus** DA `<ITEM> WHEN-VALIDATE-ITEM` on Change: action 1 *FOS - Execute PL/SQL Code* `FORMS_APX.CHECK_ERROR(<FORM>.<ITEM>_VALIDATION(P_<ITEM> => :P<page>_<ITEM>));` or, when the trigger derives values, `<FORM>.<ITEM>_WHEN_VALIDATE_ITEM(P_<ITEM> => :P<page>_<ITEM>, P_<ITEM2> => :P<page>_<ITEM2>);` |
 | Values the trigger derives (names, codes) | FOS *Items to Return* (`p_attribute_03`) - no JavaScript |
 | `Make_Field_Entrable` / `SET_ITEM_PROPERTY(ENABLED / UPDATEABLE)` decided by **stored data** | Item **Read Only** condition, *PL/SQL Expression* `<FORM>.<ITEM>_IS_READ_ONLY(P_<OTHER_ITEM> => :P<page>_<OTHER_ITEM>)` (BOOLEAN function) - evaluated by APEX at page render |
 | Same, decided **while typing** | Native *Enable* / *Disable* actions in the item's DA, with a client-side condition. If the rule needs the database, FOS returns a flag item `P<page>_<ITEM>_READ_ONLY` (`Y` / `N`) and the condition is *Item = Value* |
 | `SET_ITEM_PROPERTY(VISIBLE)` | Native *Show* / *Hide*, or a server-side condition on the item |
 | `SET_ITEM_PROPERTY(REQUIRED)` | Validation `<ITEM> REQUIRED` with a server-side condition (`<FORM>.<ITEM>_IS_REQUIRED(...)`). No client-side "required" script |
 | `GO_ITEM` | Native *Set Focus* |
-| `SHOW_ALERT` stop / `MESSAGE` + `FORM_TRIGGER_FAILURE` | `<FORM>.CHECK_ERROR` / `FORMS_APX.FORM_TRIGGER_FAILURE` - FOS shows the error (`p_attribute_05 => '#SQLERRM#'`) |
+| `SHOW_ALERT` stop / `MESSAGE` + `FORM_TRIGGER_FAILURE` | `FORMS_APX.CHECK_ERROR` / `FORMS_APX.FORM_TRIGGER_FAILURE` - FOS shows the error (`p_attribute_05 => '#SQLERRM#'`) |
 | `SHOW_ALERT` caution (Yes / No) | Native *Confirm* action (fixed text, from a Text Message), then the server action. Only when the text is computed on the server: one line `apex.message.confirm($v('P<page>_CONFIRM_TEXT'), ...)` |
 | `EXECUTE_QUERY` / re-query | Page submit with a request, or native *Refresh* |
 | `CALL_FORM` | Modal page `<page>0n` + *Dialog Closed* DA (native Refresh / Submit) |
@@ -251,7 +251,7 @@ the signature.
 Fixed section order (banner comment per section, the same in spec and body):
 
 1. **VERSION** - the version block and `PKG_VERSION`.
-2. **f345 HELPERS** - `CHECK_ERROR`, `REQUIRED_VALIDATION`, `P0_PAGE_PK_CHECK`, `GET_MODULE_ID`, `HEADER_TITLE`.
+2. **f345 HELPERS** - the form's own key check `P0_PAGE_PK_CHECK` (and other form-specific helpers). The common helpers (`CHECK_ERROR`, `REQUIRED_VALIDATION`, `GET_MODULE_ID`, `HEADER_TITLE`, Hijri date helpers ...) are in `FORMS_APX` 004, not in the form package.
 3. **FORM LEVEL** - form triggers in Forms order (`PRE_FORM`, `WHEN_NEW_FORM_INSTANCE`, `PRE_COMMIT` ...).
 4. **BLOCK `<BLOCK>`** - one section per block, in Forms block order, and inside it:
    query (`<BLOCK>_PRE_QUERY`, `<BLOCK>_POST_QUERY`) → record (`<BLOCK>_WHEN_CREATE_RECORD`,

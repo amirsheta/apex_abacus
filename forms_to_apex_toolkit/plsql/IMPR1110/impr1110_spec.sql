@@ -1,13 +1,16 @@
 -- =============================================================================
 -- Package     : IMPR1110  (form IMPR1110.fmb "إضافة وتعديل بيانات مستورد")
 -- Owner       : LIB_APX_USR (public synonym IMPR1110; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
--- Version     : 010 (23-11-2026: 006 = step 02 revision 2 + step 03 changes (DATE items as text, ROWID page key);
+-- Version     : 011 (24-11-2026: 006 = step 02 revision 2 + step 03 changes (DATE items as text, ROWID page key);
 --               007 = parameter names by scripts/parameter_names.py; 008 = no doubled P_P_ (P_CODE => :P1110_P_CODE),
 --               APP_P_PRSNL_IMPR / APP_P_LETTER_NBR in PARAMETERS_ENTRY. No logic change. 007: rollback/IMPR1110/step04_v007/;
 --               009 = P0_PAGE_PK_CHECK restores the URL-safe ROWID of page 111001 ('-' / '_' -> '+' / '/'; a '+'
 --               in f?p arrived as a space: checksum error). 008: rollback/IMPR1110/step04_v008/;
 --               010 = Hijri date format from one place: HIJRI_DATE_FORMAT reads the Application Setting
---               HIJRI_DATE_FORMAT (default YYYY-MM-MI, was the constant MI-MM-YYYY). 009: rollback/IMPR1110/step04_v009/)
+--               HIJRI_DATE_FORMAT (default YYYY-MM-MI, was the constant MI-MM-YYYY). 009: rollback/IMPR1110/step04_v009/;
+--               011 = common helpers in FORMS_APX 004 (CHECK_ERROR, REQUIRED_VALIDATION, HIJRI_DATE_FORMAT, GET_MODULE_ID,
+--               HEADER_TITLE, ARABIC_MESSAGE, CG_MESSAGE, cur_hij_date ...), called as FORMS_APX.<NAME>; pages call
+--               FORMS_APX directly. No logic change except REQUIRED_VALIDATION text. 010: rollback/IMPR1110/step04_v010/)
 -- Author      : Claude Code
 -- Status      : NOT COMPILED.
 -- Layout      : VERSION -> f345 HELPERS -> FORM LEVEL -> BLOCK IMPORTERS (query, record, items in Forms
@@ -22,13 +25,13 @@
 SET DEFINE OFF
 
 CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
-   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '010';
+   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '011';
    V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    FUNCTION PKG_VERSION
       RETURN VARCHAR2;
    V_PACKAGE_NAME      VARCHAR2 (50) := 'IMPR1110';
-   V_LAST_MODIFY_DT    VARCHAR2 (10) := '23-11-2026';
+   V_LAST_MODIFY_DT    VARCHAR2 (10) := '24-11-2026';
    V_MODIFIED_BY       VARCHAR2 (50) := 'Claude Code';
    V_INFO              VARCHAR2 (500)
       :=    'PACKAGE NAME :  '
@@ -87,26 +90,10 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
                                CAR_AGENT_FLAG_LOCKED    OUT VARCHAR2);
 
     -- Section: f345 HELPERS
-    -- f345 CHECK_ERROR: raise the text returned by a <ITEM>_VALIDATION function (used by the FOS DAs)
-    PROCEDURE CHECK_ERROR (ERROR_TEXT IN VARCHAR2);
-
-    -- Section: f345 HELPERS
-    -- Validation "<ITEM> REQUIRED" (server-side condition <ITEM>_IS_REQUIRED): Forms FRM-40202
-    FUNCTION REQUIRED_VALIDATION (ITEM_VALUE IN VARCHAR2, ITEM_LABEL IN VARCHAR2) RETURN VARCHAR2;
-
-    -- Section: f345 HELPERS
-    -- Hijri date format of the application: APEX Application Setting HIJRI_DATE_FORMAT, default YYYY-MM-MI
-    -- (the f345 Hijri picker writes iYYYY-iMM-iDD; the day is kept in the minutes). Change the setting
-    -- (Shared Components > Application Settings, or APEX_APP_SETTING.SET_VALUE) to change it.
-    -- APEX  : computation P1110_HIJRI_DATE_FORMAT (Before Header) = format mask &P1110_HIJRI_DATE_FORMAT.
-    --         of the Hijri date items; the package converts the item texts with the same function.
-    FUNCTION HIJRI_DATE_FORMAT RETURN VARCHAR2;
-
-    -- Section: f345 HELPERS
     -- Process "P0_PAGE_PK CHECK" (Before Header): P0_PAGE_PK holds the ROWID of the importer (Forms key
     -- mode ROWID); forget a key that is not a row of IMPORTERS of this port (block WHERE clause).
     -- The search page 111001 passes the ROWID URL-safe (TRANSLATE(ROWID, '+/', '-_'): a '+' in f?p arrives
-    -- as a space and the checksum fails); it is translated back first. A ROWID never contains '-' or '_'.
+    -- as a space and the checksum fails); FORMS_APX.ROWID_FROM_URL translates it back first.
     PROCEDURE P0_PAGE_PK_CHECK (P_PAGE_PK    IN OUT VARCHAR2,
                                 P_CURR_PORT_CD IN     NUMBER);
 
@@ -118,20 +105,11 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
                               P_CURR_PORT_CD IN NUMBER) RETURN VARCHAR2;
 
     -- Section: f345 HELPERS
-    -- Computation P1110_MODULE_ID: SC_SYSTEM_OBJECTS id of the form (f345 Page Functions list)
-    FUNCTION GET_MODULE_ID (P_MODULE_ID IN VARCHAR2) RETURN VARCHAR2;
-
-    -- Section: f345 HELPERS
     -- Process "PARAMETERS ENTRY" (f345): one-shot hand-over of :PARAMETER.PRSNL_IMPR / LETTER_NBR
     PROCEDURE PARAMETERS_ENTRY (APP_P_PRSNL_IMPR       IN OUT VARCHAR2,
                                 APP_P_LETTER_NBR       IN OUT VARCHAR2,
                                 P_PRSNL_IMPR IN OUT VARCHAR2,
                                 P_LETTER_NBR IN OUT VARCHAR2);
-
-    -- Section: f345 HELPERS
-    -- Process "HEADER TITLE": the form title from SC_SYSTEM_OBJECTS (Forms TITLE block)
-    PROCEDURE HEADER_TITLE (P_MODULE_ID   IN     VARCHAR2,
-                            P_HERO_TITLE IN OUT VARCHAR2);
 
     -- =========================================================================
     -- FORM LEVEL

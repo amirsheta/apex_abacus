@@ -14,7 +14,6 @@ SET DEFINE OFF
 
 CREATE OR REPLACE PACKAGE BODY LIB_APX_USR.<FORM>
 AS
-    c_err CONSTANT PLS_INTEGER := -20001;
 
     -- =========================================================================
     -- PACKAGE VERSION
@@ -30,20 +29,6 @@ AS
     -- =========================================================================
     -- f345 HELPERS
     -- =========================================================================
-    PROCEDURE CHECK_ERROR (ERROR_TEXT IN VARCHAR2)
-    IS
-    BEGIN
-        IF ERROR_TEXT IS NOT NULL THEN
-            raise_application_error(c_err, ERROR_TEXT);
-        END IF;
-    END CHECK_ERROR;
-
-    FUNCTION REQUIRED_VALIDATION (ITEM_VALUE IN VARCHAR2, ITEM_LABEL IN VARCHAR2) RETURN VARCHAR2
-    IS
-    BEGIN
-        -- Source: FRM-40202 "Field must be entered"
-        RETURN CASE WHEN TRIM(ITEM_VALUE) IS NULL THEN 'يجب إدخال ' || ITEM_LABEL END;
-    END REQUIRED_VALIDATION;
 
     PROCEDURE P0_PAGE_PK_CHECK (P_PAGE_PK IN OUT VARCHAR2)
     IS
@@ -58,28 +43,6 @@ AS
             P_PAGE_PK := NULL;                         -- record deleted / not visible
         END IF;
     END P0_PAGE_PK_CHECK;
-
-    FUNCTION GET_MODULE_ID (P_MODULE_ID IN VARCHAR2) RETURN VARCHAR2
-    IS
-        v_id VARCHAR2(40);
-    BEGIN
-        IF P_MODULE_ID IS NOT NULL THEN
-            RETURN P_MODULE_ID;
-        END IF;
-        SELECT TO_CHAR(MIN(o.sysobj_id))
-          INTO v_id
-          FROM sc_system_objects o
-         WHERE UPPER(REGEXP_REPLACE(o.sys_os_file_name, '\..*$', '')) = '<FORM>';
-        RETURN v_id;
-    END GET_MODULE_ID;
-
-    PROCEDURE HEADER_TITLE (P_PAGE_PK         IN VARCHAR2,
-                            P_HERO_TITLE IN OUT VARCHAR2)
-    IS
-    BEGIN
-        P_HERO_TITLE := CASE WHEN P_PAGE_PK IS NULL THEN '<screen title>'
-                                      ELSE '<screen title> - ' || P_PAGE_PK END;
-    END HEADER_TITLE;
 
     -- =========================================================================
     -- FORM LEVEL

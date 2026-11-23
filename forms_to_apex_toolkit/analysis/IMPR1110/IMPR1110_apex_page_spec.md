@@ -45,8 +45,12 @@
 5. **Dates.** BUS_ID_EXPRD_DT and BUS_ID_ISSUE_DT are Hijri dates stored as DATE with the Forms mask
    `MI-MM-YYYY` (decision §15 #10; the day is kept in the minutes because e.g. 30-02 is not a valid
    DATE). The items are Text Fields with the f345 class `hijri-date-default` (app-wide Hijri picker, no page
-   JavaScript) and format mask `MI-MM-YYYY`. The package entry points take them as `VARCHAR2` and convert with
-   the same mask (change made in this step, §16).
+   JavaScript). Since package 010 (user request 2026-11-23) the format comes from one place: the APEX
+   Application Setting `HIJRI_DATE_FORMAT` (default `YYYY-MM-MI`, the output of the f345 Hijri picker; the day
+   stays in the minutes). Computation `P1110_HIJRI_DATE_FORMAT` (Before Header) = `IMPR1110.HIJRI_DATE_FORMAT`,
+   item format mask `&P1110_HIJRI_DATE_FORMAT.`, placeholder سنة-شهر-يوم. The package entry points take them as
+   `VARCHAR2` and convert with the same function. Interface texts keep `MI-MM-YYYY` (the MCI data string,
+   the values sent with the importer, the residence-expiry message): they are external formats.
 6. **Declarative, minimal JavaScript.** No JavaScript file, no AJAX callback. 9 *Execute JavaScript Code*
    actions remain, each 1–3 lines, all of them for a question whose text is computed on the server, or for
    opening a dialog from a function (§10.3).
@@ -174,7 +178,7 @@ Rules:
 | `P1110_BUS_ID_STATUS` | BUS_ID_STATUS | Display Only, CSS u-hidden (Send On Page Submit = No) | - | No | - | - | - | - | 2 | 1040 / hidden | - | - | No (server value) | `IMPORTERS.BUS_ID_STATUS (CGSO$COMBO_DO)` | - |
 | `P1110_IMPR_TYPE_CD` | IMPR_TYPE_CD | Popup LOV (display = return value, manual entry) | رمز النشاط التجارى | Yes | - | - | LOV_IMPR_TYPE | - | 4 | 70 / row Yes / col 1 span 1 | DA `IMPR_TYPE_CD READ ONLY` (flag `P1110_IMPR_TYPE_CD_LOCKED`) | - | Yes | `IMPORTERS.IMPR_TYPE_CD (CGSO$CHAR_ARB)` | LOV form LOV_Impr_Type (type part) |
 | `P1110_IMPR_TYPE_NAME` | - | Display Only (Send On Page Submit = No) | - | No | - | - | - | - | 40 | 80 / row No / col 2 span 5 | - | - | No (server value) | `IMPORTERS.IMPR_TYPE_NAME (CGSO$CHAR_ARB_DO)` | - |
-| `P1110_BUS_ID_EXPRD_DT` | BUS_ID_EXPRD_DT | Text Field, CSS class `hijri-date-default` (f345 Hijri picker) | إنـتهـاء الـنشاط | Validation `BUS_ID_EXPRD_DT REQUIRED` (`BUS_ID_EXPRD_DT_IS_REQUIRED`) | MI-MM-YYYY | - | - | - | 10 | 90 / row No / col 9 span 2 | DA `BUS_ID_EXPRD_DT READ ONLY` (flag `P1110_BUS_ID_EXPRD_DT_LOCKED`) | - | Yes | `IMPORTERS.BUS_ID_EXPRD_DT (CGSO$HDATE_ARB)` | Hijri DATE, mask MI-MM-YYYY as in Forms (placeholder "يوم-شهر-سنة") |
+| `P1110_BUS_ID_EXPRD_DT` | BUS_ID_EXPRD_DT | Text Field, CSS class `hijri-date-default` (f345 Hijri picker) | إنـتهـاء الـنشاط | Validation `BUS_ID_EXPRD_DT REQUIRED` (`BUS_ID_EXPRD_DT_IS_REQUIRED`) | &P1110_HIJRI_DATE_FORMAT. | - | - | - | 10 | 90 / row No / col 9 span 2 | DA `BUS_ID_EXPRD_DT READ ONLY` (flag `P1110_BUS_ID_EXPRD_DT_LOCKED`) | - | Yes | `IMPORTERS.BUS_ID_EXPRD_DT (CGSO$HDATE_ARB)` | Hijri DATE, mask MI-MM-YYYY as in Forms (placeholder "يوم-شهر-سنة") |
 | `P1110_BUS_ID_TYPE_CD` | BUS_ID_TYPE_CD | Select List | نوع الرقم الإستدلالي | Yes | - | - | LOV_IMPR_TYPE_BUS_ID | P1110_IMPR_TYPE_CD | 4 | 100 / row Yes / col 1 span 1 | PL/SQL Expression `IMPR1110.BUS_ID_TYPE_CD_IS_READ_ONLY(P_IMPR_NBR => :P1110_IMPR_NBR)` | - | Yes | `IMPORTERS.BUS_ID_TYPE_CD (CGSO$CHAR_ARB_DO)` | bus-id-type part of LOV_Impr_Type (Forms: display item + LOV button BUTT) |
 | `P1110_BUS_ID_TYPE_NAME` | - | Display Only (Send On Page Submit = No) | - | No | - | - | - | - | 40 | 110 / row No / col 2 span 3 | - | - | No (server value) | `IMPORTERS.BUS_ID_TYPE_NAME (CGSO$CHAR_ARB_DO)` | - |
 | `P1110_COMM_RGSTRTN_TYPE` | COMM_RGSTRTN_TYPE | Select List | نوع السجل التجاري | Validation `COMM_RGSTRTN_TYPE REQUIRED` (`COMM_RGSTRTN_TYPE_IS_REQUIRED`) | - | - | LOV_COMM_RGSTRTN_TYPE | - | 2 | 120 / row No / col 9 span 2 | DA `COMM_RGSTRTN_TYPE READ ONLY` (flag `P1110_COMM_RGSTRTN_TYPE_LOCKED`) | - | Yes | `IMPORTERS.COMM_RGSTRTN_TYPE (CGSO$CHAR_ARB)` | list item, CG_REF_CODES |
@@ -199,7 +203,7 @@ Rules:
 | `P1110_ENG_IMPR_NAME` | ENG_IMPR_NAME | Text Field (dir=ltr) | الاســــم الأجنبـــــــي | No | - | - | - | - | 200 | 230 / row Yes / col 1 span 5 | - | - | Yes | `IMPORTERS.ENG_IMPR_NAME (CGSO$CHAR_EN)` | - |
 | `P1110_IMPR_CNTCT_NAME` | IMPR_CNTCT_NAME | Text Field | الوكيل المفوض | No | - | - | - | - | 200 | 240 / row No / col 7 span 4 | - | - | Yes | `IMPORTERS.IMPR_CNTCT_NAME (CGSO$CHAR_ARB)` | - |
 | `P1110_IMPR_ADDRESS` | IMPR_ADDRESS | Text Field | الــعـــــــنـــــــوان | No | - | - | - | - | 2000 | 250 / row Yes / col 1 span 6 | - | - | Yes | `IMPORTERS.IMPR_ADDRESS (CGSO$CHAR_ARB)` | - |
-| `P1110_BUS_ID_ISSUE_DT` | BUS_ID_ISSUE_DT | Display Only (Send On Page Submit = No) | تاريخ انشاء النشاط | No | MI-MM-YYYY | - | - | - | 10 | 260 / row No / col 9 span 2 | - | - | No (server value) | `IMPORTERS.BUS_ID_ISSUE_DT (CGSO$HDATE_ARB_DO)` | Hijri DATE, mask MI-MM-YYYY as in Forms (placeholder "يوم-شهر-سنة") |
+| `P1110_BUS_ID_ISSUE_DT` | BUS_ID_ISSUE_DT | Display Only (Send On Page Submit = No) | تاريخ انشاء النشاط | No | &P1110_HIJRI_DATE_FORMAT. | - | - | - | 10 | 260 / row No / col 9 span 2 | - | - | No (server value) | `IMPORTERS.BUS_ID_ISSUE_DT (CGSO$HDATE_ARB_DO)` | Hijri DATE, mask MI-MM-YYYY as in Forms (placeholder "يوم-شهر-سنة") |
 | `P1110_STATUS` | - | Display Only, CSS u-hidden (Send On Page Submit = No) | - | No | - | Static: 1 | - | - | 2 | 1130 / hidden | - | - | No (server value) | `IMPORTERS.STATUS (CGSO$CHECK_BOX_MD)` | - |
 | `P1110_IMPR_NBR_PARENT` | IMPR_NBR_PARENT | Popup LOV (display = return value, manual entry) | تابــع الـــــــــــــــــى | No | - | - | LOV_IMPR | - | 11 | 270 / row Yes / col 1 span 2 | - | - | Yes | `IMPORTERS.IMPR_NBR_PARENT (CGSO$CHAR_ARB)` | LOV form LOV_IMPR |
 | `P1110_IMPR_NAME_PARENT` | - | Display Only (Send On Page Submit = No) | - | No | - | - | - | - | - | 280 / row No / col 3 span 3 | - | - | No (server value) | `IMPORTERS.IMPR_NAME_PARENT (CGSO$CHAR_ARB_DO)` | - |
@@ -234,6 +238,7 @@ Rules:
 | `P1110_P_LETTER_NBR` | - | Hidden (Value Protected = Yes) | - | No | - | - | - | - | - | hidden | - | - | No (server value) | - | :PARAMETER.LETTER_NBR (PARAMETERS ENTRY, EXEC_FUNS) |
 | `P1110_P_PRSNL_IMPR` | - | Hidden (Value Protected = Yes) | - | No | - | Static: 0 | - | - | - | hidden | - | - | No (server value) | - | :PARAMETER.PRSNL_IMPR (PARAMETERS ENTRY), default 0 |
 | `P1110_MODULE_ID` | - | Hidden (Value Protected = Yes) | - | No | - | - | - | - | - | hidden | - | - | No (server value) | - | f345: SC_SYSTEM_OBJECTS id of the form; kept by SCREEN ENTRY RESET |
+| `P1110_HIJRI_DATE_FORMAT` | - | Hidden (Value Protected = Yes) | - | No | - | - | - | - | - | hidden | - | - | No (server value) | - | Hijri date format (Application Setting HIJRI_DATE_FORMAT, default YYYY-MM-MI): format mask &P1110_HIJRI_DATE_FORMAT. of the Hijri date items |
 | `P1110_HERO_TITLE` | - | Display Only (region IMPORTERS_HERO) | - | No | - | - | - | - | - | hidden | - | - | No (server value) | - | f345 HEADER TITLE |
 | `P1110_FORM_OPEN` | - | Hidden (Value Protected = Yes) | - | No | - | - | - | - | - | hidden | - | - | No (server value) | - | Y after WHEN-NEW-FORM-INSTANCE ran (once per entry; SCREEN ENTRY RESET clears it) |
 | `P1110_ADJ_FUNS` | - | Hidden (Value Protected = Yes) | - | No | - | - | - | - | - | hidden | - | - | No (server value) | - | f345 Page Functions filter (comma list of SYS_OS_FILE_NAME) |
@@ -400,6 +405,7 @@ the fetched record (ADJ_FUNS, MOBILE_URL, PRE_INSERT_QUESTION) run After Header.
 
 | Item | Point | Type | Expression | Condition | Source |
 |---|---|---|---|---|---|
+| P1110_HIJRI_DATE_FORMAT | Before Header | PL/SQL Expression | `IMPR1110.HIJRI_DATE_FORMAT` | - | Hijri date format from one place: Application Setting HIJRI_DATE_FORMAT (Forms mask MI-MM-YYYY) |
 | P1110_ADJ_FUNS | After Header | PL/SQL Expression | `IMPR1110.ADJ_FUNS(P_IMPR_NBR => :P1110_IMPR_NBR, P_IMPR_TYPE_CD => :P1110_IMPR_TYPE_CD, P_BUS_ID_TYPE_CD => :P1110_BUS_ID_TYPE_CD, P_CURR_PORT_CD => :P_CURR_PORT_CD, SSO_APP_USER => :SSO_APP_USER, P_CLASS_CD => :P_CLASS_CD, V_USR_TYPE => :V_USR_TYPE)` | - | PU ADJ_FUNS |
 | P1110_BROKER_USER | Before Header | PL/SQL Expression | `CASE WHEN IMPR1110.EXPRESS_POST_IS_READ_ONLY(P_CLASS_CD => :P_CLASS_CD, V_USR_TYPE => :V_USR_TYPE) THEN 'Y' ELSE 'N' END` | - | PRE-INSERT condition class 1 / type 3 (same rule as EXPRESS_POST) |
 | P1110_PRE_INSERT_QUESTION | After Header | PL/SQL Expression | `APEX_LANG.MESSAGE('IMPR1110_PRE_INSERT_CONFIRM')` | :P1110_BROKER_USER = 'Y' | IMPORTERS.PRE-INSERT CONFIRM text (Text Message, translatable) |
@@ -1303,7 +1309,7 @@ form's rows first, and it ends with COMMIT. **Not executed** (CLAUDE.md §6.10).
 
 Package `IMPR1110` **005 → 006** (generator `work/step02/build_package.py`, self-check clean):
 - DATE columns (BUS_ID_EXPRD_DT, BUS_ID_ISSUE_DT, LST_TRAN_DT) are passed as `VARCHAR2` and converted with
-  `c_mask` (`MI-MM-YYYY`) / `c_date_time_mask` (`YYYY/MM/DD HH24:MI:SS`, the Forms PLSQL_DATE_FORMAT).
+  `c_mask` (`MI-MM-YYYY`; package 010: function `HIJRI_DATE_FORMAT`, Application Setting, default `YYYY-MM-MI`) / `c_date_time_mask` (`YYYY/MM/DD HH24:MI:SS`, the Forms PLSQL_DATE_FORMAT).
   APEX binds page items as text with the application date format (`DS`), which cannot read Hijri values.
 - `P0_PAGE_PK_CHECK` checks a ROWID key; new `IMPORTER_ROW_ID` for process `EXECUTE-QUERY`.
 - `READ_ONLY_FLAGS` covers 14 groups (added IMPR_TYPE_CD, BUS_ID_EXPRD_DT, IMPR_TEL_NBR and CAR_AGENT_FLAG,

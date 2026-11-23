@@ -8,6 +8,7 @@
  "NATIVE_SUBMIT_PAGE attributes 01 / 02 (not in f345)",
  "ROWID primary key of the Form region: p_include_rowid_column, item p_source ROWID / p_source_data_type ROWID",
  "button DA: p_triggering_button_id (page 111001 SEARCH)",
+ "create_app_setting (Application Setting HIJRI_DATE_FORMAT; not in f345): p_name, p_value, p_is_required, p_comments",
  "p_lov_cascade_parent_items / p_ajax_optimize_refresh (cascading LOV parents)",
  "p_query_where on the NATIVE_FORM region (AGR1100 has no WHERE clause)",
  "p_read_only_when2 => PLSQL with p_read_only_when_type => EXPRESSION (f345 shows the pattern only for p_display_when)",

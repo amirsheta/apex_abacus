@@ -1,11 +1,13 @@
 -- =============================================================================
 -- Package     : IMPR1110  (form IMPR1110.fmb "إضافة وتعديل بيانات مستورد")
 -- Owner       : LIB_APX_USR (public synonym IMPR1110; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
--- Version     : 009 (23-11-2026: 006 = step 02 revision 2 + step 03 changes (DATE items as text, ROWID page key);
+-- Version     : 010 (23-11-2026: 006 = step 02 revision 2 + step 03 changes (DATE items as text, ROWID page key);
 --               007 = parameter names by scripts/parameter_names.py; 008 = no doubled P_P_ (P_CODE => :P1110_P_CODE),
 --               APP_P_PRSNL_IMPR / APP_P_LETTER_NBR in PARAMETERS_ENTRY. No logic change. 007: rollback/IMPR1110/step04_v007/;
 --               009 = P0_PAGE_PK_CHECK restores the URL-safe ROWID of page 111001 ('-' / '_' -> '+' / '/'; a '+'
---               in f?p arrived as a space: checksum error). 008: rollback/IMPR1110/step04_v008/)
+--               in f?p arrived as a space: checksum error). 008: rollback/IMPR1110/step04_v008/;
+--               010 = Hijri date format from one place: HIJRI_DATE_FORMAT reads the Application Setting
+--               HIJRI_DATE_FORMAT (default YYYY-MM-MI, was the constant MI-MM-YYYY). 009: rollback/IMPR1110/step04_v009/)
 -- Author      : Claude Code
 -- Status      : NOT COMPILED.
 -- Layout      : VERSION -> f345 HELPERS -> FORM LEVEL -> BLOCK IMPORTERS (query, record, items in Forms
@@ -20,7 +22,7 @@
 SET DEFINE OFF
 
 CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
-   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '009';
+   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '010';
    V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    FUNCTION PKG_VERSION
@@ -91,6 +93,14 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
     -- Section: f345 HELPERS
     -- Validation "<ITEM> REQUIRED" (server-side condition <ITEM>_IS_REQUIRED): Forms FRM-40202
     FUNCTION REQUIRED_VALIDATION (ITEM_VALUE IN VARCHAR2, ITEM_LABEL IN VARCHAR2) RETURN VARCHAR2;
+
+    -- Section: f345 HELPERS
+    -- Hijri date format of the application: APEX Application Setting HIJRI_DATE_FORMAT, default YYYY-MM-MI
+    -- (the f345 Hijri picker writes iYYYY-iMM-iDD; the day is kept in the minutes). Change the setting
+    -- (Shared Components > Application Settings, or APEX_APP_SETTING.SET_VALUE) to change it.
+    -- APEX  : computation P1110_HIJRI_DATE_FORMAT (Before Header) = format mask &P1110_HIJRI_DATE_FORMAT.
+    --         of the Hijri date items; the package converts the item texts with the same function.
+    FUNCTION HIJRI_DATE_FORMAT RETURN VARCHAR2;
 
     -- Section: f345 HELPERS
     -- Process "P0_PAGE_PK CHECK" (Before Header): P0_PAGE_PK holds the ROWID of the importer (Forms key

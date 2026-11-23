@@ -6,7 +6,7 @@
 --               main page 1120 (IMPR1120), search page 112001 (IMPR1120_SEARCH)
 -- Author      : Claude Code
 -- Created     : 2026-11-23
--- Version     : 007
+-- Version     : 008
 -- Purpose     : Business logic of the form, organised like the form itself:
 --               VERSION -> f345 HELPERS -> FORM LEVEL -> BLOCK IMPORTERS (master, query only)
 --               -> BLOCK IMPR_SUSPN (detail, Interactive Grid) -> PROGRAM UNITS
@@ -22,8 +22,9 @@
 --               f345 application items P_CURR_PORT_CD => :P_CURR_PORT_CD,
 --               SSO_APP_USER => :SSO_APP_USER, P_GLOBAL_V_WS_ID => :P_GLOBAL_V_WS_ID.
 --               Forms parameter CURRENT_SIDE -> page item P1120_P_CURRENT_SIDE.
---               Hijri dates are passed as text in the Forms mask MI-MM-RRRR (OLB class CGSO$HDATE_ARB;
---               the day is kept in the minutes because e.g. 30-02 is not a valid DATE), as in IMPR1110.
+--               Hijri dates are passed as text in the format HIJRI_DATE_FORMAT (APEX Application Setting
+--               HIJRI_DATE_FORMAT, default YYYY-MM-MI = the output of the f345 Hijri picker; the day is kept in
+--               the minutes because e.g. 30-02 is not a valid DATE), as in IMPR1110. Forms used MI-MM-RRRR.
 --               The package never reads page items itself, so it is testable without APEX.
 -- Names       : IMPR_SUSPN column members drop the block prefix, because
 --               IMPR_SUSPN_SUSPN_<COLUMN>_<SUFFIX> is longer than 30 bytes (CLAUDE.md §4);
@@ -55,13 +56,17 @@
 --               2026-11-23 Claude Code 007 P0_PAGE_PK_CHECK restores a URL-safe ROWID ('-' / '_' back to
 --                          '+' / '/'): the search page link passed the ROWID in f?p and a '+' arrived as a
 --                          space (checksum error). Previous version: rollback/IMPR1120/step04_v006/
+--               2026-11-23 Claude Code 008 Hijri date format from one place (user request): public function
+--                          HIJRI_DATE_FORMAT reads the APEX Application Setting HIJRI_DATE_FORMAT (default
+--                          YYYY-MM-MI, the f345 Hijri picker format; was the constant MI-MM-RRRR); the format
+--                          error message follows it. Previous version: rollback/IMPR1120/step04_v007/
 -- =============================================================================
 SET DEFINE OFF
 
 CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1120 AS
-   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '007';
-   V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '007';
-   V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '007';
+   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '008';
+   V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '008';
+   V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '008';
    FUNCTION PKG_VERSION
       RETURN VARCHAR2;
    V_PACKAGE_NAME      VARCHAR2 (50) := 'IMPR1120';
@@ -91,6 +96,12 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1120 AS
     -- Error text when a required value is empty, else NULL
     -- APEX  : Validation "<ITEM> REQUIRED": return IMPR1120.REQUIRED_VALIDATION(:<ITEM>, '<label>');
     FUNCTION  REQUIRED_VALIDATION (ITEM_VALUE IN VARCHAR2, ITEM_LABEL IN VARCHAR2) RETURN VARCHAR2;
+
+    -- Hijri date format of the application: APEX Application Setting HIJRI_DATE_FORMAT, default
+    -- YYYY-MM-MI (the f345 Hijri picker writes iYYYY-iMM-iDD; the day is kept in the minutes). Change the
+    -- setting (Shared Components > Application Settings, or APEX_APP_SETTING.SET_VALUE) to change it.
+    -- APEX  : region SQL of IMPR_SUSPN: TO_CHAR(<date>, (SELECT IMPR1120.HIJRI_DATE_FORMAT FROM dual))
+    FUNCTION  HIJRI_DATE_FORMAT RETURN VARCHAR2;
 
     -- APEX  : Process "P0_PAGE_PK CHECK" (Before Header). P0_PAGE_PK holds the ROWID of the
     --         IMPORTERS row (as IMPR1110); a key that is not an importer of this port is dropped.

@@ -51,6 +51,21 @@
     END REQUIRED_VALIDATION;
 
     -- Section: f345 HELPERS
+    -- Hijri date format of the application: APEX Application Setting HIJRI_DATE_FORMAT, default YYYY-MM-MI
+    -- (the f345 Hijri picker writes iYYYY-iMM-iDD; the day is kept in the minutes). Change the setting
+    -- (Shared Components > Application Settings, or APEX_APP_SETTING.SET_VALUE) to change it.
+    -- APEX  : computation P1110_HIJRI_DATE_FORMAT (Before Header) = format mask &P1110_HIJRI_DATE_FORMAT.
+    --         of the Hijri date items; the package converts the item texts with the same function.
+    FUNCTION HIJRI_DATE_FORMAT RETURN VARCHAR2
+    IS
+    BEGIN
+        RETURN NVL(APEX_APP_SETTING.GET_VALUE(p_name => 'HIJRI_DATE_FORMAT'), c_hijri_date_format);
+    EXCEPTION
+        WHEN OTHERS THEN               -- no APEX session / setting missing: the default format
+            RETURN c_hijri_date_format;
+    END HIJRI_DATE_FORMAT;
+
+    -- Section: f345 HELPERS
     -- Process "P0_PAGE_PK CHECK" (Before Header): P0_PAGE_PK holds the ROWID of the importer (Forms key
     -- mode ROWID); forget a key that is not a row of IMPORTERS of this port (block WHERE clause).
     -- The search page 111001 passes the ROWID URL-safe (TRANSLATE(ROWID, '+/', '-_'): a '+' in f?p arrives

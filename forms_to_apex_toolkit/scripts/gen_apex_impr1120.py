@@ -388,9 +388,9 @@ SUSPN_COLUMNS = [
     dict(name='SUSPN_SEQ', kind='HIDDEN', data_type='NUMBER', pk=True, comment='Source: IMPR1120.IMPR_SUSPN.SUSPN_SEQ (PRE-INSERT MAX + 1)'),
     dict(name='SUSPN_STRT_DT', kind='TEXT', data_type='VARCHAR2', heading='بداية الإيقاف', req=True, maxlen=10, css='hijri-date-default',
          default_plsql='IMPR1120.SUSPN_STRT_DT_DEFAULT', read_only=R_ROW,
-         comment='Source: IMPR1120.IMPR_SUSPN.SUSPN_STRT_DT (Hijri, MI-MM-RRRR text; WHEN-NEW-ITEM-INSTANCE default)'),
+         comment='Source: IMPR1120.IMPR_SUSPN.SUSPN_STRT_DT (Hijri text in HIJRI_DATE_FORMAT, default YYYY-MM-MI; WHEN-NEW-ITEM-INSTANCE default)'),
     dict(name='SUSPN_END_DT', kind='TEXT', data_type='VARCHAR2', heading='نهاية الإيقاف', req=True, maxlen=10, css='hijri-date-default',
-         read_only=R_ROW, comment='Source: IMPR1120.IMPR_SUSPN.SUSPN_END_DT (Hijri, MI-MM-RRRR text)'),
+         read_only=R_ROW, comment='Source: IMPR1120.IMPR_SUSPN.SUSPN_END_DT (Hijri text in HIJRI_DATE_FORMAT, default YYYY-MM-MI)'),
     dict(name='SUSPN_RSN_CD', kind='SELECT', data_type='NUMBER', heading='السبب', lov_key='9120:lov:LOV_IMPR_SUSPN_RSN_CD',
          default_plsql='IMPR1120.SUSPN_RSN_CD_DEFAULT(%s)' % SITE, read_only=R_ROW,
          comment='Source: IMPR1120.IMPR_SUSPN.SUSPN_RSN_CD (list CG_REF_CODES IMPR_SUSPN_RSN_CD; WHEN-NEW-ITEM-INSTANCE default)'),
@@ -406,8 +406,8 @@ SUSPN_SQL = '\n'.join([
     'SELECT s.port_cd,',
     '       s.impr_nbr,',
     '       s.suspn_seq,',
-    "       TO_CHAR(s.suspn_strt_dt, 'MI-MM-RRRR') AS suspn_strt_dt,",
-    "       TO_CHAR(s.suspn_end_dt,  'MI-MM-RRRR') AS suspn_end_dt,",
+    "       TO_CHAR(s.suspn_strt_dt, (SELECT IMPR1120.HIJRI_DATE_FORMAT FROM dual)) AS suspn_strt_dt,   -- Application Setting",
+    "       TO_CHAR(s.suspn_end_dt,  (SELECT IMPR1120.HIJRI_DATE_FORMAT FROM dual)) AS suspn_end_dt,    -- HIJRI_DATE_FORMAT",
     '       s.suspn_rsn_cd,',
     '       s.suspn_rsn_text,',
     '       s.suspn_side_cd',
@@ -479,7 +479,7 @@ def gen():
 --               reference application f345 (apex/Reference/f345.sql)
 -- Standard    : CLAUDE.md 4b / 4c, docs/f345_reference_standard.md 3-9: read-only Form region (ROWID),
 --               editable Interactive Grid with PL/SQL row DML, FOS + native dynamic actions,
---               one-line calls into package IMPR1120 (version 007). No JavaScript, no AJAX callback.
+--               one-line calls into package IMPR1120 (version 008). No JavaScript, no AJAX callback.
 -- Contents    : component export INTO the application installed from f345 AND already holding the
 --               IMPR1110 export (page group IMPR, LOV_SD_PORTS, LOV_ALLOWED_EXPORT are reused):
 --               pages 1120 (main) and 112001 (search) + 2 LOVs + 1 Text Message.

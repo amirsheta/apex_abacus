@@ -1,5 +1,5 @@
 -- =============================================================================
--- Package body: IMPR1110 (version 009, 23-11-2026) - see the spec header. NOT COMPILED.
+-- Package body: IMPR1110 (version 010, 23-11-2026) - see the spec header. NOT COMPILED.
 -- Layout      : 1 private types and declarations, 2 forward declarations, 3 private helpers and the
 --               converted Forms logic (record based, Forms order, UI calls replaced by "NULL; -- APEX ..."),
 --               4 read-only / required rules, 5 f345 helpers, 6 APEX entry points (spec order), 7 version.
@@ -105,7 +105,7 @@ AS
         brkr_nbr      NUMBER           -- :PARAMETER.P_BRKR_NBR
     );
 
-    c_mask       CONSTANT VARCHAR2(10)  := 'MI-MM-YYYY';   -- Hijri mask of the form: day kept in the minutes (Feb 30 is no DATE)
+    c_hijri_date_format CONSTANT VARCHAR2(30) := 'YYYY-MM-MI';   -- default of the Application Setting HIJRI_DATE_FORMAT (f345 Hijri picker); day kept in the minutes (Feb 30 is no DATE); Forms used MI-MM-YYYY
     c_date_time_mask CONSTANT VARCHAR2(30) := 'YYYY/MM/DD HH24:MI:SS';   -- Forms PLSQL_DATE_FORMAT (PRE-FORM), LST_TRAN_DT
     c_err        CONSTANT PLS_INTEGER   := -20001;
     c_hero_title CONSTANT VARCHAR2(200) := 'إضافة وتعديل بيانات مستورد';
@@ -6913,6 +6913,21 @@ AS
     END REQUIRED_VALIDATION;
 
     -- Section: f345 HELPERS
+    -- Hijri date format of the application: APEX Application Setting HIJRI_DATE_FORMAT, default YYYY-MM-MI
+    -- (the f345 Hijri picker writes iYYYY-iMM-iDD; the day is kept in the minutes). Change the setting
+    -- (Shared Components > Application Settings, or APEX_APP_SETTING.SET_VALUE) to change it.
+    -- APEX  : computation P1110_HIJRI_DATE_FORMAT (Before Header) = format mask &P1110_HIJRI_DATE_FORMAT.
+    --         of the Hijri date items; the package converts the item texts with the same function.
+    FUNCTION HIJRI_DATE_FORMAT RETURN VARCHAR2
+    IS
+    BEGIN
+        RETURN NVL(APEX_APP_SETTING.GET_VALUE(p_name => 'HIJRI_DATE_FORMAT'), c_hijri_date_format);
+    EXCEPTION
+        WHEN OTHERS THEN               -- no APEX session / setting missing: the default format
+            RETURN c_hijri_date_format;
+    END HIJRI_DATE_FORMAT;
+
+    -- Section: f345 HELPERS
     -- Process "P0_PAGE_PK CHECK" (Before Header): P0_PAGE_PK holds the ROWID of the importer (Forms key
     -- mode ROWID); forget a key that is not a row of IMPORTERS of this port (block WHERE clause).
     -- The search page 111001 passes the ROWID URL-safe (TRANSLATE(ROWID, '+/', '-_'): a '+' in f?p arrives
@@ -7537,7 +7552,7 @@ AS
     IS
         r T_RECORD;
     BEGIN
-        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, c_mask);
+        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, HIJRI_DATE_FORMAT);
         BUS_ID_EXPRD_DT_VALIDATE_ITEM(r, FALSE);
         RETURN NULL;
     EXCEPTION
@@ -7551,7 +7566,7 @@ AS
     IS
         r T_RECORD;
     BEGIN
-        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, c_mask);
+        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, HIJRI_DATE_FORMAT);
         BUS_ID_EXPRD_DT_VALIDATE_ITEM(r, TRUE);
     END BUS_ID_EXPRD_DT_VALIDATE_ITEM;
 
@@ -7720,7 +7735,7 @@ AS
         r.impr_nbr := P_IMPR_NBR;
         r.bus_id_status := P_BUS_ID_STATUS;
         r.impr_type_cd := P_IMPR_TYPE_CD;
-        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, c_mask);
+        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, HIJRI_DATE_FORMAT);
         r.bus_id_type_cd := P_BUS_ID_TYPE_CD;
         r.comm_rgstrtn_type := P_COMM_RGSTRTN_TYPE;
         r.city_code_of_id := P_CITY_CODE_OF_ID;
@@ -7731,7 +7746,7 @@ AS
         r.impr_name_std := P_IMPR_NAME_STD;
         r.lst_tran_dt := TO_DATE(P_LST_TRAN_DT, c_date_time_mask);
         r.impr_address := P_IMPR_ADDRESS;
-        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, c_mask);
+        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, HIJRI_DATE_FORMAT);
         r.impr_pob_nbr := P_IMPR_POB_NBR;
         r.impr_zip_cd := P_IMPR_ZIP_CD;
         r.impr_tel_nbr := P_IMPR_TEL_NBR;
@@ -7797,7 +7812,7 @@ AS
         r.impr_nbr := P_IMPR_NBR;
         r.bus_id_status := P_BUS_ID_STATUS;
         r.impr_type_cd := P_IMPR_TYPE_CD;
-        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, c_mask);
+        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, HIJRI_DATE_FORMAT);
         r.bus_id_type_cd := P_BUS_ID_TYPE_CD;
         r.comm_rgstrtn_type := P_COMM_RGSTRTN_TYPE;
         r.city_code_of_id := P_CITY_CODE_OF_ID;
@@ -7808,7 +7823,7 @@ AS
         r.impr_name_std := P_IMPR_NAME_STD;
         r.lst_tran_dt := TO_DATE(P_LST_TRAN_DT, c_date_time_mask);
         r.impr_address := P_IMPR_ADDRESS;
-        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, c_mask);
+        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, HIJRI_DATE_FORMAT);
         r.impr_pob_nbr := P_IMPR_POB_NBR;
         r.impr_zip_cd := P_IMPR_ZIP_CD;
         r.impr_tel_nbr := P_IMPR_TEL_NBR;
@@ -7827,14 +7842,14 @@ AS
         BUS_ID_POST_CHANGE;
         BUS_ID_WHEN_VALIDATE_ITEM(r, c, NVL(P_ANSWER, c_yes), NVL(P_SUSPEND_ANSWER, c_yes));
         P_BUS_ID_STATUS := r.bus_id_status;
-        P_BUS_ID_EXPRD_DT := TO_CHAR(r.bus_id_exprd_dt, c_mask);
+        P_BUS_ID_EXPRD_DT := TO_CHAR(r.bus_id_exprd_dt, HIJRI_DATE_FORMAT);
         P_CITY_CODE_OF_ID := r.city_code_of_id;
         P_BUS_ID := r.bus_id;
         P_ARBC_IMPR_NAME := r.arbc_impr_name;
         P_IMPR_NAME_STD := r.impr_name_std;
         P_LST_TRAN_DT := TO_CHAR(r.lst_tran_dt, c_date_time_mask);
         P_IMPR_ADDRESS := r.impr_address;
-        P_BUS_ID_ISSUE_DT := TO_CHAR(r.bus_id_issue_dt, c_mask);
+        P_BUS_ID_ISSUE_DT := TO_CHAR(r.bus_id_issue_dt, HIJRI_DATE_FORMAT);
         P_IMPR_POB_NBR := r.impr_pob_nbr;
         P_IMPR_ZIP_CD := r.impr_zip_cd;
         P_IMPR_TEL_NBR := r.impr_tel_nbr;
@@ -7970,7 +7985,7 @@ AS
         r.impr_nbr := P_IMPR_NBR;
         r.bus_id_status := P_BUS_ID_STATUS;
         r.impr_type_cd := P_IMPR_TYPE_CD;
-        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, c_mask);
+        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, HIJRI_DATE_FORMAT);
         r.bus_id_type_cd := P_BUS_ID_TYPE_CD;
         r.comm_rgstrtn_type := P_COMM_RGSTRTN_TYPE;
         r.city_code_of_id := P_CITY_CODE_OF_ID;
@@ -7981,7 +7996,7 @@ AS
         r.impr_name_std := P_IMPR_NAME_STD;
         r.lst_tran_dt := TO_DATE(P_LST_TRAN_DT, c_date_time_mask);
         r.impr_address := P_IMPR_ADDRESS;
-        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, c_mask);
+        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, HIJRI_DATE_FORMAT);
         r.impr_pob_nbr := P_IMPR_POB_NBR;
         r.impr_zip_cd := P_IMPR_ZIP_CD;
         r.impr_tel_nbr := P_IMPR_TEL_NBR;
@@ -8048,7 +8063,7 @@ AS
         r.impr_nbr := P_IMPR_NBR;
         r.bus_id_status := P_BUS_ID_STATUS;
         r.impr_type_cd := P_IMPR_TYPE_CD;
-        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, c_mask);
+        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, HIJRI_DATE_FORMAT);
         r.bus_id_type_cd := P_BUS_ID_TYPE_CD;
         r.comm_rgstrtn_type := P_COMM_RGSTRTN_TYPE;
         r.city_code_of_id := P_CITY_CODE_OF_ID;
@@ -8059,7 +8074,7 @@ AS
         r.impr_name_std := P_IMPR_NAME_STD;
         r.lst_tran_dt := TO_DATE(P_LST_TRAN_DT, c_date_time_mask);
         r.impr_address := P_IMPR_ADDRESS;
-        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, c_mask);
+        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, HIJRI_DATE_FORMAT);
         r.impr_pob_nbr := P_IMPR_POB_NBR;
         r.impr_zip_cd := P_IMPR_ZIP_CD;
         r.impr_tel_nbr := P_IMPR_TEL_NBR;
@@ -8079,14 +8094,14 @@ AS
         BUS_ID_BRNCH_POST_CHANGE;
         BUS_ID_BRNCH_VALIDATE_ITEM(r, c, NVL(P_ANSWER, c_yes));
         P_BUS_ID_STATUS := r.bus_id_status;
-        P_BUS_ID_EXPRD_DT := TO_CHAR(r.bus_id_exprd_dt, c_mask);
+        P_BUS_ID_EXPRD_DT := TO_CHAR(r.bus_id_exprd_dt, HIJRI_DATE_FORMAT);
         P_CITY_CODE_OF_ID := r.city_code_of_id;
         P_BUS_ID_BRNCH := r.bus_id_brnch;
         P_ARBC_IMPR_NAME := r.arbc_impr_name;
         P_IMPR_NAME_STD := r.impr_name_std;
         P_LST_TRAN_DT := TO_CHAR(r.lst_tran_dt, c_date_time_mask);
         P_IMPR_ADDRESS := r.impr_address;
-        P_BUS_ID_ISSUE_DT := TO_CHAR(r.bus_id_issue_dt, c_mask);
+        P_BUS_ID_ISSUE_DT := TO_CHAR(r.bus_id_issue_dt, HIJRI_DATE_FORMAT);
         P_IMPR_POB_NBR := r.impr_pob_nbr;
         P_IMPR_ZIP_CD := r.impr_zip_cd;
         P_IMPR_TEL_NBR := r.impr_tel_nbr;
@@ -8282,7 +8297,7 @@ AS
     IS
         r T_RECORD;
     BEGIN
-        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, c_mask);
+        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, HIJRI_DATE_FORMAT);
         BUS_ID_ISSUE_DT_VALIDATE_ITEM(r, FALSE);
         RETURN NULL;
     EXCEPTION
@@ -8296,7 +8311,7 @@ AS
     IS
         r T_RECORD;
     BEGIN
-        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, c_mask);
+        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, HIJRI_DATE_FORMAT);
         BUS_ID_ISSUE_DT_VALIDATE_ITEM(r, TRUE);
     END BUS_ID_ISSUE_DT_VALIDATE_ITEM;
 
@@ -8737,7 +8752,7 @@ AS
         r.hq_impr_nbr := P_HQ_IMPR_NBR;
         r.impr_nbr := P_IMPR_NBR;
         r.impr_type_cd := P_IMPR_TYPE_CD;
-        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, c_mask);
+        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, HIJRI_DATE_FORMAT);
         r.bus_id_type_cd := P_BUS_ID_TYPE_CD;
         r.comm_rgstrtn_type := P_COMM_RGSTRTN_TYPE;
         r.city_code_of_id := P_CITY_CODE_OF_ID;
@@ -8751,7 +8766,7 @@ AS
         r.eng_impr_name := P_ENG_IMPR_NAME;
         r.impr_cntct_name := P_IMPR_CNTCT_NAME;
         r.impr_address := P_IMPR_ADDRESS;
-        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, c_mask);
+        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, HIJRI_DATE_FORMAT);
         r.impr_nbr_parent := P_IMPR_NBR_PARENT;
         r.add_ctry_cd := P_ADD_CTRY_CD;
         r.city_code := P_CITY_CODE;
@@ -8852,7 +8867,7 @@ AS
         r.impr_nbr := P_IMPR_NBR;
         r.bus_id_status := P_BUS_ID_STATUS;
         r.impr_type_cd := P_IMPR_TYPE_CD;
-        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, c_mask);
+        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, HIJRI_DATE_FORMAT);
         r.bus_id_type_cd := P_BUS_ID_TYPE_CD;
         r.comm_rgstrtn_type := P_COMM_RGSTRTN_TYPE;
         r.city_code_of_id := P_CITY_CODE_OF_ID;
@@ -8868,7 +8883,7 @@ AS
         r.eng_impr_name := P_ENG_IMPR_NAME;
         r.impr_cntct_name := P_IMPR_CNTCT_NAME;
         r.impr_address := P_IMPR_ADDRESS;
-        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, c_mask);
+        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, HIJRI_DATE_FORMAT);
         r.impr_nbr_parent := P_IMPR_NBR_PARENT;
         r.add_ctry_cd := P_ADD_CTRY_CD;
         r.city_code := P_CITY_CODE;
@@ -8953,7 +8968,7 @@ AS
         r.impr_nbr := P_IMPR_NBR;
         r.bus_id_status := P_BUS_ID_STATUS;
         r.impr_type_cd := P_IMPR_TYPE_CD;
-        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, c_mask);
+        r.bus_id_exprd_dt := TO_DATE(P_BUS_ID_EXPRD_DT, HIJRI_DATE_FORMAT);
         r.bus_id_type_cd := P_BUS_ID_TYPE_CD;
         r.comm_rgstrtn_type := P_COMM_RGSTRTN_TYPE;
         r.city_code_of_id := P_CITY_CODE_OF_ID;
@@ -8969,7 +8984,7 @@ AS
         r.eng_impr_name := P_ENG_IMPR_NAME;
         r.impr_cntct_name := P_IMPR_CNTCT_NAME;
         r.impr_address := P_IMPR_ADDRESS;
-        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, c_mask);
+        r.bus_id_issue_dt := TO_DATE(P_BUS_ID_ISSUE_DT, HIJRI_DATE_FORMAT);
         r.impr_nbr_parent := P_IMPR_NBR_PARENT;
         r.add_ctry_cd := P_ADD_CTRY_CD;
         r.city_code := P_CITY_CODE;

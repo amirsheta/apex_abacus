@@ -226,7 +226,7 @@ def design_item(i, seq_hidden):
         it.update(column=col, data_type=source_type(i['name'][len('P1110_'):], i['source']))
     if 'hijri-date-default' in t:
         it['tag_css'] = 'hijri-date-default'                 # f345 app-wide Hijri picker (Hijri_init.js)
-        it['tag'] = 'placeholder="%s"' % 'يوم-شهر-سنة'
+        it['tag'] = 'placeholder="%s"' % 'سنة-شهر-يوم'   # default HIJRI_DATE_FORMAT YYYY-MM-MI
     tags = []
     if 'E-Mail' in t: it['subtype'] = 'EMAIL'
     if 'Phone' in t: it['subtype'] = 'PHONE'
@@ -414,7 +414,7 @@ def gen():
 -- Target      : Oracle APEX 21.2 (export version 2021.10.15), Oracle Database 12.1.0.2,
 --               reference application f345 (apex/Reference/f345.sql)
 -- Standard    : CLAUDE.md 4b / 4c, docs/f345_reference_standard.md 3-9: native Form region (ROWID),
---               FOS + native dynamic actions, one-line calls into package IMPR1110 (version 009).
+--               FOS + native dynamic actions, one-line calls into package IMPR1110 (version 010).
 --               No JavaScript file, no AJAX callback process.
 -- Contents    : component export INTO the application installed from f345: pages 1110 (main),
 --               111001 (search), 111002 (mobile) + the shared components they need.
@@ -458,6 +458,17 @@ end;
         body.append(call('create_flow_item', [('p_id', ref('9000:ai:' + n)), ('p_name', q(n)), ('p_protection_level', q('I')),
                                               ('p_item_comment', src(s + ' / spec 13.2'))]))
     W(block('application/shared_components/logic/application_items', '\n'.join(body)))
+    # one place for the Hijri date format of the forms (user request 2026-11-23): read by IMPR1110.HIJRI_DATE_FORMAT
+    # and IMPR1120.HIJRI_DATE_FORMAT (default YYYY-MM-MI = the f345 Hijri picker output); change it here or with
+    # APEX_APP_SETTING.SET_VALUE, no recompile
+    nid('9000:set:HIJRI_DATE_FORMAT', 7)
+    W(block('application/shared_components/app_settings/hijri_date_format',
+            call('create_app_setting', [('p_id', ref('9000:set:HIJRI_DATE_FORMAT')), ('p_name', q('HIJRI_DATE_FORMAT')),
+                                        ('p_value', q('YYYY-MM-MI')), ('p_is_required', q('N')),
+                                        ('p_comments', q('Hijri date format of the IMPR forms (Oracle format mask; the day is kept '
+                                                         'in the minutes MI). Must match the f345 Hijri picker (page 0, iYYYY-iMM-iDD).'))],
+                 'Source: Forms mask CGSO$HDATE_ARB (MI-MM-YYYY / MI-MM-RRRR), now one Application Setting')))
+    UNCERTAIN.add('create_app_setting (Application Setting HIJRI_DATE_FORMAT; not in f345): p_name, p_value, p_is_required, p_comments')
     for name, sql, cols, s in LOVS:
         nid('9000:lov:' + name, 5)
         b = [call('create_list_of_values', [

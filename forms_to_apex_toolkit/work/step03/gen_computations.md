@@ -1,5 +1,6 @@
 | Item | Point | Type | Expression | Condition | Source |
 |---|---|---|---|---|---|
+| P1110_HIJRI_DATE_FORMAT | Before Header | PL/SQL Expression | `IMPR1110.HIJRI_DATE_FORMAT` | - | Hijri date format from one place: Application Setting HIJRI_DATE_FORMAT (Forms mask MI-MM-YYYY) |
 | P1110_ADJ_FUNS | After Header | PL/SQL Expression | `IMPR1110.ADJ_FUNS(P_IMPR_NBR => :P1110_IMPR_NBR, P_IMPR_TYPE_CD => :P1110_IMPR_TYPE_CD, P_BUS_ID_TYPE_CD => :P1110_BUS_ID_TYPE_CD, P_CURR_PORT_CD => :P_CURR_PORT_CD, SSO_APP_USER => :SSO_APP_USER, P_CLASS_CD => :P_CLASS_CD, V_USR_TYPE => :V_USR_TYPE)` | - | PU ADJ_FUNS |
 | P1110_BROKER_USER | Before Header | PL/SQL Expression | `CASE WHEN IMPR1110.EXPRESS_POST_IS_READ_ONLY(P_CLASS_CD => :P_CLASS_CD, V_USR_TYPE => :V_USR_TYPE) THEN 'Y' ELSE 'N' END` | - | PRE-INSERT condition class 1 / type 3 (same rule as EXPRESS_POST) |
 | P1110_PRE_INSERT_QUESTION | After Header | PL/SQL Expression | `APEX_LANG.MESSAGE('IMPR1110_PRE_INSERT_CONFIRM')` | :P1110_BROKER_USER = 'Y' | IMPORTERS.PRE-INSERT CONFIRM text (Text Message, translatable) |

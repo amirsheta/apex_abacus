@@ -7,7 +7,7 @@
 --               reference application f345 (apex/Reference/f345.sql)
 -- Standard    : CLAUDE.md 4b / 4c, docs/f345_reference_standard.md 3-9: read-only Form region (ROWID),
 --               editable Interactive Grid with PL/SQL row DML, FOS + native dynamic actions,
---               one-line calls into package IMPR1120 (version 007). No JavaScript, no AJAX callback.
+--               one-line calls into package IMPR1120 (version 008). No JavaScript, no AJAX callback.
 -- Contents    : component export INTO the application installed from f345 AND already holding the
 --               IMPR1110 export (page group IMPR, LOV_SD_PORTS, LOV_ALLOWED_EXPORT are reused):
 --               pages 1120 (main) and 112001 (search) + 2 LOVs + 1 Text Message.
@@ -138,8 +138,8 @@ wwv_flow_api.create_page_plug(
 'SELECT s.port_cd,',
 '       s.impr_nbr,',
 '       s.suspn_seq,',
-'       TO_CHAR(s.suspn_strt_dt, ''MI-MM-RRRR'') AS suspn_strt_dt,',
-'       TO_CHAR(s.suspn_end_dt,  ''MI-MM-RRRR'') AS suspn_end_dt,',
+'       TO_CHAR(s.suspn_strt_dt, (SELECT IMPR1120.HIJRI_DATE_FORMAT FROM dual)) AS suspn_strt_dt,   -- Application Setting',
+'       TO_CHAR(s.suspn_end_dt,  (SELECT IMPR1120.HIJRI_DATE_FORMAT FROM dual)) AS suspn_end_dt,    -- HIJRI_DATE_FORMAT',
 '       s.suspn_rsn_cd,',
 '       s.suspn_rsn_text,',
 '       s.suspn_side_cd',
@@ -225,7 +225,7 @@ wwv_flow_api.create_region_column(
 ,p_duplicate_value=>true
 ,p_include_in_export=>false
 );
--- Source: IMPR1120.IMPR_SUSPN.SUSPN_STRT_DT (Hijri, MI-MM-RRRR text; WHEN-NEW-ITEM-INSTANCE default)
+-- Source: IMPR1120.IMPR_SUSPN.SUSPN_STRT_DT (Hijri text in HIJRI_DATE_FORMAT, default YYYY-MM-MI; WHEN-NEW-ITEM-INSTANCE default)
 wwv_flow_api.create_region_column(
  p_id=>wwv_flow_api.id(112002000060)
 ,p_name=>'SUSPN_STRT_DT'
@@ -265,7 +265,7 @@ wwv_flow_api.create_region_column(
 ,p_readonly_condition2=>'PLSQL'
 ,p_readonly_for_each_row=>true
 );
--- Source: IMPR1120.IMPR_SUSPN.SUSPN_END_DT (Hijri, MI-MM-RRRR text)
+-- Source: IMPR1120.IMPR_SUSPN.SUSPN_END_DT (Hijri text in HIJRI_DATE_FORMAT, default YYYY-MM-MI)
 wwv_flow_api.create_region_column(
  p_id=>wwv_flow_api.id(112002000070)
 ,p_name=>'SUSPN_END_DT'

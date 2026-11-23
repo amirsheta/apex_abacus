@@ -222,7 +222,7 @@
    "type": "Text Field, CSS class `hijri-date-default` (f345 Hijri picker)",
    "label": "إنـتهـاء الـنشاط",
    "required": "Validation `BUS_ID_EXPRD_DT REQUIRED` (`BUS_ID_EXPRD_DT_IS_REQUIRED`)",
-   "mask": "MI-MM-YYYY",
+   "mask": "&P1110_HIJRI_DATE_FORMAT.",
    "default": "-",
    "lov": "-",
    "parents": "-",
@@ -672,7 +672,7 @@
    "type": "Display Only (Send On Page Submit = No)",
    "label": "تاريخ انشاء النشاط",
    "required": "No",
-   "mask": "MI-MM-YYYY",
+   "mask": "&P1110_HIJRI_DATE_FORMAT.",
    "default": "-",
    "lov": "-",
    "parents": "-",
@@ -1294,6 +1294,24 @@
    "condition": "",
    "source": "-",
    "notes": "f345: SC_SYSTEM_OBJECTS id of the form; kept by SCREEN ENTRY RESET",
+   "submit": "No (server value)"
+  },
+  {
+   "name": "P1110_HIJRI_DATE_FORMAT",
+   "column": "-",
+   "type": "Hidden (Value Protected = Yes)",
+   "label": "-",
+   "required": "No",
+   "mask": "-",
+   "default": "-",
+   "lov": "-",
+   "parents": "-",
+   "maxlen": "-",
+   "layout": "hidden",
+   "read_only": "-",
+   "condition": "",
+   "source": "-",
+   "notes": "Hijri date format (Application Setting HIJRI_DATE_FORMAT, default YYYY-MM-MI): format mask &P1110_HIJRI_DATE_FORMAT. of the Hijri date items",
    "submit": "No (server value)"
   },
   {
@@ -2177,6 +2195,13 @@
   }
  ],
  "computations": [
+  {
+   "item": "P1110_HIJRI_DATE_FORMAT",
+   "point": "Before Header",
+   "expression": "IMPR1110.HIJRI_DATE_FORMAT",
+   "condition": "-",
+   "source": "Hijri date format from one place: Application Setting HIJRI_DATE_FORMAT (Forms mask MI-MM-YYYY)"
+  },
   {
    "item": "P1110_ADJ_FUNS",
    "point": "After Header",

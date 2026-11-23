@@ -45,8 +45,12 @@
 5. **Dates.** BUS_ID_EXPRD_DT and BUS_ID_ISSUE_DT are Hijri dates stored as DATE with the Forms mask
    `MI-MM-YYYY` (decision §15 #10; the day is kept in the minutes because e.g. 30-02 is not a valid
    DATE). The items are Text Fields with the f345 class `hijri-date-default` (app-wide Hijri picker, no page
-   JavaScript) and format mask `MI-MM-YYYY`. The package entry points take them as `VARCHAR2` and convert with
-   the same mask (change made in this step, §16).
+   JavaScript). Since package 010 (user request 2026-11-23) the format comes from one place: the APEX
+   Application Setting `HIJRI_DATE_FORMAT` (default `YYYY-MM-MI`, the output of the f345 Hijri picker; the day
+   stays in the minutes). Computation `P1110_HIJRI_DATE_FORMAT` (Before Header) = `IMPR1110.HIJRI_DATE_FORMAT`,
+   item format mask `&P1110_HIJRI_DATE_FORMAT.`, placeholder سنة-شهر-يوم. The package entry points take them as
+   `VARCHAR2` and convert with the same function. Interface texts keep `MI-MM-YYYY` (the MCI data string,
+   the values sent with the importer, the residence-expiry message): they are external formats.
 6. **Declarative, minimal JavaScript.** No JavaScript file, no AJAX callback. 9 *Execute JavaScript Code*
    actions remain, each 1–3 lines, all of them for a question whose text is computed on the server, or for
    opening a dialog from a function (§10.3).

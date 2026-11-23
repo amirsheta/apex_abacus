@@ -9,7 +9,7 @@ form's rows first, and it ends with COMMIT. **Not executed** (CLAUDE.md §6.10).
 
 Package `IMPR1110` **005 → 006** (generator `work/step02/build_package.py`, self-check clean):
 - DATE columns (BUS_ID_EXPRD_DT, BUS_ID_ISSUE_DT, LST_TRAN_DT) are passed as `VARCHAR2` and converted with
-  `c_mask` (`MI-MM-YYYY`) / `c_date_time_mask` (`YYYY/MM/DD HH24:MI:SS`, the Forms PLSQL_DATE_FORMAT).
+  `c_mask` (`MI-MM-YYYY`; package 010: function `HIJRI_DATE_FORMAT`, Application Setting, default `YYYY-MM-MI`) / `c_date_time_mask` (`YYYY/MM/DD HH24:MI:SS`, the Forms PLSQL_DATE_FORMAT).
   APEX binds page items as text with the application date format (`DS`), which cannot read Hijri values.
 - `P0_PAGE_PK_CHECK` checks a ROWID key; new `IMPORTER_ROW_ID` for process `EXECUTE-QUERY`.
 - `READ_ONLY_FLAGS` covers 14 groups (added IMPR_TYPE_CD, BUS_ID_EXPRD_DT, IMPR_TEL_NBR and CAR_AGENT_FLAG,

@@ -116,8 +116,8 @@
 | 112 | ITEM | `IMPORTERS.IMPR_CNTCT_NAME` | P1120_IMPR_CNTCT_NAME | 1120 | – | MAPPED | Display Only |
 | 113 | ITEM | `IMPORTERS.IMPR_NAME_STD` | search filter on IMPR_NAME_STD (page 112001 SQL) | 112001 | IMPR1120.IMPORTERS_PRE_QUERY_NAME_STD | MAPPED | standardised Arabic name, query only |
 | 114 | ITEM | `IMPORTERS.CTRY_CD_OF_ID` | P1120_CTRY_CD_OF_ID | 1120 | – | MAPPED | Hidden (Value Protected) - input of the POST-QUERY city lookup |
-| 115 | ITEM | `IMPR_SUSPN.SUSPN_STRT_DT` | IMPR_SUSPN.SUSPN_STRT_DT | 1120 | – | MAPPED | Text Field (MI-MM-RRRR, hijri-date-default), required, default SUSPN_STRT_DT_DEFAULT |
-| 116 | ITEM | `IMPR_SUSPN.SUSPN_END_DT` | IMPR_SUSPN.SUSPN_END_DT | 1120 | – | MAPPED | Text Field (MI-MM-RRRR, hijri-date-default), required |
+| 115 | ITEM | `IMPR_SUSPN.SUSPN_STRT_DT` | IMPR_SUSPN.SUSPN_STRT_DT | 1120 | – | MAPPED | Text Field (HIJRI_DATE_FORMAT, default YYYY-MM-MI, hijri-date-default), required, default SUSPN_STRT_DT_DEFAULT |
+| 116 | ITEM | `IMPR_SUSPN.SUSPN_END_DT` | IMPR_SUSPN.SUSPN_END_DT | 1120 | – | MAPPED | Text Field (HIJRI_DATE_FORMAT, default YYYY-MM-MI, hijri-date-default), required |
 | 117 | ITEM | `IMPR_SUSPN.SUSPN_SEQ` | IMPR_SUSPN.SUSPN_SEQ | 1120 | – | MAPPED | Hidden, primary key (set by IMPR_SUSPN_PRE_INSERT) |
 | 118 | ITEM | `IMPR_SUSPN.SUSPN_RSN_CD` | IMPR_SUSPN.SUSPN_RSN_CD | 1120 | – | MAPPED | Select List LOV_IMPR_SUSPN_RSN_CD, default SUSPN_RSN_CD_DEFAULT |
 | 119 | ITEM | `IMPR_SUSPN.SUSPN_RSN_TEXT` | IMPR_SUSPN.SUSPN_RSN_TEXT | 1120 | – | MAPPED | Text Field, required, default SUSPN_RSN_TEXT_DEFAULT |

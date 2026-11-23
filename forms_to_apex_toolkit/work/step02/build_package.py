@@ -300,7 +300,7 @@ add('PAGE 111002 (LOV_UPDATE_IMPR_MOBILE)', 'CENTRAL_MOBILE', 'N', 'PU LOV_UPDAT
     'Computation P111002_CENTRAL_MOBILE (Before Header)', [], ret='CENTRAL_MOBILE(r, c)', prefix='P111002_')
 
 # ------------------------------------------------------------------ generate entries
-DATE_MASK = {'BUS_ID_EXPRD_DT': 'c_mask', 'BUS_ID_ISSUE_DT': 'c_mask', 'LST_TRAN_DT': 'c_date_time_mask'}
+DATE_MASK = {'BUS_ID_EXPRD_DT': 'HIJRI_DATE_FORMAT', 'BUS_ID_ISSUE_DT': 'HIJRI_DATE_FORMAT', 'LST_TRAN_DT': 'c_date_time_mask'}
 def ptype(t):
     return re.sub(r'\(\d+\)', '', t)          # no length in a parameter type
 LOGIC_CALL = re.compile(r'(?<![\w.$#])([A-Za-z][A-Za-z0-9_$#]*)\s*[(;]')
@@ -398,7 +398,7 @@ def spec_decl(m):
 
 # ------------------------------------------------------------------ assemble the spec
 vb = re.search(r'(?s)(   V_PKG_VERSION .*?\|\| V_MODIFIED_BY;\n)', spec_src).group(1)
-vb = re.sub(r"'VERSION NO\. IS:' \|\| '\d+'", "'VERSION NO. IS:' || '009'", vb, count=1)
+vb = re.sub(r"'VERSION NO\. IS:' \|\| '\d+'", "'VERSION NO. IS:' || '010'", vb, count=1)
 vb = re.sub(r"V_LAST_MODIFY_DT    VARCHAR2 \(10\) := '[^']*'", "V_LAST_MODIFY_DT    VARCHAR2 (10) := '%s'" % DATE, vb)
 grants = spec_src[spec_src.index('\n-- -----------------------------------------------------------------------------\n-- Synonym and grants'):]
 def banner(t):
@@ -419,11 +419,13 @@ order += [s for s in sections if s not in order]
 spec = ['-- =============================================================================',
         '-- Package     : IMPR1110  (form IMPR1110.fmb "إضافة وتعديل بيانات مستورد")',
         '-- Owner       : LIB_APX_USR (public synonym IMPR1110; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)',
-        '-- Version     : 009 (%s: 006 = step 02 revision 2 + step 03 changes (DATE items as text, ROWID page key);' % DATE,
+        '-- Version     : 010 (%s: 006 = step 02 revision 2 + step 03 changes (DATE items as text, ROWID page key);' % DATE,
         '--               007 = parameter names by scripts/parameter_names.py; 008 = no doubled P_P_ (P_CODE => :P1110_P_CODE),',
         '--               APP_P_PRSNL_IMPR / APP_P_LETTER_NBR in PARAMETERS_ENTRY. No logic change. 007: rollback/IMPR1110/step04_v007/;',
         "--               009 = P0_PAGE_PK_CHECK restores the URL-safe ROWID of page 111001 ('-' / '_' -> '+' / '/'; a '+'",
-        '--               in f?p arrived as a space: checksum error). 008: rollback/IMPR1110/step04_v008/)',
+        '--               in f?p arrived as a space: checksum error). 008: rollback/IMPR1110/step04_v008/;',
+        '--               010 = Hijri date format from one place: HIJRI_DATE_FORMAT reads the Application Setting',
+        '--               HIJRI_DATE_FORMAT (default YYYY-MM-MI, was the constant MI-MM-YYYY). 009: rollback/IMPR1110/step04_v009/)',
         '-- Author      : Claude Code',
         '-- Status      : NOT COMPILED.',
         '-- Layout      : VERSION -> f345 HELPERS -> FORM LEVEL -> BLOCK IMPORTERS (query, record, items in Forms',
@@ -448,7 +450,7 @@ spec_text = '\n'.join(spec)
 # ------------------------------------------------------------------ assemble the body
 logic_fwd = ['    ' + m['header'] + ';' for m, _ in logic_text]
 body = ['-- =============================================================================',
-        '-- Package body: IMPR1110 (version 009, %s) - see the spec header. NOT COMPILED.' % DATE,
+        '-- Package body: IMPR1110 (version 010, %s) - see the spec header. NOT COMPILED.' % DATE,
         '-- Layout      : 1 private types and declarations, 2 forward declarations, 3 private helpers and the',
         '--               converted Forms logic (record based, Forms order, UI calls replaced by "NULL; -- APEX ..."),',
         '--               4 read-only / required rules, 5 f345 helpers, 6 APEX entry points (spec order), 7 version.',
@@ -457,7 +459,7 @@ body = ['-- ====================================================================
         'SET DEFINE OFF', '', 'CREATE OR REPLACE PACKAGE BODY LIB_APX_USR.IMPR1110', 'AS',
         banner('1 PRIVATE TYPES AND DECLARATIONS').rstrip('\n'),
         t_record_txt.strip('\n'), '', t_context_txt.strip('\n'), '',
-        "    c_mask       CONSTANT VARCHAR2(10)  := 'MI-MM-YYYY';   -- Hijri mask of the form: day kept in the minutes (Feb 30 is no DATE)",
+        "    c_hijri_date_format CONSTANT VARCHAR2(30) := 'YYYY-MM-MI';   -- default of the Application Setting HIJRI_DATE_FORMAT (f345 Hijri picker); day kept in the minutes (Feb 30 is no DATE); Forms used MI-MM-YYYY",
         "    c_date_time_mask CONSTANT VARCHAR2(30) := 'YYYY/MM/DD HH24:MI:SS';   -- Forms PLSQL_DATE_FORMAT (PRE-FORM), LST_TRAN_DT",
         '    c_err        CONSTANT PLS_INTEGER   := -20001;',
         "    c_hero_title CONSTANT VARCHAR2(200) := 'إضافة وتعديل بيانات مستورد';",

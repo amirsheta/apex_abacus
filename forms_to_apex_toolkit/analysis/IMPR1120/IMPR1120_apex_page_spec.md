@@ -6,7 +6,7 @@
 | Date | 2026-11-23 |
 | Application | 202530 (installed from f345, ID offset 460632461717563830), page group `IMPR` |
 | Pages | **1120** `IMPR1120` (main) · **112001** `IMPR1120_SEARCH` (modal search) |
-| Package | `LIB_APX_USR.IMPR1120` version **007** (007: URL-safe ROWID key from the search page, P0_PAGE_PK_CHECK; 006: compile fix in IMPR_SUSPN_SAVE_ROW; step 03 changes in §16; 003–005: parameter names without `I_` / `IO_` / `O_`, page items passed as `P_<ITEM>`, no doubled `P_P_`, §16 #14) |
+| Package | `LIB_APX_USR.IMPR1120` version **008** (008: Hijri date format from the Application Setting `HIJRI_DATE_FORMAT`; 007: URL-safe ROWID key from the search page, P0_PAGE_PK_CHECK; 006: compile fix in IMPR_SUSPN_SAVE_ROW; step 03 changes in §16; 003–005: parameter names without `I_` / `IO_` / `O_`, page items passed as `P_<ITEM>`, no doubled `P_P_`, §16 #14) |
 | Inputs | [inventory](IMPR1120_inventory.md), [logic extraction](IMPR1120_logic_extraction.md), [package spec](../../plsql/IMPR1120/impr1120_spec.sql), `docs/f345_reference_standard.md` |
 | Generated parts | §14 and `registry/IMPR1120_registry.sql` are built by `work/IMPR1120/step03/build_trace.py` from the XML (edit `work/IMPR1120/step03/spec_manual.md` or the script, then re-run) |
 | Status | design only: no export yet (step 04); the package is **not compiled** |
@@ -40,7 +40,7 @@
    - the column defaults;
    - the reason and side validations;
    - row read-only state (every column: `IMPR_SUSPN_IS_READ_ONLY`, *For Each Row*), with the matching server check in `IMPR_SUSPN_SAVE_ROW`.
-6. **Hijri dates as text.** The grid SQL returns the dates as `TO_CHAR(…, 'MI-MM-RRRR')`, the Forms mask of the OLB class `CGSO$HDATE_ARB`. The columns are Text Fields with the f345 class `hijri-date-default` (app-wide Hijri picker), and the package converts the text. This is the IMPR1110 decision, but with the exact Forms mask (`RRRR`; IMPR1110 uses `YYYY`).
+6. **Hijri dates as text, one format.** The grid SQL returns the dates as `TO_CHAR(…, (SELECT IMPR1120.HIJRI_DATE_FORMAT FROM dual))`. `IMPR1120.HIJRI_DATE_FORMAT` reads the APEX Application Setting `HIJRI_DATE_FORMAT` (default `YYYY-MM-MI`, the output format of the f345 Hijri picker; the day is kept in the minutes); Forms used `MI-MM-RRRR` (OLB class `CGSO$HDATE_ARB`). Change the setting to change the format of both forms, without a recompile (user request 2026-11-23). The columns are Text Fields with the f345 class `hijri-date-default` (app-wide Hijri picker), and the package converts the text with the same function.
 7. **Forms WHEN-VALIDATE-ITEM fires only when the item changes.** The grid validations get the row key and skip a value equal to the stored one. Without this, editing only the end date of an older suspension would fail "start date ≥ today".
 8. **Declarative, no JavaScript.** 0 *Execute JavaScript Code* actions, no JavaScript file, no AJAX callback.
 
@@ -82,8 +82,8 @@ Region `IMPR_SUSPN`:
 SELECT s.port_cd,
        s.impr_nbr,
        s.suspn_seq,
-       TO_CHAR(s.suspn_strt_dt, 'MI-MM-RRRR') AS suspn_strt_dt,
-       TO_CHAR(s.suspn_end_dt,  'MI-MM-RRRR') AS suspn_end_dt,
+       TO_CHAR(s.suspn_strt_dt, (SELECT IMPR1120.HIJRI_DATE_FORMAT FROM dual)) AS suspn_strt_dt,
+       TO_CHAR(s.suspn_end_dt,  (SELECT IMPR1120.HIJRI_DATE_FORMAT FROM dual)) AS suspn_end_dt,
        s.suspn_rsn_cd,
        s.suspn_rsn_text,
        s.suspn_side_cd
@@ -464,8 +464,8 @@ Theme 42 / style ZATCA Forms, page 0 (`P0_ACTIONS`, `P0_PAGE_PK`, `P0_SEARCH_URL
 | 112 | ITEM | `IMPORTERS.IMPR_CNTCT_NAME` | P1120_IMPR_CNTCT_NAME | 1120 | – | MAPPED | Display Only |
 | 113 | ITEM | `IMPORTERS.IMPR_NAME_STD` | search filter on IMPR_NAME_STD (page 112001 SQL) | 112001 | IMPR1120.IMPORTERS_PRE_QUERY_NAME_STD | MAPPED | standardised Arabic name, query only |
 | 114 | ITEM | `IMPORTERS.CTRY_CD_OF_ID` | P1120_CTRY_CD_OF_ID | 1120 | – | MAPPED | Hidden (Value Protected) - input of the POST-QUERY city lookup |
-| 115 | ITEM | `IMPR_SUSPN.SUSPN_STRT_DT` | IMPR_SUSPN.SUSPN_STRT_DT | 1120 | – | MAPPED | Text Field (MI-MM-RRRR, hijri-date-default), required, default SUSPN_STRT_DT_DEFAULT |
-| 116 | ITEM | `IMPR_SUSPN.SUSPN_END_DT` | IMPR_SUSPN.SUSPN_END_DT | 1120 | – | MAPPED | Text Field (MI-MM-RRRR, hijri-date-default), required |
+| 115 | ITEM | `IMPR_SUSPN.SUSPN_STRT_DT` | IMPR_SUSPN.SUSPN_STRT_DT | 1120 | – | MAPPED | Text Field (HIJRI_DATE_FORMAT, default YYYY-MM-MI, hijri-date-default), required, default SUSPN_STRT_DT_DEFAULT |
+| 116 | ITEM | `IMPR_SUSPN.SUSPN_END_DT` | IMPR_SUSPN.SUSPN_END_DT | 1120 | – | MAPPED | Text Field (HIJRI_DATE_FORMAT, default YYYY-MM-MI, hijri-date-default), required |
 | 117 | ITEM | `IMPR_SUSPN.SUSPN_SEQ` | IMPR_SUSPN.SUSPN_SEQ | 1120 | – | MAPPED | Hidden, primary key (set by IMPR_SUSPN_PRE_INSERT) |
 | 118 | ITEM | `IMPR_SUSPN.SUSPN_RSN_CD` | IMPR_SUSPN.SUSPN_RSN_CD | 1120 | – | MAPPED | Select List LOV_IMPR_SUSPN_RSN_CD, default SUSPN_RSN_CD_DEFAULT |
 | 119 | ITEM | `IMPR_SUSPN.SUSPN_RSN_TEXT` | IMPR_SUSPN.SUSPN_RSN_TEXT | 1120 | – | MAPPED | Text Field, required, default SUSPN_RSN_TEXT_DEFAULT |
@@ -879,7 +879,7 @@ It deletes the form's rows first, so it can be re-run, and ends with COMMIT. **N
 
 Package `IMPR1120` 001 → **002** (001 kept in `rollback/IMPR1120/step02_v001/`):
 
-1. **Dates as text.** The date parameters are `VARCHAR2` in the Forms mask `MI-MM-RRRR`. Private helpers `hijri_text_to_date` / `hijri_text` convert them (no calendar conversion: the text is already Hijri); a wrong format gives the FRM-50026 equivalent (Arabic text to confirm). `SUSPN_STRT_DT_DEFAULT` returns text.
+1. **Dates as text.** The date parameters are `VARCHAR2` in the format `HIJRI_DATE_FORMAT` (package 008: Application Setting, default `YYYY-MM-MI`; was the Forms mask `MI-MM-RRRR`). Private helpers `hijri_text_to_date` / `hijri_text` convert them (no calendar conversion: the text is already Hijri); a wrong format gives the FRM-50026 equivalent in the format of the setting (e.g. سنة-شهر-يوم (YYYY-MM-MI); Arabic text to confirm). `SUSPN_STRT_DT_DEFAULT` returns text.
 2. **Validations skip unchanged values.** The four column validations (and `SUSPN_RSN_CD_VALIDATE_ITEM`) take the row key and skip a value equal to the stored one (private `stored_suspension`, §0 #7).
 3. **New `PRE_DELETE`** refuses the page 0 DELETE of the importer.
 4. **New `IMPR_SUSPN_SAVE_ROW`** does the grid DML per row (§0 #4).

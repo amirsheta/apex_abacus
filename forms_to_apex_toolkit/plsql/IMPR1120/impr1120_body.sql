@@ -1,6 +1,6 @@
 -- =============================================================================
 -- Package body: IMPR1120   (matches impr1120_spec.sql - f345 standard)
--- Source form : IMPR1120.fmb   Target: APEX 21.2 / DB 12.1.0.2   Version: 007
+-- Source form : IMPR1120.fmb   Target: APEX 21.2 / DB 12.1.0.2   Version: 008
 -- Author      : Claude Code     Created: 2026-11-23   (see the spec history)
 -- Rules: no Forms built-ins (FORMS_APX instead), no COMMIT / ROLLBACK,
 --        parameters named after their binds without I_ / IO_ / O_; page items P<page>_X -> P_X;
@@ -23,11 +23,10 @@ AS
     c_activity_insert  CONSTANT NUMBER       := 1;
     c_activity_update  CONSTANT NUMBER       := 2;
     c_activity_delete  CONSTANT NUMBER       := 3;
-    -- Forms format mask of the Hijri date items (OLB property class CGSO$HDATE_ARB); the day is kept
-    -- in the minutes, so every Hijri day (e.g. 30-02) fits in a DATE. IMPR1110 uses MI-MM-YYYY.
-    c_date_mask        CONSTANT VARCHAR2(10) := 'MI-MM-RRRR';
-    -- Forms FRM-50026 "Date must be entered in a format like MI-MM-RRRR". TODO: confirm the Arabic text.
-    c_msg_date_format  CONSTANT VARCHAR2(200) := 'يجب إدخال التاريخ بالصيغة يوم-شهر-سنة (MI-MM-RRRR)';
+    -- Default Hijri date format when the Application Setting HIJRI_DATE_FORMAT is missing (or outside APEX):
+    -- the output of the f345 Hijri picker; the day is kept in the minutes, so every Hijri day (e.g. 30-02)
+    -- fits in a DATE. Forms used MI-MM-RRRR (OLB property class CGSO$HDATE_ARB).
+    c_hijri_date_format CONSTANT VARCHAR2(30) := 'YYYY-MM-MI';
 
     -- Texts the Forms code did not have (it raised FORM_TRIGGER_FAILURE without a message, or
     -- made the rows unreachable with NEXT_RECORD). TODO: agree the texts (inventory §15 #12).
@@ -64,23 +63,34 @@ AS
         RETURN v_ret;
     END cur_hij_date;
 
-    -- Hijri date text (Forms mask MI-MM-RRRR) -> DATE. No calendar conversion: the text is already Hijri
+    -- Forms FRM-50026 "Date must be entered in a format like <mask>", in the format of the setting
+    -- (YYYY-MM-MI -> سنة-شهر-يوم). TODO: confirm the Arabic text.
+    FUNCTION date_format_message RETURN VARCHAR2
+    IS
+        v_format VARCHAR2(30) := HIJRI_DATE_FORMAT;
+    BEGIN
+        RETURN 'يجب إدخال التاريخ بالصيغة '
+               || REPLACE(REPLACE(REPLACE(REPLACE(UPPER(v_format), 'YYYY', 'سنة'), 'RRRR', 'سنة'), 'MI', 'يوم'), 'MM', 'شهر')
+               || ' (' || v_format || ')';
+    END date_format_message;
+
+    -- Hijri date text (format HIJRI_DATE_FORMAT) -> DATE. No calendar conversion: the text is already Hijri
     -- (HIJDATE_DB.TO_HIJRI would convert a Gregorian date). A wrong format raises the FRM-50026 equivalent.
     FUNCTION hijri_text_to_date (p_text IN VARCHAR2) RETURN DATE
     IS
     BEGIN
-        RETURN TO_DATE(p_text, c_date_mask);
+        RETURN TO_DATE(p_text, HIJRI_DATE_FORMAT);
     EXCEPTION
         WHEN OTHERS THEN               -- ORA-01821 / ORA-01843 / ORA-01847 ...: not in the mask
-            FORMS_APX.FORM_TRIGGER_FAILURE(c_msg_date_format);
+            FORMS_APX.FORM_TRIGGER_FAILURE(date_format_message);
             RETURN NULL;               -- not reached
     END hijri_text_to_date;
 
-    -- DATE -> Hijri date text in the Forms mask
+    -- DATE -> Hijri date text in the format HIJRI_DATE_FORMAT
     FUNCTION hijri_text (p_date IN DATE) RETURN VARCHAR2
     IS
     BEGIN
-        RETURN TO_CHAR(p_date, c_date_mask);
+        RETURN TO_CHAR(p_date, HIJRI_DATE_FORMAT);
     END hijri_text;
 
     -- HIJDATE.VALID_HIJ_DATE (CIC_LIB.pld): HIJDATE_DB.VALID_HIJ_DATE(HDate, V_MSG) = 0 ->
@@ -96,10 +106,10 @@ AS
             RETURN NULL;
         END IF;
         BEGIN
-            v_date := TO_DATE(p_text, c_date_mask);
+            v_date := TO_DATE(p_text, HIJRI_DATE_FORMAT);
         EXCEPTION
             WHEN OTHERS THEN
-                RETURN c_msg_date_format;
+                RETURN date_format_message;
         END;
         IF hijdate_db.valid_hij_date(v_date, v_msg) = 0 THEN
             RETURN NVL(v_msg, 'التاريخ غير صحيح');
@@ -233,6 +243,15 @@ AS
         -- Source: FRM-40202 "Field must be entered"
         RETURN CASE WHEN TRIM(ITEM_VALUE) IS NULL THEN 'يجب إدخال ' || ITEM_LABEL END;
     END REQUIRED_VALIDATION;
+
+    FUNCTION HIJRI_DATE_FORMAT RETURN VARCHAR2
+    IS
+    BEGIN
+        RETURN NVL(APEX_APP_SETTING.GET_VALUE(p_name => 'HIJRI_DATE_FORMAT'), c_hijri_date_format);
+    EXCEPTION
+        WHEN OTHERS THEN               -- no APEX session / setting missing: the default format
+            RETURN c_hijri_date_format;
+    END HIJRI_DATE_FORMAT;
 
     -- P0_PAGE_PK = ROWID of the importer. Outside port 99 it must belong to the user's port
     -- (IMPORTERS.PRE-QUERY forces PORT_CD := :PARAMETER.P_CURR_PORT_CD).
@@ -943,7 +962,7 @@ AS
                      P_CURR_PORT_CD, SSO_APP_USER, P_GLOBAL_V_WS_ID);
         BEGIN
             v_today  := hijdate_db.cur_hij_date;
-            v_end_dt := TO_DATE(SUSPN_END_DT, c_date_mask);
+            v_end_dt := TO_DATE(SUSPN_END_DT, HIJRI_DATE_FORMAT);
             IF v_end_dt <= v_today THEN
                 SUSPN_RLSE_DT := hijri_text(v_end_dt);
             END IF;
@@ -1174,7 +1193,7 @@ AS
     -- APEX-DA: [Source: IMPR_SUSPN.SUSPN_RSN_TEXT.WHEN-NEW-ITEM-INSTANCE] -> dropped (body is NULL; GO_ITEM commented out)
     --
     -- APEX-DA: [Source: IMPR_SUSPN.SUSPN_*_DT KEY-LISTVAL / KEY-F4 (INTRFACE.DISP_CALENDAR / DISP_DATE_CON)]
-    -- Implement: IG Text Field columns holding the MI-MM-RRRR text (region SQL TO_CHAR), CSS class
+    -- Implement: IG Text Field columns holding the HIJRI_DATE_FORMAT text (region SQL TO_CHAR), CSS class
     --            hijri-date-default (f345 Hijri picker), as IMPR1110.
     --
     -- APEX-DA: [Source: IMPR_SUSPN.KEY-DELREC -> TMPLT.KEY_DELETE_RECORD] -> IG row delete

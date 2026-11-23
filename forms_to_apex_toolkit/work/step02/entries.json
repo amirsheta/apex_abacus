@@ -7,51 +7,51 @@
 "apex": "Process \"WHEN-NEW-FORM-INSTANCE\" (Before Header, first page view)",
 "params": [
 [
-"I_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"IO_P1110_CTRY_CD",
+"P_CTRY_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_EXPR_TYPE",
+"P_IMPR_EXPR_TYPE",
 "IN OUT"
 ],
 [
-"IO_P1110_ADD_CTRY_CD",
+"P_ADD_CTRY_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_EXPRESS_POST",
+"P_EXPRESS_POST",
 "IN OUT"
 ],
 [
-"IO_P1110_CRTY_ARBC_NAME",
+"P_CRTY_ARBC_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_ADD_CRTY_ARBC_NAME",
+"P_ADD_CRTY_ARBC_NAME",
 "IN OUT"
 ],
 [
-"I_P_CURR_PORT_CD",
+"P_CURR_PORT_CD",
 "IN"
 ],
 [
-"I_P_CLASS_CD",
+"P_CLASS_CD",
 "IN"
 ],
 [
-"I_V_USR_TYPE",
+"V_USR_TYPE",
 "IN"
 ],
 [
-"I_P1110_P_LETTER_NBR",
+"P_LETTER_NBR",
 "IN"
 ]
 ]
@@ -64,175 +64,175 @@
 "apex": "Process \"POST-QUERY\" (Before Header, after \"Initialize form IMPORTERS\"; :P0_PAGE_PK is not null)",
 "params": [
 [
-"I_P1110_PORT_CD",
+"P_PORT_CD",
 "IN"
 ],
 [
-"I_P1110_HQ_IMPR_NBR",
+"P_HQ_IMPR_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_STATUS",
+"P_BUS_ID_STATUS",
 "IN"
 ],
 [
-"I_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_CITY_CODE_OF_ID",
+"P_CITY_CODE_OF_ID",
 "IN"
 ],
 [
-"I_P1110_BUS_ID",
+"P_BUS_ID",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_BRNCH",
+"P_BUS_ID_BRNCH",
 "IN"
 ],
 [
-"IO_P1110_CTRY_CD",
+"P_CTRY_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_ADD_CTRY_CD",
+"P_ADD_CTRY_CD",
 "IN OUT"
 ],
 [
-"I_P1110_CITY_CODE",
+"P_CITY_CODE",
 "IN"
 ],
 [
-"I_P1110_EMAIL",
+"P_EMAIL",
 "IN"
 ],
 [
-"I_P1110_MOBILE_NO",
+"P_MOBILE_NO",
 "IN"
 ],
 [
-"I_P1110_ID_NBR",
+"P_ID_NBR",
 "IN"
 ],
 [
-"I_P1110_CTRY_CD_OF_ID",
+"P_CTRY_CD_OF_ID",
 "IN"
 ],
 [
-"IO_P1110_PORT_NAME",
+"P_PORT_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_SDP_PORT_STATUS",
+"P_SDP_PORT_STATUS",
 "IN OUT"
 ],
 [
-"IO_P1110_SUSPN_STATUS",
+"P_SUSPN_STATUS",
 "IN OUT"
 ],
 [
-"IO_P1110_STATUS_DESC",
+"P_STATUS_DESC",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_TYPE_NAME",
+"P_IMPR_TYPE_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_BUS_ID_TYPE_NAME",
+"P_BUS_ID_TYPE_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_ID_CITY_NAME",
+"P_ID_CITY_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_ID_MINS_COMM_CD",
+"P_ID_MINS_COMM_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_L_CT_CITY_STATUS2",
+"P_L_CT_CITY_STATUS2",
 "IN OUT"
 ],
 [
-"IO_P1110_BRNH_CITY_CD",
+"P_BRNH_CITY_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_BRNH_CITY_NAME",
+"P_BRNH_CITY_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_CRTY_ARBC_NAME",
+"P_CRTY_ARBC_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_CTRY_CTRY_STATUS",
+"P_CTRY_CTRY_STATUS",
 "IN OUT"
 ],
 [
-"IO_P1110_ITIDT_NOTE",
+"P_ITIDT_NOTE",
 "IN OUT"
 ],
 [
-"IO_P1110_STATUS",
+"P_STATUS",
 "IN OUT"
 ],
 [
-"IO_P1110_WASL_CITY_NAME",
+"P_WASL_CITY_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_ADD_CRTY_ARBC_NAME",
+"P_ADD_CRTY_ARBC_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_CITY_NAME",
+"P_CITY_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_L_CT_CITY_STATUS",
+"P_L_CT_CITY_STATUS",
 "IN OUT"
 ],
 [
-"IO_P1110_B_EMAIL",
+"P_B_EMAIL",
 "IN OUT"
 ],
 [
-"IO_P1110_B_MOBILE_NO",
+"P_B_MOBILE_NO",
 "IN OUT"
 ],
 [
-"IO_P1110_B_ID_NBR",
+"P_B_ID_NBR",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_ID_TYPE",
+"P_IMPR_ID_TYPE",
 "IN OUT"
 ],
 [
-"I_P_CURR_PORT_CD",
+"P_CURR_PORT_CD",
 "IN"
 ],
 [
-"I_SSO_APP_USER",
+"SSO_APP_USER",
 "IN"
 ],
 [
-"I_P_CLASS_CD",
+"P_CLASS_CD",
 "IN"
 ],
 [
-"I_V_USR_TYPE",
+"V_USR_TYPE",
 "IN"
 ]
 ]
@@ -245,27 +245,27 @@
 "apex": "Process \"WHEN-CREATE-RECORD\" (Before Header, :P0_PAGE_PK is null)",
 "params": [
 [
-"IO_P1110_PORT_CD",
+"P_PORT_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_PORT_NAME",
+"P_PORT_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_TYPE_NAME",
+"P_IMPR_TYPE_NAME",
 "IN OUT"
 ],
 [
-"I_P_CURR_PORT_CD",
+"P_CURR_PORT_CD",
 "IN"
 ],
 [
-"I_P1110_P_PRSNL_IMPR",
+"P_PRSNL_IMPR",
 "IN"
 ]
 ]
@@ -278,75 +278,75 @@
 "apex": "Process \"WHEN-NEW-RECORD-INSTANCE\" (Before Header, after POST-QUERY / WHEN-CREATE-RECORD); FOS after a function (Confirm with NEW_RECORD_CONFIRM_TEXT first)",
 "params": [
 [
-"I_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ],
 [
-"IO_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN OUT"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_COMM_RGSTRTN_TYPE",
+"P_COMM_RGSTRTN_TYPE",
 "IN"
 ],
 [
-"I_P1110_BUS_ID",
+"P_BUS_ID",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_BRNCH",
+"P_BUS_ID_BRNCH",
 "IN"
 ],
 [
-"IO_P1110_CTRY_CD",
+"P_CTRY_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_ARBC_IMPR_NAME",
+"P_ARBC_IMPR_NAME",
 "IN OUT"
 ],
 [
-"I_P1110_IMPR_NBR_PARENT",
+"P_IMPR_NBR_PARENT",
 "IN"
 ],
 [
-"IO_P1110_ADD_CTRY_CD",
+"P_ADD_CTRY_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_CRTY_ARBC_NAME",
+"P_CRTY_ARBC_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_NAME_PARENT",
+"P_IMPR_NAME_PARENT",
 "IN OUT"
 ],
 [
-"IO_P1110_ADD_CRTY_ARBC_NAME",
+"P_ADD_CRTY_ARBC_NAME",
 "IN OUT"
 ],
 [
-"I_P_CURR_PORT_CD",
+"P_CURR_PORT_CD",
 "IN"
 ],
 [
-"I_P_CLASS_CD",
+"P_CLASS_CD",
 "IN"
 ],
 [
-"I_V_USR_TYPE",
+"V_USR_TYPE",
 "IN"
 ],
 [
-"I_P1110_P_CODE",
+"P_CODE",
 "IN"
 ],
 [
-"I_P1110_ANSWER",
+"P_ANSWER",
 "IN"
 ]
 ]
@@ -359,27 +359,27 @@
 "apex": "FOS returns P1110_CONFIRM_TEXT; native Confirm when it is not null",
 "params": [
 [
-"I_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_COMM_RGSTRTN_TYPE",
+"P_COMM_RGSTRTN_TYPE",
 "IN"
 ],
 [
-"I_P1110_BUS_ID",
+"P_BUS_ID",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_BRNCH",
+"P_BUS_ID_BRNCH",
 "IN"
 ],
 [
-"I_P1110_P_CODE",
+"P_CODE",
 "IN"
 ]
 ]
@@ -400,15 +400,15 @@
 "apex": "Validation \"PORT_CD VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_PORT_CD",
+"P_PORT_CD",
 "IN"
 ],
 [
-"I_P1110_PORT_NAME",
+"P_PORT_NAME",
 "IN"
 ],
 [
-"I_P1110_SDP_PORT_STATUS",
+"P_SDP_PORT_STATUS",
 "IN"
 ]
 ]
@@ -418,18 +418,18 @@
 "name": "PORT_CD_WHEN_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.PORT_CD.WHEN-VALIDATE-ITEM",
-"apex": "DA \"PORT_CD WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"PORT_CD WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"I_P1110_PORT_CD",
+"P_PORT_CD",
 "IN"
 ],
 [
-"IO_P1110_PORT_NAME",
+"P_PORT_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_SDP_PORT_STATUS",
+"P_SDP_PORT_STATUS",
 "IN OUT"
 ]
 ]
@@ -447,7 +447,7 @@
 "name": "HQ_IMPR_NBR_WHEN_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.HQ_IMPR_NBR.POST-CHANGE",
-"apex": "DA \"HQ_IMPR_NBR WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"HQ_IMPR_NBR WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": []
 },
 {
@@ -458,11 +458,11 @@
 "apex": "Validation \"IMPR_NBR VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_PORT_CD",
+"P_PORT_CD",
 "IN"
 ],
 [
-"I_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ]
 ]
@@ -472,14 +472,14 @@
 "name": "IMPR_NBR_WHEN_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.IMPR_NBR.WHEN-VALIDATE-ITEM",
-"apex": "DA \"IMPR_NBR WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"IMPR_NBR WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"I_P1110_PORT_CD",
+"P_PORT_CD",
 "IN"
 ],
 [
-"I_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ]
 ]
@@ -492,55 +492,55 @@
 "apex": "Validation \"IMPR_TYPE_CD VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_BUS_ID",
+"P_BUS_ID",
 "IN"
 ],
 [
-"I_P1110_CTRY_CD",
+"P_CTRY_CD",
 "IN"
 ],
 [
-"I_P1110_ADD_CTRY_CD",
+"P_ADD_CTRY_CD",
 "IN"
 ],
 [
-"I_P1110_IMPR_TYPE_NAME",
+"P_IMPR_TYPE_NAME",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_TYPE_NAME",
+"P_BUS_ID_TYPE_NAME",
 "IN"
 ],
 [
-"I_P1110_CRTY_ARBC_NAME",
+"P_CRTY_ARBC_NAME",
 "IN"
 ],
 [
-"I_P1110_ITIDT_NOTE",
+"P_ITIDT_NOTE",
 "IN"
 ],
 [
-"I_P1110_STATUS",
+"P_STATUS",
 "IN"
 ],
 [
-"I_P1110_ADD_CRTY_ARBC_NAME",
+"P_ADD_CRTY_ARBC_NAME",
 "IN"
 ],
 [
-"I_P_CURR_PORT_CD",
+"P_CURR_PORT_CD",
 "IN"
 ]
 ]
@@ -550,58 +550,58 @@
 "name": "IMPR_TYPE_CD_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.IMPR_TYPE_CD.POST-CHANGE + WHEN-VALIDATE-ITEM",
-"apex": "DA \"IMPR_TYPE_CD WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"IMPR_TYPE_CD WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"I_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ],
 [
-"IO_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_BUS_ID",
+"P_BUS_ID",
 "IN OUT"
 ],
 [
-"IO_P1110_CTRY_CD",
+"P_CTRY_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_ADD_CTRY_CD",
+"P_ADD_CTRY_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_TYPE_NAME",
+"P_IMPR_TYPE_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_BUS_ID_TYPE_NAME",
+"P_BUS_ID_TYPE_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_CRTY_ARBC_NAME",
+"P_CRTY_ARBC_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_ITIDT_NOTE",
+"P_ITIDT_NOTE",
 "IN OUT"
 ],
 [
-"IO_P1110_STATUS",
+"P_STATUS",
 "IN OUT"
 ],
 [
-"IO_P1110_ADD_CRTY_ARBC_NAME",
+"P_ADD_CRTY_ARBC_NAME",
 "IN OUT"
 ],
 [
-"I_P_CURR_PORT_CD",
+"P_CURR_PORT_CD",
 "IN"
 ]
 ]
@@ -614,7 +614,7 @@
 "apex": "Validation \"BUS_ID_EXPRD_DT VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_BUS_ID_EXPRD_DT",
+"P_BUS_ID_EXPRD_DT",
 "IN"
 ]
 ]
@@ -624,10 +624,10 @@
 "name": "BUS_ID_EXPRD_DT_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.BUS_ID_EXPRD_DT.WHEN-VALIDATE-ITEM",
-"apex": "DA \"BUS_ID_EXPRD_DT WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"BUS_ID_EXPRD_DT WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"I_P1110_BUS_ID_EXPRD_DT",
+"P_BUS_ID_EXPRD_DT",
 "IN"
 ]
 ]
@@ -640,27 +640,27 @@
 "apex": "Validation \"BUS_ID_TYPE_CD VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_CTRY_CD",
+"P_CTRY_CD",
 "IN"
 ],
 [
-"I_P1110_ADD_CTRY_CD",
+"P_ADD_CTRY_CD",
 "IN"
 ],
 [
-"I_P1110_CRTY_ARBC_NAME",
+"P_CRTY_ARBC_NAME",
 "IN"
 ],
 [
-"I_P1110_ADD_CRTY_ARBC_NAME",
+"P_ADD_CRTY_ARBC_NAME",
 "IN"
 ]
 ]
@@ -670,30 +670,30 @@
 "name": "BUS_ID_TYPE_CD_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.BUS_ID_TYPE_CD.POST-CHANGE",
-"apex": "DA \"BUS_ID_TYPE_CD WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"BUS_ID_TYPE_CD WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"I_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"IO_P1110_CTRY_CD",
+"P_CTRY_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_ADD_CTRY_CD",
+"P_ADD_CTRY_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_CRTY_ARBC_NAME",
+"P_CRTY_ARBC_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_ADD_CRTY_ARBC_NAME",
+"P_ADD_CRTY_ARBC_NAME",
 "IN OUT"
 ]
 ]
@@ -706,27 +706,27 @@
 "apex": "Validation \"CITY_CODE_OF_ID VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_CITY_CODE_OF_ID",
+"P_CITY_CODE_OF_ID",
 "IN"
 ],
 [
-"I_P1110_CTRY_CD_OF_ID",
+"P_CTRY_CD_OF_ID",
 "IN"
 ],
 [
-"I_P1110_ID_CITY_NAME",
+"P_ID_CITY_NAME",
 "IN"
 ],
 [
-"I_P1110_ID_MINS_COMM_CD",
+"P_ID_MINS_COMM_CD",
 "IN"
 ],
 [
-"I_P1110_L_CT_CITY_STATUS2",
+"P_L_CT_CITY_STATUS2",
 "IN"
 ],
 [
-"I_P1110_ROW_ID",
+"P_ROW_ID",
 "IN"
 ]
 ]
@@ -736,30 +736,30 @@
 "name": "CITY_CODE_OF_ID_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.CITY_CODE_OF_ID.WHEN-VALIDATE-ITEM",
-"apex": "DA \"CITY_CODE_OF_ID WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"CITY_CODE_OF_ID WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"IO_P1110_CITY_CODE_OF_ID",
+"P_CITY_CODE_OF_ID",
 "IN OUT"
 ],
 [
-"IO_P1110_CTRY_CD_OF_ID",
+"P_CTRY_CD_OF_ID",
 "IN OUT"
 ],
 [
-"IO_P1110_ID_CITY_NAME",
+"P_ID_CITY_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_ID_MINS_COMM_CD",
+"P_ID_MINS_COMM_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_L_CT_CITY_STATUS2",
+"P_L_CT_CITY_STATUS2",
 "IN OUT"
 ],
 [
-"I_P1110_ROW_ID",
+"P_ROW_ID",
 "IN"
 ]
 ]
@@ -772,123 +772,123 @@
 "apex": "Validation \"BUS_ID VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_PORT_CD",
+"P_PORT_CD",
 "IN"
 ],
 [
-"I_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_STATUS",
+"P_BUS_ID_STATUS",
 "IN"
 ],
 [
-"I_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_EXPRD_DT",
+"P_BUS_ID_EXPRD_DT",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_COMM_RGSTRTN_TYPE",
+"P_COMM_RGSTRTN_TYPE",
 "IN"
 ],
 [
-"I_P1110_CITY_CODE_OF_ID",
+"P_CITY_CODE_OF_ID",
 "IN"
 ],
 [
-"I_P1110_BUS_ID",
+"P_BUS_ID",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_BRNCH",
+"P_BUS_ID_BRNCH",
 "IN"
 ],
 [
-"I_P1110_CTRY_CD",
+"P_CTRY_CD",
 "IN"
 ],
 [
-"I_P1110_ARBC_IMPR_NAME",
+"P_ARBC_IMPR_NAME",
 "IN"
 ],
 [
-"I_P1110_IMPR_NAME_STD",
+"P_IMPR_NAME_STD",
 "IN"
 ],
 [
-"I_P1110_LST_TRAN_DT",
+"P_LST_TRAN_DT",
 "IN"
 ],
 [
-"I_P1110_IMPR_ADDRESS",
+"P_IMPR_ADDRESS",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_ISSUE_DT",
+"P_BUS_ID_ISSUE_DT",
 "IN"
 ],
 [
-"I_P1110_IMPR_POB_NBR",
+"P_IMPR_POB_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_ZIP_CD",
+"P_IMPR_ZIP_CD",
 "IN"
 ],
 [
-"I_P1110_IMPR_TEL_NBR",
+"P_IMPR_TEL_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_FAX_NBR",
+"P_IMPR_FAX_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_TELEX_NBR",
+"P_IMPR_TELEX_NBR",
 "IN"
 ],
 [
-"I_P1110_CTRY_CD_OF_ID",
+"P_CTRY_CD_OF_ID",
 "IN"
 ],
 [
-"I_P1110_ACTIVITY",
+"P_ACTIVITY",
 "IN"
 ],
 [
-"I_P1110_CREATION_FLAG",
+"P_CREATION_FLAG",
 "IN"
 ],
 [
-"I_P1110_ID_CITY_NAME",
+"P_ID_CITY_NAME",
 "IN"
 ],
 [
-"I_P1110_ID_MINS_COMM_CD",
+"P_ID_MINS_COMM_CD",
 "IN"
 ],
 [
-"I_P1110_BRNH_CITY_CD",
+"P_BRNH_CITY_CD",
 "IN"
 ],
 [
-"I_P1110_BRNH_CITY_NAME",
+"P_BRNH_CITY_NAME",
 "IN"
 ],
 [
-"I_P1110_B_ID_NBR",
+"P_B_ID_NBR",
 "IN"
 ],
 [
-"I_P1110_ROW_ID",
+"P_ROW_ID",
 "IN"
 ]
 ]
@@ -898,134 +898,134 @@
 "name": "BUS_ID_WHEN_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.BUS_ID.POST-CHANGE + WHEN-VALIDATE-ITEM",
-"apex": "DA \"BUS_ID WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"BUS_ID WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"I_P1110_PORT_CD",
+"P_PORT_CD",
 "IN"
 ],
 [
-"I_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ],
 [
-"IO_P1110_BUS_ID_STATUS",
+"P_BUS_ID_STATUS",
 "IN OUT"
 ],
 [
-"I_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN"
 ],
 [
-"IO_P1110_BUS_ID_EXPRD_DT",
+"P_BUS_ID_EXPRD_DT",
 "IN OUT"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_COMM_RGSTRTN_TYPE",
+"P_COMM_RGSTRTN_TYPE",
 "IN"
 ],
 [
-"IO_P1110_CITY_CODE_OF_ID",
+"P_CITY_CODE_OF_ID",
 "IN OUT"
 ],
 [
-"IO_P1110_BUS_ID",
+"P_BUS_ID",
 "IN OUT"
 ],
 [
-"I_P1110_BUS_ID_BRNCH",
+"P_BUS_ID_BRNCH",
 "IN"
 ],
 [
-"I_P1110_CTRY_CD",
+"P_CTRY_CD",
 "IN"
 ],
 [
-"IO_P1110_ARBC_IMPR_NAME",
+"P_ARBC_IMPR_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_NAME_STD",
+"P_IMPR_NAME_STD",
 "IN OUT"
 ],
 [
-"IO_P1110_LST_TRAN_DT",
+"P_LST_TRAN_DT",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_ADDRESS",
+"P_IMPR_ADDRESS",
 "IN OUT"
 ],
 [
-"IO_P1110_BUS_ID_ISSUE_DT",
+"P_BUS_ID_ISSUE_DT",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_POB_NBR",
+"P_IMPR_POB_NBR",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_ZIP_CD",
+"P_IMPR_ZIP_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_TEL_NBR",
+"P_IMPR_TEL_NBR",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_FAX_NBR",
+"P_IMPR_FAX_NBR",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_TELEX_NBR",
+"P_IMPR_TELEX_NBR",
 "IN OUT"
 ],
 [
-"I_P1110_CTRY_CD_OF_ID",
+"P_CTRY_CD_OF_ID",
 "IN"
 ],
 [
-"IO_P1110_ACTIVITY",
+"P_ACTIVITY",
 "IN OUT"
 ],
 [
-"IO_P1110_CREATION_FLAG",
+"P_CREATION_FLAG",
 "IN OUT"
 ],
 [
-"IO_P1110_ID_CITY_NAME",
+"P_ID_CITY_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_ID_MINS_COMM_CD",
+"P_ID_MINS_COMM_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_BRNH_CITY_CD",
+"P_BRNH_CITY_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_BRNH_CITY_NAME",
+"P_BRNH_CITY_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_B_ID_NBR",
+"P_B_ID_NBR",
 "IN OUT"
 ],
 [
-"I_P1110_ROW_ID",
+"P_ROW_ID",
 "IN"
 ],
 [
-"I_P1110_ANSWER",
+"P_ANSWER",
 "IN"
 ],
 [
-"I_P1110_SUSPEND_ANSWER",
+"P_SUSPEND_ANSWER",
 "IN"
 ]
 ]
@@ -1038,15 +1038,15 @@
 "apex": "Validation \"BRNH_CITY_CD VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_CTRY_CD_OF_ID",
+"P_CTRY_CD_OF_ID",
 "IN"
 ],
 [
-"I_P1110_BRNH_CITY_CD",
+"P_BRNH_CITY_CD",
 "IN"
 ],
 [
-"I_P1110_BRNH_CITY_NAME",
+"P_BRNH_CITY_NAME",
 "IN"
 ]
 ]
@@ -1056,18 +1056,18 @@
 "name": "BRNH_CITY_CD_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.BRNH_CITY_CD.WHEN-VALIDATE-ITEM",
-"apex": "DA \"BRNH_CITY_CD WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"BRNH_CITY_CD WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"I_P1110_CTRY_CD_OF_ID",
+"P_CTRY_CD_OF_ID",
 "IN"
 ],
 [
-"I_P1110_BRNH_CITY_CD",
+"P_BRNH_CITY_CD",
 "IN"
 ],
 [
-"IO_P1110_BRNH_CITY_NAME",
+"P_BRNH_CITY_NAME",
 "IN OUT"
 ]
 ]
@@ -1080,123 +1080,123 @@
 "apex": "Validation \"BUS_ID_BRNCH VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_PORT_CD",
+"P_PORT_CD",
 "IN"
 ],
 [
-"I_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_STATUS",
+"P_BUS_ID_STATUS",
 "IN"
 ],
 [
-"I_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_EXPRD_DT",
+"P_BUS_ID_EXPRD_DT",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_COMM_RGSTRTN_TYPE",
+"P_COMM_RGSTRTN_TYPE",
 "IN"
 ],
 [
-"I_P1110_CITY_CODE_OF_ID",
+"P_CITY_CODE_OF_ID",
 "IN"
 ],
 [
-"I_P1110_BUS_ID",
+"P_BUS_ID",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_BRNCH",
+"P_BUS_ID_BRNCH",
 "IN"
 ],
 [
-"I_P1110_CTRY_CD",
+"P_CTRY_CD",
 "IN"
 ],
 [
-"I_P1110_ARBC_IMPR_NAME",
+"P_ARBC_IMPR_NAME",
 "IN"
 ],
 [
-"I_P1110_IMPR_NAME_STD",
+"P_IMPR_NAME_STD",
 "IN"
 ],
 [
-"I_P1110_LST_TRAN_DT",
+"P_LST_TRAN_DT",
 "IN"
 ],
 [
-"I_P1110_IMPR_ADDRESS",
+"P_IMPR_ADDRESS",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_ISSUE_DT",
+"P_BUS_ID_ISSUE_DT",
 "IN"
 ],
 [
-"I_P1110_IMPR_POB_NBR",
+"P_IMPR_POB_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_ZIP_CD",
+"P_IMPR_ZIP_CD",
 "IN"
 ],
 [
-"I_P1110_IMPR_TEL_NBR",
+"P_IMPR_TEL_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_FAX_NBR",
+"P_IMPR_FAX_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_TELEX_NBR",
+"P_IMPR_TELEX_NBR",
 "IN"
 ],
 [
-"I_P1110_CTRY_CD_OF_ID",
+"P_CTRY_CD_OF_ID",
 "IN"
 ],
 [
-"I_P1110_ACTIVITY",
+"P_ACTIVITY",
 "IN"
 ],
 [
-"I_P1110_CREATION_FLAG",
+"P_CREATION_FLAG",
 "IN"
 ],
 [
-"I_P1110_ID_CITY_NAME",
+"P_ID_CITY_NAME",
 "IN"
 ],
 [
-"I_P1110_BRNH_ID_MINS_COMM_CD",
+"P_BRNH_ID_MINS_COMM_CD",
 "IN"
 ],
 [
-"I_P1110_BRNH_CITY_CD",
+"P_BRNH_CITY_CD",
 "IN"
 ],
 [
-"I_P1110_BRNH_CITY_NAME",
+"P_BRNH_CITY_NAME",
 "IN"
 ],
 [
-"I_P1110_ROW_ID",
+"P_ROW_ID",
 "IN"
 ],
 [
-"I_P1110_P_CODE",
+"P_CODE",
 "IN"
 ]
 ]
@@ -1206,130 +1206,130 @@
 "name": "BUS_ID_BRNCH_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.BUS_ID_BRNCH.POST-CHANGE + WHEN-VALIDATE-ITEM",
-"apex": "DA \"BUS_ID_BRNCH WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"BUS_ID_BRNCH WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"I_P1110_PORT_CD",
+"P_PORT_CD",
 "IN"
 ],
 [
-"I_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ],
 [
-"IO_P1110_BUS_ID_STATUS",
+"P_BUS_ID_STATUS",
 "IN OUT"
 ],
 [
-"I_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN"
 ],
 [
-"IO_P1110_BUS_ID_EXPRD_DT",
+"P_BUS_ID_EXPRD_DT",
 "IN OUT"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_COMM_RGSTRTN_TYPE",
+"P_COMM_RGSTRTN_TYPE",
 "IN"
 ],
 [
-"IO_P1110_CITY_CODE_OF_ID",
+"P_CITY_CODE_OF_ID",
 "IN OUT"
 ],
 [
-"I_P1110_BUS_ID",
+"P_BUS_ID",
 "IN"
 ],
 [
-"IO_P1110_BUS_ID_BRNCH",
+"P_BUS_ID_BRNCH",
 "IN OUT"
 ],
 [
-"I_P1110_CTRY_CD",
+"P_CTRY_CD",
 "IN"
 ],
 [
-"IO_P1110_ARBC_IMPR_NAME",
+"P_ARBC_IMPR_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_NAME_STD",
+"P_IMPR_NAME_STD",
 "IN OUT"
 ],
 [
-"IO_P1110_LST_TRAN_DT",
+"P_LST_TRAN_DT",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_ADDRESS",
+"P_IMPR_ADDRESS",
 "IN OUT"
 ],
 [
-"IO_P1110_BUS_ID_ISSUE_DT",
+"P_BUS_ID_ISSUE_DT",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_POB_NBR",
+"P_IMPR_POB_NBR",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_ZIP_CD",
+"P_IMPR_ZIP_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_TEL_NBR",
+"P_IMPR_TEL_NBR",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_FAX_NBR",
+"P_IMPR_FAX_NBR",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_TELEX_NBR",
+"P_IMPR_TELEX_NBR",
 "IN OUT"
 ],
 [
-"I_P1110_CTRY_CD_OF_ID",
+"P_CTRY_CD_OF_ID",
 "IN"
 ],
 [
-"IO_P1110_ACTIVITY",
+"P_ACTIVITY",
 "IN OUT"
 ],
 [
-"IO_P1110_CREATION_FLAG",
+"P_CREATION_FLAG",
 "IN OUT"
 ],
 [
-"IO_P1110_ID_CITY_NAME",
+"P_ID_CITY_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_BRNH_ID_MINS_COMM_CD",
+"P_BRNH_ID_MINS_COMM_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_BRNH_CITY_CD",
+"P_BRNH_CITY_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_BRNH_CITY_NAME",
+"P_BRNH_CITY_NAME",
 "IN OUT"
 ],
 [
-"I_P1110_ROW_ID",
+"P_ROW_ID",
 "IN"
 ],
 [
-"I_P1110_P_CODE",
+"P_CODE",
 "IN"
 ],
 [
-"I_P1110_ANSWER",
+"P_ANSWER",
 "IN"
 ]
 ]
@@ -1342,27 +1342,27 @@
 "apex": "Validation \"CTRY_CD VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_CTRY_CD",
+"P_CTRY_CD",
 "IN"
 ],
 [
-"I_P1110_CTRY_CD_OF_ID",
+"P_CTRY_CD_OF_ID",
 "IN"
 ],
 [
-"I_P1110_CRTY_ARBC_NAME",
+"P_CRTY_ARBC_NAME",
 "IN"
 ],
 [
-"I_P1110_CTRY_CTRY_STATUS",
+"P_CTRY_CTRY_STATUS",
 "IN"
 ]
 ]
@@ -1372,30 +1372,30 @@
 "name": "CTRY_CD_WHEN_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.CTRY_CD.WHEN-VALIDATE-ITEM",
-"apex": "DA \"CTRY_CD WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"CTRY_CD WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"I_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_CTRY_CD",
+"P_CTRY_CD",
 "IN"
 ],
 [
-"IO_P1110_CTRY_CD_OF_ID",
+"P_CTRY_CD_OF_ID",
 "IN OUT"
 ],
 [
-"IO_P1110_CRTY_ARBC_NAME",
+"P_CRTY_ARBC_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_CTRY_CTRY_STATUS",
+"P_CTRY_CTRY_STATUS",
 "IN OUT"
 ]
 ]
@@ -1413,7 +1413,7 @@
 "name": "IMPR_EXPR_TYPE_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.IMPR_EXPR_TYPE.POST-CHANGE",
-"apex": "DA \"IMPR_EXPR_TYPE WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"IMPR_EXPR_TYPE WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": []
 },
 {
@@ -1424,11 +1424,11 @@
 "apex": "Validation \"ARBC_IMPR_NAME VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_ARBC_IMPR_NAME",
+"P_ARBC_IMPR_NAME",
 "IN"
 ],
 [
-"I_P1110_IMPR_NAME_STD",
+"P_IMPR_NAME_STD",
 "IN"
 ]
 ]
@@ -1438,14 +1438,14 @@
 "name": "ARBC_IMPR_NAME_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.ARBC_IMPR_NAME.WHEN-VALIDATE-ITEM",
-"apex": "DA \"ARBC_IMPR_NAME WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"ARBC_IMPR_NAME WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"IO_P1110_ARBC_IMPR_NAME",
+"P_ARBC_IMPR_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_NAME_STD",
+"P_IMPR_NAME_STD",
 "IN OUT"
 ]
 ]
@@ -1458,7 +1458,7 @@
 "apex": "Validation \"ENG_IMPR_NAME VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_ENG_IMPR_NAME",
+"P_ENG_IMPR_NAME",
 "IN"
 ]
 ]
@@ -1468,10 +1468,10 @@
 "name": "ENG_IMPR_NAME_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.ENG_IMPR_NAME.WHEN-VALIDATE-ITEM",
-"apex": "DA \"ENG_IMPR_NAME WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"ENG_IMPR_NAME WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"IO_P1110_ENG_IMPR_NAME",
+"P_ENG_IMPR_NAME",
 "IN OUT"
 ]
 ]
@@ -1484,7 +1484,7 @@
 "apex": "Validation \"BUS_ID_ISSUE_DT VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_BUS_ID_ISSUE_DT",
+"P_BUS_ID_ISSUE_DT",
 "IN"
 ]
 ]
@@ -1494,10 +1494,10 @@
 "name": "BUS_ID_ISSUE_DT_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.BUS_ID_ISSUE_DT.WHEN-VALIDATE-ITEM",
-"apex": "DA \"BUS_ID_ISSUE_DT WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"BUS_ID_ISSUE_DT WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"I_P1110_BUS_ID_ISSUE_DT",
+"P_BUS_ID_ISSUE_DT",
 "IN"
 ]
 ]
@@ -1510,11 +1510,11 @@
 "apex": "Validation \"IMPR_NBR_PARENT VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_IMPR_NBR_PARENT",
+"P_IMPR_NBR_PARENT",
 "IN"
 ],
 [
-"I_P1110_IMPR_NAME_PARENT",
+"P_IMPR_NAME_PARENT",
 "IN"
 ]
 ]
@@ -1524,14 +1524,14 @@
 "name": "IMPR_NBR_PARENT_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.IMPR_NBR_PARENT.WHEN-VALIDATE-ITEM",
-"apex": "DA \"IMPR_NBR_PARENT WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"IMPR_NBR_PARENT WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"I_P1110_IMPR_NBR_PARENT",
+"P_IMPR_NBR_PARENT",
 "IN"
 ],
 [
-"IO_P1110_IMPR_NAME_PARENT",
+"P_IMPR_NAME_PARENT",
 "IN OUT"
 ]
 ]
@@ -1544,23 +1544,23 @@
 "apex": "Validation \"ADD_CTRY_CD VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_ADD_CTRY_CD",
+"P_ADD_CTRY_CD",
 "IN"
 ],
 [
-"I_P1110_CITY_CODE",
+"P_CITY_CODE",
 "IN"
 ],
 [
-"I_P1110_ADD_CRTY_ARBC_NAME",
+"P_ADD_CRTY_ARBC_NAME",
 "IN"
 ],
 [
-"I_P1110_CITY_NAME",
+"P_CITY_NAME",
 "IN"
 ],
 [
-"I_P1110_L_CT_CITY_STATUS",
+"P_L_CT_CITY_STATUS",
 "IN"
 ]
 ]
@@ -1570,26 +1570,26 @@
 "name": "ADD_CTRY_CD_WHEN_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.ADD_CTRY_CD.WHEN-VALIDATE-ITEM",
-"apex": "DA \"ADD_CTRY_CD WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"ADD_CTRY_CD WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"I_P1110_ADD_CTRY_CD",
+"P_ADD_CTRY_CD",
 "IN"
 ],
 [
-"I_P1110_CITY_CODE",
+"P_CITY_CODE",
 "IN"
 ],
 [
-"IO_P1110_ADD_CRTY_ARBC_NAME",
+"P_ADD_CRTY_ARBC_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_CITY_NAME",
+"P_CITY_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_L_CT_CITY_STATUS",
+"P_L_CT_CITY_STATUS",
 "IN OUT"
 ]
 ]
@@ -1602,23 +1602,23 @@
 "apex": "Validation \"CITY_CODE VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_ADD_CTRY_CD",
+"P_ADD_CTRY_CD",
 "IN"
 ],
 [
-"I_P1110_CITY_CODE",
+"P_CITY_CODE",
 "IN"
 ],
 [
-"I_P1110_ADD_CRTY_ARBC_NAME",
+"P_ADD_CRTY_ARBC_NAME",
 "IN"
 ],
 [
-"I_P1110_CITY_NAME",
+"P_CITY_NAME",
 "IN"
 ],
 [
-"I_P1110_L_CT_CITY_STATUS",
+"P_L_CT_CITY_STATUS",
 "IN"
 ]
 ]
@@ -1628,26 +1628,26 @@
 "name": "CITY_CODE_WHEN_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.CITY_CODE.WHEN-VALIDATE-ITEM",
-"apex": "DA \"CITY_CODE WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"CITY_CODE WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"I_P1110_ADD_CTRY_CD",
+"P_ADD_CTRY_CD",
 "IN"
 ],
 [
-"I_P1110_CITY_CODE",
+"P_CITY_CODE",
 "IN"
 ],
 [
-"IO_P1110_ADD_CRTY_ARBC_NAME",
+"P_ADD_CRTY_ARBC_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_CITY_NAME",
+"P_CITY_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_L_CT_CITY_STATUS",
+"P_L_CT_CITY_STATUS",
 "IN OUT"
 ]
 ]
@@ -1660,7 +1660,7 @@
 "apex": "Validation \"IMPR_TEL_NBR VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_IMPR_TEL_NBR",
+"P_IMPR_TEL_NBR",
 "IN"
 ]
 ]
@@ -1670,10 +1670,10 @@
 "name": "IMPR_TEL_NBR_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.IMPR_TEL_NBR.WHEN-VALIDATE-ITEM",
-"apex": "DA \"IMPR_TEL_NBR WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"IMPR_TEL_NBR WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"I_P1110_IMPR_TEL_NBR",
+"P_IMPR_TEL_NBR",
 "IN"
 ]
 ]
@@ -1686,15 +1686,15 @@
 "apex": "Validation \"B_EMAIL VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_PORT_CD",
+"P_PORT_CD",
 "IN"
 ],
 [
-"I_P1110_B_EMAIL",
+"P_B_EMAIL",
 "IN"
 ],
 [
-"I_P_CURR_PORT_CD",
+"P_CURR_PORT_CD",
 "IN"
 ]
 ]
@@ -1704,18 +1704,18 @@
 "name": "B_EMAIL_WHEN_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.B_EMAIL.POST-CHANGE + WHEN-VALIDATE-ITEM",
-"apex": "DA \"B_EMAIL WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"B_EMAIL WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"IO_P1110_PORT_CD",
+"P_PORT_CD",
 "IN OUT"
 ],
 [
-"I_P1110_B_EMAIL",
+"P_B_EMAIL",
 "IN"
 ],
 [
-"I_P_CURR_PORT_CD",
+"P_CURR_PORT_CD",
 "IN"
 ]
 ]
@@ -1728,7 +1728,7 @@
 "apex": "Validation \"EMAIL VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_EMAIL",
+"P_EMAIL",
 "IN"
 ]
 ]
@@ -1738,10 +1738,10 @@
 "name": "EMAIL_WHEN_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.EMAIL.WHEN-VALIDATE-ITEM",
-"apex": "DA \"EMAIL WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"EMAIL WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"I_P1110_EMAIL",
+"P_EMAIL",
 "IN"
 ]
 ]
@@ -1754,19 +1754,19 @@
 "apex": "Validation \"B_MOBILE_NO VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_PORT_CD",
+"P_PORT_CD",
 "IN"
 ],
 [
-"I_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ],
 [
-"I_P1110_B_MOBILE_NO",
+"P_B_MOBILE_NO",
 "IN"
 ],
 [
-"I_P_CURR_PORT_CD",
+"P_CURR_PORT_CD",
 "IN"
 ]
 ]
@@ -1776,22 +1776,22 @@
 "name": "B_MOBILE_NO_WHEN_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.B_MOBILE_NO.POST-CHANGE + WHEN-VALIDATE-ITEM",
-"apex": "DA \"B_MOBILE_NO WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"B_MOBILE_NO WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"IO_P1110_PORT_CD",
+"P_PORT_CD",
 "IN OUT"
 ],
 [
-"I_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ],
 [
-"I_P1110_B_MOBILE_NO",
+"P_B_MOBILE_NO",
 "IN"
 ],
 [
-"I_P_CURR_PORT_CD",
+"P_CURR_PORT_CD",
 "IN"
 ]
 ]
@@ -1804,7 +1804,7 @@
 "apex": "Validation \"BANK_IBAN VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_BANK_IBAN",
+"P_BANK_IBAN",
 "IN"
 ]
 ]
@@ -1814,10 +1814,10 @@
 "name": "BANK_IBAN_WHEN_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.BANK_IBAN.WHEN-VALIDATE-ITEM",
-"apex": "DA \"BANK_IBAN WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"BANK_IBAN WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"IO_P1110_BANK_IBAN",
+"P_BANK_IBAN",
 "IN OUT"
 ]
 ]
@@ -1830,15 +1830,15 @@
 "apex": "Validation \"B_ID_NBR VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_PORT_CD",
+"P_PORT_CD",
 "IN"
 ],
 [
-"I_P1110_B_ID_NBR",
+"P_B_ID_NBR",
 "IN"
 ],
 [
-"I_P_CURR_PORT_CD",
+"P_CURR_PORT_CD",
 "IN"
 ]
 ]
@@ -1848,18 +1848,18 @@
 "name": "B_ID_NBR_WHEN_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.B_ID_NBR.POST-CHANGE + WHEN-VALIDATE-ITEM",
-"apex": "DA \"B_ID_NBR WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"B_ID_NBR WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"IO_P1110_PORT_CD",
+"P_PORT_CD",
 "IN OUT"
 ],
 [
-"I_P1110_B_ID_NBR",
+"P_B_ID_NBR",
 "IN"
 ],
 [
-"I_P_CURR_PORT_CD",
+"P_CURR_PORT_CD",
 "IN"
 ]
 ]
@@ -1872,27 +1872,27 @@
 "apex": "Validation \"CTRY_CD_OF_ID VALIDATION\" (request CREATE / SAVE): returns the error text",
 "params": [
 [
-"I_P1110_CITY_CODE_OF_ID",
+"P_CITY_CODE_OF_ID",
 "IN"
 ],
 [
-"I_P1110_CTRY_CD_OF_ID",
+"P_CTRY_CD_OF_ID",
 "IN"
 ],
 [
-"I_P1110_ID_CITY_NAME",
+"P_ID_CITY_NAME",
 "IN"
 ],
 [
-"I_P1110_ID_MINS_COMM_CD",
+"P_ID_MINS_COMM_CD",
 "IN"
 ],
 [
-"I_P1110_L_CT_CITY_STATUS2",
+"P_L_CT_CITY_STATUS2",
 "IN"
 ],
 [
-"I_P1110_ROW_ID",
+"P_ROW_ID",
 "IN"
 ]
 ]
@@ -1902,30 +1902,30 @@
 "name": "CTRY_CD_OF_ID_VALIDATE_ITEM",
 "kind": "P",
 "source": "IMPORTERS.CTRY_CD_OF_ID.WHEN-VALIDATE-ITEM",
-"apex": "DA \"CTRY_CD_OF_ID WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items",
+"apex": "DA \"CTRY_CD_OF_ID WHEN-VALIDATE-ITEM\" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"IO_P1110_CITY_CODE_OF_ID",
+"P_CITY_CODE_OF_ID",
 "IN OUT"
 ],
 [
-"IO_P1110_CTRY_CD_OF_ID",
+"P_CTRY_CD_OF_ID",
 "IN OUT"
 ],
 [
-"IO_P1110_ID_CITY_NAME",
+"P_ID_CITY_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_ID_MINS_COMM_CD",
+"P_ID_MINS_COMM_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_L_CT_CITY_STATUS2",
+"P_L_CT_CITY_STATUS2",
 "IN OUT"
 ],
 [
-"I_P1110_ROW_ID",
+"P_ROW_ID",
 "IN"
 ]
 ]
@@ -1935,30 +1935,30 @@
 "name": "IMPR_TYPE_CD_NEW_ITEM_INSTANCE",
 "kind": "P",
 "source": "IMPORTERS.IMPR_TYPE_CD.WHEN-NEW-ITEM-INSTANCE",
-"apex": "DA \"IMPR_TYPE_CD WHEN-NEW-ITEM-INSTANCE\": FOS, Items to Return = the IO_ items",
+"apex": "DA \"IMPR_TYPE_CD WHEN-NEW-ITEM-INSTANCE\": FOS, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"I_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"IO_P1110_CTRY_CD",
+"P_CTRY_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_ADD_CTRY_CD",
+"P_ADD_CTRY_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_CRTY_ARBC_NAME",
+"P_CRTY_ARBC_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_ADD_CRTY_ARBC_NAME",
+"P_ADD_CRTY_ARBC_NAME",
 "IN OUT"
 ]
 ]
@@ -1968,38 +1968,38 @@
 "name": "IMPR_TYPE_CD_LOV_RETURN",
 "kind": "P",
 "source": "IMPORTERS.IMPR_TYPE_CD.KEY-LISTVAL (values the LOV returns)",
-"apex": "DA \"IMPR_TYPE_CD KEY-LISTVAL\": FOS, Items to Return = the IO_ items",
+"apex": "DA \"IMPR_TYPE_CD KEY-LISTVAL\": FOS, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"IO_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_CTRY_CD",
+"P_CTRY_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_ADD_CTRY_CD",
+"P_ADD_CTRY_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_TYPE_NAME",
+"P_IMPR_TYPE_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_BUS_ID_TYPE_NAME",
+"P_BUS_ID_TYPE_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_CRTY_ARBC_NAME",
+"P_CRTY_ARBC_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_ADD_CRTY_ARBC_NAME",
+"P_ADD_CRTY_ARBC_NAME",
 "IN OUT"
 ]
 ]
@@ -2009,10 +2009,10 @@
 "name": "CITY_CODE_OF_ID_WHEN_NEW_ITEM",
 "kind": "P",
 "source": "IMPORTERS.CITY_CODE_OF_ID.WHEN-NEW-ITEM-INSTANCE",
-"apex": "DA \"CITY_CODE_OF_ID WHEN-NEW-ITEM-INSTANCE\": FOS, Items to Return = the IO_ items",
+"apex": "DA \"CITY_CODE_OF_ID WHEN-NEW-ITEM-INSTANCE\": FOS, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"I_P1110_COMM_RGSTRTN_TYPE",
+"P_COMM_RGSTRTN_TYPE",
 "IN"
 ]
 ]
@@ -2022,30 +2022,30 @@
 "name": "BUS_ID_WHEN_NEW_ITEM_INSTANCE",
 "kind": "P",
 "source": "IMPORTERS.BUS_ID.WHEN-NEW-ITEM-INSTANCE",
-"apex": "DA \"BUS_ID WHEN-NEW-ITEM-INSTANCE\": FOS, Items to Return = the IO_ items",
+"apex": "DA \"BUS_ID WHEN-NEW-ITEM-INSTANCE\": FOS, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"I_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_COMM_RGSTRTN_TYPE",
+"P_COMM_RGSTRTN_TYPE",
 "IN"
 ],
 [
-"I_P1110_CITY_CODE_OF_ID",
+"P_CITY_CODE_OF_ID",
 "IN"
 ],
 [
-"I_P1110_BUS_ID",
+"P_BUS_ID",
 "IN"
 ],
 [
-"I_P1110_ID_MINS_COMM_CD",
+"P_ID_MINS_COMM_CD",
 "IN"
 ]
 ]
@@ -2055,34 +2055,34 @@
 "name": "BUS_ID_BRNCH_NEW_ITEM_INSTANCE",
 "kind": "P",
 "source": "IMPORTERS.BUS_ID_BRNCH.WHEN-NEW-ITEM-INSTANCE",
-"apex": "DA \"BUS_ID_BRNCH WHEN-NEW-ITEM-INSTANCE\": FOS, Items to Return = the IO_ items",
+"apex": "DA \"BUS_ID_BRNCH WHEN-NEW-ITEM-INSTANCE\": FOS, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"I_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_CITY_CODE_OF_ID",
+"P_CITY_CODE_OF_ID",
 "IN"
 ],
 [
-"I_P1110_BUS_ID",
+"P_BUS_ID",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_BRNCH",
+"P_BUS_ID_BRNCH",
 "IN"
 ],
 [
-"I_P1110_CITY_CODE",
+"P_CITY_CODE",
 "IN"
 ],
 [
-"I_P1110_BRNH_CITY_CD",
+"P_BRNH_CITY_CD",
 "IN"
 ]
 ]
@@ -2092,14 +2092,14 @@
 "name": "COMM_RGSTRTN_TYPE_LIST_CHANGED",
 "kind": "P",
 "source": "IMPORTERS.COMM_RGSTRTN_TYPE.WHEN-LIST-CHANGED",
-"apex": "DA \"COMM_RGSTRTN_TYPE WHEN-LIST-CHANGED\": FOS, Items to Return = the IO_ items",
+"apex": "DA \"COMM_RGSTRTN_TYPE WHEN-LIST-CHANGED\": FOS, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"I_P1110_COMM_RGSTRTN_TYPE",
+"P_COMM_RGSTRTN_TYPE",
 "IN"
 ],
 [
-"IO_P1110_BUS_ID_BRNCH",
+"P_BUS_ID_BRNCH",
 "IN OUT"
 ]
 ]
@@ -2109,30 +2109,30 @@
 "name": "ARBC_IMPR_NAME_KEY_NEXT_ITEM",
 "kind": "P",
 "source": "IMPORTERS.ARBC_IMPR_NAME.KEY-NEXT-ITEM",
-"apex": "DA \"ARBC_IMPR_NAME KEY-NEXT-ITEM\": FOS, Items to Return = the IO_ items",
+"apex": "DA \"ARBC_IMPR_NAME KEY-NEXT-ITEM\": FOS, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"I_P1110_CTRY_CD",
+"P_CTRY_CD",
 "IN"
 ],
 [
-"IO_P1110_ADD_CTRY_CD",
+"P_ADD_CTRY_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_CITY_CODE",
+"P_CITY_CODE",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_TEL_NBR",
+"P_IMPR_TEL_NBR",
 "IN OUT"
 ],
 [
-"IO_P1110_ADD_CRTY_ARBC_NAME",
+"P_ADD_CRTY_ARBC_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_CITY_NAME",
+"P_CITY_NAME",
 "IN OUT"
 ]
 ]
@@ -2142,10 +2142,10 @@
 "name": "BANK_IBAN_NEW_ITEM_INSTANCE",
 "kind": "P",
 "source": "IMPORTERS.BANK_IBAN.WHEN-NEW-ITEM-INSTANCE",
-"apex": "DA \"BANK_IBAN WHEN-NEW-ITEM-INSTANCE\": FOS, Items to Return = the IO_ items",
+"apex": "DA \"BANK_IBAN WHEN-NEW-ITEM-INSTANCE\": FOS, Items to Return = the IN OUT / OUT items",
 "params": [
 [
-"IO_P1110_BANK_IBAN",
+"P_BANK_IBAN",
 "IN OUT"
 ]
 ]
@@ -2158,31 +2158,31 @@
 "apex": "FOS before \"BUS_ID WHEN-VALIDATE-ITEM\": returns P1110_CONFIRM_TEXT; Confirm sets P1110_SUSPEND_ANSWER",
 "params": [
 [
-"I_P1110_PORT_CD",
+"P_PORT_CD",
 "IN"
 ],
 [
-"I_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_COMM_RGSTRTN_TYPE",
+"P_COMM_RGSTRTN_TYPE",
 "IN"
 ],
 [
-"I_P1110_BUS_ID",
+"P_BUS_ID",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_BRNCH",
+"P_BUS_ID_BRNCH",
 "IN"
 ],
 [
-"I_P1110_CTRY_CD",
+"P_CTRY_CD",
 "IN"
 ]
 ]
@@ -2195,191 +2195,191 @@
 "apex": "Process \"PRE-INSERT\" (request CREATE / SAVE, :P0_PAGE_PK is null), before \"Process form IMPORTERS\"; Confirm of brokers (class 1, type 3) sets P1110_ANSWER",
 "params": [
 [
-"I_P1110_PORT_CD",
+"P_PORT_CD",
 "IN"
 ],
 [
-"IO_P1110_HQ_IMPR_NBR",
+"P_HQ_IMPR_NBR",
 "IN OUT"
 ],
 [
-"I_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_EXPRD_DT",
+"P_BUS_ID_EXPRD_DT",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_COMM_RGSTRTN_TYPE",
+"P_COMM_RGSTRTN_TYPE",
 "IN"
 ],
 [
-"IO_P1110_CITY_CODE_OF_ID",
+"P_CITY_CODE_OF_ID",
 "IN OUT"
 ],
 [
-"I_P1110_BUS_ID",
+"P_BUS_ID",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_BRNCH",
+"P_BUS_ID_BRNCH",
 "IN"
 ],
 [
-"I_P1110_CTRY_CD",
+"P_CTRY_CD",
 "IN"
 ],
 [
-"I_P1110_IMPR_EXPR_TYPE",
+"P_IMPR_EXPR_TYPE",
 "IN"
 ],
 [
-"I_P1110_ARBC_IMPR_NAME",
+"P_ARBC_IMPR_NAME",
 "IN"
 ],
 [
-"I_P1110_IMPD_STMT_NBR",
+"P_IMPD_STMT_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_DATA_SRCE",
+"P_IMPR_DATA_SRCE",
 "IN"
 ],
 [
-"I_P1110_ENG_IMPR_NAME",
+"P_ENG_IMPR_NAME",
 "IN"
 ],
 [
-"I_P1110_IMPR_CNTCT_NAME",
+"P_IMPR_CNTCT_NAME",
 "IN"
 ],
 [
-"I_P1110_IMPR_ADDRESS",
+"P_IMPR_ADDRESS",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_ISSUE_DT",
+"P_BUS_ID_ISSUE_DT",
 "IN"
 ],
 [
-"I_P1110_IMPR_NBR_PARENT",
+"P_IMPR_NBR_PARENT",
 "IN"
 ],
 [
-"I_P1110_ADD_CTRY_CD",
+"P_ADD_CTRY_CD",
 "IN"
 ],
 [
-"I_P1110_CITY_CODE",
+"P_CITY_CODE",
 "IN"
 ],
 [
-"I_P1110_IMPR_POB_NBR",
+"P_IMPR_POB_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_ZIP_CD",
+"P_IMPR_ZIP_CD",
 "IN"
 ],
 [
-"I_P1110_IMPR_TEL_NBR",
+"P_IMPR_TEL_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_FAX_NBR",
+"P_IMPR_FAX_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_TELEX_NBR",
+"P_IMPR_TELEX_NBR",
 "IN"
 ],
 [
-"I_P1110_BANK_IBAN",
+"P_BANK_IBAN",
 "IN"
 ],
 [
-"I_P1110_CAR_AGENT_FLAG",
+"P_CAR_AGENT_FLAG",
 "IN"
 ],
 [
-"I_P1110_EXPRESS_POST",
+"P_EXPRESS_POST",
 "IN"
 ],
 [
-"IO_P1110_CTRY_CD_OF_ID",
+"P_CTRY_CD_OF_ID",
 "IN OUT"
 ],
 [
-"I_P1110_EXPD_STMT_NBR",
+"P_EXPD_STMT_NBR",
 "IN"
 ],
 [
-"I_P1110_WVR_ENTRY_NBR",
+"P_WVR_ENTRY_NBR",
 "IN"
 ],
 [
-"I_P1110_ACTIVITY",
+"P_ACTIVITY",
 "IN"
 ],
 [
-"IO_P1110_ID_CITY_NAME",
+"P_ID_CITY_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_ID_MINS_COMM_CD",
+"P_ID_MINS_COMM_CD",
 "IN OUT"
 ],
 [
-"IO_P1110_L_CT_CITY_STATUS2",
+"P_L_CT_CITY_STATUS2",
 "IN OUT"
 ],
 [
-"I_P1110_BRNH_CITY_CD",
+"P_BRNH_CITY_CD",
 "IN"
 ],
 [
-"I_P1110_B_EMAIL",
+"P_B_EMAIL",
 "IN"
 ],
 [
-"I_P1110_B_MOBILE_NO",
+"P_B_MOBILE_NO",
 "IN"
 ],
 [
-"I_P1110_B_ID_NBR",
+"P_B_ID_NBR",
 "IN"
 ],
 [
-"I_P_CURR_PORT_CD",
+"P_CURR_PORT_CD",
 "IN"
 ],
 [
-"I_SSO_APP_USER",
+"SSO_APP_USER",
 "IN"
 ],
 [
-"I_P_GLOBAL_V_WS_ID",
+"P_GLOBAL_V_WS_ID",
 "IN"
 ],
 [
-"I_P_CLASS_CD",
+"P_CLASS_CD",
 "IN"
 ],
 [
-"I_V_USR_TYPE",
+"V_USR_TYPE",
 "IN"
 ],
 [
-"I_P1110_ANSWER",
+"P_ANSWER",
 "IN"
 ]
 ]
@@ -2392,199 +2392,199 @@
 "apex": "Process \"POST-INSERT\", after \"Process form IMPORTERS\"",
 "params": [
 [
-"I_P1110_PORT_CD",
+"P_PORT_CD",
 "IN"
 ],
 [
-"IO_P1110_HQ_IMPR_NBR",
+"P_HQ_IMPR_NBR",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN OUT"
 ],
 [
-"I_P1110_BUS_ID_STATUS",
+"P_BUS_ID_STATUS",
 "IN"
 ],
 [
-"I_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_EXPRD_DT",
+"P_BUS_ID_EXPRD_DT",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_COMM_RGSTRTN_TYPE",
+"P_COMM_RGSTRTN_TYPE",
 "IN"
 ],
 [
-"I_P1110_CITY_CODE_OF_ID",
+"P_CITY_CODE_OF_ID",
 "IN"
 ],
 [
-"I_P1110_BUS_ID",
+"P_BUS_ID",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_BRNCH",
+"P_BUS_ID_BRNCH",
 "IN"
 ],
 [
-"I_P1110_CTRY_CD",
+"P_CTRY_CD",
 "IN"
 ],
 [
-"I_P1110_IMPR_EXPR_TYPE",
+"P_IMPR_EXPR_TYPE",
 "IN"
 ],
 [
-"I_P1110_ARBC_IMPR_NAME",
+"P_ARBC_IMPR_NAME",
 "IN"
 ],
 [
-"I_P1110_IMPR_NAME_STD",
+"P_IMPR_NAME_STD",
 "IN"
 ],
 [
-"I_P1110_LST_TRAN_DT",
+"P_LST_TRAN_DT",
 "IN"
 ],
 [
-"I_P1110_IMPD_STMT_NBR",
+"P_IMPD_STMT_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_DATA_SRCE",
+"P_IMPR_DATA_SRCE",
 "IN"
 ],
 [
-"I_P1110_ENG_IMPR_NAME",
+"P_ENG_IMPR_NAME",
 "IN"
 ],
 [
-"I_P1110_IMPR_CNTCT_NAME",
+"P_IMPR_CNTCT_NAME",
 "IN"
 ],
 [
-"I_P1110_IMPR_ADDRESS",
+"P_IMPR_ADDRESS",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_ISSUE_DT",
+"P_BUS_ID_ISSUE_DT",
 "IN"
 ],
 [
-"I_P1110_IMPR_NBR_PARENT",
+"P_IMPR_NBR_PARENT",
 "IN"
 ],
 [
-"I_P1110_ADD_CTRY_CD",
+"P_ADD_CTRY_CD",
 "IN"
 ],
 [
-"I_P1110_CITY_CODE",
+"P_CITY_CODE",
 "IN"
 ],
 [
-"I_P1110_IMPR_POB_NBR",
+"P_IMPR_POB_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_ZIP_CD",
+"P_IMPR_ZIP_CD",
 "IN"
 ],
 [
-"I_P1110_IMPR_TEL_NBR",
+"P_IMPR_TEL_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_FAX_NBR",
+"P_IMPR_FAX_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_TELEX_NBR",
+"P_IMPR_TELEX_NBR",
 "IN"
 ],
 [
-"I_P1110_EMAIL",
+"P_EMAIL",
 "IN"
 ],
 [
-"I_P1110_MOBILE_NO",
+"P_MOBILE_NO",
 "IN"
 ],
 [
-"I_P1110_BANK_IBAN",
+"P_BANK_IBAN",
 "IN"
 ],
 [
-"I_P1110_ID_NBR",
+"P_ID_NBR",
 "IN"
 ],
 [
-"I_P1110_CAR_AGENT_FLAG",
+"P_CAR_AGENT_FLAG",
 "IN"
 ],
 [
-"I_P1110_EXPRESS_POST",
+"P_EXPRESS_POST",
 "IN"
 ],
 [
-"I_P1110_CTRY_CD_OF_ID",
+"P_CTRY_CD_OF_ID",
 "IN"
 ],
 [
-"I_P1110_CREATION_FLAG",
+"P_CREATION_FLAG",
 "IN"
 ],
 [
-"I_P1110_B_EMAIL",
+"P_B_EMAIL",
 "IN"
 ],
 [
-"I_P1110_B_MOBILE_NO",
+"P_B_MOBILE_NO",
 "IN"
 ],
 [
-"I_P1110_B_ID_NBR",
+"P_B_ID_NBR",
 "IN"
 ],
 [
-"I_P_CURR_PORT_CD",
+"P_CURR_PORT_CD",
 "IN"
 ],
 [
-"I_SSO_APP_USER",
+"SSO_APP_USER",
 "IN"
 ],
 [
-"I_P_GLOBAL_V_WS_ID",
+"P_GLOBAL_V_WS_ID",
 "IN"
 ],
 [
-"I_P_CLASS_CD",
+"P_CLASS_CD",
 "IN"
 ],
 [
-"I_V_USR_TYPE",
+"V_USR_TYPE",
 "IN"
 ],
 [
-"I_P_BRKR_PORT_CD",
+"P_BRKR_PORT_CD",
 "IN"
 ],
 [
-"I_P_LIC_TYPE",
+"P_LIC_TYPE",
 "IN"
 ],
 [
-"I_P_BRKR_NBR",
+"P_BRKR_NBR",
 "IN"
 ]
 ]
@@ -2597,183 +2597,183 @@
 "apex": "Process \"PRE-UPDATE\" (request SAVE, :P0_PAGE_PK is not null), before \"Process form IMPORTERS\"",
 "params": [
 [
-"I_P1110_PORT_CD",
+"P_PORT_CD",
 "IN"
 ],
 [
-"IO_P1110_HQ_IMPR_NBR",
+"P_HQ_IMPR_NBR",
 "IN OUT"
 ],
 [
-"I_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_STATUS",
+"P_BUS_ID_STATUS",
 "IN"
 ],
 [
-"IO_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN OUT"
 ],
 [
-"I_P1110_BUS_ID_EXPRD_DT",
+"P_BUS_ID_EXPRD_DT",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_COMM_RGSTRTN_TYPE",
+"P_COMM_RGSTRTN_TYPE",
 "IN"
 ],
 [
-"I_P1110_CITY_CODE_OF_ID",
+"P_CITY_CODE_OF_ID",
 "IN"
 ],
 [
-"I_P1110_BUS_ID",
+"P_BUS_ID",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_BRNCH",
+"P_BUS_ID_BRNCH",
 "IN"
 ],
 [
-"I_P1110_CTRY_CD",
+"P_CTRY_CD",
 "IN"
 ],
 [
-"I_P1110_IMPR_EXPR_TYPE",
+"P_IMPR_EXPR_TYPE",
 "IN"
 ],
 [
-"IO_P1110_ARBC_IMPR_NAME",
+"P_ARBC_IMPR_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_NAME_STD",
+"P_IMPR_NAME_STD",
 "IN OUT"
 ],
 [
-"I_P1110_LST_TRAN_DT",
+"P_LST_TRAN_DT",
 "IN"
 ],
 [
-"I_P1110_IMPD_STMT_NBR",
+"P_IMPD_STMT_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_DATA_SRCE",
+"P_IMPR_DATA_SRCE",
 "IN"
 ],
 [
-"IO_P1110_ENG_IMPR_NAME",
+"P_ENG_IMPR_NAME",
 "IN OUT"
 ],
 [
-"IO_P1110_IMPR_CNTCT_NAME",
+"P_IMPR_CNTCT_NAME",
 "IN OUT"
 ],
 [
-"I_P1110_IMPR_ADDRESS",
+"P_IMPR_ADDRESS",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_ISSUE_DT",
+"P_BUS_ID_ISSUE_DT",
 "IN"
 ],
 [
-"I_P1110_IMPR_NBR_PARENT",
+"P_IMPR_NBR_PARENT",
 "IN"
 ],
 [
-"I_P1110_ADD_CTRY_CD",
+"P_ADD_CTRY_CD",
 "IN"
 ],
 [
-"I_P1110_CITY_CODE",
+"P_CITY_CODE",
 "IN"
 ],
 [
-"I_P1110_IMPR_POB_NBR",
+"P_IMPR_POB_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_ZIP_CD",
+"P_IMPR_ZIP_CD",
 "IN"
 ],
 [
-"I_P1110_IMPR_TEL_NBR",
+"P_IMPR_TEL_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_FAX_NBR",
+"P_IMPR_FAX_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_TELEX_NBR",
+"P_IMPR_TELEX_NBR",
 "IN"
 ],
 [
-"I_P1110_EMAIL",
+"P_EMAIL",
 "IN"
 ],
 [
-"IO_P1110_MOBILE_NO",
+"P_MOBILE_NO",
 "IN OUT"
 ],
 [
-"I_P1110_BANK_IBAN",
+"P_BANK_IBAN",
 "IN"
 ],
 [
-"I_P1110_ID_NBR",
+"P_ID_NBR",
 "IN"
 ],
 [
-"I_P1110_CAR_AGENT_FLAG",
+"P_CAR_AGENT_FLAG",
 "IN"
 ],
 [
-"I_P1110_EXPRESS_POST",
+"P_EXPRESS_POST",
 "IN"
 ],
 [
-"I_P1110_CTRY_CD_OF_ID",
+"P_CTRY_CD_OF_ID",
 "IN"
 ],
 [
-"IO_P1110_CUSTOMS_ENTERED",
+"P_CUSTOMS_ENTERED",
 "IN OUT"
 ],
 [
-"I_P1110_CREATION_FLAG",
+"P_CREATION_FLAG",
 "IN"
 ],
 [
-"IO_P1110_IMPR_TYPE_NAME",
+"P_IMPR_TYPE_NAME",
 "IN OUT"
 ],
 [
-"I_P1110_B_MOBILE_NO",
+"P_B_MOBILE_NO",
 "IN"
 ],
 [
-"I_P_CURR_PORT_CD",
+"P_CURR_PORT_CD",
 "IN"
 ],
 [
-"I_SSO_APP_USER",
+"SSO_APP_USER",
 "IN"
 ],
 [
-"I_P_GLOBAL_V_WS_ID",
+"P_GLOBAL_V_WS_ID",
 "IN"
 ],
 [
-"I_P1110_P_LETTER_NBR",
+"P_LETTER_NBR",
 "IN"
 ]
 ]
@@ -2786,35 +2786,35 @@
 "apex": "Process \"POST-UPDATE\", after \"Process form IMPORTERS\"",
 "params": [
 [
-"I_P1110_HQ_IMPR_NBR",
+"P_HQ_IMPR_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_BUS_ID",
+"P_BUS_ID",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_BRNCH",
+"P_BUS_ID_BRNCH",
 "IN"
 ],
 [
-"I_P1110_B_EMAIL",
+"P_B_EMAIL",
 "IN"
 ],
 [
-"I_P1110_B_MOBILE_NO",
+"P_B_MOBILE_NO",
 "IN"
 ],
 [
-"I_P1110_B_ID_NBR",
+"P_B_ID_NBR",
 "IN"
 ]
 ]
@@ -2827,27 +2827,27 @@
 "apex": "Process \"KEY-DELREC\" (request DELETE) instead of the native delete",
 "params": [
 [
-"I_P1110_PORT_CD",
+"P_PORT_CD",
 "IN"
 ],
 [
-"I_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ],
 [
-"I_P1110_ROW_ID",
+"P_ROW_ID",
 "IN"
 ],
 [
-"I_P_CURR_PORT_CD",
+"P_CURR_PORT_CD",
 "IN"
 ],
 [
-"I_SSO_APP_USER",
+"SSO_APP_USER",
 "IN"
 ],
 [
-"I_P_GLOBAL_V_WS_ID",
+"P_GLOBAL_V_WS_ID",
 "IN"
 ]
 ]
@@ -2860,31 +2860,31 @@
 "apex": "Computation P1110_ADJ_FUNS (comma list of the enabled functions, filter of the f345 Page Functions list)",
 "params": [
 [
-"I_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"I_P_CURR_PORT_CD",
+"P_CURR_PORT_CD",
 "IN"
 ],
 [
-"I_SSO_APP_USER",
+"SSO_APP_USER",
 "IN"
 ],
 [
-"I_P_CLASS_CD",
+"P_CLASS_CD",
 "IN"
 ],
 [
-"I_V_USR_TYPE",
+"V_USR_TYPE",
 "IN"
 ]
 ]
@@ -2897,67 +2897,67 @@
 "apex": "DA of each entry of the Page Functions list (FOS); then WHEN_NEW_RECORD_INSTANCE",
 "params": [
 [
-"I_P1110_PORT_CD",
+"P_PORT_CD",
 "IN"
 ],
 [
-"I_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ],
 [
-"I_P1110_BUS_ID",
+"P_BUS_ID",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_BRNCH",
+"P_BUS_ID_BRNCH",
 "IN"
 ],
 [
-"I_P1110_ARBC_IMPR_NAME",
+"P_ARBC_IMPR_NAME",
 "IN"
 ],
 [
-"I_P_CURR_PORT_CD",
+"P_CURR_PORT_CD",
 "IN"
 ],
 [
-"I_SSO_APP_USER",
+"SSO_APP_USER",
 "IN"
 ],
 [
-"I_P_GLOBAL_V_WS_ID",
+"P_GLOBAL_V_WS_ID",
 "IN"
 ],
 [
-"I_P_CLASS_CD",
+"P_CLASS_CD",
 "IN"
 ],
 [
-"I_V_USR_TYPE",
+"V_USR_TYPE",
 "IN"
 ],
 [
-"IO_P1110_P_LETTER_NBR",
+"P_LETTER_NBR",
 "IN OUT"
 ],
 [
-"IO_P1110_P_CODE",
+"P_CODE",
 "IN OUT"
 ],
 [
-"I_P_BRKR_PORT_CD",
+"P_BRKR_PORT_CD",
 "IN"
 ],
 [
-"I_P_LIC_TYPE",
+"P_LIC_TYPE",
 "IN"
 ],
 [
-"I_P_BRKR_NBR",
+"P_BRKR_NBR",
 "IN"
 ],
 [
-"I_FUNCTION_CODE",
+"FUNCTION_CODE",
 "IN"
 ]
 ]
@@ -2970,27 +2970,27 @@
 "apex": "FOS returns P1110_CONFIRM_TEXT; native Confirm",
 "params": [
 [
-"I_P1110_PORT_CD",
+"P_PORT_CD",
 "IN"
 ],
 [
-"I_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ],
 [
-"I_P1110_IMPR_TYPE_CD",
+"P_IMPR_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_TYPE_CD",
+"P_BUS_ID_TYPE_CD",
 "IN"
 ],
 [
-"I_P1110_BUS_ID",
+"P_BUS_ID",
 "IN"
 ],
 [
-"I_P1110_BUS_ID_BRNCH",
+"P_BUS_ID_BRNCH",
 "IN"
 ]
 ]
@@ -3003,15 +3003,15 @@
 "apex": "DA \"IMPR_MCI_SERVICE\" after the Confirm (FOS)",
 "params": [
 [
-"I_P1110_PORT_CD",
+"P_PORT_CD",
 "IN"
 ],
 [
-"I_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ],
 [
-"I_P1110_ANSWER",
+"P_ANSWER",
 "IN"
 ]
 ]
@@ -3024,7 +3024,7 @@
 "apex": "DA \"Dialog Closed\" of page 111002 (FOS)",
 "params": [
 [
-"I_P1110_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ]
 ]
@@ -3037,11 +3037,11 @@
 "apex": "Computation P111002_CENTRAL_MOBILE (Before Header)",
 "params": [
 [
-"I_P111002_IMPR_NBR",
+"P_IMPR_NBR",
 "IN"
 ],
 [
-"I_P_CURR_PORT_CD",
+"P_CURR_PORT_CD",
 "IN"
 ]
 ]

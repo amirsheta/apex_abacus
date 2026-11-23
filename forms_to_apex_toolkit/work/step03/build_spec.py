@@ -34,10 +34,17 @@ ENTRIES = json.load(open('work/step02/entries.json', encoding='utf-8'))
 
 APP_ITEMS = {'P_CURR_PORT_CD', 'SSO_APP_USER', 'P_GLOBAL_V_WS_ID', 'P_CLASS_CD', 'V_USR_TYPE', 'P_BRKR_PORT_CD',
              'P_LIC_TYPE', 'P_BRKR_NBR', 'P_PRSNL_IMPR', 'P_LETTER_NBR', 'P0_PAGE_PK'}
-def bind(param, literal=None):
+# Binds come from the ORIGINAL parameter names (work/step02/parameter_binds.json, written by build_package.py):
+# the new name alone does not say which item it carries (P_CODE carries P1110_P_CODE, APP_P_PRSNL_IMPR the
+# application item P_PRSNL_IMPR). The rule below is the one used before the renaming, on the original name.
+BINDS = json.load(open('work/step02/parameter_binds.json', encoding='utf-8'))
+def bind(param, literal=None, member=None):
+    """parameter name (package 008) -> APEX bind"""
     if literal and param in literal: return literal[param]
-    name = re.sub(r'^(IO|I|O)_', '', param)
-    if param == 'I_FUNCTION_CODE': return ':%sFUNCTION_CODE' % P
+    old = BINDS.get(member, {}).get(param)
+    if old is None: raise KeyError('no original name for %s.%s' % (member, param))
+    name = re.sub(r'^(IO|I|O)_', '', old)
+    if old == 'I_FUNCTION_CODE': return ':%sFUNCTION_CODE' % P
     m = re.match(r'(\w+)_LOCKED$', name)
     if m and not name.startswith('P1110_'): return ':%s%s_LOCKED' % (P, m.group(1))
     if name == 'VALUE': return None
@@ -50,7 +57,7 @@ def call(member, literal=None, skip_defaults=True, overrides=None):
         if p in overrides:
             if overrides[p] is not None: args.append('%s => %s' % (p, overrides[p]))
             continue
-        b = bind(p, literal)
+        b = bind(p, literal, member)
         if b is None: continue
         args.append('%s => %s' % (p, b))
     return '%s.%s(%s)' % (PKG, member, ', '.join(args))
@@ -59,7 +66,7 @@ def binds_of(member, modes, overrides=None):
     out = []
     for p, mode, _ in MEMBERS[member]['params']:
         if mode in modes and p not in overrides:
-            b = bind(p)
+            b = bind(p, None, member)
             if b and b.startswith(':P'): out.append(b[1:])
     return out
 
@@ -164,7 +171,7 @@ for e in ENTRIES:
 for it, f in DYN_REQUIRED.items():
     lbl = ROWS.get(P + it, {}).get('label', it)
     validations.append(dict(name='%s REQUIRED' % it, item=P + it, member='REQUIRED_VALIDATION',
-                            code="RETURN %s.REQUIRED_VALIDATION(I_VALUE => :%s%s, I_LABEL => '%s');" % (PKG, P, it, lbl),
+                            code="RETURN %s.REQUIRED_VALIDATION(ITEM_VALUE => :%s%s, ITEM_LABEL => '%s');" % (PKG, P, it, lbl),
                             condition=call(f), source='SET_ITEM_PROPERTY(%s, REQUIRED) - read_only_rules.md' % it))
 
 # ------------------------------------------------------------------ dynamic actions
@@ -230,7 +237,7 @@ for g, its in FLAG_GROUPS.items():
        'read_only_rules.md (Make_Field_Entrable / SET_ITEM_PROPERTY ENABLED)',
        condition='Item %s%s_LOCKED = Y' % (P, g), fire_init='Yes')
 # functions (f345 Page Functions list -> custom event = SYS_OS_FILE_NAME)
-WNRI_OVR = {'I_%sANSWER' % P: ':%sANSWER' % P}
+WNRI_OVR = {'P_ANSWER': ':%sANSWER' % P}
 for code, kind in [('IMPR1110F1', 'support'), ('IMPR1110F2', 'support'), ('IMPR1110F3', 'support'),
                    ('IMPR1110F5', 'support'), ('IMPR1110F4', 'mode'), ('IMPR_CAR_AGENT', 'mode'),
                    ('CREATE_BRKR_IMPR_AUTH', 'direct'), ('IMPR1115_GZT', 'direct'), ('IMPR_MCI_SERVICE', 'mci'),
@@ -243,14 +250,14 @@ for code, kind in [('IMPR1110F1', 'support'), ('IMPR1110F2', 'support'), ('IMPR1
                 js(["apex.navigation.redirect($v('P1110_SUPPORT_URL'));"],
                    'open the SUPPORT_ENTRY dialog (form converted separately, decision §15 #12; its page and URL item are TODO)')]
     elif kind == 'direct':
-        acts = [fos('EXEC_FUNS', overrides={'I_FUNCTION_CODE': "'%s'" % code})]
+        acts = [fos('EXEC_FUNS', overrides={'FUNCTION_CODE': "'%s'" % code})]
     elif kind == 'mci':
         a = fos('UPDATE_IMPORTER_CONFIRM_TEXT'); a['code'] = ':%sCONFIRM_TEXT := %s;' % (P, call('UPDATE_IMPORTER_CONFIRM_TEXT')); a['ret'] = [P + 'CONFIRM_TEXT']
         acts = [a, js(["apex.message.confirm($v('P1110_CONFIRM_TEXT'), function (ok) {",
                        "    if (ok) { $s('P1110_ANSWER', '1'); apex.event.trigger(document, 'impr1110-update-importer'); } });"],
                       'question text computed on the server (UPDATE_IMPORTER_MSG)')]
     elif kind == 'mobile':
-        acts = [fos('EXEC_FUNS', overrides={'I_FUNCTION_CODE': "'%s'" % code}, note='checks IMPR_NBR > 3000000'),
+        acts = [fos('EXEC_FUNS', overrides={'FUNCTION_CODE': "'%s'" % code}, note='checks IMPR_NBR > 3000000'),
                 js(["apex.navigation.redirect($v('P1110_MOBILE_URL'));"], 'open dialog page 111002 (URL from apex_page.get_url, modal)')]
     else:
         acts = [dict(action='-', code='no DA: the f345 list links to page IMPR1110 itself when a page named IMPR1115 exists', submit=[], ret=[], note='TODO: IMPR1115 not converted')]
@@ -271,7 +278,7 @@ da('EXEC_FUNS', 'Change', 'Item P1110_FUNCTION_CODE',
 da('WHEN-NEW-RECORD-INSTANCE', 'Custom: impr1110-new-record-instance', 'JavaScript Expression: document',
    [fos('WHEN_NEW_RECORD_INSTANCE', overrides=WNRI_OVR), flags_action()], 'IMPORTERS.PRE-RECORD + WHEN-NEW-RECORD-INSTANCE after a function')
 da('UPDATE_IMPORTER', 'Custom: impr1110-update-importer', 'JavaScript Expression: document',
-   [fos('UPDATE_IMPORTER', overrides={'I_%sANSWER' % P: ':%sANSWER' % P})], 'PU UPDATE_IMPORTER (function IMPR_MCI_SERVICE)')
+   [fos('UPDATE_IMPORTER', overrides={'P_ANSWER': ':%sANSWER' % P})], 'PU UPDATE_IMPORTER (function IMPR_MCI_SERVICE)')
 da('LOV_UPDATE_IMPR_MOBILE DIALOG CLOSED', 'Dialog Closed', 'JavaScript Expression: document',
    [fos('LOV_UPDATE_MOBLIE')], 'PU LOV_UPDATE_MOBLIE after CALL_FORM(LOV_UPDATE_IMPR_MOBILE)', condition='dialog page 111002')
 da('PRE-INSERT CONFIRM', 'Before Page Submit', '-',
@@ -293,7 +300,7 @@ items.append(dict(name=P + 'SUPPORT_URL', column='-', type='Hidden (Value Protec
 # ------------------------------------------------------------------ processes / computations
 def proc(seq, point, name, code, cond, source):
     return dict(seq=seq, point=point, name=name, code=code, condition=cond, source=source)
-WNRI_RENDER = {'I_%sP_CODE' % P: 'NULL', 'I_%sANSWER' % P: None}
+WNRI_RENDER = {'P_CODE': 'NULL', 'P_ANSWER': None}
 processes = [
     proc(10, 'Before Header', 'New', 'f345 session setup, copied from AGR1100 (`:SSO_APP_USER := GENERAL_UTILITY.ZATCA_SSO(:APP_USER);` + port / user lookups)', '-', 'f345 standard §6'),
     proc(20, 'Before Header', 'P0_PAGE_PK CHECK', call('P0_PAGE_PK_CHECK') + ';', '-', 'f345 (block WHERE clause PORT_CD = :PARAMETER.P_CURR_PORT_CD)'),
@@ -306,7 +313,7 @@ processes = [
     proc(82, 'Before Header', 'POST-QUERY', call('POST_QUERY') + ';', ':%sROW_ID is not null' % P, 'IMPORTERS.POST-QUERY (+ POST-CHANGE on fetch)'),
     proc(84, 'Before Header', 'WHEN-CREATE-RECORD', call('WHEN_CREATE_RECORD') + ';', ':%sROW_ID is null' % P, 'IMPORTERS.WHEN-CREATE-RECORD'),
     proc(86, 'Before Header', 'WHEN-NEW-RECORD-INSTANCE', call('WHEN_NEW_RECORD_INSTANCE', overrides=WNRI_RENDER) + ';', '-',
-         'IMPORTERS.PRE-RECORD + WHEN-NEW-RECORD-INSTANCE. I_P1110_P_CODE => NULL: Forms consumes :PARAMETER.CODE in the first WNRI after the function'),
+         'IMPORTERS.PRE-RECORD + WHEN-NEW-RECORD-INSTANCE. P_CODE => NULL: Forms consumes :PARAMETER.CODE in the first WNRI after the function'),
     proc(88, 'Before Header', 'READ ONLY FLAGS', FLAGS_CALL + ';', '-', 'net read-only state (read_only_rules.md)'),
     proc(100, 'Before Header', 'HEADER TITLE', call('HEADER_TITLE') + ';', '-', 'f345 (OLB block TITLE)'),
     proc(10, 'After Submit', 'EXECUTE-QUERY', ':P0_PAGE_PK := %s;' % call('IMPORTER_ROW_ID'), ":REQUEST = 'EXECUTE_QUERY'", 'IMPORTERS.IMPR_NBR.WHEN-VALIDATE-ITEM -> WHEN-NEW-ITEM-INSTANCE EXECUTE_QUERY'),
@@ -462,8 +469,9 @@ reg = ['-- =====================================================================
        '-- Form    : IMPR1110.fmb',
        '-- Author  : Claude Code',
        '-- Date    : 2026-11-19',
-       '-- Version : 3.0 (step 03 revision 2: declarative design - native Form DML, I_ / IO_ calls into package',
-       '--           IMPR1110 version 006, no AJAX / JavaScript file; previous version: rollback/IMPR1110/step03_rev1/)',
+       '-- Version : 3.1 (step 03 revision 2: declarative design - native Form DML, named-parameter calls into package',
+       '--           IMPR1110 version 008 (parameter names without I_ / IO_ / O_, page items as P_<ITEM>), no AJAX /',
+       '--           JavaScript file; previous version: rollback/IMPR1110/step03_rev1/)',
        '-- Generated by work/step03/build_spec.py - %d object rows (%s).' % (len(trace), ', '.join('%s %d' % kv for kv in sorted(stat.items()))),
        '-- app_id 202530 = the application installed from f345 (apex-instance-ids). Re-runnable: deletes the',
        "-- form's rows first. NOT executed (CLAUDE.md 6.10).",
@@ -477,7 +485,7 @@ reg = ['-- =====================================================================
        'VALUES',
        "    ('IMPR1110', 'IMPR', 'IMPR', 202530, 1110, 1110, 'IMPR1110',",
        "     'IMPR1110', 'COMPLEX', 'DESIGN', NULL, NULL,",
-       "     %s);" % lit('إضافة وتعديل بيانات مستورد - step 03 rev 2 page design (pages 1110, 111001, 111002); package IMPR1110 006 not compiled'),
+       "     %s);" % lit('إضافة وتعديل بيانات مستورد - step 03 rev 2 page design (pages 1110, 111001, 111002); package IMPR1110 008 not compiled'),
        '', 'DECLARE',
        '    PROCEDURE m (p_type    VARCHAR2, p_name   VARCHAR2, p_comp  VARCHAR2, p_comp_name VARCHAR2,',
        '                 p_page    NUMBER,   p_member VARCHAR2, p_status VARCHAR2, p_notes   VARCHAR2)',

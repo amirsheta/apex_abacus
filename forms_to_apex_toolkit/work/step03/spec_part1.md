@@ -23,11 +23,11 @@
    **ROWID** (Forms key mode ROWID). "Initialize form" fetches the row and "Process form" inserts / updates
    it; the package runs the Forms triggers around them (`PRE-INSERT` … `POST-UPDATE`). Revision 1 used
    a Static Content region with package DML; that is no longer needed because every trigger now takes its
-   items as `I_` / `IO_` binds.
+   items as named binds (IN / IN OUT parameters).
 2. **Record key = ROWID in `P0_PAGE_PK`.** The search page and the after-insert process put the ROWID into
    `P0_PAGE_PK`; process `P0_PAGE_PK` copies it to `P1110_ROW_ID`. A ROWID key keeps working while the
    origin of IMPR_NBR on insert is still open (extraction report §7 #1; the column is nullable, "SEL INS NUL").
-3. **Every process, validation and DA is one call into `IMPR1110` with named binds** (`I_P1110_X => :P1110_X`).
+3. **Every process, validation and DA is one call into `IMPR1110` with named binds** (`P_X => :P1110_X`; packages 007 / 008: no `I_` / `IO_` / `O_` prefix, a page item `P<page>_X` is passed as `P_X`, application items keep their name).
    The parameter lists in this spec are generated from the package spec, so they match it exactly.
 4. **Read-only rules (the answer to "why is an item read-only").** Three kinds, all from
    `work/step02/read_only_rules.md`:
@@ -129,7 +129,7 @@ SELECT ROWIDTOCHAR(i.ROWID) AS row_id,
 | Seq | Region | Type | Items / buttons | Notes |
 |---|---|---|---|---|
 | 10 | `BLK` | Static Content, Blank with Attributes `zatca-forms cg-form` | `P111002_MOBILE_NO` (Text Field, subtype Phone, label رقم الجوال, Optional - Above), `P111002_IMPR_NBR` (Hidden, Value Protected, set by the URL with checksum), `P111002_CENTRAL_MOBILE` (Hidden) | `BLK.WHEN-NEW-BLOCK-INSTANCE`: MOBILE_NO := :PARAMETER.P_CENTRAL_MOBILE → computations §9 |
-| 20 | `CTRL_BLK` | Buttons Container | `PB_OK` (Submit, request `PB_OK`), `PB_CANCEL` (Defined by DA) | process `PB_OK WHEN-BUTTON-PRESSED` → `IMPR1110.MOBILE_OK(I_P111002_MOBILE_NO => :P111002_MOBILE_NO);` then process *Close Dialog*; DA `PB_CANCEL WHEN-BUTTON-PRESSED`: FOS `IMPR1110.MOBILE_CANCEL;` then native *Cancel Dialog* |
+| 20 | `CTRL_BLK` | Buttons Container | `PB_OK` (Submit, request `PB_OK`), `PB_CANCEL` (Defined by DA) | process `PB_OK WHEN-BUTTON-PRESSED` → `IMPR1110.MOBILE_OK(P_MOBILE_NO => :P111002_MOBILE_NO);` then process *Close Dialog*; DA `PB_CANCEL WHEN-BUTTON-PRESSED`: FOS `IMPR1110.MOBILE_CANCEL;` then native *Cancel Dialog* |
 
 ---
 

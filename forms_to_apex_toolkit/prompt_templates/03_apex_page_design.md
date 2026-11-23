@@ -53,8 +53,8 @@ Names
 - Processes `<TRIGGER>` (master block) / `<BLOCK> <TRIGGER>` (detail); validations
   `<ITEM> VALIDATION` / `<ITEM> REQUIRED`; DAs `<ITEM> WHEN-VALIDATE-ITEM` /
   `<BLOCK> <COLUMN> WHEN-VALIDATE-ITEM`. Space separated, no dots.
-- Every process / validation / DA is a ONE-LINE call to {{FORM_NAME_UC}} with I_/IO_ named
-  parameters (key copies such as `:P0_PAGE_PK := :P<page>_<PK>;` are the only exception).
+- Every process / validation / DA is a ONE-LINE call to {{FORM_NAME_UC}} with named
+  parameters (P_<ITEM> => :P<page>_<ITEM>, no I_ / IO_ / O_ prefix) (key copies such as `:P0_PAGE_PK := :P<page>_<PK>;` are the only exception).
 - Every component's Comments = "Source: {{FORM_NAME}}.<BLOCK>.<ITEM>.<TRIGGER>".
 - LOVs keep Forms LOV names (do not re-create LOVs that f345 has); alerts → Text Messages with
   the alert name; :GLOBAL.X → application item G_X; menu parameters → the f345 items
@@ -119,7 +119,7 @@ DA "Set Value" (SQL) on change — document the DA. Binds use f345 item names (:
 ## 7. Validations
 Map every WHEN-VALIDATE-ITEM and WHEN-VALIDATE-RECORD:
 | Validation name (`<ITEM> VALIDATION` / `<ITEM> REQUIRED`) | Level (item / page / IG row) | Type (PL/SQL Function Body returning Error Text / ...) |
-  Code (`return {{FORM_NAME_UC}}.<ITEM>_VALIDATION(I_P<page>_<ITEM> => :P<page>_<ITEM>);`) | Associated item |
+  Code (`return {{FORM_NAME_UC}}.<ITEM>_VALIDATION(P_<ITEM> => :P<page>_<ITEM>);`) | Associated item |
   Error display location | Condition (request CREATE / SAVE) | Source trigger |
 Plus the matching DA `<ITEM> WHEN-VALIDATE-ITEM` (change → FOS Execute PL/SQL Code:
 `{{FORM_NAME_UC}}.CHECK_ERROR({{FORM_NAME_UC}}.<ITEM>_VALIDATION(...));`) so the user sees the error at once.

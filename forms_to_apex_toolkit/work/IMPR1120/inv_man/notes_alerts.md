@@ -1,0 +1,4 @@
+> **Alert notes**
+> - 9 alerts come from `CIC_OLB.olb` (style, title and buttons resolved from `CIC_OLB_OLB.xml`); `STR.DispAlert` / `STR.DispArbMsg` set the text at runtime. `CG$ASK_COMMIT` is the form's own Designer alert; it has no title in the XML and is not referenced.
+> - Messages used: `STR.DispArbMsg(9, 100, 'ERROR')` (start date before today), `(9, 110, 'ERROR')` (end date before start date), `(9, 150, 'INFORMATION')` (importer not found in this port). Their text is in the message table read by `STR_DB`: **MISSING SOURCE** (§15 #11). Delete confirmation: WARNING alert in `TMPLT.KEY_DELETE_RECORD` (`CIC_LIB.pld`; the Arabic literal is stored in Windows-1256 and shows as mojibake in the .pld text).
+> - APEX mapping (f345 standard §9): ERROR → `CHECK_ERROR` / `FORMS_APX.FORM_TRIGGER_FAILURE`; INFORMATION → page message; WARNING (delete) → the native confirm of the page 0 / IG delete.

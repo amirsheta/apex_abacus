@@ -9,7 +9,7 @@
 
 Prerequisite: utPLSQL v3 installed in the test database (`ut.version()` returns 3.x).
 Standard: the package under test is `<FORM>` (f345, `CLAUDE.md` §4b); its APEX entry points take
-`I_` / `IO_` parameters named after the page binds.
+parameters named after the page binds (no `I_` / `IO_` / `O_`; page item `P<page>_X` -> `P_X`).
 
 ---
 
@@ -49,8 +49,8 @@ Generate a utPLSQL v3 test package TEST_{{FORM_NAME_UC}} (spec + body in one fil
 - FORMS_APX.FORM_TRIGGER_FAILURE / alert raise -20000 → use --%throws(-20000).
 - Tests must compile on DB 12.1.0.2 (no qualified expressions; identifiers ≤ 30 bytes).
   Check that the installed utPLSQL v3 release supports 12.1 before installing.
-- Tests must not depend on an APEX session: call the members with literal I_ values (e.g.
-  I_SSO_APP_USER => 'TEST_USER', I_P_CURR_PORT_CD => 1); use apex_session.create_session only
+- Tests must not depend on an APEX session: call the members with literal values (e.g.
+  SSO_APP_USER => 'TEST_USER', P_CURR_PORT_CD => 1); use apex_session.create_session only
   in a clearly marked optional test. Globals (G_<NAME>) work outside APEX through
   FORMS_APX.get_global / set_global.
 - Name each test with --%test(<description referencing the original Forms trigger>).

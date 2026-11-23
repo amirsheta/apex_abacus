@@ -99,12 +99,13 @@ detail block, `<ITEM> <TRIGGER>` for item triggers.
 | Function (TMPLT `EXECUTE_FUNCTION`) | DA on the custom event `<SYS_OS_FILE_NAME>` fired by the *Page Functions* list | `EXEC_FUNS` |
 | Program unit `CALC_TOTAL` | — | `CALC_TOTAL` (same name) |
 
-Always present: `CHECK_ERROR(I_ERR)` (raises the error text), `REQUIRED_VALIDATION`, `P0_PAGE_PK_CHECK`,
+Always present: `CHECK_ERROR(ERROR_TEXT)` (raises the error text), `REQUIRED_VALIDATION`, `P0_PAGE_PK_CHECK`,
 `GET_MODULE_ID`, `HEADER_TITLE`.
 
-Parameters of members called by APEX: `I_` / `IO_` / `O_` + the bind name
-(`IO_P11100_AGRMNT_NO => :P11100_AGRMNT_NO`, `I_MEMBER_ISN => :MEMBER_ISN`,
-`I_SSO_APP_USER => :SSO_APP_USER`). Every process body is one line calling the package.
+Parameters of members called by APEX: the bind name without an `I_` / `IO_` / `O_` prefix; a page item
+`P<page>_X` is passed as `P_X` (`P_AGRMNT_NO => :P11100_AGRMNT_NO`, `MEMBER_ISN => :MEMBER_ISN`,
+`SSO_APP_USER => :SSO_APP_USER`); inside SQL the parameter is qualified with the member name
+(`docs/f345_reference_standard.md` §5, `scripts/parameter_names.py`). Every process body is one line calling the package.
 
 Name length: package members ≤ **30 bytes** (DB 12.1.0.2). If a name is longer, shorten the item part
 and keep the full Forms name in the member's header comment and in `MIG_OBJECT_MAP`.

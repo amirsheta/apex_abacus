@@ -21,7 +21,7 @@ FORM NAME:       {{FORM_NAME}}
 INVENTORY:       analysis/{{FORM_NAME}}/{{FORM_NAME}}_inventory.md
 XML FILE:        output/xml/{{FORM_NAME}}_fmb.xml
 PACKAGE NAME:    {{FORM_NAME_UC}}      (upper-case form name, no pkg_ prefix - f345: AGR1100)
-MAIN PAGE NO.:   {{PAGE_ID}}           (from MIG_FORM_REGISTRY; used in parameter names I_P<page>_<ITEM>)
+MAIN PAGE NO.:   {{PAGE_ID}}           (from MIG_FORM_REGISTRY; page items P<page>_<ITEM>, passed as parameters P_<ITEM>)
 TEMPLATES:       plsql_templates/pkg_template_spec.sql, plsql_templates/pkg_template_body.sql
                  (rename the template package to {{FORM_NAME_UC}})
 NAMING RULES:    docs/f345_reference_standard.md §5 and §6
@@ -82,17 +82,22 @@ Member names (f345 standard §5; every name ≤ 30 bytes, DB 12.1.0.2; upper cas
 | WHEN-VALIDATE-RECORD | FUNCTION `<BLOCK>_WHEN_VALIDATE_RECORD` returning error text | `AGRMNT_MEMBERS_VALIDATE_RECORD` |
 | WHEN-NEW-FORM-INSTANCE / PRE-FORM | `INIT_FORM` / `PRE_FORM` | |
 | program unit | same name as in Forms | `CALC_TOTAL` |
-| f345 helpers (always generate) | `CHECK_ERROR(I_ERR)` raises when not null; `REQUIRED_VALIDATION(I_VALUE, I_LABEL)`; `P0_PAGE_PK_CHECK(IO_P0_PAGE_PK)`; `GET_MODULE_ID`; `HEADER_TITLE` | |
+| f345 helpers (always generate) | `CHECK_ERROR(ERROR_TEXT)` raises when not null; `REQUIRED_VALIDATION(ITEM_VALUE, ITEM_LABEL)`; `P0_PAGE_PK_CHECK(P_PAGE_PK)`; `GET_MODULE_ID`; `HEADER_TITLE` | |
 `<BLOCK>` = the FULL block name. Never abbreviate names (CLAUDE.md §4): no _wvi, _pre_ins, _post_chg,
 CHK, _VAL, block short forms. Only a name longer than 30 bytes is shortened (drop WHEN_, then the
 block part), and its full name goes in the member's comment. Forms program-unit and item names stay
 exactly as in Forms.
 
 Parameter names:
-- Members called by APEX: `I_` (IN), `IO_` (IN OUT), `O_` (OUT) + the bind name without `:`.
-  Page items → `IO_P{{PAGE_ID}}_<ITEM>`, IG columns → `I_<COLUMN>`, application items →
-  `I_<APP_ITEM>` (e.g. `I_SSO_APP_USER => :SSO_APP_USER`, `I_P_CURR_PORT_CD => :P_CURR_PORT_CD`).
-  The page passes every value as a named bind, so each APEX process stays a one-line call.
+- Members called by APEX: the parameter is named after its bind, without an `I_` / `IO_` / `O_` prefix
+  (the mode is IN / IN OUT / OUT). Page items P{{PAGE_ID}}_<ITEM> -> `P_<ITEM>`; the page item of a Forms
+  parameter P{{PAGE_ID}}_P_<PARAM> -> `P_<PARAM>` (no doubled `P_P_`; when the member also takes the application
+  item `P_<PARAM>`, that one is `APP_P_<PARAM>`); P0_PAGE_PK -> `P_PAGE_PK`; IG columns -> `<COLUMN>`;
+  application items keep their name (e.g. `SSO_APP_USER => :SSO_APP_USER`, `P_CURR_PORT_CD => :P_CURR_PORT_CD`).
+  Names that would be keywords get a full word (`ERROR_TEXT`, `ITEM_VALUE`, `ITEM_LABEL`). Inside every SQL
+  statement qualify the parameter with its member name (`PRE_DELETE.P_<ITEM>`): an unqualified name that
+  matches a column resolves to the column. The page passes every value as a named bind, so each APEX process
+  stays a one-line call. Rule and checks: `scripts/parameter_names.py`.
 - Internal-only members: `p_<name>`; local variables `v_`, constants `c_`, globals `g_`.
 
 Keep the original Forms trigger code as a comment above each member ("Original Forms code:").
@@ -100,7 +105,7 @@ Use FORMS_APX for MESSAGE / FORM_TRIGGER_FAILURE / stop alerts / :GLOBAL / USER 
 converted code reads like the original.
 
 Rules:
-1. Remove every Forms built-in. Item references (:BLOCK.ITEM) become I_/IO_ parameters (APEX
+1. Remove every Forms built-in. Item references (:BLOCK.ITEM) become IN / IN OUT parameters (APEX
    entry points) or p_ parameters / record fields (internal) — NEVER v('P..') or bind variables
    to page items inside the package. The package must be testable without an APEX session.
    Exception: FORMS_APX.app_user / get_global may be used anywhere (they also work

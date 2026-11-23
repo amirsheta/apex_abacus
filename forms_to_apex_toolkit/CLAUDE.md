@@ -106,7 +106,7 @@ database — keep this in mind before suggesting an APEX upgrade.
 | Standalone procedure | `<VERB>_<OBJECT>` in full words, no prefix | `RECALCULATE_TOTALS` |
 | Standalone function | `GET_<OBJECT>` / `<VERB>_<OBJECT>` in full words, no prefix | `GET_DISCOUNT` |
 | Local variables | `v_<name>` | `v_customer_id` |
-| Parameters of members called from APEX | `I_` / `IO_` / `O_` + bind name without `:` (f345) | `IO_P11100_AGRMNT_NO`, `I_MEMBER_ISN` |
+| Parameters of members called from APEX | bind name without `:` and **without** an `I_` / `IO_` / `O_` prefix (the mode is IN / IN OUT / OUT). A page item `P<page>_X` is passed as `P_X` (`P_AGRMNT_NO => :P11100_AGRMNT_NO`); the page item of a Forms parameter `P<page>_P_X` as `P_X` too (no doubled `P_P_`; if the same member also receives the application item `P_X`, that parameter is `APP_P_X`); `P0_PAGE_PK` as `P_PAGE_PK`; application items and IG columns keep their name. Inside SQL a parameter is qualified with its member name (`PRE_DELETE.P_AGRMNT_NO`), because an unqualified name that matches a column resolves to the column. Rule and checks: `scripts/parameter_names.py`. (Project rule of 2026-11-23; f345's AGR1100 still used `I_` / `IO_`.) | `P_AGRMNT_NO`, `MEMBER_ISN`, `SSO_APP_USER`, `P_PAGE_PK` |
 | Parameters of internal-only members | `p_<name>` | `p_order_id` |
 | Constants | `c_<name>` | `c_status_open` |
 | Global (package) variables | `g_<name>` | `g_user_name` |
@@ -208,7 +208,7 @@ Full rules: `docs/f345_reference_standard.md` §9 and §10. Summary:
    state. An *Execute JavaScript Code* action may have at most 3 lines; anything more needs a reason in
    the page spec and the user's approval.
 3. **One readable package per form.** No adapter packages and no all-items record copied through
-   session state: each member takes only the items it uses (`I_` / `IO_`). Fixed section order
+   session state: each member takes only the items it uses (IN / IN OUT parameters named by §4). Fixed section order
    (version → helpers → form level → each block: query, record, items in navigation order, DML,
    buttons → program units → private helpers → UI comments). One Forms trigger = one member,
    about 80 lines at most.

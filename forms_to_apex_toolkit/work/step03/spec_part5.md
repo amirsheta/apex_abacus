@@ -8,7 +8,7 @@
 - **FOS - Execute PL/SQL Code** (f345 plug-in `COM.FOS.EXECUTE_PLSQL_CODE`) with the attributes of standard §9:
   `p_attribute_01` = the call below; `p_attribute_02` = *Items to Submit* (only items the user can change,
   plus the answer / function-code items; everything else is read from session state); `p_attribute_03` =
-  *Items to Return* (the `IO_` / `O_` items); `p_attribute_05 => '#SQLERRM#'`; `p_wait_for_result => 'Y'`.
+  *Items to Return* (the IN OUT / OUT parameters); `p_attribute_05 => '#SQLERRM#'`; `p_wait_for_result => 'Y'`.
   `p_attribute_15 => 'suppressChangeEvent:escape-message'`, except on the `READ_ONLY_FLAGS` action, which
   must fire the change events of the flag items.
 - An error raised by the package (`FORMS_APX.FORM_TRIGGER_FAILURE`, ORA-20001) stops the DA, and FOS

@@ -414,7 +414,7 @@ def gen():
 -- Target      : Oracle APEX 21.2 (export version 2021.10.15), Oracle Database 12.1.0.2,
 --               reference application f345 (apex/Reference/f345.sql)
 -- Standard    : CLAUDE.md 4b / 4c, docs/f345_reference_standard.md 3-9: native Form region (ROWID),
---               FOS + native dynamic actions, one-line calls into package IMPR1110 (version 006).
+--               FOS + native dynamic actions, one-line calls into package IMPR1110 (version 008).
 --               No JavaScript file, no AJAX callback process.
 -- Contents    : component export INTO the application installed from f345: pages 1110 (main),
 --               111001 (search), 111002 (mobile) + the shared components they need.
@@ -755,7 +755,7 @@ end;
     A(process(PG_MOB, '111002:proc:KEEP', 10, 'AFTER_HEADER', 'G_LAST_PAGE KEEP', ':G_LAST_PAGE := 1110;', None,
               'f345 SCREEN ENTRY RESET keeps the open record only for <page> and <page>01; without this the record of 1110 is cleared / standard 4'))
     A(process(PG_MOB, '111002:proc:OK', 10, 'AFTER_SUBMIT', 'PB_OK WHEN-BUTTON-PRESSED',
-              'IMPR1110.MOBILE_OK(I_P111002_MOBILE_NO => :P111002_MOBILE_NO);', ('PB_OK', 'REQUEST_EQUALS_CONDITION'),
+              'IMPR1110.MOBILE_OK(P_MOBILE_NO => :P111002_MOBILE_NO);', ('PB_OK', 'REQUEST_EQUALS_CONDITION'),
               'LOV_UPDATE_IMPR_MOBILE.CTRL_BLK.PB_OK.WHEN-BUTTON-PRESSED / spec 8'))
     A(process(PG_MOB, '111002:proc:CLOSE', 20, 'AFTER_SUBMIT', 'Close Dialog', None, ('PB_OK', 'REQUEST_EQUALS_CONDITION'),
               'LOV_UPDATE_IMPR_MOBILE COPY_SELECTED_VALUES + EXIT_FORM / spec 8', ptype='NATIVE_CLOSE_WINDOW'))

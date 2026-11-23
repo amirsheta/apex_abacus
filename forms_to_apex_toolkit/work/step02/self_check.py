@@ -108,16 +108,17 @@ for pat, why in [(r"\bv\s*\(\s*''", "v('...') session state"), (r'apex_util\.(ge
 # 5 identifiers longer than 30 bytes
 for w in set(re.findall(r'[A-Za-z][A-Za-z0-9_$#]*', c)):
     if len(w.encode()) > 30: add('identifier > 30 bytes', w)
-# 6 parameter naming: members declared in the spec use I_ / IO_ / O_ only
+# 6 parameter naming (scripts/parameter_names.py, version 008): no I_ / IO_ / O_ prefix, page items as P_<ITEM>
 for m in sm:
     for p in signature(m)[1]:
-        if not re.match(r'(I|IO|O)_', p): add('spec parameter not I_/IO_/O_', (m['name'], p))
+        if re.match(r'(I|IO|O)_', p): add('spec parameter with I_/IO_/O_ prefix', (m['name'], p))
+        if re.match(r'P\d+_', p): add('spec parameter named after a page item (use P_<ITEM>)', (m['name'], p))
 # 7 member size (one trigger = one member, about 80 lines; generated entries counted without the
 #   parameter copy lines)
 sizes = []
 for m in impl:
     n = m['end'] - m['start'] + 1
-    copy = len(re.findall(r'(?m)^\s+(r|c)\.\w+ := I[O]?_\w+;$|^\s+IO_\w+ := (r|c)\.\w+;$', m['text']))
+    copy = len(re.findall(r'(?m)^\s+(r|c)\.\w+ := [A-Z][A-Z0-9_$#]*;$|^\s+[A-Z][A-Z0-9_$#]* := (r|c)\.\w+;$', m['text']))
     if n - copy > 80: sizes.append((m['name'], n, n - copy))
 # 8 balance per member
 for m in impl:
@@ -134,7 +135,7 @@ for k, pat, t in [('spec owner', r'CREATE OR REPLACE PACKAGE LIB_APX_USR\.IMPR11
                   ('synonym', r'CREATE OR REPLACE PUBLIC SYNONYM IMPR1110 FOR LIB_APX_USR\.IMPR1110;', spec),
                   ('grant LIB_USR', r'GRANT EXECUTE ON LIB_APX_USR\.IMPR1110 TO LIB_USR;', spec),
                   ('grant SECURITY_DEFAULT', r'TO SECURITY_DEFAULT;', spec), ('grant SECURITY_PROD', r'TO SECURITY_PROD;', spec),
-                  ('grant CUSTOMS', r'TO CUSTOMS;', spec), ('version 006', r"'VERSION NO\. IS:' \|\| '006'", spec),
+                  ('grant CUSTOMS', r'TO CUSTOMS;', spec), ('version 008', r"'VERSION NO\. IS:' \|\| '008'", spec),
                   ('PKG_VERSION body', r'FUNCTION PKG_VERSION\s+RETURN VARCHAR2\s+IS\s+BEGIN\s+RETURN V_INFO;', body)]:
     if not re.search(pat, t): add('package frame missing', k)
 

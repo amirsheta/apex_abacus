@@ -10,17 +10,21 @@ What it does
  2. drops the session-state adapter, the UI recorder, the old entry points and the Forms default INSERT / UPDATE
     (APEX native Form DML replaces them)
  3. adds the read-only / required / visible rule functions (read_only_rules.md)
- 4. generates every APEX entry point with I_ / IO_ parameters = exactly the items its logic reads / writes
+ 4. generates every APEX entry point with IN / IN OUT parameters = exactly the items its logic reads / writes
+ 6. names the parameters by the project rule (scripts/parameter_names.py, version 008): no I_ / IO_ / O_ prefix,
+    page item P<page>_X -> P_X, application items unchanged; parameters qualified with the member name inside SQL
  5. writes the spec in the f345 §10 section order
 Re-run after changing the rules or the entry table. Usage: python3 -I work/step02/build_package.py
 """
-import re, json, collections, sys
+import re, json, collections, sys, os
+sys.path.insert(0, 'scripts')
+import parameter_names
 
 SRC_SPEC = 'rollback/IMPR1110/step02_rev1/impr1110_spec.sql'
 SRC_BODY = 'rollback/IMPR1110/step02_rev1/impr1110_body.sql'
 OUT_SPEC = 'plsql/IMPR1110/impr1110_spec.sql'
 OUT_BODY = 'plsql/IMPR1110/impr1110_body.sql'
-DATE = '19-11-2026'
+DATE = '23-11-2026'
 PAGE = 'P1110_'
 
 spec_src = open(SRC_SPEC, encoding='utf-8').read()
@@ -246,7 +250,7 @@ for it, (pc, wvi) in ITEMS.items():
         'Validation "%s VALIDATION" (request CREATE / SAVE): returns the error text' % it,
         val, text_function=True)
     add('ITEM ' + it, it + '_WHEN_VALIDATE_ITEM', 'P', 'IMPORTERS.%s.%s' % (it, trig),
-        'DA "%s WHEN-VALIDATE-ITEM" (Change): FOS, Items to Submit = the I_ items, Items to Return = the IO_ items' % it, da)
+        'DA "%s WHEN-VALIDATE-ITEM" (Change): FOS, Items to Submit = the IN items, Items to Return = the IN OUT / OUT items' % it, da)
 
 for name, it, src, call in [
         ('IMPR_TYPE_CD_NEW_ITEM_INSTANCE', 'IMPR_TYPE_CD', 'WHEN-NEW-ITEM-INSTANCE', 'IMPR_TYPE_CD_NEW_ITEM_INSTANCE(r);'),
@@ -258,7 +262,7 @@ for name, it, src, call in [
         ('ARBC_IMPR_NAME_KEY_NEXT_ITEM', 'ARBC_IMPR_NAME', 'KEY-NEXT-ITEM', 'ARBC_IMPR_NAME_KEY_NEXT_ITEM(r);'),
         ('BANK_IBAN_NEW_ITEM_INSTANCE', 'BANK_IBAN', 'WHEN-NEW-ITEM-INSTANCE', 'BANK_IBAN_NEW_ITEM_INSTANCE(r);')]:
     add('ITEM ' + it, name, 'P', 'IMPORTERS.%s.%s' % (it, src),
-        'DA "%s %s": FOS, Items to Return = the IO_ items' % (it, src.split(' ')[0]), [call])
+        'DA "%s %s": FOS, Items to Return = the IN OUT / OUT items' % (it, src.split(' ')[0]), [call])
 add('ITEM BUS_ID', 'BUS_ID_SUSPENDED_CONFIRM_TEXT', 'F',
     'IMPORTERS.BUS_ID.WHEN-VALIDATE-ITEM, question "يوجد مستورد ... موقوف له نفس الرقم الإستدلالي"',
     'FOS before "BUS_ID WHEN-VALIDATE-ITEM": returns P1110_CONFIRM_TEXT; Confirm sets P1110_SUSPEND_ANSWER',
@@ -394,7 +398,7 @@ def spec_decl(m):
 
 # ------------------------------------------------------------------ assemble the spec
 vb = re.search(r'(?s)(   V_PKG_VERSION .*?\|\| V_MODIFIED_BY;\n)', spec_src).group(1)
-vb = re.sub(r"'VERSION NO\. IS:' \|\| '\d+'", "'VERSION NO. IS:' || '006'", vb, count=1)
+vb = re.sub(r"'VERSION NO\. IS:' \|\| '\d+'", "'VERSION NO. IS:' || '008'", vb, count=1)
 vb = re.sub(r"V_LAST_MODIFY_DT    VARCHAR2 \(10\) := '[^']*'", "V_LAST_MODIFY_DT    VARCHAR2 (10) := '%s'" % DATE, vb)
 grants = spec_src[spec_src.index('\n-- -----------------------------------------------------------------------------\n-- Synonym and grants'):]
 def banner(t):
@@ -415,13 +419,18 @@ order += [s for s in sections if s not in order]
 spec = ['-- =============================================================================',
         '-- Package     : IMPR1110  (form IMPR1110.fmb "إضافة وتعديل بيانات مستورد")',
         '-- Owner       : LIB_APX_USR (public synonym IMPR1110; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)',
-        '-- Version     : 006 (%s, step 02 revision 2 + step 03 changes: DATE items as text, ROWID page key)' % DATE,
+        '-- Version     : 008 (%s: 006 = step 02 revision 2 + step 03 changes (DATE items as text, ROWID page key);' % DATE,
+        '--               007 = parameter names by scripts/parameter_names.py; 008 = no doubled P_P_ (P_CODE => :P1110_P_CODE),',
+        '--               APP_P_PRSNL_IMPR / APP_P_LETTER_NBR in PARAMETERS_ENTRY. No logic change. 007: rollback/IMPR1110/step04_v007/)',
         '-- Author      : Claude Code',
         '-- Status      : NOT COMPILED.',
         '-- Layout      : VERSION -> f345 HELPERS -> FORM LEVEL -> BLOCK IMPORTERS (query, record, items in Forms',
         '--               navigation order with their read-only / required rules, DML) -> FUNCTIONS -> page 111002.',
-        '--               Every member here is called by APEX with named binds: I_ = item read, IO_ = item read and',
-        '--               written back. The converted Forms logic is private in the body (record based, Forms order).',
+        '--               Every member here is called by APEX with named binds. Parameter names have no I_ / IO_ / O_',
+        '--               prefix (the mode is IN / IN OUT / OUT); a page item P<page>_X is passed as P_X',
+        '--               (P_BUS_ID => :P1110_BUS_ID, P_PAGE_PK => :P0_PAGE_PK, P_MOBILE_NO => :P111002_MOBILE_NO),',
+        '--               application items keep their name (P_CURR_PORT_CD => :P_CURR_PORT_CD). Inside SQL a parameter',
+        '--               is qualified with its member name. The converted Forms logic is private in the body.',
         '-- Generated   : by work/step02/build_package.py (re-run after a change; do not edit by hand)',
         '-- =============================================================================',
         'SET DEFINE OFF', '', 'CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS', vb,
@@ -432,12 +441,12 @@ for s in order:
     spec.append(banner(s))
     spec.append('\n\n'.join(sections[s]))
 spec += ['', 'END IMPR1110;', '/', 'SHOW ERRORS', grants.rstrip('\n'), '']
-open(OUT_SPEC, 'w', encoding='utf-8', newline='\n').write('\n'.join(spec))
+spec_text = '\n'.join(spec)
 
 # ------------------------------------------------------------------ assemble the body
 logic_fwd = ['    ' + m['header'] + ';' for m, _ in logic_text]
 body = ['-- =============================================================================',
-        '-- Package body: IMPR1110 (version 006, %s) - see the spec header. NOT COMPILED.' % DATE,
+        '-- Package body: IMPR1110 (version 008, %s) - see the spec header. NOT COMPILED.' % DATE,
         '-- Layout      : 1 private types and declarations, 2 forward declarations, 3 private helpers and the',
         '--               converted Forms logic (record based, Forms order, UI calls replaced by "NULL; -- APEX ..."),',
         '--               4 read-only / required rules, 5 f345 helpers, 6 APEX entry points (spec order), 7 version.',
@@ -461,7 +470,7 @@ for m, t in logic_text:
     body += [t, '']
 body += [banner('4 READ-ONLY / REQUIRED / VISIBLE RULES (work/step02/read_only_rules.md)').rstrip('\n')] + [t + '\n' for m, t in rule_members]
 body += [banner('5 f345 HELPERS AND SMALL ENTRY POINTS').rstrip('\n')] + [t + '\n' for m, t in helper_members]
-body += [banner('6 APEX ENTRY POINTS (generated: I_ / IO_ = items the logic reads / writes)').rstrip('\n')]
+body += [banner('6 APEX ENTRY POINTS (generated: IN / IN OUT parameters = items the logic reads / writes)').rstrip('\n')]
 for s in order:
     for e, (_, impl) in gen:
         if e['section'] == s:
@@ -469,13 +478,29 @@ for s in order:
 body += [banner('7 PACKAGE VERSION   (SELECT IMPR1110.PKG_VERSION FROM dual;)').rstrip('\n'),
          '    FUNCTION PKG_VERSION', '       RETURN VARCHAR2', '    IS', '    BEGIN', '       RETURN V_INFO;', '    END PKG_VERSION;', '',
          'END IMPR1110;', '/', 'SHOW ERRORS', '']
-open(OUT_BODY, 'w', encoding='utf-8', newline='\n').write('\n'.join(body))
+body_text = '\n'.join(body)
+# ---- parameter names (scripts/parameter_names.py): rename, then qualify inside SQL
+RENAMES = parameter_names.mapping_from_spec(spec_text)
+# {member: {new name: original name}}: build_spec.py derives each bind from the original name
+json.dump(parameter_names.binds_by_member(spec_text), open('work/step02/parameter_binds.json', 'w'), indent=1, sort_keys=True)
+spec_text = parameter_names.rename_package(spec_text, RENAMES)
+body_text = parameter_names.rename_package(body_text, RENAMES)
+body_text, n_qualified = parameter_names.qualify_sql(spec_text, body_text)
+left = parameter_names.unqualified_in_sql(spec_text, body_text)
+if left:
+    sys.exit('parameters not qualified inside SQL: %s' % left[:5])
+private_sql = parameter_names.private_functions_in_sql(spec_text, body_text)
+if private_sql:
+    sys.exit('private functions called inside SQL (ORA-00904): %s' % private_sql[:5])
+json.dump(RENAMES, open('work/step02/parameter_renames.json', 'w'), indent=1, sort_keys=True)
+open(OUT_SPEC, 'w', encoding='utf-8', newline='\n').write(spec_text)
+open(OUT_BODY, 'w', encoding='utf-8', newline='\n').write(body_text)
 
 stats = dict(logic_members=len(logic_text), ui_calls_replaced=removed_total, entries=len(gen),
-             rules=len(rule_members), helpers=len(helper_members),
+             rules=len(rule_members), helpers=len(helper_members), renamed_parameters=len(RENAMES), qualified_in_sql=n_qualified,
              spec_lines=sum(x.count('\n') + 1 for x in spec), body_lines=sum(x.count('\n') + 1 for x in body))
 json.dump(stats, open('work/step02/build_stats.json', 'w'), indent=1)
 print(stats)
 json.dump([dict(section=e['section'], name=e['name'], kind=e['kind'], source=e['source'], apex=e['apex'],
-                params=[(p, m) for p, m, _ in e['params']]) for e, _ in gen],
+                params=[(RENAMES.get(p, p), m) for p, m, _ in e['params']]) for e, _ in gen],
           open('work/step02/entries.json', 'w', encoding='utf-8'), indent=0, ensure_ascii=False)

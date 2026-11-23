@@ -13,15 +13,15 @@
 -- PATTERN 1: WHEN-VALIDATE-ITEM that checks a value
 -- Forms: ORDERS.CUSTOMER_ID WHEN-VALIDATE-ITEM
 --          IF NOT exists(...) THEN MESSAGE('Unknown customer'); RAISE FORM_TRIGGER_FAILURE; END IF;
--- Package : FUNCTION CUSTOMER_ID_VALIDATION (I_P120_CUSTOMER_ID IN VARCHAR2) RETURN VARCHAR2
+-- Package : FUNCTION CUSTOMER_ID_VALIDATION (P_CUSTOMER_ID IN VARCHAR2) RETURN VARCHAR2
 --           (returns the error text, NULL when valid)
 -- APEX 1  : Validation "CUSTOMER_ID VALIDATION" - PL/SQL Function Body returning Error Text,
 --           associated item P120_CUSTOMER_ID, condition request CREATE / SAVE:
---             return ORDERS.CUSTOMER_ID_VALIDATION(I_P120_CUSTOMER_ID => :P120_CUSTOMER_ID);
+--             return ORDERS.CUSTOMER_ID_VALIDATION(P_CUSTOMER_ID => :P120_CUSTOMER_ID);
 -- APEX 2  : DA "CUSTOMER_ID WHEN-VALIDATE-ITEM" - Event Change, Item P120_CUSTOMER_ID
 --           True action: FOS - Execute PL/SQL Code
 --             Code (p_attribute_01):
---               ORDERS.CHECK_ERROR(ORDERS.CUSTOMER_ID_VALIDATION(I_P120_CUSTOMER_ID => :P120_CUSTOMER_ID));
+--               ORDERS.CHECK_ERROR(ORDERS.CUSTOMER_ID_VALIDATION(P_CUSTOMER_ID => :P120_CUSTOMER_ID));
 --             Items to Submit (p_attribute_02): P120_CUSTOMER_ID
 --             Error message  (p_attribute_05): #SQLERRM#
 --           The user sees the error at once; the validation still enforces it at submit.
@@ -30,13 +30,13 @@
 -- -----------------------------------------------------------------------------
 -- PATTERN 2: WHEN-VALIDATE-ITEM that fills other items
 -- Forms: ORDERS.CUSTOMER_ID WHEN-VALIDATE-ITEM fills CUSTOMER_NAME / CREDIT_LIMIT
--- Package : PROCEDURE CUSTOMER_ID_WHEN_VALIDATE_ITEM (I_P120_CUSTOMER_ID   IN VARCHAR2,
---                                                    IO_P120_CUSTOMER_NAME IN OUT VARCHAR2,
---                                                    IO_P120_CREDIT_LIMIT  IN OUT NUMBER)
+-- Package : PROCEDURE CUSTOMER_ID_WHEN_VALIDATE_ITEM (P_CUSTOMER_ID   IN VARCHAR2,
+--                                                    P_CUSTOMER_NAME IN OUT VARCHAR2,
+--                                                    P_CREDIT_LIMIT  IN OUT NUMBER)
 -- APEX    : DA "CUSTOMER_ID WHEN-VALIDATE-ITEM" - Event Change, Item P120_CUSTOMER_ID
 --           True action: FOS - Execute PL/SQL Code
---             ORDERS.CUSTOMER_ID_WHEN_VALIDATE_ITEM(I_P120_CUSTOMER_ID => :P120_CUSTOMER_ID,
---                 IO_P120_CUSTOMER_NAME => :P120_CUSTOMER_NAME, IO_P120_CREDIT_LIMIT => :P120_CREDIT_LIMIT);
+--             ORDERS.CUSTOMER_ID_WHEN_VALIDATE_ITEM(P_CUSTOMER_ID => :P120_CUSTOMER_ID,
+--                 P_CUSTOMER_NAME => :P120_CUSTOMER_NAME, P_CREDIT_LIMIT => :P120_CREDIT_LIMIT);
 --             Items to Submit: P120_CUSTOMER_ID
 --             Items to Return: P120_CUSTOMER_NAME,P120_CREDIT_LIMIT
 -- No JavaScript: FOS writes the returned values into the page items.
@@ -46,10 +46,10 @@
 -- PATTERN 3: Make_Field_Entrable / SET_ITEM_PROPERTY(ENABLED) decided by stored data
 -- Forms: WHEN-NEW-RECORD-INSTANCE
 --          IF :ORDERS.STATUS = 'CLOSED' THEN Make_Field_Entrable('ORDERS.AMOUNT', FALSE); END IF;
--- Package : FUNCTION AMOUNT_IS_READ_ONLY (I_P120_STATUS IN VARCHAR2) RETURN BOOLEAN
---             IS BEGIN RETURN I_P120_STATUS = 'CLOSED'; END;
+-- Package : FUNCTION AMOUNT_IS_READ_ONLY (P_STATUS IN VARCHAR2) RETURN BOOLEAN
+--             IS BEGIN RETURN P_STATUS = 'CLOSED'; END;
 -- APEX    : item P120_AMOUNT - Read Only: PL/SQL Expression
---             ORDERS.AMOUNT_IS_READ_ONLY(I_P120_STATUS => :P120_STATUS)
+--             ORDERS.AMOUNT_IS_READ_ONLY(P_STATUS => :P120_STATUS)
 --           APEX evaluates it when the page is rendered. Several items with the same rule share
 --           one function, named by the rule in full words (e.g. CLOSED_ORDER_IS_READ_ONLY).
 -- -----------------------------------------------------------------------------
@@ -65,7 +65,7 @@
 --   False action: Disable -> P120_COUNTRY   (Fire on Initialization = Yes)
 -- APEX (rule needs the database): FOS returns a flag item
 --   True action 1: FOS - Execute PL/SQL Code
---     :P120_COUNTRY_READ_ONLY := CASE WHEN ORDERS.COUNTRY_IS_READ_ONLY(I_P120_ORDER_TYPE => :P120_ORDER_TYPE)
+--     :P120_COUNTRY_READ_ONLY := CASE WHEN ORDERS.COUNTRY_IS_READ_ONLY(P_ORDER_TYPE => :P120_ORDER_TYPE)
 --                                     THEN 'Y' ELSE 'N' END;
 --     Items to Submit: P120_ORDER_TYPE | Items to Return: P120_COUNTRY_READ_ONLY
 --   True action 2: Enable P120_COUNTRY, client-side condition Item = Value P120_COUNTRY_READ_ONLY N
@@ -84,11 +84,11 @@
 -- -----------------------------------------------------------------------------
 -- PATTERN 6: Conditional required field
 -- Forms: SET_ITEM_PROPERTY('ORDERS.PO_NUMBER', REQUIRED, PROPERTY_TRUE) when PAY_TYPE = 'INVOICE'
--- Package : FUNCTION PO_NUMBER_IS_REQUIRED (I_P120_PAY_TYPE IN VARCHAR2) RETURN BOOLEAN
+-- Package : FUNCTION PO_NUMBER_IS_REQUIRED (P_PAY_TYPE IN VARCHAR2) RETURN BOOLEAN
 -- APEX    : Validation "PO_NUMBER REQUIRED" - PL/SQL Function Body returning Error Text
 --             return ORDERS.REQUIRED_VALIDATION(:P120_PO_NUMBER, '<label>');
 --           Server-side Condition: PL/SQL Expression
---             ORDERS.PO_NUMBER_IS_REQUIRED(I_P120_PAY_TYPE => :P120_PAY_TYPE)
+--             ORDERS.PO_NUMBER_IS_REQUIRED(P_PAY_TYPE => :P120_PAY_TYPE)
 --           No client-side script for the "required" marker.
 -- -----------------------------------------------------------------------------
 

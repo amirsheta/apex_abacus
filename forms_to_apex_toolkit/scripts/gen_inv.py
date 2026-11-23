@@ -135,7 +135,7 @@ stats = dict(blocks=len(blocks), items=sum(len(b.findall(NS + 'Item')) for b in 
              lov=len(fm.findall(NS + 'LOV')), rg=len(fm.findall(NS + 'RecordGroup')), canvases=len(fm.findall(NS + 'Canvas')),
              windows=len(fm.findall(NS + 'Window')), alerts=len(fm.findall(NS + 'Alert')),
              params=len(fm.findall(NS + 'ModuleParameter')), libs=len(fm.findall(NS + 'AttachedLibrary')),
-             relations=len(fm.findall(NS + 'Relation')), va=len(fm.findall(NS + 'VisualAttribute')))
+             relations=len(list(fm.iter(NS + 'Relation'))), va=len(fm.findall(NS + 'VisualAttribute')))
 json.dump({k: (dict(v) if isinstance(v, collections.Counter) else v) for k, v in stats.items()},
           open(os.path.join(man_dir, 'stats.json'), 'w'), indent=1)
 
@@ -187,7 +187,7 @@ w(man('s02.md'))
 # ---- 3 blocks
 w('## 3. Blocks\n')
 w('> Properties absent from the XML are Forms defaults **or inherited from the object library** '
-  '(`ParentModule`/`ParentName`). The .olb is not available, so such values are shown as `default/OLB`.\n')
+  '(`ParentModule`/`ParentName`); such values are shown as `default/OLB` (OLB properties: `forms/COMMON/olb/CIC_OLB_OLB.xml`).\n')
 w('| Block | Base table / Query data source | DML target | Type | Records displayed | Records buffered | WHERE clause | ORDER BY | '
   'Insert | Update | Delete | Query | Canvas(es) | Subclassed from |\n|' + '---|' * 14)
 item_canvas = {}
@@ -236,14 +236,21 @@ w(man('notes_items.md'))
 
 # ---- 5 relations
 w('## 5. Relations (master–detail)\n')
-rels = fm.findall(NS + 'Relation')
+# frmf2xml nests each <Relation> inside its master <Block>, so search the whole tree and take the master from the parent.
+rels = [(b, r) for b in fm.iter(NS + 'Block') for r in b.findall(NS + 'Relation')]
 if rels:
-    w('| Relation | Master block | Detail block | Join condition | Delete behaviour | Coordination |\n|---|---|---|---|---|---|')
-    for r in rels:
-        w(f"| {r.get('Name')} | {cell(r.get('MasterBlock'))} | {cell(r.get('DetailBlock'))} | {cell(U(r.get('JoinCondition')))} | "
-          f"{cell(r.get('DeleteRecordBehavior'))} | {cell(r.get('Deferred'))}/{cell(r.get('AutoQuery'))} |")
+    w('| Relation | Master block | Detail block | Join condition | Delete behaviour | Deferred / Auto-query | Prevent masterless operations | Subclassed from |'
+      '\n|---|---|---|---|---|---|---|---|')
+    for b, r in rels:
+        w(f"| {r.get('Name')} | {cell(r.get('MasterBlock') or b.get('Name'))} | {cell(r.get('DetailBlock'))} | {cell(U(r.get('JoinCondition')))} | "
+          f"{cell(r.get('DeleteRecordBehavior') or 'not in XML → Forms default (Non-Isolated)')} | "
+          f"{cell(r.get('Deferred') or 'default (false)')}/{cell(r.get('AutoQuery') or 'default (false)')} | "
+          f"{cell(r.get('PreventMasterlessOperations') or 'default (false)')} | {cell(r.get('ParentName'))} |")
+    w('')
 else:
-    w('**None.** The XML contains 0 `<Relation>` elements. `IMPORTERS` is the only base-table block; the other four are control blocks.\n')
+    base = [b.get('Name') for b in blocks if b.get('QueryDataSourceName')]
+    w(f"**None.** The XML contains 0 `<Relation>` elements. Base-table blocks: {', '.join('`%s`' % n for n in base) or 'none'}; "
+      f"the other {len(blocks) - len(base)} are control blocks.\n")
 
 # ---- 6 triggers
 w('## 6. Triggers\n')

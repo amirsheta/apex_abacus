@@ -141,14 +141,14 @@ four tokens, and '{{' must not appear at all.
      ('AGRMNT_MEMBERS PRE-UPDATE'); native ones 'Initialize form', 'Process form',
      'Process form - DELETE', '<BLOCK> - Save Interactive Grid Data'
    - validations: '<ITEM> VALIDATION' (FUNC_BODY_RETURNING_ERR_TEXT,
-     'return {{FORM_NAME_UC}}.<ITEM>_VALIDATION(I_P<page>_<ITEM> => :P<page>_<ITEM>);') and
+     'return {{FORM_NAME_UC}}.<ITEM>_VALIDATION(P_<ITEM> => :P<page>_<ITEM>);') and
      '<ITEM> REQUIRED' ('return {{FORM_NAME_UC}}.REQUIRED_VALIDATION(:P<page>_<ITEM>, unistr(''<label>''));')
    - DAs: '<ITEM> WHEN-VALIDATE-ITEM' (change) / '<BLOCK> <COLUMN> WHEN-VALIDATE-ITEM' (IG column),
      action PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE with
-     '{{FORM_NAME_UC}}.CHECK_ERROR({{FORM_NAME_UC}}.<ITEM>_VALIDATION(I_... => :...));'
+     '{{FORM_NAME_UC}}.CHECK_ERROR({{FORM_NAME_UC}}.<ITEM>_VALIDATION(P_<ITEM> => :P<page>_<ITEM>));'
    - every PL/SQL body is ONE line calling package {{FORM_NAME_UC}} with named parameters
-     I_<bind>, IO_<bind>, O_<bind> (e.g. IO_P11100_AGRMNT_NO => :P11100_AGRMNT_NO,
-     I_SSO_APP_USER => :SSO_APP_USER). The only exceptions are key copies (':P0_PAGE_PK := ...').
+     named after the binds without I_ / IO_ / O_ (page item P<page>_X -> P_X; e.g. P_AGRMNT_NO => :P11100_AGRMNT_NO,
+     SSO_APP_USER => :SSO_APP_USER, MEMBER_ISN => :MEMBER_ISN; docs/f345_reference_standard.md §5). The only exceptions are key copies (':P0_PAGE_PK := ...').
    - p_process_comment / comments = 'Source: <FORM>.<BLOCK>.<ITEM>.<TRIGGER>'.
    - p_error_display_location => 'INLINE_IN_NOTIFICATION' on every process.
 6. Process order and conditions: follow docs/f345_reference_standard.md §6 exactly

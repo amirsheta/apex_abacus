@@ -126,15 +126,19 @@ this in import_notes.md whenever you generate such a page.
 | Detail-block trigger | `<BLOCK>_<TRIGGER>` | `AGR1100.AGRMNT_MEMBERS_PRE_INSERT`, `AGR1100.AGRMNT_ITEMS_PRE_DELETE` |
 | Validation function (returns error text, NULL = OK) | `<ITEM>_VALIDATION` / `<BLOCK>_<ITEM>_VALIDATION` | `AGR1100.CTRY_CD_VALIDATION`, `AGR1100.MEMBERS_CTRY_CD_VALIDATION` (shortened: 33 bytes in full) |
 | WHEN-VALIDATE-ITEM side effects (procedure) | `<ITEM>_WHEN_VALIDATE_ITEM` | `AGR1100.AGRMNT_NO_WHEN_VALIDATE_ITEM` |
-| Error raiser | `<FORM>.CHECK_ERROR(p_err)` raises when `p_err` is not null | `AGR1100.CHECK_ERROR(AGR1100.CTRY_CD_VALIDATION(...))` |
-| Required check | `<FORM>.REQUIRED_VALIDATION(p_value, p_label)` | |
+| Error raiser | `<FORM>.CHECK_ERROR(ERROR_TEXT)` raises when `ERROR_TEXT` is not null | `AGR1100.CHECK_ERROR(AGR1100.CTRY_CD_VALIDATION(...))` |
+| Required check | `<FORM>.REQUIRED_VALIDATION(ITEM_VALUE, ITEM_LABEL)` | |
 | Form init / helpers | `INIT_FORM`, `P0_PAGE_PK_CHECK`, `HEADER_TITLE`, `GET_MODULE_ID`, `INFO_SAVE`, `INFO_LOAD`, `ADJ_FUNS`, `EXEC_FUNS` | |
-| Parameters | `I_<bind name>` (IN), `IO_<bind name>` (IN OUT), `O_<bind name>` (OUT); bind name without `:` | `IO_P11100_AGRMNT_NO => :P11100_AGRMNT_NO`, `I_MEMBER_ISN => :MEMBER_ISN`, `I_SSO_APP_USER => :SSO_APP_USER` |
+| Parameters | bind name without `:` and **without** an `I_` / `IO_` / `O_` prefix (the mode is IN / IN OUT / OUT). A page item `P<page>_X` is passed as `P_X` (`P_AGRMNT_NO => :P11100_AGRMNT_NO`); the page item of a Forms parameter `P<page>_P_X` as `P_X` too (no doubled `P_P_`; if the same member also receives the application item `P_X`, that parameter is `APP_P_X`); `P0_PAGE_PK` as `P_PAGE_PK`; application items and IG columns keep their name. Inside SQL a parameter is qualified with its member name (`PRE_DELETE.P_AGRMNT_NO`), because an unqualified name that matches a column resolves to the column. Rule and checks: `scripts/parameter_names.py` | `P_AGRMNT_NO => :P11100_AGRMNT_NO`, `MEMBER_ISN => :MEMBER_ISN`, `SSO_APP_USER => :SSO_APP_USER`, `P_PAGE_PK => :P0_PAGE_PK` |
 
 `<BLOCK>` = the **full** block name. Names are never abbreviated (CLAUDE.md §4); only when a name
 would exceed 30 bytes is it shortened (drop `WHEN_`, then shorten the block part), with the full
 name in the member's comment. Example: `AGRMNT_MEMBERS_CTRY_CD_VALIDATION` (33 bytes) → `MEMBERS_CTRY_CD_VALIDATION`.
 Every name stays ≤ 30 bytes (DB 12.1.0.2).
+
+**Parameter names override f345.** The AGR1100 pages of f345 named parameters `I_` / `IO_` / `O_` + bind
+(`IO_P11100_AGRMNT_NO`). By the project decision of 2026-11-23 the prefix is not used and page items are passed as
+`P_<ITEM>` (table above). This rule wins over f345 (exception to the "f345 wins" rule at the top of this document).
 
 ### Component names (Forms trigger notation, space-separated)
 | Component | Pattern | Example |
@@ -156,7 +160,7 @@ All PL/SQL is a one-line call into `<FORM>`. `p_error_display_location=>'INLINE_
 | Seq | Name | Body / type |
 |---|---|---|
 | 10 | `New` | session setup: `:SSO_APP_USER := GENERAL_UTILITY.ZATCA_SSO(:APP_USER);` plus port/user lookups (copy from AGR1100) |
-| 20 | `P0_PAGE_PK CHECK` | `<FORM>.P0_PAGE_PK_CHECK(IO_P0_PAGE_PK => :P0_PAGE_PK);` |
+| 20 | `P0_PAGE_PK CHECK` | `<FORM>.P0_PAGE_PK_CHECK(P_PAGE_PK => :P0_PAGE_PK);` |
 | 40 | `PARAMETERS` | `:P<page>_MODULE_ID := <FORM>.GET_MODULE_ID(:P<page>_MODULE_ID);` |
 | 50 | `PARAMETERS ENTRY` | copy app items `P_<PARAM>` into `P<page>_P_<PARAM>`, when they are not null |
 | 60 | `WHEN-NEW-FORM-INSTANCE` | `<FORM>.INIT_FORM(...)`, when `P<page>_P_<KEY>` is not null |
@@ -206,7 +210,7 @@ equivalent on page 0 gets the Text with Icon template, the same options, and a `
 search grids use `p_is_editable=>false`. Always set `p_add_row_if_empty=>false`, `p_submit_checked_rows=>false`,
 `p_lazy_loading=>false`, `p_toolbar_buttons=>'SEARCH_COLUMN:SEARCH_FIELD:ACTIONS_MENU:RESET'`,
 and `p_enable_save_public_report=>false`. Server calls from IG column DAs use
-`PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE` with `<FORM>.CHECK_ERROR(<FORM>.<BLOCK>_<COL>_VALIDATION(I_<COL> => :<COL>))`.
+`PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE` with `<FORM>.CHECK_ERROR(<FORM>.<BLOCK>_<COL>_VALIDATION(<COL> => :<COL>))`.
 
 ## 9. Declarative first: as little JavaScript as possible
 
@@ -214,9 +218,9 @@ Every Forms behaviour is built from native APEX components. JavaScript is the la
 
 | Forms | APEX 21.2 (in this order of preference) |
 |---|---|
-| WHEN-VALIDATE-ITEM / POST-CHANGE | Validation `<ITEM> VALIDATION` (server, at submit) **plus** DA `<ITEM> WHEN-VALIDATE-ITEM` on Change: action 1 *FOS - Execute PL/SQL Code* `<FORM>.CHECK_ERROR(<FORM>.<ITEM>_VALIDATION(I_P<page>_<ITEM> => :P<page>_<ITEM>));` or, when the trigger derives values, `<FORM>.<ITEM>_WHEN_VALIDATE_ITEM(I_... => :..., IO_... => :...);` |
+| WHEN-VALIDATE-ITEM / POST-CHANGE | Validation `<ITEM> VALIDATION` (server, at submit) **plus** DA `<ITEM> WHEN-VALIDATE-ITEM` on Change: action 1 *FOS - Execute PL/SQL Code* `<FORM>.CHECK_ERROR(<FORM>.<ITEM>_VALIDATION(P_<ITEM> => :P<page>_<ITEM>));` or, when the trigger derives values, `<FORM>.<ITEM>_WHEN_VALIDATE_ITEM(P_<ITEM> => :P<page>_<ITEM>, P_<ITEM2> => :P<page>_<ITEM2>);` |
 | Values the trigger derives (names, codes) | FOS *Items to Return* (`p_attribute_03`) - no JavaScript |
-| `Make_Field_Entrable` / `SET_ITEM_PROPERTY(ENABLED / UPDATEABLE)` decided by **stored data** | Item **Read Only** condition, *PL/SQL Expression* `<FORM>.<ITEM>_IS_READ_ONLY(I_... => :...)` (BOOLEAN function) - evaluated by APEX at page render |
+| `Make_Field_Entrable` / `SET_ITEM_PROPERTY(ENABLED / UPDATEABLE)` decided by **stored data** | Item **Read Only** condition, *PL/SQL Expression* `<FORM>.<ITEM>_IS_READ_ONLY(P_<OTHER_ITEM> => :P<page>_<OTHER_ITEM>)` (BOOLEAN function) - evaluated by APEX at page render |
 | Same, decided **while typing** | Native *Enable* / *Disable* actions in the item's DA, with a client-side condition. If the rule needs the database, FOS returns a flag item `P<page>_<ITEM>_READ_ONLY` (`Y` / `N`) and the condition is *Item = Value* |
 | `SET_ITEM_PROPERTY(VISIBLE)` | Native *Show* / *Hide*, or a server-side condition on the item |
 | `SET_ITEM_PROPERTY(REQUIRED)` | Validation `<ITEM> REQUIRED` with a server-side condition (`<FORM>.<ITEM>_IS_REQUIRED(...)`). No client-side "required" script |
@@ -241,7 +245,7 @@ Not allowed:
 
 One package `<FORM>` per form, owned by `LIB_APX_USR` (CLAUDE.md §3.2). No adapter packages, and no
 "record of all items" copied to and from session state: each member takes **only the items it uses**,
-as `I_` / `IO_` parameters, so APEX passes them as binds and a reader sees every input and output in
+as IN / IN OUT / OUT parameters named by §5, so APEX passes them as binds and a reader sees every input and output in
 the signature.
 
 Fixed section order (banner comment per section, the same in spec and body):

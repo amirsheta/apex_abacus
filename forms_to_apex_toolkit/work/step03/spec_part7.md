@@ -29,7 +29,7 @@ Open items:
 | 8 | `P_BRKR_PORT_CD`, `P_LIC_TYPE` are not set by the f345 login (§13.2) | brokers |
 | 9 | Arabic texts of FRM-40202 / 40350 (NIB.ON_ERROR, MISSING SOURCE) | messages |
 | 10 | FOS success-message display of `FORMS_APX.MESSAGE` text from an AJAX call (§10.1) | notes |
-| 11 | List template of region `FUNCS` and the session-setup process `New`: copy them from AGR1100 (git history of f345) | step 04 |
+| 11 | List template of region `FUNCS` (f345 *Moy Functions Nav*, TODO-VERIFY against AGR1100). Process `New` is a disabled placeholder (condition Never, as in AGR1100): its AGR1100 code holds a host name | step 04 |
 | 12 | Decision §15 #6 (page 0 DELETE offered, no extra function restriction): to be confirmed | DELETE |
 
 Step 04 must replace `scripts/gen_apex_impr1110.py` (revision-1 design: AJAX, JavaScript file). The new

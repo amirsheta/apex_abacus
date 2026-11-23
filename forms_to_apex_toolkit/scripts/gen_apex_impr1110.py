@@ -551,13 +551,14 @@ end;
     for n, c in enumerate([c for c in D['computations'] if c['item'].startswith('P1110_')], 1):
         key = '1110:comp:' + c['item']
         nid(key, 5)
-        cond = [] if c['condition'] == '-' else [('p_compute_when', q(c['condition'])), ('p_compute_when2', q('PLSQL')),
-                                                 ('p_compute_when_type', q('EXPRESSION'))]
+        # the condition is part of the expression: create_page_computation has no PL/SQL-expression
+        # condition language parameter in 21.2 (p_compute_when2 -> PLS-00306 on import, 2026-11-19)
+        expr = c['expression'] if c['condition'] == '-' else 'CASE WHEN %s THEN %s END' % (c['condition'], c['expression'])
         A(call('create_page_computation', [
             ('p_id', ref(key)), ('p_computation_sequence', str(n * 10)), ('p_computation_item', q(c['item'])),
             ('p_computation_point', q('AFTER_HEADER' if c['point'].startswith('After') else 'BEFORE_HEADER')),
-            ('p_computation_type', q('EXPRESSION')), ('p_computation_language', q('PLSQL')), ('p_computation', lit(c['expression']))]
-            + cond + [('p_computation_comment', src(c['source'] + ' / spec 9'))]))
+            ('p_computation_type', q('EXPRESSION')), ('p_computation_language', q('PLSQL')), ('p_computation', lit(expr)),
+            ('p_computation_comment', src(c['source'] + ' / spec 9'))]))
     # validations (spec 7)
     for n, v in enumerate(D['validations'], 1):
         key = '1110:val:' + v['name']

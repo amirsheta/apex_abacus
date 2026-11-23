@@ -2195,7 +2195,7 @@
    "item": "P1110_PRE_INSERT_QUESTION",
    "point": "After Header",
    "expression": "APEX_LANG.MESSAGE('IMPR1110_PRE_INSERT_CONFIRM')",
-   "condition": ":P1110_BROKER_USER = Y",
+   "condition": ":P1110_BROKER_USER = 'Y'",
    "source": "IMPORTERS.PRE-INSERT CONFIRM text (Text Message, translatable)"
   },
   {

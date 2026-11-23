@@ -326,7 +326,7 @@ computations = [
     dict(item=P + 'BROKER_USER', point='Before Header', expression="CASE WHEN %s THEN 'Y' ELSE 'N' END" % call('EXPRESS_POST_IS_READ_ONLY'),
          condition='-', source='PRE-INSERT condition class 1 / type 3 (same rule as EXPRESS_POST)'),
     dict(item=P + 'PRE_INSERT_QUESTION', point='After Header', expression="APEX_LANG.MESSAGE('IMPR1110_PRE_INSERT_CONFIRM')",
-         condition=':P1110_BROKER_USER = ''Y''', source='IMPORTERS.PRE-INSERT CONFIRM text (Text Message, translatable)'),
+         condition=":P1110_BROKER_USER = 'Y'", source='IMPORTERS.PRE-INSERT CONFIRM text (Text Message, translatable)'),
     dict(item=P + 'MOBILE_URL', point='After Header', expression="APEX_PAGE.GET_URL(p_page => 111002, p_clear_cache => '111002', p_items => 'P111002_IMPR_NBR', p_values => :P1110_IMPR_NBR)",
          condition=':P1110_IMPR_NBR is not null', source='CALL_FORM(LOV_UPDATE_IMPR_MOBILE)'),
     dict(item='P111002_CENTRAL_MOBILE', point='Before Header (page 111002)', expression=call('CENTRAL_MOBILE'), condition='-',

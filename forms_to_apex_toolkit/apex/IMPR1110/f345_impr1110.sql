@@ -2461,10 +2461,7 @@ wwv_flow_api.create_page_computation(
 ,p_computation_point=>'AFTER_HEADER'
 ,p_computation_type=>'EXPRESSION'
 ,p_computation_language=>'PLSQL'
-,p_computation=>'APEX_LANG.MESSAGE(''IMPR1110_PRE_INSERT_CONFIRM'')'
-,p_compute_when=>':P1110_BROKER_USER = Y'
-,p_compute_when2=>'PLSQL'
-,p_compute_when_type=>'EXPRESSION'
+,p_computation=>'CASE WHEN :P1110_BROKER_USER = ''Y'' THEN APEX_LANG.MESSAGE(''IMPR1110_PRE_INSERT_CONFIRM'') END'
 ,p_computation_comment=>'Source: IMPORTERS.PRE-INSERT CONFIRM text (Text Message, translatable) / spec 9'
 );
 wwv_flow_api.create_page_computation(
@@ -2474,10 +2471,7 @@ wwv_flow_api.create_page_computation(
 ,p_computation_point=>'AFTER_HEADER'
 ,p_computation_type=>'EXPRESSION'
 ,p_computation_language=>'PLSQL'
-,p_computation=>'APEX_PAGE.GET_URL(p_page => 111002, p_clear_cache => ''111002'', p_items => ''P111002_IMPR_NBR'', p_values => :P1110_IMPR_NBR)'
-,p_compute_when=>':P1110_IMPR_NBR is not null'
-,p_compute_when2=>'PLSQL'
-,p_compute_when_type=>'EXPRESSION'
+,p_computation=>'CASE WHEN :P1110_IMPR_NBR is not null THEN APEX_PAGE.GET_URL(p_page => 111002, p_clear_cache => ''111002'', p_items => ''P111002_IMPR_NBR'', p_values => :P1110_IMPR_NBR) END'
 ,p_computation_comment=>'Source: CALL_FORM(LOV_UPDATE_IMPR_MOBILE) / spec 9'
 );
 wwv_flow_api.create_page_validation(

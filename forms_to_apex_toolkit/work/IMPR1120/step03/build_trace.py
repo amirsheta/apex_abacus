@@ -91,8 +91,8 @@ SUSPN_COLUMNS = {
     'SUSPN_RSN_CD': 'Select List LOV_IMPR_SUSPN_RSN_CD, default SUSPN_RSN_CD_DEFAULT',
     'SUSPN_RSN_TEXT': 'Text Field, required, default SUSPN_RSN_TEXT_DEFAULT',
     'SUSPN_SIDE_CD': 'Select List LOV_SUSPN_SIDE_CD, default SUSPN_SIDE_CD_DEFAULT, read only once stored',
-    'IMPR_NBR': 'Hidden, primary key (process IMPR_SUSPN MASTER KEYS)',
-    'PORT_CD': 'Hidden, primary key (process IMPR_SUSPN MASTER KEYS)',
+    'IMPR_NBR': 'Hidden, primary key (default = master item P1120_IMPR_NBR; save call NVL(:IMPR_NBR, :P1120_IMPR_NBR))',
+    'PORT_CD': 'Hidden, primary key (default = master item P1120_PORT_CD; save call NVL(:PORT_CD, :P1120_PORT_CD))',
 }
 for b in blocks:
     bn = b.get('Name')
@@ -249,7 +249,7 @@ for owner, trg in walk_triggers():
 for b in blocks:
     for r in b.findall(NS + 'Relation'):
         add('RELATION', r.get('Name'), 'REGION', 'IMPR_SUSPN (IG WHERE port_cd = :P1120_PORT_CD AND impr_nbr = :P1120_IMPR_NBR)',
-            PAGE, None, 'MAPPED', '%s -> %s; master keys copied by process IMPR_SUSPN MASTER KEYS' % (b.get('Name'), r.get('DetailBlock')))
+            PAGE, None, 'MAPPED', '%s -> %s; master keys from the master form (column default + NVL in the save call)' % (b.get('Name'), r.get('DetailBlock')))
 
 # ------------------------------------------------------------------ LOVs and record groups
 LOVS = {

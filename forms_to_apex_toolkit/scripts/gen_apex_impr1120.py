@@ -204,6 +204,9 @@ def ig_column(page, c, seq):
                   ('p_lov_display_null', 'false')]
             UNCERTAIN.add('IG select list column on a shared LOV: p_lov_type => SHARED + p_lov_id (f345 shows only SQL_QUERY / p_lov_source)')
         p += FILTER + [('p_is_primary_key', 'false')]
+    if c.get('default_item'):    # master key from the master form item (Forms CopyValueFrom)
+        p += [('p_default_type', q('ITEM')), ('p_default_expression', q(c['default_item']))]
+        UNCERTAIN.add('IG column default from a page item: p_default_type => ITEM + p_default_expression (f345 shows only STATIC)')
     if c.get('default_plsql'):
         p += [('p_default_type', q('EXPRESSION')), ('p_default_language', q('PLSQL')), ('p_default_expression', lit(c['default_plsql']))]
         UNCERTAIN.add('IG column default PL/SQL expression: p_default_type => EXPRESSION + p_default_language => PLSQL (f345 shows only STATIC)')
@@ -378,8 +381,10 @@ MASTER_ITEMS = [
 
 # page 1120 IG IMPR_SUSPN (spec 4.3)
 SUSPN_COLUMNS = [
-    dict(name='PORT_CD', kind='HIDDEN', data_type='NUMBER', pk=True, comment='Source: IMPR1120.IMPR_SUSPN.PORT_CD (CopyValueFrom IMPORTERS.PORT_CD)'),
-    dict(name='IMPR_NBR', kind='HIDDEN', data_type='NUMBER', pk=True, comment='Source: IMPR1120.IMPR_SUSPN.IMPR_NBR (CopyValueFrom IMPORTERS.IMPR_NBR)'),
+    dict(name='PORT_CD', kind='HIDDEN', data_type='NUMBER', pk=True, default_item='P1120_PORT_CD',
+         comment='Source: IMPR1120.IMPR_SUSPN.PORT_CD (CopyValueFrom IMPORTERS.PORT_CD: default = master item P1120_PORT_CD)'),
+    dict(name='IMPR_NBR', kind='HIDDEN', data_type='NUMBER', pk=True, default_item='P1120_IMPR_NBR',
+         comment='Source: IMPR1120.IMPR_SUSPN.IMPR_NBR (CopyValueFrom IMPORTERS.IMPR_NBR: default = master item P1120_IMPR_NBR)'),
     dict(name='SUSPN_SEQ', kind='HIDDEN', data_type='NUMBER', pk=True, comment='Source: IMPR1120.IMPR_SUSPN.SUSPN_SEQ (PRE-INSERT MAX + 1)'),
     dict(name='SUSPN_STRT_DT', kind='TEXT', data_type='VARCHAR2', heading='بداية الإيقاف', req=True, maxlen=10, css='hijri-date-default',
          default_plsql='IMPR1120.SUSPN_STRT_DT_DEFAULT', read_only=R_ROW,
@@ -452,7 +457,9 @@ NEW_LOVS = [  # spec 6
      'pop list IMPR_SUSPN.SUSPN_SIDE_CD (CGDV$POPULATE_DYNAMIC_LISTS)')]
 MSG_IS_1_IMP_FK = 'بيانات الربط مع ملف المستوردين غير صحيحة - أعد إدخال البيانات'
 
-SAVE_ROW = ('IMPR1120.IMPR_SUSPN_SAVE_ROW(APEX$ROW_STATUS => :APEX$ROW_STATUS, PORT_CD => :PORT_CD, IMPR_NBR => :IMPR_NBR, '
+# the master keys come from the master form when the row has none (new row): Forms CopyValueFrom IMPORTERS.PORT_CD / IMPR_NBR
+SAVE_ROW = ('IMPR1120.IMPR_SUSPN_SAVE_ROW(APEX$ROW_STATUS => :APEX$ROW_STATUS, PORT_CD => NVL(:PORT_CD, :P1120_PORT_CD), '
+            'IMPR_NBR => NVL(:IMPR_NBR, :P1120_IMPR_NBR), '
             'SUSPN_SEQ => :SUSPN_SEQ, SUSPN_STRT_DT => :SUSPN_STRT_DT, SUSPN_END_DT => :SUSPN_END_DT, '
             'SUSPN_RSN_CD => :SUSPN_RSN_CD, SUSPN_RSN_TEXT => :SUSPN_RSN_TEXT, SUSPN_SIDE_CD => :SUSPN_SIDE_CD, '
             'P_HQ_IMPR_NBR => :P1120_HQ_IMPR_NBR, P_PORT_NAME => :P1120_PORT_NAME, P_BUS_ID => :P1120_BUS_ID, '
@@ -644,9 +651,6 @@ end;
          'IMPR1120.IMPORTERS.IMPR_NBR.WHEN-VALIDATE-ITEM -> Exec_Query_Now -> EXECUTE_QUERY; page 0 CREATE / spec 0 #3, 8', {}),
         (AS, 30, 'PRE-DELETE', 'IMPR1120.PRE_DELETE;', ('DELETE', 'REQUEST_EQUALS_CONDITION'),
          'IMPR1120 block IMPORTERS Delete Allowed = No (FRM-41049) / spec 8', {}),
-        (AS, 100, 'IMPR_SUSPN MASTER KEYS', ':PORT_CD := :P1120_PORT_CD; :IMPR_NBR := :P1120_IMPR_NBR;',
-         (":REQUEST = 'SAVE' AND :APEX$ROW_STATUS = 'C'", 'EXPRESSION', 'PLSQL'),
-         'IMPR1120.IMPR_SUSPN CopyValueFrom IMPORTERS.PORT_CD / IMPR_NBR (f345 standard 6) / spec 8', dict(region='1120:plug:IMPR_SUSPN')),
         (AS, 110, 'IMPR_SUSPN - Save Interactive Grid Data', None, ('SAVE', 'REQUEST_EQUALS_CONDITION'),
          'IMPR1120.IMPR_SUSPN PRE-INSERT, POST-INSERT, PRE-UPDATE, ON-DELETE (row by row, IMPR_SUSPN_SAVE_ROW) / spec 0 #4, 8',
          dict(ptype='NATIVE_IG_DML', region='1120:plug:IMPR_SUSPN',

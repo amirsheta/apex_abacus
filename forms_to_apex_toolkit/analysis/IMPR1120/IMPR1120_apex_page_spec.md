@@ -187,8 +187,8 @@ The row read-only expression **R** is `IMPR1120.IMPR_SUSPN_IS_READ_ONLY(SUSPN_SI
 
 | Column | Type | Heading | Required | Default | LOV | Max | Read Only | Forms item |
 |---|---|---|---|---|---|---|---|---|
-| `PORT_CD` | Hidden, primary key | – | – | – | – | – | – | `IMPR_SUSPN.PORT_CD` (CopyValueFrom IMPORTERS.PORT_CD) |
-| `IMPR_NBR` | Hidden, primary key | – | – | – | – | – | – | `IMPR_SUSPN.IMPR_NBR` (CopyValueFrom IMPORTERS.IMPR_NBR) |
+| `PORT_CD` | Hidden, primary key | – | – | Item `P1120_PORT_CD` (master form) | – | – | – | `IMPR_SUSPN.PORT_CD` (CopyValueFrom IMPORTERS.PORT_CD; the save call also uses `NVL(:PORT_CD, :P1120_PORT_CD)`) |
+| `IMPR_NBR` | Hidden, primary key | – | – | Item `P1120_IMPR_NBR` (master form) | – | – | – | `IMPR_SUSPN.IMPR_NBR` (CopyValueFrom IMPORTERS.IMPR_NBR; the save call also uses `NVL(:IMPR_NBR, :P1120_IMPR_NBR)`) |
 | `SUSPN_SEQ` | Hidden, primary key | – | – | – | – | – | – | `IMPR_SUSPN.SUSPN_SEQ` (set in PRE-INSERT) |
 | `SUSPN_STRT_DT` | Text Field, CSS class `hijri-date-default`, placeholder "يوم-شهر-سنة" | بداية الإيقاف | Yes (Value Required) | PL/SQL Expression `IMPR1120.SUSPN_STRT_DT_DEFAULT` | – | 10 | R | `IMPR_SUSPN.SUSPN_STRT_DT` |
 | `SUSPN_END_DT` | Text Field, `hijri-date-default` | نهاية الإيقاف | Yes | – | – | 10 | R | `IMPR_SUSPN.SUSPN_END_DT` |
@@ -261,8 +261,7 @@ f345 order (standard §6), error display inline in notification. Slot 50 `PARAME
 | Before Header | 100 | `HEADER TITLE` | `IMPR1120.HEADER_TITLE(P_MODULE_ID => :P1120_MODULE_ID, P_HERO_TITLE => :P1120_HERO_TITLE);` | – | f345 (OLB block TITLE) |
 | After Submit | 10 | `EXECUTE-QUERY` | `IMPR1120.IMPR_NBR_WHEN_VALIDATE_ITEM(P_PORT_CD => :P1120_PORT_CD, P_IMPR_NBR => :P1120_IMPR_NBR, P_PAGE_PK => :P0_PAGE_PK);` | `:REQUEST IN ('EXECUTE_QUERY', 'CREATE')` | IMPR_NBR.WHEN-VALIDATE-ITEM → Exec_Query_Now → EXECUTE_QUERY |
 | After Submit | 30 | `PRE-DELETE` | `IMPR1120.PRE_DELETE;` | `:REQUEST = 'DELETE'` | block IMPORTERS Delete Allowed = No |
-| After Submit | 100 | `IMPR_SUSPN MASTER KEYS` | `:PORT_CD := :P1120_PORT_CD; :IMPR_NBR := :P1120_IMPR_NBR;` | Editable Region `IMPR_SUSPN`, `:APEX$ROW_STATUS = 'C'` | CopyValueFrom IMPORTERS.PORT_CD / IMPR_NBR (f345 standard §6) |
-| After Submit | 110 | `IMPR_SUSPN - Save Interactive Grid Data` | NATIVE_IG_DML, Editable Region `IMPR_SUSPN`, Target Type **PL/SQL Code**: `IMPR1120.IMPR_SUSPN_SAVE_ROW(APEX$ROW_STATUS => :APEX$ROW_STATUS, PORT_CD => :PORT_CD, IMPR_NBR => :IMPR_NBR, SUSPN_SEQ => :SUSPN_SEQ, SUSPN_STRT_DT => :SUSPN_STRT_DT, SUSPN_END_DT => :SUSPN_END_DT, SUSPN_RSN_CD => :SUSPN_RSN_CD, SUSPN_RSN_TEXT => :SUSPN_RSN_TEXT, SUSPN_SIDE_CD => :SUSPN_SIDE_CD, P_HQ_IMPR_NBR => :P1120_HQ_IMPR_NBR, P_PORT_NAME => :P1120_PORT_NAME, P_BUS_ID => :P1120_BUS_ID, P_CURRENT_SIDE => :P1120_P_CURRENT_SIDE, P_CURR_PORT_CD => :P_CURR_PORT_CD, SSO_APP_USER => :SSO_APP_USER, P_GLOBAL_V_WS_ID => :P_GLOBAL_V_WS_ID);` | `:REQUEST = 'SAVE'` | Forms transaction processing of IMPR_SUSPN: PRE-INSERT, POST-INSERT, PRE-UPDATE, ON-DELETE (§0 #4) |
+| After Submit | 110 | `IMPR_SUSPN - Save Interactive Grid Data` | NATIVE_IG_DML, Editable Region `IMPR_SUSPN`, Target Type **PL/SQL Code**: `IMPR1120.IMPR_SUSPN_SAVE_ROW(APEX$ROW_STATUS => :APEX$ROW_STATUS, PORT_CD => NVL(:PORT_CD, :P1120_PORT_CD), IMPR_NBR => NVL(:IMPR_NBR, :P1120_IMPR_NBR), SUSPN_SEQ => :SUSPN_SEQ, SUSPN_STRT_DT => :SUSPN_STRT_DT, SUSPN_END_DT => :SUSPN_END_DT, SUSPN_RSN_CD => :SUSPN_RSN_CD, SUSPN_RSN_TEXT => :SUSPN_RSN_TEXT, SUSPN_SIDE_CD => :SUSPN_SIDE_CD, P_HQ_IMPR_NBR => :P1120_HQ_IMPR_NBR, P_PORT_NAME => :P1120_PORT_NAME, P_BUS_ID => :P1120_BUS_ID, P_CURRENT_SIDE => :P1120_P_CURRENT_SIDE, P_CURR_PORT_CD => :P_CURR_PORT_CD, SSO_APP_USER => :SSO_APP_USER, P_GLOBAL_V_WS_ID => :P_GLOBAL_V_WS_ID);` | `:REQUEST = 'SAVE'` | Forms transaction processing of IMPR_SUSPN: PRE-INSERT, POST-INSERT, PRE-UPDATE, ON-DELETE (§0 #4) |
 
 - **Success message** of process 110: the f345 save message, as on IMPR1110. Forms showed FRM-40400 through `NIB.ON_MESSAGE`.
 - **Branch:** after processing → page 1120 (f345 default). Request `EXECUTE_QUERY` also clears the cache of page 1120, so the old record's names are not kept. `P1120_MODULE_ID` and `P1120_P_CURRENT_SIDE` are cleared too, and Before Header processes 40 / 45 compute them again.
@@ -472,8 +471,8 @@ Theme 42 / style ZATCA Forms, page 0 (`P0_ACTIONS`, `P0_PAGE_PK`, `P0_SEARCH_URL
 | 119 | ITEM | `IMPR_SUSPN.SUSPN_RSN_TEXT` | IMPR_SUSPN.SUSPN_RSN_TEXT | 1120 | – | MAPPED | Text Field, required, default SUSPN_RSN_TEXT_DEFAULT |
 | 120 | ITEM | `IMPR_SUSPN.SUSPN_SIDE_CD` | IMPR_SUSPN.SUSPN_SIDE_CD | 1120 | – | MAPPED | Select List LOV_SUSPN_SIDE_CD, default SUSPN_SIDE_CD_DEFAULT, read only once stored |
 | 121 | ITEM | `IMPR_SUSPN.SUSPN_RLSE_DT` | – | – | IMPR1120.IMPR_SUSPN_SAVE_ROW | MAPPED | not a grid column: set by IMPR_SUSPN_PRE_UPDATE / IMPR_SUSPN_ON_DELETE; region WHERE SUSPN_RLSE_DT IS NULL |
-| 122 | ITEM | `IMPR_SUSPN.IMPR_NBR` | IMPR_SUSPN.IMPR_NBR | 1120 | – | MAPPED | Hidden, primary key (process IMPR_SUSPN MASTER KEYS) |
-| 123 | ITEM | `IMPR_SUSPN.PORT_CD` | IMPR_SUSPN.PORT_CD | 1120 | – | MAPPED | Hidden, primary key (process IMPR_SUSPN MASTER KEYS) |
+| 122 | ITEM | `IMPR_SUSPN.IMPR_NBR` | IMPR_SUSPN.IMPR_NBR | 1120 | – | MAPPED | Hidden, primary key (default = master item P1120_IMPR_NBR; save call NVL(:IMPR_NBR, :P1120_IMPR_NBR)) |
+| 123 | ITEM | `IMPR_SUSPN.PORT_CD` | IMPR_SUSPN.PORT_CD | 1120 | – | MAPPED | Hidden, primary key (default = master item P1120_PORT_CD; save call NVL(:PORT_CD, :P1120_PORT_CD)) |
 | 124 | TRIGGER | `FORM.KEY-EDIT` | – | – | – | DROPPED | NIB.KEY_EDIT -> page 0 toolbar / IG keyboard |
 | 125 | TRIGGER | `FORM.KEY-DUPREC` | – | – | – | DROPPED | NIB.KEY_DUPREC -> page 0 toolbar / IG keyboard |
 | 126 | TRIGGER | `FORM.PRE-FORM` | – | – | – | DROPPED | NIB.PRE_FORM, NLS date setting, help path -> f345 application |
@@ -743,7 +742,7 @@ Theme 42 / style ZATCA Forms, page 0 (`P0_ACTIONS`, `P0_PAGE_PK`, `P0_SEARCH_URL
 | 390 | TRIGGER | `IMPR_SUSPN.SUSPN_RLSE_DT.KEY-LISTVAL` | – | – | – | DROPPED | Designer "may the LOV be shown" check -> item read-only state |
 | 391 | TRIGGER | `IMPR_SUSPN.SUSPN_RLSE_DT.KEY-F4` | – | – | – | DROPPED | INTRFACE.DISP_DATE_CON -> date column (Hijri picker) |
 | 392 | TRIGGER | `IMPR_SUSPN.SUSPN_RLSE_DT.WHEN-VALIDATE-ITEM` | – | – | – | DROPPED | hidden, non-navigable item: never fires |
-| 393 | RELATION | `CGFK$IS_1_IMP_FK` | IMPR_SUSPN (IG WHERE port_cd = :P1120_PORT_CD AND impr_nbr = :P1120_IMPR_NBR) | 1120 | – | MAPPED | IMPORTERS -> IMPR_SUSPN; master keys copied by process IMPR_SUSPN MASTER KEYS |
+| 393 | RELATION | `CGFK$IS_1_IMP_FK` | IMPR_SUSPN (IG WHERE port_cd = :P1120_PORT_CD AND impr_nbr = :P1120_IMPR_NBR) | 1120 | – | MAPPED | IMPORTERS -> IMPR_SUSPN; master keys from the master form (column default + NVL in the save call) |
 | 394 | LOV | `CGFK$IMPORTERS_PORT_CD` | LOV_SD_PORTS (from IMPR1110) | 1120 | – | MAPPED | P1120_PORT_CD (port 99 only) |
 | 395 | LOV | `CGFK$IMPORTERS_CITY_CODE_OF_ID` | – | – | – | DROPPED | item display only; search by IG column filter |
 | 396 | LOV | `CGFK$IMPORTERS_CTRY_CD` | – | – | – | DROPPED | item display only; search by IG column filter |

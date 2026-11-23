@@ -75,7 +75,7 @@
 | Page | Name / alias | Title | Mode | Page template | Source (Forms) | Forms menu role (documentation only) | Navigation menu |
 |---|---|---|---|---|---|---|---|
 | 1110 | `IMPR1110` / `IMPR1110` | `&SYS_ANAME.` | Normal | Zatca-Minimal_No_Navigation (`11622270914969205733`), CSS class `zf`, protection C, Warn on Unsaved Changes = Yes | window `CGSO$WINDOW_1`, canvas `CG$PAGE_1` | module IMPR1110 in `CIC_MENU` (MISSING SOURCE) | entry under IMPR, same position as in the Forms menu (TODO when CIC_MENU is available) |
-| 111001 | `IMPR1110_SEARCH` / `IMPR1110-SEARCH` | `&SYS_ANAME.` | Modal Dialog 1800 × 800 | theme default for dialogs | Enter-Query / Execute-Query of block IMPORTERS | as 1110 | No |
+| 111001 | `IMPR1110_SEARCH` / `IMPR1110-SEARCH` | `&SYS_ANAME.` | Modal Dialog 1800 × 800, Cursor Focus *First item on page* (`P111001_SEARCH`) | theme default for dialogs | Enter-Query / Execute-Query of block IMPORTERS | as 1110 | No |
 | 111002 | `IMPR1110_MOBILE` / `IMPR1110-MOBILE` | تعديل رقم الجوال | Modal Dialog 480 × 320 | theme default for dialogs | called form `LOV_UPDATE_IMPR_MOBILE` | function IMPR1110_MOB (Page Functions) | No |
 
 Page 111002 needs process `G_LAST_PAGE KEEP` (After Header, `:G_LAST_PAGE := 1110;`). Without it, f345
@@ -99,20 +99,24 @@ the Before Header processes and the FOS *Items to Return*.
 
 | Seq | Region | Type | Source | Template | Notes |
 |---|---|---|---|---|---|
-| 10 | `IMPORTERS_SEARCH_CRITERIA` | Static Content | item `P111001_ARBC_IMPR_NAME` (label الاســــم العربــــــــى), button `SEARCH` (Text with Icon, fa-search, Defined by DA: Refresh `IMPORTERS_SEARCH`) | Blank with Attributes, `zatca-forms cg-form` | PRE-QUERY name criterion (`STR.StrFormat`) |
-| 20 | `IMPORTERS_SEARCH` | Interactive Grid, not editable | SQL below | Standard, `#DEFAULT#:t-Region--noPadding`, `cg-card cg-grid`; f345 IG defaults (standard §8) | IG search field and column filters = Forms query-by-example on the other items |
+| 10 | `IMPORTERS_SEARCH_CRITERIA` | Static Content | one search text `P111001_SEARCH` (label بحث في كل الأعمدة), buttons `SEARCH` (Text with Icon, fa-search, Defined by DA: Refresh `IMPORTERS_SEARCH`) and `CLEAR` (Text with Icon, fa-eraser, class `cg-b-clear`, label مسح البحث, Defined by DA: Clear `P111001_SEARCH` + Refresh); DA `SEARCH KEY-ENTER` (Key Up of `P111001_SEARCH`, client condition `this.browserEvent.which === 13`: Refresh) | Blank with Attributes, `zatca-forms cg-form` | PRE-QUERY criteria as one text over all columns (user request 2026-11-23, as IMPR1120) |
+| 20 | `IMPORTERS_SEARCH` | Interactive Grid, not editable | SQL below | Standard, `#DEFAULT#:t-Region--noPadding`, `cg-card cg-grid`; f345 IG defaults (standard §8) except: toolbar `ACTIONS_MENU:RESET` (no second search field), Lazy Loading on, no total row count | the one search text and the column filters = Forms query-by-example |
 
 ```sql
-SELECT TRANSLATE(ROWIDTOCHAR(i.ROWID), '+/', '-_') AS row_id,   -- URL-safe ROWID (see the link column)
+-- one search text over every shown column; no rows until a search is made, as Forms opens the block in
+-- Enter-Query mode: the dialog opens without reading IMPORTERS. No sort clause: the whole result is not sorted
+SELECT TRANSLATE(ROWIDTOCHAR(i.ROWID), '+/', '-_') AS row_id,   -- URL-safe: a '+' in f?p arrives as a space
        i.impr_nbr, i.arbc_impr_name, i.eng_impr_name, i.bus_id, i.bus_id_brnch,
-       i.impr_type_cd, it.impr_type_name, i.bus_id_type_cd, i.ctry_cd, i.hq_impr_nbr
+       i.impr_type_cd || ' - ' || it.impr_type_name AS impr_type, i.hq_impr_nbr
   FROM importers i, impr_types it
- WHERE i.port_cd = :P_CURR_PORT_CD                                        -- block WHERE clause
+ WHERE :P111001_SEARCH IS NOT NULL
+   AND i.port_cd = :P_CURR_PORT_CD
    AND it.impr_type_cd (+) = i.impr_type_cd
-   AND (NVL(:P1110_P_PRSNL_IMPR, 0) <> 1 OR i.impr_type_cd = 4)           -- PRE-QUERY (PRSNL_IMPR)
-   AND (:P111001_ARBC_IMPR_NAME IS NULL
-        OR i.impr_name_std LIKE str_db.strformat(:P111001_ARBC_IMPR_NAME, 1)) -- PRE-QUERY (name)
- ORDER BY i.impr_nbr DESC                                                 -- block ORDER BY
+   AND (NVL(:P1110_P_PRSNL_IMPR, 0) <> 1 OR i.impr_type_cd = 4)
+   AND (INSTR(UPPER(i.impr_nbr || '|' || i.arbc_impr_name || '|' || i.eng_impr_name || '|' || i.bus_id || '|' ||
+                    i.bus_id_brnch || '|' || i.impr_type_cd || ' - ' || it.impr_type_name || '|' || i.hq_impr_nbr),
+              UPPER(TRIM(:P111001_SEARCH))) > 0
+        OR i.impr_name_std LIKE '%' || (SELECT str_db.strformat(TRIM(:P111001_SEARCH), 1) FROM dual) || '%')
 ```
 
 - Link column `IMPR_NBR`: Link Builder → page 1110, clear cache 1110, set `P0_PAGE_PK = &ROW_ID.`. `ROW_ID` is
@@ -121,8 +125,12 @@ SELECT TRANSLATE(ROWIDTOCHAR(i.ROWID), '+/', '-_') AS row_id,   -- URL-safe ROWI
   never contains `-` or `_`.
 - `:P1110_P_PRSNL_IMPR` is read from session state: SCREEN ENTRY RESET keeps page 1110 items between 1110
   and its `01` page.
-- Forms QBE uses `=` unless the value contains `%`. `LIKE` gives the same result, except that `_` is also a
-  wildcard (accepted, as in revision 1).
+- **Opening is fast:** no rows while `P111001_SEARCH` is empty (Forms opens the block in Enter-Query mode), so the
+  dialog opens without reading `IMPORTERS`; Lazy Loading, no total row count, no sort clause (block ORDER BY
+  impr_nbr DESC dropped at the user's request; a grid column can still be sorted).
+- **One search text** (contains, upper case) over every shown column; the Arabic name is also searched in
+  `IMPR_NAME_STD` through `str_db.strformat(text, 1)` (PRE-QUERY `STR.StrFormat`). Forms QBE operators (`=`,
+  `%`, `<` ...) are not supported in it; the column filters of the Actions menu remain for exact criteria.
 - The `EXEC_QUERY_NOW` branch of PRE-QUERY (query by IMPR_NBR after IMPR_NBR WHEN-VALIDATE-ITEM) is process
   `EXECUTE-QUERY` of page 1110 (§8), not this page.
 

@@ -5080,6 +5080,7 @@ wwv_flow_api.create_page(
 ,p_dialog_height=>'800'
 ,p_dialog_width=>'1800'
 ,p_protection_level=>'C'
+,p_first_item=>'AUTO_FIRST_ITEM'
 ,p_page_comment=>'Source: IMPR1110 Enter-Query / Execute-Query of block IMPORTERS (TOOLBAR.RE_ENTER_QUERY) / spec 2, 3'
 ,p_last_upd_yyyymmddhh24miss=>'20261119000000'
 );
@@ -5094,7 +5095,7 @@ wwv_flow_api.create_page_plug(
 ,p_attribute_01=>'N'
 ,p_attribute_02=>'TEXT'
 ,p_attribute_03=>'Y'
-,p_plug_comment=>'Source: IMPR1110.IMPORTERS.PRE-QUERY (name criterion) / spec 3'
+,p_plug_comment=>'Source: IMPR1110.IMPORTERS.PRE-QUERY criteria as one search text over all columns / spec 3'
 );
 wwv_flow_api.create_page_plug(
  p_id=>wwv_flow_api.id(11100101000020)
@@ -5106,20 +5107,24 @@ wwv_flow_api.create_page_plug(
 ,p_plug_display_sequence=>20
 ,p_query_type=>'SQL'
 ,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'-- one search text over every shown column; no rows until a search is made, as Forms opens the block in',
+'-- Enter-Query mode: the dialog opens without reading IMPORTERS. No sort clause: the whole result is not sorted',
 'SELECT TRANSLATE(ROWIDTOCHAR(i.ROWID), ''+/'', ''-_'') AS row_id,   -- URL-safe: a ''+'' in f?p arrives as a space',
 '       i.impr_nbr, i.arbc_impr_name, i.eng_impr_name, i.bus_id, i.bus_id_brnch,',
 '       i.impr_type_cd || '' - '' || it.impr_type_name AS impr_type, i.hq_impr_nbr',
 '  FROM importers i, impr_types it',
-' WHERE i.port_cd = :P_CURR_PORT_CD',
+' WHERE :P111001_SEARCH IS NOT NULL',
+'   AND i.port_cd = :P_CURR_PORT_CD',
 '   AND it.impr_type_cd (+) = i.impr_type_cd',
 '   AND (NVL(:P1110_P_PRSNL_IMPR, 0) <> 1 OR i.impr_type_cd = 4)',
-'   AND (:P111001_ARBC_IMPR_NAME IS NULL',
-'        OR i.impr_name_std LIKE str_db.strformat(:P111001_ARBC_IMPR_NAME, 1))',
-' ORDER BY i.impr_nbr DESC'))
+'   AND (INSTR(UPPER(i.impr_nbr || ''|'' || i.arbc_impr_name || ''|'' || i.eng_impr_name || ''|'' || i.bus_id || ''|'' ||',
+'                    i.bus_id_brnch || ''|'' || i.impr_type_cd || '' - '' || it.impr_type_name || ''|'' || i.hq_impr_nbr),',
+'              UPPER(TRIM(:P111001_SEARCH))) > 0',
+'        OR i.impr_name_std LIKE ''%'' || (SELECT str_db.strformat(TRIM(:P111001_SEARCH), 1) FROM dual) || ''%'')'))
 ,p_plug_source_type=>'NATIVE_IG'
-,p_ajax_items_to_submit=>'P111001_ARBC_IMPR_NAME'
+,p_ajax_items_to_submit=>'P111001_SEARCH'
 ,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
-,p_plug_comment=>'Source: IMPR1110.IMPORTERS block query + PRE-QUERY (name, PRSNL_IMPR) / spec 3'
+,p_plug_comment=>'Source: IMPR1110.IMPORTERS block query + PRE-QUERY (PRSNL_IMPR; block ORDER BY dropped); one search text over all columns, no query until a search, no total row count, lazy loading / spec 3'
 );
 wwv_flow_api.create_region_column(
  p_id=>wwv_flow_api.id(11100102000010)
@@ -5331,15 +5336,15 @@ wwv_flow_api.create_interactive_grid(
  p_id=>wwv_flow_api.id(11100103000010)
 ,p_internal_uid=>111001000201
 ,p_is_editable=>false
-,p_lazy_loading=>false
+,p_lazy_loading=>true
 ,p_requires_filter=>false
 ,p_select_first_row=>true
 ,p_fixed_row_height=>true
 ,p_pagination_type=>'SET'
-,p_show_total_row_count=>true
-,p_no_data_found_message=>unistr('\0644\0627 \064A\0648\062C\062F \0645\0633\062A\0648\0631\062F\0648\0646')
+,p_show_total_row_count=>false
+,p_no_data_found_message=>unistr('\0644\0627 \062A\0648\062C\062F \0646\062A\0627\0626\062C - \0623\062F\062E\0644 \0646\0635 \0627\0644\0628\062D\062B \062B\0645 \0627\0636\063A\0637 \0628\062D\062B')
 ,p_show_toolbar=>true
-,p_toolbar_buttons=>'SEARCH_COLUMN:SEARCH_FIELD:ACTIONS_MENU:RESET'
+,p_toolbar_buttons=>'ACTIONS_MENU:RESET'
 ,p_enable_save_public_report=>false
 ,p_enable_subscriptions=>true
 ,p_enable_flashback=>true
@@ -5435,15 +5440,15 @@ wwv_flow_api.create_ig_report_column(
 );
 wwv_flow_api.create_page_item(
  p_id=>wwv_flow_api.id(11100104000010)
-,p_name=>'P111001_ARBC_IMPR_NAME'
+,p_name=>'P111001_SEARCH'
 ,p_item_sequence=>10
 ,p_item_plug_id=>wwv_flow_api.id(11100101000010)
-,p_prompt=>unistr('\0627\0644\0627\0633\0640\0640\0640\0640\0645 \0627\0644\0639\0631\0628\0640\0640\0640\0640\0640\0640\0640\0640\0649')
+,p_prompt=>unistr('\0628\062D\062B \0641\064A \0643\0644 \0627\0644\0623\0639\0645\062F\0629')
 ,p_display_as=>'NATIVE_TEXT_FIELD'
 ,p_cSize=>30
 ,p_cMaxlength=>200
 ,p_begin_on_new_line=>'YES'
-,p_colspan=>4
+,p_colspan=>6
 ,p_field_template=>wwv_flow_api.id(11621983529556869749)
 ,p_item_template_options=>'#DEFAULT#:t-Form-fieldContainer--stretchInputs'
 ,p_is_persistent=>'N'
@@ -5451,7 +5456,7 @@ wwv_flow_api.create_page_item(
 ,p_attribute_02=>'N'
 ,p_attribute_04=>'TEXT'
 ,p_attribute_05=>'BOTH'
-,p_item_comment=>'Source: IMPR1110.IMPORTERS.ARBC_IMPR_NAME (PRE-QUERY: IMPR_NAME_STD = STR.StrFormat(name, TRUE))'
+,p_item_comment=>'Source: IMPR1110.IMPORTERS query criteria (ARBC_IMPR_NAME: PRE-QUERY IMPR_NAME_STD = STR.StrFormat(name, TRUE), and the QBE of the other items) as one text over all columns (user request 2026-11-23)'
 );
 wwv_flow_api.create_page_button(
  p_id=>wwv_flow_api.id(11100102000090)
@@ -5466,6 +5471,20 @@ wwv_flow_api.create_page_button(
 ,p_icon_css_classes=>'fa-search'
 ,p_button_css_classes=>'cg-b-search'
 ,p_button_comment=>'Source: IMPR1110 EXECUTE_QUERY of block IMPORTERS / spec 3'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(11100102000100)
+,p_button_sequence=>30
+,p_button_plug_id=>wwv_flow_api.id(11100101000010)
+,p_button_name=>'CLEAR'
+,p_button_action=>'DEFINED_BY_DA'
+,p_button_template_options=>'#DEFAULT#:t-Button--iconLeft'
+,p_button_template_id=>wwv_flow_api.id(11621986167597869752)
+,p_button_image_alt=>unistr('\0645\0633\062D \0627\0644\0628\062D\062B')
+,p_button_position=>'BODY'
+,p_icon_css_classes=>'fa-eraser'
+,p_button_css_classes=>'cg-b-clear'
+,p_button_comment=>'Source: IMPR1110 TOOLBAR.CLEAR_ALL for the search (user request 2026-11-23) / spec 3'
 );
 wwv_flow_api.create_page_da_event(
  p_id=>wwv_flow_api.id(11100108000010)
@@ -5489,6 +5508,58 @@ wwv_flow_api.create_page_da_action(
 );
 wwv_flow_api.create_page_da_event(
  p_id=>wwv_flow_api.id(11100108000020)
+,p_name=>'SEARCH KEY-ENTER'
+,p_event_sequence=>12
+,p_triggering_element_type=>'ITEM'
+,p_triggering_element=>'P111001_SEARCH'
+,p_triggering_condition_type=>'JAVASCRIPT_EXPRESSION'
+,p_triggering_expression=>'this.browserEvent.which === 13'
+,p_bind_type=>'bind'
+,p_bind_event_type=>'keyup'
+,p_da_event_comment=>'Source: IMPR1110 KEY-EXEQRY (Enter in the search text; f345 AGR1100_SEARCH "SEARCH REFRESH" keyup pattern) / spec 3'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(11100109000020)
+,p_event_id=>wwv_flow_api.id(11100108000020)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'N'
+,p_action=>'NATIVE_REFRESH'
+,p_affected_elements_type=>'REGION'
+,p_affected_region_id=>wwv_flow_api.id(11100101000020)
+);
+wwv_flow_api.create_page_da_event(
+ p_id=>wwv_flow_api.id(11100108000030)
+,p_name=>'CLEAR WHEN-BUTTON-PRESSED'
+,p_event_sequence=>15
+,p_triggering_element_type=>'BUTTON'
+,p_triggering_button_id=>wwv_flow_api.id(11100102000100)
+,p_bind_type=>'bind'
+,p_bind_event_type=>'click'
+,p_da_event_comment=>'Source: IMPR1110 TOOLBAR.CLEAR_ALL (search criteria) / spec 3'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(11100109000030)
+,p_event_id=>wwv_flow_api.id(11100108000030)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'N'
+,p_action=>'NATIVE_CLEAR'
+,p_affected_elements_type=>'ITEM'
+,p_affected_elements=>'P111001_SEARCH'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(11100109000040)
+,p_event_id=>wwv_flow_api.id(11100108000030)
+,p_event_result=>'TRUE'
+,p_action_sequence=>20
+,p_execute_on_page_init=>'N'
+,p_action=>'NATIVE_REFRESH'
+,p_affected_elements_type=>'REGION'
+,p_affected_region_id=>wwv_flow_api.id(11100101000020)
+);
+wwv_flow_api.create_page_da_event(
+ p_id=>wwv_flow_api.id(11100108000040)
 ,p_name=>'Hide'
 ,p_event_sequence=>20
 ,p_bind_type=>'bind'
@@ -5496,8 +5567,8 @@ wwv_flow_api.create_page_da_event(
 ,p_da_event_comment=>'Source: f345 AGR1100_SEARCH "Hide" (page 0 toolbar not used in a dialog)'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(11100109000020)
-,p_event_id=>wwv_flow_api.id(11100108000020)
+ p_id=>wwv_flow_api.id(11100109000050)
+,p_event_id=>wwv_flow_api.id(11100108000040)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
 ,p_execute_on_page_init=>'Y'

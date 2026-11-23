@@ -608,7 +608,7 @@ end;
         ('p_page_mode', q('MODAL')), ('p_step_title', q('&SYS_ANAME.')), ('p_warn_on_unsaved_changes', q('N')),
         ('p_autocomplete_on_off', q('OFF')), ('p_group_id', ref('9000:pg:IMPR')), ('p_page_css_classes', q('zf')),
         ('p_page_template_options', q('#DEFAULT#')), ('p_dialog_height', q('800')), ('p_dialog_width', q('1800')),
-        ('p_protection_level', q('C')),
+        ('p_protection_level', q('C')), ('p_first_item', q('AUTO_FIRST_ITEM')),
         ('p_page_comment', src('IMPR1110 Enter-Query / Execute-Query of block IMPORTERS (TOOLBAR.RE_ENTER_QUERY) / spec 2, 3')),
         ('p_last_upd_yyyymmddhh24miss', q(STAMP))], 'Source: f345 search page <page>01 (page 0 SEARCH)'))
     nid('111001:plug:CRIT', 1)
@@ -617,26 +617,32 @@ end;
         ('p_region_css_classes', q('zatca-forms cg-form')), ('p_region_template_options', q('#DEFAULT#')),
         ('p_plug_template', fid('REGION_HERO')), ('p_plug_display_sequence', '10'), ('p_attribute_01', q('N')),
         ('p_attribute_02', q('TEXT')), ('p_attribute_03', q('Y')),
-        ('p_plug_comment', src('IMPR1110.IMPORTERS.PRE-QUERY (name criterion) / spec 3'))]))
+        ('p_plug_comment', src('IMPR1110.IMPORTERS.PRE-QUERY criteria as one search text over all columns / spec 3'))]))
+    # one search text over every shown column; no rows until a search (Forms Enter-Query), no sort clause (user request 2026-11-23)
     ig_sql = '\n'.join([
+        '-- one search text over every shown column; no rows until a search is made, as Forms opens the block in',
+        '-- Enter-Query mode: the dialog opens without reading IMPORTERS. No sort clause: the whole result is not sorted',
         "SELECT TRANSLATE(ROWIDTOCHAR(i.ROWID), '+/', '-_') AS row_id,   -- URL-safe: a '+' in f?p arrives as a space",
         '       i.impr_nbr, i.arbc_impr_name, i.eng_impr_name, i.bus_id, i.bus_id_brnch,',
         "       i.impr_type_cd || ' - ' || it.impr_type_name AS impr_type, i.hq_impr_nbr",
         '  FROM importers i, impr_types it',
-        ' WHERE i.port_cd = :P_CURR_PORT_CD',
+        ' WHERE :P111001_SEARCH IS NOT NULL',
+        '   AND i.port_cd = :P_CURR_PORT_CD',
         '   AND it.impr_type_cd (+) = i.impr_type_cd',
         '   AND (NVL(:P1110_P_PRSNL_IMPR, 0) <> 1 OR i.impr_type_cd = 4)',
-        '   AND (:P111001_ARBC_IMPR_NAME IS NULL',
-        '        OR i.impr_name_std LIKE str_db.strformat(:P111001_ARBC_IMPR_NAME, 1))',
-        ' ORDER BY i.impr_nbr DESC'])
+        "   AND (INSTR(UPPER(i.impr_nbr || '|' || i.arbc_impr_name || '|' || i.eng_impr_name || '|' || i.bus_id || '|' ||",
+        "                    i.bus_id_brnch || '|' || i.impr_type_cd || ' - ' || it.impr_type_name || '|' || i.hq_impr_nbr),",
+        '              UPPER(TRIM(:P111001_SEARCH))) > 0',
+        "        OR i.impr_name_std LIKE '%' || (SELECT str_db.strformat(TRIM(:P111001_SEARCH), 1) FROM dual) || '%')"])
     nid('111001:plug:IG', 1)
     A(call('create_page_plug', [
         ('p_id', ref('111001:plug:IG')), ('p_plug_name', q('المستوردون')), ('p_region_name', q('IMPORTERS_SEARCH')),
         ('p_region_css_classes', q('cg-card cg-grid')), ('p_region_template_options', q('#DEFAULT#:t-Region--noPadding')),
         ('p_plug_template', fid('REGION_GRID')), ('p_plug_display_sequence', '20'), ('p_query_type', q('SQL')),
         ('p_plug_source', lit(ig_sql)), ('p_plug_source_type', q('NATIVE_IG')),
-        ('p_ajax_items_to_submit', q('P111001_ARBC_IMPR_NAME')), ('p_plug_query_options', q('DERIVED_REPORT_COLUMNS')),
-        ('p_plug_comment', src('IMPR1110.IMPORTERS block query + PRE-QUERY (name, PRSNL_IMPR) / spec 3'))]))
+        ('p_ajax_items_to_submit', q('P111001_SEARCH')), ('p_plug_query_options', q('DERIVED_REPORT_COLUMNS')),
+        ('p_plug_comment', src('IMPR1110.IMPORTERS block query + PRE-QUERY (PRSNL_IMPR; block ORDER BY dropped); one search text '
+                               'over all columns, no query until a search, no total row count, lazy loading / spec 3'))]))
     cols = [('ROW_ID', None, 'VARCHAR2'), ('IMPR_NBR', 'الرقم الجمركي', 'NUMBER'), ('ARBC_IMPR_NAME', 'الاسم العربي', 'VARCHAR2'),
             ('ENG_IMPR_NAME', 'الاسم الأجنبي', 'VARCHAR2'), ('BUS_ID', 'الرقم الإستدلالي', 'VARCHAR2'),
             ('BUS_ID_BRNCH', 'الرقم الفرعي', 'VARCHAR2'), ('IMPR_TYPE', 'النشاط التجاري', 'VARCHAR2'), ('HQ_IMPR_NBR', 'الرقم الموحد', 'NUMBER')]
@@ -666,10 +672,10 @@ end;
         A(call('create_region_column', prm))
     nid('111001:ig', 3)
     A(call('create_interactive_grid', [
-        ('p_id', ref('111001:ig')), ('p_internal_uid', '111001000201'), ('p_is_editable', 'false'), ('p_lazy_loading', 'false'),
+        ('p_id', ref('111001:ig')), ('p_internal_uid', '111001000201'), ('p_is_editable', 'false'), ('p_lazy_loading', 'true'),
         ('p_requires_filter', 'false'), ('p_select_first_row', 'true'), ('p_fixed_row_height', 'true'), ('p_pagination_type', q('SET')),
-        ('p_show_total_row_count', 'true'), ('p_no_data_found_message', q('لا يوجد مستوردون')), ('p_show_toolbar', 'true'),
-        ('p_toolbar_buttons', q('SEARCH_COLUMN:SEARCH_FIELD:ACTIONS_MENU:RESET')), ('p_enable_save_public_report', 'false'),
+        ('p_show_total_row_count', 'false'), ('p_no_data_found_message', q('لا توجد نتائج - أدخل نص البحث ثم اضغط بحث')),
+        ('p_show_toolbar', 'true'), ('p_toolbar_buttons', q('ACTIONS_MENU:RESET')), ('p_enable_save_public_report', 'false'),
         ('p_enable_subscriptions', 'true'), ('p_enable_flashback', 'true'), ('p_define_chart_view', 'true'),
         ('p_enable_download', 'true'), ('p_download_formats', q('CSV:HTML:XLSX:PDF')), ('p_enable_mail_download', 'true'),
         ('p_fixed_header', q('PAGE')), ('p_show_icon_view', 'false'), ('p_show_detail_view', 'false')]))
@@ -688,8 +694,9 @@ end;
                                            ('p_column_id', ref('111001:col:' + c)), ('p_is_visible', 'false' if c == 'ROW_ID' else 'true'),
                                            ('p_is_frozen', 'false')]))
     A(page_item(PG_SEARCH, '111001:plug:CRIT', 10, dict(
-        name='P111001_ARBC_IMPR_NAME', kind='NATIVE_TEXT_FIELD', label='الاســــم العربــــــــى', maxlen=200, span=4,
-        comment='Source: IMPR1110.IMPORTERS.ARBC_IMPR_NAME (PRE-QUERY: IMPR_NAME_STD = STR.StrFormat(name, TRUE))')))
+        name='P111001_SEARCH', kind='NATIVE_TEXT_FIELD', label='بحث في كل الأعمدة', maxlen=200, span=6,
+        comment='Source: IMPR1110.IMPORTERS query criteria (ARBC_IMPR_NAME: PRE-QUERY IMPR_NAME_STD = STR.StrFormat(name, TRUE), '
+                'and the QBE of the other items) as one text over all columns (user request 2026-11-23)')))
     nid('111001:btn:SEARCH', 2)
     A(call('create_page_button', [
         ('p_id', ref('111001:btn:SEARCH')), ('p_button_sequence', '20'), ('p_button_plug_id', ref('111001:plug:CRIT')),
@@ -697,6 +704,13 @@ end;
         ('p_button_template_id', fid('BUTTON')), ('p_button_image_alt', q('بحث')), ('p_button_position', q('BODY')),
         ('p_icon_css_classes', q('fa-search')), ('p_button_css_classes', q('cg-b-search')),
         ('p_button_comment', src('IMPR1110 EXECUTE_QUERY of block IMPORTERS / spec 3'))]))
+    nid('111001:btn:CLEAR', 2)
+    A(call('create_page_button', [
+        ('p_id', ref('111001:btn:CLEAR')), ('p_button_sequence', '30'), ('p_button_plug_id', ref('111001:plug:CRIT')),
+        ('p_button_name', q('CLEAR')), ('p_button_action', q('DEFINED_BY_DA')), ('p_button_template_options', q('#DEFAULT#:t-Button--iconLeft')),
+        ('p_button_template_id', fid('BUTTON')), ('p_button_image_alt', q('مسح البحث')), ('p_button_position', q('BODY')),
+        ('p_icon_css_classes', q('fa-eraser')), ('p_button_css_classes', q('cg-b-clear')),
+        ('p_button_comment', src('IMPR1110 TOOLBAR.CLEAR_ALL for the search (user request 2026-11-23) / spec 3'))]))
     ek, ak = '111001:da:SEARCH', '111001:daa:SEARCH:10'
     nid(ek, 8); nid(ak, 9)
     A(call('create_page_da_event', [('p_id', ref(ek)), ('p_name', q('SEARCH')), ('p_event_sequence', '10'),
@@ -707,6 +721,32 @@ end;
                                      ('p_action_sequence', '10'), ('p_execute_on_page_init', q('N')), ('p_action', q('NATIVE_REFRESH')),
                                      ('p_affected_elements_type', q('REGION')), ('p_affected_region_id', ref('111001:plug:IG'))]))
     UNCERTAIN.add('button DA: p_triggering_button_id (page 111001 SEARCH)')
+    refresh = [('p_action', q('NATIVE_REFRESH')), ('p_affected_elements_type', q('REGION')), ('p_affected_region_id', ref('111001:plug:IG'))]
+    ek = '111001:da:SEARCH KEY-ENTER'
+    nid(ek, 8); nid(ek + ':10', 9)
+    A(call('create_page_da_event', [('p_id', ref(ek)), ('p_name', q('SEARCH KEY-ENTER')), ('p_event_sequence', '12'),
+                                    ('p_triggering_element_type', q('ITEM')), ('p_triggering_element', q('P111001_SEARCH')),
+                                    ('p_triggering_condition_type', q('JAVASCRIPT_EXPRESSION')),
+                                    ('p_triggering_expression', q('this.browserEvent.which === 13')),
+                                    ('p_bind_type', q('bind')), ('p_bind_event_type', q('keyup')),
+                                    ('p_da_event_comment', src('IMPR1110 KEY-EXEQRY (Enter in the search text; f345 AGR1100_SEARCH '
+                                                               '"SEARCH REFRESH" keyup pattern) / spec 3'))]))
+    A(call('create_page_da_action', [('p_id', ref(ek + ':10')), ('p_event_id', ref(ek)), ('p_event_result', q('TRUE')),
+                                     ('p_action_sequence', '10'), ('p_execute_on_page_init', q('N'))] + refresh))
+    UNCERTAIN.add('DA client-side condition JAVASCRIPT_EXPRESSION this.browserEvent.which === 13 (Enter key; not in f345)')
+    ek = '111001:da:CLEAR'
+    nid(ek, 8); nid(ek + ':10', 9); nid(ek + ':20', 9)
+    A(call('create_page_da_event', [('p_id', ref(ek)), ('p_name', q('CLEAR WHEN-BUTTON-PRESSED')), ('p_event_sequence', '15'),
+                                    ('p_triggering_element_type', q('BUTTON')), ('p_triggering_button_id', ref('111001:btn:CLEAR')),
+                                    ('p_bind_type', q('bind')), ('p_bind_event_type', q('click')),
+                                    ('p_da_event_comment', src('IMPR1110 TOOLBAR.CLEAR_ALL (search criteria) / spec 3'))]))
+    A(call('create_page_da_action', [('p_id', ref(ek + ':10')), ('p_event_id', ref(ek)), ('p_event_result', q('TRUE')),
+                                     ('p_action_sequence', '10'), ('p_execute_on_page_init', q('N')), ('p_action', q('NATIVE_CLEAR')),
+                                     ('p_affected_elements_type', q('ITEM')), ('p_affected_elements', q('P111001_SEARCH'))]))
+    A(call('create_page_da_action', [('p_id', ref(ek + ':20')), ('p_event_id', ref(ek)), ('p_event_result', q('TRUE')),
+                                     ('p_action_sequence', '20'), ('p_execute_on_page_init', q('N'))] + refresh))
+    UNCERTAIN.add('NATIVE_CLEAR action with p_affected_elements (page 111001 CLEAR; not in f345)')
+    UNCERTAIN.add('search IG 111001: p_lazy_loading true, p_show_total_row_count false, toolbar ACTIONS_MENU:RESET (search field removed)')
     A(hide_toolbar_da(PG_SEARCH, 20))
     W(block('application/pages/page_111001', '\n'.join(P)))
 

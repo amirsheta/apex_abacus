@@ -128,6 +128,11 @@ If the component import fails on application 202530 (as on 2026-11-18, `WWV_FLOW
 **"Database Application, Page or Component Export"**, install as application 202530, replace the
 existing application. Back up 202530 first: the full import replaces the whole application.
 
+Change 2026-11-23 (user request, as IMPR1120): search page 111001 has one search text `P111001_SEARCH` over all
+columns (replacing `P111001_ARBC_IMPR_NAME` and the grid's toolbar search), a CLEAR button, search on Enter, focus
+on the search field, and opens fast: no query until a search, Lazy Loading, no total row count, no sort clause.
+Port and personal-importer rules unchanged. No package change.
+
 Fix 2026-11-23 (found on IMPR1120): opening an importer from the search page could fail with "The checksum
 computed on the request … did not match the checksum passed into the show procedure". The link passed the
 ROWID in `f?p`, and a `+` in it arrives as a space. Page 111001 now passes it URL-safe
@@ -176,7 +181,9 @@ export but does not appear in f345, so its name or effect is unconfirmed for 21.
 5. `NATIVE_SUBMIT_PAGE` attributes 01 / 02 (not in f345).
 6. ROWID primary key of the Form region: `p_include_rowid_column`, item `p_source` ROWID /
    `p_source_data_type` ROWID.
-7. Button DA: `p_triggering_button_id` (page 111001 `SEARCH`).
+7. Button DA: `p_triggering_button_id` (page 111001 `SEARCH`, `CLEAR`); `NATIVE_CLEAR` with `p_affected_elements`
+   (page 111001 `CLEAR`); search grid `p_lazy_loading => true`, `p_show_total_row_count => false`, toolbar
+   `ACTIONS_MENU:RESET`; DA `SEARCH KEY-ENTER` condition `JAVASCRIPT_EXPRESSION this.browserEvent.which === 13`.
 8. `p_lov_cascade_parent_items` / `p_ajax_optimize_refresh` (cascading LOV parents).
 9. `p_query_where` on the `NATIVE_FORM` region (AGR1100 has no WHERE clause).
 10. `p_read_only_when2 => 'PLSQL'` with `p_read_only_when_type => 'EXPRESSION'` (f345 shows the
@@ -214,7 +221,9 @@ Send the full error text (API name and line): the generator can drop or replace 
 3. Utilities → Advisor on the three pages.
 4. Shared Components: the 13 LOVs return rows for a sample port; the 32 new application items are
    *Restricted*; none duplicates an f345 item; Text Message `IMPR1110_PRE_INSERT_CONFIRM` exists.
-5. Search modal: `SEARCH` → 111001 → search by name / number → click the number → page 1110 shows the
+5. Search modal: `SEARCH` → 111001 opens at once with an empty grid and the cursor in the search field → type
+   any part of the number, Arabic / English name, ID number, branch, activity or unified number → بحث or Enter
+   (other keys do not search) → مسح البحث empties the field and the grid → click the number → page 1110 shows the
    importer and the toolbar switches to SAVE / DELETE. Open several importers, including ones whose ROWID
    contains `+` or `/`: no checksum error.
 6. Each DML path:

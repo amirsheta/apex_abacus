@@ -155,8 +155,8 @@ BEGIN
     m('ITEM', 'IMPR_SUSPN.SUSPN_RSN_TEXT', 'IG_COLUMN', 'IMPR_SUSPN.SUSPN_RSN_TEXT', 1120, NULL, 'MAPPED', 'Text Field, required, default SUSPN_RSN_TEXT_DEFAULT');
     m('ITEM', 'IMPR_SUSPN.SUSPN_SIDE_CD', 'IG_COLUMN', 'IMPR_SUSPN.SUSPN_SIDE_CD', 1120, NULL, 'MAPPED', 'Select List LOV_SUSPN_SIDE_CD, default SUSPN_SIDE_CD_DEFAULT, read only once stored');
     m('ITEM', 'IMPR_SUSPN.SUSPN_RLSE_DT', NULL, NULL, NULL, 'IMPR1120.IMPR_SUSPN_SAVE_ROW', 'MAPPED', 'not a grid column: set by IMPR_SUSPN_PRE_UPDATE / IMPR_SUSPN_ON_DELETE; region WHERE SUSPN_RLSE_DT IS NULL');
-    m('ITEM', 'IMPR_SUSPN.IMPR_NBR', 'IG_COLUMN', 'IMPR_SUSPN.IMPR_NBR', 1120, NULL, 'MAPPED', 'Hidden, primary key (process IMPR_SUSPN MASTER KEYS)');
-    m('ITEM', 'IMPR_SUSPN.PORT_CD', 'IG_COLUMN', 'IMPR_SUSPN.PORT_CD', 1120, NULL, 'MAPPED', 'Hidden, primary key (process IMPR_SUSPN MASTER KEYS)');
+    m('ITEM', 'IMPR_SUSPN.IMPR_NBR', 'IG_COLUMN', 'IMPR_SUSPN.IMPR_NBR', 1120, NULL, 'MAPPED', 'Hidden, primary key (default = master item P1120_IMPR_NBR; save call NVL(:IMPR_NBR, :P1120_IMPR_NBR))');
+    m('ITEM', 'IMPR_SUSPN.PORT_CD', 'IG_COLUMN', 'IMPR_SUSPN.PORT_CD', 1120, NULL, 'MAPPED', 'Hidden, primary key (default = master item P1120_PORT_CD; save call NVL(:PORT_CD, :P1120_PORT_CD))');
     m('TRIGGER', 'FORM.KEY-EDIT', NULL, NULL, NULL, NULL, 'DROPPED', 'NIB.KEY_EDIT -> page 0 toolbar / IG keyboard');
     m('TRIGGER', 'FORM.KEY-DUPREC', NULL, NULL, NULL, NULL, 'DROPPED', 'NIB.KEY_DUPREC -> page 0 toolbar / IG keyboard');
     m('TRIGGER', 'FORM.PRE-FORM', NULL, NULL, NULL, NULL, 'DROPPED', 'NIB.PRE_FORM, NLS date setting, help path -> f345 application');
@@ -426,7 +426,7 @@ BEGIN
     m('TRIGGER', 'IMPR_SUSPN.SUSPN_RLSE_DT.KEY-LISTVAL', NULL, NULL, NULL, NULL, 'DROPPED', 'Designer "may the LOV be shown" check -> item read-only state');
     m('TRIGGER', 'IMPR_SUSPN.SUSPN_RLSE_DT.KEY-F4', NULL, NULL, NULL, NULL, 'DROPPED', 'INTRFACE.DISP_DATE_CON -> date column (Hijri picker)');
     m('TRIGGER', 'IMPR_SUSPN.SUSPN_RLSE_DT.WHEN-VALIDATE-ITEM', NULL, NULL, NULL, NULL, 'DROPPED', 'hidden, non-navigable item: never fires');
-    m('RELATION', 'CGFK$IS_1_IMP_FK', 'REGION', 'IMPR_SUSPN (IG WHERE port_cd = :P1120_PORT_CD AND impr_nbr = :P1120_IMPR_NBR)', 1120, NULL, 'MAPPED', 'IMPORTERS -> IMPR_SUSPN; master keys copied by process IMPR_SUSPN MASTER KEYS');
+    m('RELATION', 'CGFK$IS_1_IMP_FK', 'REGION', 'IMPR_SUSPN (IG WHERE port_cd = :P1120_PORT_CD AND impr_nbr = :P1120_IMPR_NBR)', 1120, NULL, 'MAPPED', 'IMPORTERS -> IMPR_SUSPN; master keys from the master form (column default + NVL in the save call)');
     m('LOV', 'CGFK$IMPORTERS_PORT_CD', 'LOV', 'LOV_SD_PORTS (from IMPR1110)', 1120, NULL, 'MAPPED', 'P1120_PORT_CD (port 99 only)');
     m('LOV', 'CGFK$IMPORTERS_CITY_CODE_OF_ID', NULL, NULL, NULL, NULL, 'DROPPED', 'item display only; search by IG column filter');
     m('LOV', 'CGFK$IMPORTERS_CTRY_CD', NULL, NULL, NULL, NULL, 'DROPPED', 'item display only; search by IG column filter');

@@ -123,8 +123,8 @@
 | 119 | ITEM | `IMPR_SUSPN.SUSPN_RSN_TEXT` | IMPR_SUSPN.SUSPN_RSN_TEXT | 1120 | – | MAPPED | Text Field, required, default SUSPN_RSN_TEXT_DEFAULT |
 | 120 | ITEM | `IMPR_SUSPN.SUSPN_SIDE_CD` | IMPR_SUSPN.SUSPN_SIDE_CD | 1120 | – | MAPPED | Select List LOV_SUSPN_SIDE_CD, default SUSPN_SIDE_CD_DEFAULT, read only once stored |
 | 121 | ITEM | `IMPR_SUSPN.SUSPN_RLSE_DT` | – | – | IMPR1120.IMPR_SUSPN_SAVE_ROW | MAPPED | not a grid column: set by IMPR_SUSPN_PRE_UPDATE / IMPR_SUSPN_ON_DELETE; region WHERE SUSPN_RLSE_DT IS NULL |
-| 122 | ITEM | `IMPR_SUSPN.IMPR_NBR` | IMPR_SUSPN.IMPR_NBR | 1120 | – | MAPPED | Hidden, primary key (process IMPR_SUSPN MASTER KEYS) |
-| 123 | ITEM | `IMPR_SUSPN.PORT_CD` | IMPR_SUSPN.PORT_CD | 1120 | – | MAPPED | Hidden, primary key (process IMPR_SUSPN MASTER KEYS) |
+| 122 | ITEM | `IMPR_SUSPN.IMPR_NBR` | IMPR_SUSPN.IMPR_NBR | 1120 | – | MAPPED | Hidden, primary key (default = master item P1120_IMPR_NBR; save call NVL(:IMPR_NBR, :P1120_IMPR_NBR)) |
+| 123 | ITEM | `IMPR_SUSPN.PORT_CD` | IMPR_SUSPN.PORT_CD | 1120 | – | MAPPED | Hidden, primary key (default = master item P1120_PORT_CD; save call NVL(:PORT_CD, :P1120_PORT_CD)) |
 | 124 | TRIGGER | `FORM.KEY-EDIT` | – | – | – | DROPPED | NIB.KEY_EDIT -> page 0 toolbar / IG keyboard |
 | 125 | TRIGGER | `FORM.KEY-DUPREC` | – | – | – | DROPPED | NIB.KEY_DUPREC -> page 0 toolbar / IG keyboard |
 | 126 | TRIGGER | `FORM.PRE-FORM` | – | – | – | DROPPED | NIB.PRE_FORM, NLS date setting, help path -> f345 application |
@@ -394,7 +394,7 @@
 | 390 | TRIGGER | `IMPR_SUSPN.SUSPN_RLSE_DT.KEY-LISTVAL` | – | – | – | DROPPED | Designer "may the LOV be shown" check -> item read-only state |
 | 391 | TRIGGER | `IMPR_SUSPN.SUSPN_RLSE_DT.KEY-F4` | – | – | – | DROPPED | INTRFACE.DISP_DATE_CON -> date column (Hijri picker) |
 | 392 | TRIGGER | `IMPR_SUSPN.SUSPN_RLSE_DT.WHEN-VALIDATE-ITEM` | – | – | – | DROPPED | hidden, non-navigable item: never fires |
-| 393 | RELATION | `CGFK$IS_1_IMP_FK` | IMPR_SUSPN (IG WHERE port_cd = :P1120_PORT_CD AND impr_nbr = :P1120_IMPR_NBR) | 1120 | – | MAPPED | IMPORTERS -> IMPR_SUSPN; master keys copied by process IMPR_SUSPN MASTER KEYS |
+| 393 | RELATION | `CGFK$IS_1_IMP_FK` | IMPR_SUSPN (IG WHERE port_cd = :P1120_PORT_CD AND impr_nbr = :P1120_IMPR_NBR) | 1120 | – | MAPPED | IMPORTERS -> IMPR_SUSPN; master keys from the master form (column default + NVL in the save call) |
 | 394 | LOV | `CGFK$IMPORTERS_PORT_CD` | LOV_SD_PORTS (from IMPR1110) | 1120 | – | MAPPED | P1120_PORT_CD (port 99 only) |
 | 395 | LOV | `CGFK$IMPORTERS_CITY_CODE_OF_ID` | – | – | – | DROPPED | item display only; search by IG column filter |
 | 396 | LOV | `CGFK$IMPORTERS_CTRY_CD` | – | – | – | DROPPED | item display only; search by IG column filter |

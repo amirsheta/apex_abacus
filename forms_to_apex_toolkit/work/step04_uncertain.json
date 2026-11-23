@@ -1,5 +1,7 @@
 [
+ "DA client-side condition JAVASCRIPT_EXPRESSION this.browserEvent.which === 13 (Enter key; not in f345)",
  "DA client-side condition p_triggering_condition_type / p_triggering_expression (not in f345)",
+ "NATIVE_CLEAR action with p_affected_elements (page 111001 CLEAR; not in f345)",
  "NATIVE_DIALOG_CANCEL action (page 111002 PB_CANCEL)",
  "NATIVE_ENABLE / NATIVE_DISABLE with p_affected_elements (not in f345)",
  "NATIVE_SET_VALUE attributes 01 / 02 / 05 / 09 (not in f345)",
@@ -9,5 +11,6 @@
  "p_lov_cascade_parent_items / p_ajax_optimize_refresh (cascading LOV parents)",
  "p_query_where on the NATIVE_FORM region (AGR1100 has no WHERE clause)",
  "p_read_only_when2 => PLSQL with p_read_only_when_type => EXPRESSION (f345 shows the pattern only for p_display_when)",
+ "search IG 111001: p_lazy_loading true, p_show_total_row_count false, toolbar ACTIONS_MENU:RESET (search field removed)",
  "wwv_flow_api.create_message (Text Message; f345 has none) - p_message_language ar-sa"
 ]

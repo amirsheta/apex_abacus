@@ -84,6 +84,8 @@ Choose **one** option.
 
 It removes and re-creates pages 1120 and 112001 only (`remove_page`). It also creates the two LOVs and the Text Message with fixed IDs. On a second import they normally replace the same components. If APEX reports a duplicate LOV or message name instead, delete `LOV_IMPR_SUSPN_RSN_CD`, `LOV_SUSPN_SIDE_CD` and `IS_1_IMP_FK` first (not verified).
 
+Fix 2026-11-23: "cannot insert NULL" when a new suspension was saved. The master keys of a new grid row were copied by a separate row process (`IMPR_SUSPN MASTER KEYS`) and did not reach the save process. They now come from the master form directly: the hidden columns `PORT_CD` / `IMPR_NBR` default to the items `P1120_PORT_CD` / `P1120_IMPR_NBR`, and the save call passes `PORT_CD => NVL(:PORT_CD, :P1120_PORT_CD)`, `IMPR_NBR => NVL(:IMPR_NBR, :P1120_IMPR_NBR)`. The `IMPR_SUSPN MASTER KEYS` process is removed. No package change.
+
 Fix 2026-11-23: the error "The checksum computed on the request … did not match the checksum passed into the show procedure" when an importer was opened from the search page. Its ROWID contained `+`, which arrives in an `f?p` value as a space. The search page now passes the ROWID URL-safe (`+` → `-`, `/` → `_`) and `IMPR1120.P0_PAGE_PK_CHECK` (package 007) translates it back. Compile package 007 before this import.
 
 Change 2026-11-23 (user request): search page 112001 has one search text `P112001_SEARCH` over all columns (replacing the port, port name and Arabic name criteria and the grid's toolbar search), a CLEAR button, search on Enter (DA `SEARCH KEY-ENTER`), and opens fast: no query until a search, no total row count, no sort clause; focus on the search field; بحث and Enter refresh the grid (the loading overlay was removed: it did not work). Package comments of the PRE-QUERY members still name the old search items.
@@ -106,7 +108,8 @@ Fix 2026-11-23: the import error "Interactive Grid Column 'SUSPN_STRT_DT' specif
      - a start date before today gives 9-100, and an end date before the start gives 9-110;
      - a reason or side not allowed for the site gives the placeholder message;
      - SAVE inserts with `SUSPN_SEQ = MAX + 1`, writes the activity log (type 1) and sends the SMS / notification (check the notification tables);
-     - add two rows in one SAVE and check that the numbers differ.
+     - add two rows in one SAVE and check that the numbers differ;
+     - check that the new rows carry the importer's port and number (`SELECT port_cd, impr_nbr FROM impr_suspns WHERE suspn_seq = …`), with no "cannot insert NULL" error.
    - **Edit a suspension:** change only the end date of an older suspension and check that there is **no** 9-100 error. An end date ≤ today releases the row (it disappears after SAVE). Activity log type 2.
    - **Delete a suspension:** the row disappears, the table row still exists with `SUSPN_RLSE_DT` = today, activity log type 3.
    - **Rows of another site:** read only. A delete or update forced in the browser is refused by the server.
@@ -130,6 +133,7 @@ Fix 2026-11-23: the import error "Interactive Grid Column 'SUSPN_STRT_DT' specif
 | 10 | branch `REQUEST_IN_CONDITION` | branch `EXECUTE-QUERY` | – |
 | 11 | DA client condition `NOT_NULL`, `NATIVE_SUBMIT_PAGE` attributes, button DA `p_triggering_button_id`, `create_message` | as IMPR1110 | as IMPR1110 |
 | 12 | search grid: `p_lazy_loading => true`, `p_show_total_row_count => false`, toolbar `ACTIONS_MENU:RESET` (no toolbar search field); native `NATIVE_CLEAR` action with `p_affected_elements` | page 112001 grid `IMPORTERS_SEARCH`, DA `CLEAR WHEN-BUTTON-PRESSED` | set them by hand if APEX ignores them |
+| 13 | IG column default from a page item: `p_default_type => 'ITEM'` + `p_default_expression` | columns `PORT_CD` (`P1120_PORT_CD`), `IMPR_NBR` (`P1120_IMPR_NBR`) | in Page Designer the column shows *Default: Item*; the save call has `NVL(...)` as a second safeguard |
 
 ## 7. Notes, deviations and open items
 

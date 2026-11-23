@@ -170,7 +170,7 @@ wwv_flow_api.create_region_column(
 ,p_attribute_02=>'Y'
 ,p_attribute_03=>'N'
 );
--- Source: IMPR1120.IMPR_SUSPN.PORT_CD (CopyValueFrom IMPORTERS.PORT_CD)
+-- Source: IMPR1120.IMPR_SUSPN.PORT_CD (CopyValueFrom IMPORTERS.PORT_CD: default = master item P1120_PORT_CD)
 wwv_flow_api.create_region_column(
  p_id=>wwv_flow_api.id(112002000030)
 ,p_name=>'PORT_CD'
@@ -186,8 +186,10 @@ wwv_flow_api.create_region_column(
 ,p_is_primary_key=>true
 ,p_duplicate_value=>true
 ,p_include_in_export=>false
+,p_default_type=>'ITEM'
+,p_default_expression=>'P1120_PORT_CD'
 );
--- Source: IMPR1120.IMPR_SUSPN.IMPR_NBR (CopyValueFrom IMPORTERS.IMPR_NBR)
+-- Source: IMPR1120.IMPR_SUSPN.IMPR_NBR (CopyValueFrom IMPORTERS.IMPR_NBR: default = master item P1120_IMPR_NBR)
 wwv_flow_api.create_region_column(
  p_id=>wwv_flow_api.id(112002000040)
 ,p_name=>'IMPR_NBR'
@@ -203,6 +205,8 @@ wwv_flow_api.create_region_column(
 ,p_is_primary_key=>true
 ,p_duplicate_value=>true
 ,p_include_in_export=>false
+,p_default_type=>'ITEM'
+,p_default_expression=>'P1120_IMPR_NBR'
 );
 -- Source: IMPR1120.IMPR_SUSPN.SUSPN_SEQ (PRE-INSERT MAX + 1)
 wwv_flow_api.create_region_column(
@@ -1237,28 +1241,13 @@ wwv_flow_api.create_page_process(
 );
 wwv_flow_api.create_page_process(
  p_id=>wwv_flow_api.id(112007000130)
-,p_process_sequence=>100
-,p_process_point=>'AFTER_SUBMIT'
-,p_region_id=>wwv_flow_api.id(112001000030)
-,p_process_type=>'NATIVE_PLSQL'
-,p_process_name=>'IMPR_SUSPN MASTER KEYS'
-,p_process_sql_clob=>':PORT_CD := :P1120_PORT_CD; :IMPR_NBR := :P1120_IMPR_NBR;'
-,p_process_clob_language=>'PLSQL'
-,p_error_display_location=>'INLINE_IN_NOTIFICATION'
-,p_process_when=>':REQUEST = ''SAVE'' AND :APEX$ROW_STATUS = ''C'''
-,p_process_when_type=>'EXPRESSION'
-,p_process_when2=>'PLSQL'
-,p_process_comment=>'Source: IMPR1120.IMPR_SUSPN CopyValueFrom IMPORTERS.PORT_CD / IMPR_NBR (f345 standard 6) / spec 8'
-);
-wwv_flow_api.create_page_process(
- p_id=>wwv_flow_api.id(112007000140)
 ,p_process_sequence=>110
 ,p_process_point=>'AFTER_SUBMIT'
 ,p_region_id=>wwv_flow_api.id(112001000030)
 ,p_process_type=>'NATIVE_IG_DML'
 ,p_process_name=>'IMPR_SUSPN - Save Interactive Grid Data'
 ,p_attribute_01=>'PLSQL_CODE'
-,p_attribute_04=>'IMPR1120.IMPR_SUSPN_SAVE_ROW(APEX$ROW_STATUS => :APEX$ROW_STATUS, PORT_CD => :PORT_CD, IMPR_NBR => :IMPR_NBR, SUSPN_SEQ => :SUSPN_SEQ, SUSPN_STRT_DT => :SUSPN_STRT_DT, SUSPN_END_DT => :SUSPN_END_DT, SUSPN_RSN_CD => :SUSPN_RSN_CD, SUSPN_RSN_TEXT => :SUSPN_RSN_TEXT, SUSPN_SIDE_CD => :SUSPN_SIDE_CD, P_HQ_IMPR_NBR => :P1120_HQ_IMPR_NBR, P_PORT_NAME => :P1120_PORT_NAME, P_BUS_ID => :P1120_BUS_ID, P_CURRENT_SIDE => :P1120_P_CURRENT_SIDE, P_CURR_PORT_CD => :P_CURR_PORT_CD, SSO_APP_USER => :SSO_APP_USER, P_GLOBAL_V_WS_ID => :P_GLOBAL_V_WS_ID);'
+,p_attribute_04=>'IMPR1120.IMPR_SUSPN_SAVE_ROW(APEX$ROW_STATUS => :APEX$ROW_STATUS, PORT_CD => NVL(:PORT_CD, :P1120_PORT_CD), IMPR_NBR => NVL(:IMPR_NBR, :P1120_IMPR_NBR), SUSPN_SEQ => :SUSPN_SEQ, SUSPN_STRT_DT => :SUSPN_STRT_DT, SUSPN_END_DT => :SUSPN_END_DT, SUSPN_RSN_CD => :SUSPN_RSN_CD, SUSPN_RSN_TEXT => :SUSPN_RSN_TEXT, SUSPN_SIDE_CD => :SUSPN_SIDE_CD, P_HQ_IMPR_NBR => :P1120_HQ_IMPR_NBR, P_PORT_NAME => :P1120_PORT_NAME, P_BUS_ID => :P1120_BUS_ID, P_CURRENT_SIDE => :P1120_P_CURRENT_SIDE, P_CURR_PORT_CD => :P_CURR_PORT_CD, SSO_APP_USER => :SSO_APP_USER, P_GLOBAL_V_WS_ID => :P_GLOBAL_V_WS_ID);'
 ,p_attribute_05=>'Y'
 ,p_attribute_06=>'N'
 ,p_attribute_08=>'Y'

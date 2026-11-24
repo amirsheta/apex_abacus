@@ -1,0 +1,6 @@
+> **Item notes**
+> - Items of the 4 OLB control blocks have no attributes in the form XML; they are inherited from `CIC_OLB.olb` and are not migrated (screen frame).
+> - `IMPORTERS` has 70 items: 48 on `CG$PAGE_1`, 22 non-displayed. Compared with IMPR1110 it **lacks** `B_EMAIL`, `B_MOBILE_NO`, `B_ID_NBR`, `IMPR_ID_TYPE`, `BRNH_CITY_CD` / `BRNH_CITY_CD_LOV` / `BRNH_CITY_NAME` / `BRNH_ID_MINS_COMM_CD`, `SDP_PORT_STATUS`, `WASL_CITY_NAME`, and **adds** `NATIONAL_NBR` (required, رقم المنشأة, must start with 7) and `BIRTH_DT` (non-displayed). `EMAIL` and `MOBILE_NO` are displayed and entered directly (hidden in IMPR1110); `ACTIVITY` and `BANK_IBAN` are non-displayed.
+> - Other property differences: `IMPR_EXPR_TYPE` is a pop list (`CGSO$POP_MD`, default 0) instead of a required list item with default 2; `CAR_AGENT_FLAG` is required; `BUS_ID` is insert-only (no `UpdateAllowed=false` → update allowed by default); `BUS_ID_ISSUE_DT` is enterable (`CGSO$HDATE_ARB`).
+> - Items whose name ends in `2` (e.g. `PORT_CD2`, `CITY_CODE_OF_ID2`) are LOV buttons calling `DO_KEY('LIST_VALUES')`.
+> - Hijri date items (`BUS_ID_EXPRD_DT`, `BUS_ID_ISSUE_DT`) are passed as `TO_CHAR(...,'MI-MM-YYYY')` to `CREATE_UNI_IMPR_NEBRAS` and validated by `HIJDATE.VALID_HIJ_DATE` (→ `HIJDATE_DB`, `plsql/Shared`).

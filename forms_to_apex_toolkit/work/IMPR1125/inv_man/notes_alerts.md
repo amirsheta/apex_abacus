@@ -1,0 +1,4 @@
+> **Alert notes**
+> - 9 alerts come from `CIC_OLB.olb`; `STR.DispAlert` sets the text at runtime. `CG$ASK_COMMIT` is not referenced.
+> - Texts used (all literal in the form, no message-table lookup): "رقم الاستدلالي للمستورد المدخل غير صحيح، أدخل الرقم الصحيح أو استخدم القائمة المرفقة" (BUS_ID, ERROR), "الرقم الموحد للمستورد المدخل غير صحيح، أدخل الرقم الصحيح أو استخدم القائمة المرفقة" (HQ_IMPR_NBR, ERROR), " لا يمكن ان يكون تاريخ نهاية الأيقاف أصغر من تاريخ بداية الأيقاف" (SUSPN_END_DT, ERROR), " توجد إيقافات محذوفة من على هذا المستورد , هل تود أستعراضها ؟" (POST-QUERY, CONFIRM). Delete confirmation: WARNING alert in `TMPLT.KEY_DELETE_RECORD`.
+> - APEX mapping (f345 standard §9): ERROR → `<ITEM>_VALIDATION` + `FORMS_APX.CHECK_ERROR`; CONFIRM → native Confirm action before opening the dialog; WARNING (delete) → the native confirm of the IG delete.

@@ -1,0 +1,3 @@
+> **Parameter/global notes**
+> - The 20 `P_*` parameters are inherited from the OLB and passed on by the launchers `APPS` / `BUTTON_LAST_TREE`. They map to the f345 items as in IMPR1110 §12 (`P_USER_ID` → `SSO_APP_USER`, `P_CURR_PORT_CD`, `P_PORT_TYPE`, `P_CLASS_CD`, `P_USER_TYPE` → `V_USR_TYPE`, `P_WS_ID` → `P_GLOBAL_V_WS_ID`). The form has **no own parameter**, and no business code reads `P_CURR_PORT_CD`: the screen is not limited to a port (the review list and the importer grid show all ports). `ACTIVITY.ADD_ACTIVITY` reads `P_CURR_PORT_CD`, `P_USER_ID`, `P_WS_ID` for the log.
+> - Globals: only frame ones (`CG$HP_HFILE` / `CG$HP_HPATH` help, `EXIT`, `SYSTEM_OBJ`). None needs an application item.

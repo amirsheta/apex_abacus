@@ -1,0 +1,14 @@
+[
+ "DA client-side condition JAVASCRIPT_EXPRESSION this.browserEvent.which === 13 (Enter key; not in f345)",
+ "DA client-side condition p_triggering_condition_type / p_triggering_expression (not in f345)",
+ "NATIVE_CLEAR action with p_affected_elements (page 113001 CLEAR; not in f345)",
+ "NATIVE_ENABLE / NATIVE_DISABLE with p_affected_elements (not in f345)",
+ "NATIVE_SUBMIT_PAGE attributes 01 / 02 (not in f345)",
+ "ROWID primary key of the Form region: p_include_rowid_column, item p_source ROWID / p_source_data_type ROWID",
+ "button DA: p_triggering_button_id (as page 113001 SEARCH; IMPR1110 uses it)",
+ "p_lov_cascade_parent_items / p_ajax_optimize_refresh (cascading LOV parents)",
+ "p_query_where on the NATIVE_FORM region (AGR1100 has no WHERE clause)",
+ "p_read_only_when2 => PLSQL with p_read_only_when_type => EXPRESSION (f345 shows the pattern only for p_display_when)",
+ "search IG 113001: p_lazy_loading true, p_show_total_row_count false, toolbar ACTIONS_MENU:RESET (search field removed)",
+ "shared LOV p_source_type 'FUNC_BODY_RETURNING_SQL' with the function body in p_lov_query (no function-body LOV in f345 or the real 21.2 export f202604; p_function_body_language left out = PL/SQL)"
+]

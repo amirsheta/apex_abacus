@@ -1,0 +1,3 @@
+> **Alert notes**
+> - All 9 alerts come from `CIC_OLB.olb` (style, title and buttons resolved from `CIC_OLB_OLB.xml`); `STR.DispAlert` sets the text at runtime. The form itself shows no business message: the only texts are the Designer messages in ON-ERROR / POST-QUERY ('رمز النشاط التجاري غير صحيح - أعد إدخال البيانات' when the type lookup finds nothing) and `ACTIVITY.ADD_ACTIVITY`'s `CFG_SYSTEM_ERROR` alert with the text returned by `ACTIVITY_DB`.
+> - APEX mapping (f345 standard §9): ERROR → `FORMS_APX.CHECK_ERROR` / `FORMS_APX.FORM_TRIGGER_FAILURE`; the commit question (`CFG_ASK_COMMIT`) → the APEX unsaved-changes warning.

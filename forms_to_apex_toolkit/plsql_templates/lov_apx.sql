@@ -10,7 +10,7 @@
 -- Target      : Oracle APEX 21.2 / Oracle Database 12.1.0.2
 -- Author      : Claude Code
 -- Created     : 2026-11-24
--- Version     : 001
+-- Version     : 002
 -- Contract    : every function returns the text of a SELECT with the columns  D (display), R (return), then the
 --               columns shown in the list. The shared LOV sets Return Column R, Display Column D.
 --               Page or application items are NOT read here: the caller passes the NAME of the item
@@ -25,13 +25,15 @@
 -- Status      : NOT COMPILED (no database in this session). Install before importing the APEX exports.
 -- History     : 2026-11-24 Claude Code 001 Initial version (user request: LOV type function body returning SQL
 --                          query, code in the common package LOV_APX)
+--               2026-11-24 Claude Code 002 IMPR1140: SINGLE_IMPORTERS (unified importer numbers, by rule type) and
+--                          HARMONIZED_TARIFF (tariff items). Previous version: rollback/LOV_APX/v001/
 -- =============================================================================
 SET DEFINE OFF
 
 CREATE OR REPLACE PACKAGE LIB_APX_USR.LOV_APX AS
-   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
-   V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
-   V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
+   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '002';
+   V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '002';
+   V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '002';
    FUNCTION PKG_VERSION
       RETURN VARCHAR2;
    V_PACKAGE_NAME      VARCHAR2 (50) := 'LOV_APX';
@@ -123,6 +125,22 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.LOV_APX AS
     -- Columns: D = R = IMPR_NBR, ARBC_IMPR_NAME, BUS_ID, BUS_ID_BRNCH, IMPR_TEL_NBR.  Importers of the port in
     -- item P_PORT_ITEM (default: the f345 item P_CURR_PORT_CD, the user's port).
     FUNCTION IMPORTERS (P_PORT_ITEM IN VARCHAR2 DEFAULT 'P_CURR_PORT_CD')
+       RETURN VARCHAR2;
+
+    -- Source: IMPR1140 PU SINGLE_IMP_LOV -> LOV forms LOV_IMPORT_HQ_NBR (SINGLE_IMPORTERS) and LOV_IMPORT_HQ_N12
+    --         (IMPORTERS, used when the rule type is 12)
+    -- Columns: D = R = HQ_IMPR_NBR, ARBC_IMPR_NAME, BUS_ID.  P_RULE_TYPE_ITEM = item holding the rule type;
+    --          rule type 12 lists the importers of the port in P_PORT_ITEM (default: the user's port).
+    FUNCTION SINGLE_IMPORTERS (P_RULE_TYPE_ITEM IN VARCHAR2,
+                               P_PORT_ITEM      IN VARCHAR2 DEFAULT 'P_CURR_PORT_CD')
+       RETURN VARCHAR2;
+
+    -- =========================================================================
+    -- TARIFF
+    -- =========================================================================
+    -- Source: IMPR1140 record group CGFK$IMPR_RULE_TARIFF_HRMNZD_C (LOV form LOV_TRF_ITEMS)
+    -- Columns: D = R = HRMNZD_CODE, ITEM_ARBC_DESC.
+    FUNCTION HARMONIZED_TARIFF
        RETURN VARCHAR2;
 
     -- =========================================================================
@@ -281,6 +299,32 @@ AS
               || ' FROM importers'
               || ' WHERE port_cd = ' || BIND_VARIABLE (P_PORT_ITEM);
     END IMPORTERS;
+
+    FUNCTION SINGLE_IMPORTERS (P_RULE_TYPE_ITEM IN VARCHAR2,
+                               P_PORT_ITEM      IN VARCHAR2 DEFAULT 'P_CURR_PORT_CD')
+       RETURN VARCHAR2
+    IS
+    BEGIN
+       RETURN    'SELECT hq_impr_nbr d, hq_impr_nbr r, arbc_impr_name, bus_id FROM single_importers'
+              || ' WHERE NVL(' || BIND_VARIABLE (P_RULE_TYPE_ITEM) || ', 0) <> 12'
+              || ' UNION ALL'
+              || ' SELECT hq_impr_nbr d, hq_impr_nbr r, MAX(arbc_impr_name), MAX(bus_id) FROM importers'
+              || ' WHERE ' || BIND_VARIABLE (P_RULE_TYPE_ITEM) || ' = 12'
+              || ' AND port_cd = ' || BIND_VARIABLE (P_PORT_ITEM)
+              || ' AND hq_impr_nbr IS NOT NULL'
+              || ' GROUP BY hq_impr_nbr';
+    END SINGLE_IMPORTERS;
+
+    -- =========================================================================
+    -- TARIFF
+    -- =========================================================================
+    FUNCTION HARMONIZED_TARIFF
+       RETURN VARCHAR2
+    IS
+    BEGIN
+       RETURN    'SELECT hrmnzd_code d, hrmnzd_code r, item_arbc_desc FROM harmonized_tariff'
+              || ' ORDER BY hrmnzd_code';
+    END HARMONIZED_TARIFF;
 
     -- =========================================================================
     -- SUPPORT LETTERS

@@ -1,0 +1,25 @@
+{
+ "blocks": 6,
+ "items": 103,
+ "triggers": 248,
+ "triggers_with_code": 83,
+ "trigger_lines": 1969,
+ "trigger_active": 1207,
+ "pu": 26,
+ "pu_lines": 872,
+ "pu_active": 450,
+ "by_level": {
+  "Form": 33,
+  "Item": 197,
+  "Block": 18
+ },
+ "lov": 1,
+ "rg": 1,
+ "canvases": 5,
+ "windows": 1,
+ "alerts": 10,
+ "params": 22,
+ "libs": 17,
+ "relations": 1,
+ "va": 51
+}

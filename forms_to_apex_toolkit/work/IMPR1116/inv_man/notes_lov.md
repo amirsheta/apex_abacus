@@ -1,0 +1,3 @@
+> **LOV notes**
+> - Both record groups are Designer FK lookups attached to an LOV on a query-only item of `IMPORTERS` (`PORT_CD` → `SD_PORTS`; `L_BIT_BUS_ID_TYPE_NAME` → `IMPR_TYPE_ID_TYPES` / `IMPR_TYPES` / `BUS_ID_TYPES`). Their buttons are hidden at startup and the items cannot be edited, so the LOVs are only reachable as query criteria (Enter Query on `IMPORTERS`). In APEX they are not needed on the main page; the type names become a join in the region SQL.
+> - Runtime record group `CGDV$DLRG` (`CREATE_GROUP_FROM_QUERY` / `POPULATE_LIST`) fills the 2 list items from `CG_REF_CODES` → shared LOVs through `LOV_APX` on the domains `ID_TYPE_GZT` and `PRTL_NAT_FLAG`.

@@ -1,0 +1,39 @@
+written /Volumes/Volume E/apex_abacus/forms_to_apex_toolkit/apex/IMPR1130/f345_impr1130.sql 3756 lines
+  create_page                      2
+  create_page_plug                 4
+  create_page_item                 76
+  create_page_button               3
+  create_page_validation           15
+  create_page_process              21
+  create_page_da_event             36
+  create_page_da_action            58
+  create_page_computation          3
+  create_page_branch               2
+  create_region_column             8
+  create_interactive_grid          1
+  create_ig_report_column          8
+  create_list_of_values            4
+  create_list_of_values_cols       10
+  create_static_lov_data           0
+  create_flow_item                 0
+  create_message                   0
+  create_security_scheme           0
+  create_page_group                0
+  NATIVE_JAVASCRIPT_CODE actions   4
+  FOS actions                      31
+placeholders: __APP_ID__, __ID_OFFSET__, __SCHEMA_NAME__, __WORKSPACE_ID__
+uncertain parameters (import_notes.md):
+  - DA client-side condition JAVASCRIPT_EXPRESSION this.browserEvent.which === 13 (Enter key; not in f345)
+  - DA client-side condition p_triggering_condition_type / p_triggering_expression (not in f345)
+  - NATIVE_CLEAR action with p_affected_elements (page 113001 CLEAR; not in f345)
+  - NATIVE_ENABLE / NATIVE_DISABLE with p_affected_elements (not in f345)
+  - NATIVE_SUBMIT_PAGE attributes 01 / 02 (not in f345)
+  - ROWID primary key of the Form region: p_include_rowid_column, item p_source ROWID / p_source_data_type ROWID
+  - button DA: p_triggering_button_id (as page 113001 SEARCH; IMPR1110 uses it)
+  - p_lov_cascade_parent_items / p_ajax_optimize_refresh (cascading LOV parents)
+  - p_query_where on the NATIVE_FORM region (AGR1100 has no WHERE clause)
+  - p_read_only_when2 => PLSQL with p_read_only_when_type => EXPRESSION (f345 shows the pattern only for p_display_when)
+  - search IG 113001: p_lazy_loading true, p_show_total_row_count false, toolbar ACTIONS_MENU:RESET (search field removed)
+  - shared LOV p_source_type 'FUNC_BODY_RETURNING_SQL' with the function body in p_lov_query (no function-body LOV in f345 or the real 21.2 export f202604; p_function_body_language left out = PL/SQL)
+problems: none
+import-ready copy: /Volumes/Volume E/apex_abacus/forms_to_apex_toolkit/apex/IMPR1130/f202530_impr1130_import.sql

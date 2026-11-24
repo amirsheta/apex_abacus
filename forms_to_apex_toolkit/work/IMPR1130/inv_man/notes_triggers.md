@@ -1,0 +1,4 @@
+> **Trigger notes**
+> - 301 triggers: Form 26, Block 16, Item 259. 136 contain code in the form XML; 165 have no `TriggerText` there and are inherited from `CIC_OLB.olb` (the same screen-frame code as IMPR1110: LSIDE mouse triggers, TOOLBAR buttons, TITLE, EDI_MSG).
+> - Form-level triggers are one-line `NIB` delegations (code in `forms/COMMON/libraries/CIC_LIB.pld`, §10.8) plus the business part of WHEN-NEW-FORM-INSTANCE.
+> - **Relation to IMPR1110:** the module name inside the XML is `IMPR1110_PROD_CENTRL` and PU `DEV_VERSIONS` says `coped_screen : impr1130_dm_685`, version 8 (IMPR1110: version 15). IMPR1130 is an **older copy of the IMPR1110 screen**: of its 178 code units (136 triggers + 42 program units) 121 are identical to IMPR1110, 46 differ, 1 is only renamed (`CG$IMPR1130_PROD_CENTRL_GLOBAL`), 9 exist only in IMPR1130 and 42 only in IMPR1110. The full per-unit comparison is in §1.3.

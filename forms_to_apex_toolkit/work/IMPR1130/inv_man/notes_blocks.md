@@ -1,0 +1,4 @@
+> **Block notes**
+> - `TITLE`, `EDI_MSG`, `LSIDE`, `TOOLBAR` are control blocks subclassed entirely from `CIC_OLB.olb` (`forms/COMMON/olb/CIC_OLB_OLB.xml`). They are the screen frame and are replaced by the f345 page template, page 0 toolbar and the page 0 `FUNCS` region.
+> - **Difference from IMPR1110:** `IMPORTERS` has **no `DeleteAllowed=false`** here (Forms default: delete allowed). `KEY-DELREC` deletes `IMPR_KNWNS` and `IMPR_UPDTS` (both active in IMPR1130; IMPR1110 had the `IMPR_KNWNS` delete commented out), commits, deletes the record, and then runs the Designer delete check `CGRI$CHK_IMPORTERS` (33 child tables) — see risk #13.
+> - The WHERE clause binds to `:PARAMETER.P_CURR_PORT_CD`; `PRE-QUERY` additionally appends a `PORT_NAME` sub-query through `CG$IMPR1130_PROD_CENTRL_GLOBAL.IMPORTERS_WHERE` (SET_BLOCK_PROPERTY DEFAULT_WHERE).

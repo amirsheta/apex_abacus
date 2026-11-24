@@ -1,7 +1,7 @@
 -- =============================================================================
--- Package body: IMPR1110 (version 011, 24-11-2026) - see the spec header. NOT COMPILED.
+-- Package body: IMPR1110 (version 012, 24-11-2026) - see the spec header. NOT COMPILED.
 -- Layout      : 1 private types and declarations, 2 forward declarations, 3 private helpers and the
---               converted Forms logic (record based, Forms order, UI calls replaced by "NULL; -- APEX ..."),
+--               converted Forms logic (record based, Forms order, Forms UI calls kept as "-- APEX-DA:" comments),
 --               4 read-only / required rules, 5 f345 helpers, 6 APEX entry points (spec order), 7 version.
 -- Generated   : by work/step02/build_package.py from rollback/IMPR1110/step02_rev1/ (do not edit by hand)
 -- =============================================================================
@@ -130,7 +130,6 @@ AS
                               p_ctx    IN OUT NOCOPY T_CONTEXT,
                               p_answer IN PLS_INTEGER DEFAULT c_yes);
     PROCEDURE IMPORTERS_PRE_RECORD (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT);
-    PROCEDURE IMPORTERS_WHEN_CLEAR_BLOCK;
     PROCEDURE IMPORTERS_POST_QUERY (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT);
     PROCEDURE IMPORTERS_PRE_INSERT (p_rec    IN OUT NOCOPY T_RECORD,
                                  p_ctx    IN T_CONTEXT,
@@ -146,7 +145,7 @@ AS
     PROCEDURE HQ_IMPR_NBR_POST_CHANGE;
     PROCEDURE IMPR_NBR_WHEN_VALIDATE_ITEM (p_rec IN OUT NOCOPY T_RECORD);
     PROCEDURE IMPR_TYPE_CD_VALIDATE_ITEM (p_rec IN OUT NOCOPY T_RECORD, p_ctx IN T_CONTEXT);
-    PROCEDURE IMPR_TYPE_CD_POST_CHANGE (p_rec IN T_RECORD);
+    PROCEDURE IMPR_TYPE_CD_POST_CHANGE;
     PROCEDURE IMPR_TYPE_CD_NEW_ITEM_INSTANCE (p_rec IN OUT NOCOPY T_RECORD);
     PROCEDURE IMPR_TYPE_CD_LOV_RETURN (p_rec IN OUT NOCOPY T_RECORD);
     PROCEDURE BUS_ID_EXPRD_DT_VALIDATE_ITEM (p_rec IN T_RECORD, p_from_item IN BOOLEAN DEFAULT TRUE);
@@ -154,18 +153,14 @@ AS
     PROCEDURE COMM_RGSTRTN_TYPE_LIST_CHANGED (p_rec IN OUT NOCOPY T_RECORD);
     PROCEDURE CTRY_CD_OF_ID_VALIDATE_ITEM (p_rec IN OUT NOCOPY T_RECORD);
     PROCEDURE CITY_CODE_OF_ID_VALIDATE_ITEM (p_rec IN OUT NOCOPY T_RECORD);
-    PROCEDURE CITY_CODE_OF_ID_WHEN_NEW_ITEM (p_rec IN T_RECORD);
     FUNCTION BUS_ID_SUSPENDED_IMPORTER (p_rec IN T_RECORD) RETURN NUMBER;
     PROCEDURE BUS_ID_WHEN_VALIDATE_ITEM (p_rec         IN OUT NOCOPY T_RECORD,
-                          p_ctx         IN T_CONTEXT,
                           p_cr_answer   IN PLS_INTEGER DEFAULT c_yes,
                           p_susp_answer IN PLS_INTEGER DEFAULT c_yes);
     PROCEDURE BUS_ID_POST_CHANGE;
     PROCEDURE BUS_ID_WHEN_NEW_ITEM_INSTANCE (p_rec IN T_RECORD);
     PROCEDURE BRNH_CITY_CD_VALIDATE_ITEM (p_rec IN OUT NOCOPY T_RECORD);
-    PROCEDURE BRNH_CITY_CD_NEW_ITEM_INSTANCE;
     PROCEDURE BUS_ID_BRNCH_VALIDATE_ITEM (p_rec       IN OUT NOCOPY T_RECORD,
-                                p_ctx       IN T_CONTEXT,
                                 p_cr_answer IN PLS_INTEGER DEFAULT c_yes);
     PROCEDURE BUS_ID_BRNCH_POST_CHANGE;
     PROCEDURE BUS_ID_BRNCH_NEW_ITEM_INSTANCE (p_rec IN T_RECORD);
@@ -287,13 +282,13 @@ AS
         IF p_rec.impr_type_cd = 4 AND p_rec.bus_id_type_cd = 3
            OR p_rec.impr_type_cd = 4 AND p_rec.bus_id_type_cd = 5 THEN
             p_rec.ctry_cd := 100;
-            NULL;  -- APEX (read_only_rules.md): ui('CTRY_CD', 'ENABLED', FALSE);
+            -- APEX-DA: ui('CTRY_CD', 'ENABLED', FALSE);
             SELECT crty_arbc_name INTO p_rec.crty_arbc_name
               FROM countries
              WHERE ctry_cd = 100;
         END IF;
         p_rec.add_ctry_cd := 100;
-        NULL;  -- APEX (read_only_rules.md): ui('ADD_CTRY_CD', 'ENABLED', FALSE);
+        -- APEX-DA: ui('ADD_CTRY_CD', 'ENABLED', FALSE);
         SELECT crty_arbc_name INTO p_rec.add_crty_arbc_name
           FROM countries
          WHERE ctry_cd = 100;
@@ -415,9 +410,9 @@ AS
     IS
         v_val VARCHAR2(200);
     BEGIN
-        NULL;  -- APEX (read_only_rules.md): entrable('COMM_RGSTRTN_TYPE', FALSE);
-        NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID_EXPRD_DT', FALSE);
-        NULL;  -- APEX (read_only_rules.md): entrable('CITY_CODE_OF_ID', FALSE);
+        -- APEX-DA: entrable('COMM_RGSTRTN_TYPE', FALSE);
+        -- APEX-DA: entrable('BUS_ID_EXPRD_DT', FALSE);
+        -- APEX-DA: entrable('CITY_CODE_OF_ID', FALSE);
         IF p_ctx.class_cd = 1 AND p_ctx.user_type = 3 THEN
             broker_int(p_rec);
         END IF;
@@ -429,10 +424,10 @@ AS
         FORMS_APX.SET_GLOBAL('LETTER_NBR', NULL);
         FORMS_APX.SET_GLOBAL('CHK_DUP_BUSID', '0');
         FORMS_APX.SET_GLOBAL('OLD_IMPR_TYPE_CD', '0');
-        IF p_ctx.letter_nbr IS NULL THEN
-            NULL;  -- APEX (read_only_rules.md): ui_focus('IMPR_NBR');
-        END IF;
-        NULL;  -- APEX (read_only_rules.md): ui('PORT_CD', 'ENABLED', FALSE);
+        -- APEX-DA: IF p_ctx.letter_nbr IS NULL THEN
+            -- APEX-DA: ui_focus('IMPR_NBR');
+        -- APEX-DA: END IF;
+        -- APEX-DA: ui('PORT_CD', 'ENABLED', FALSE);
         FORMS_APX.SET_GLOBAL('VALID', '0');
         FORMS_APX.SET_GLOBAL('IMP0F4', '0');
         FORMS_APX.SET_GLOBAL('STAT_QUE', '0');
@@ -506,16 +501,17 @@ AS
               INTO p_rec.impr_type_name
               FROM impr_types
              WHERE impr_type_cd = p_rec.impr_type_cd;
-            NULL;  -- APEX (read_only_rules.md): entrable('IMPR_TYPE_CD', FALSE);
-            NULL;  -- APEX (read_only_rules.md): entrable('CITY_CODE_OF_ID', FALSE);
-            NULL;  -- APEX (read_only_rules.md): ui('CITY_CODE_OF_ID2', 'ENABLED', FALSE);
-            NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID_BRNCH', FALSE);
+            -- APEX-DA: entrable('IMPR_TYPE_CD', FALSE);
+            -- APEX-DA: entrable('CITY_CODE_OF_ID', FALSE);
+            -- APEX-DA: ui('CITY_CODE_OF_ID2', 'ENABLED', FALSE);
+            -- APEX-DA: entrable('BUS_ID_BRNCH', FALSE);
         ELSE
-            NULL;  -- APEX (read_only_rules.md): entrable('CITY_CODE_OF_ID', TRUE);
-            NULL;  -- APEX (read_only_rules.md): ui('CITY_CODE_OF_ID2', 'ENABLED', TRUE);
+            NULL;
+            -- APEX-DA: entrable('CITY_CODE_OF_ID', TRUE);
+            -- APEX-DA: ui('CITY_CODE_OF_ID2', 'ENABLED', TRUE);
         END IF;
-        NULL;  -- APEX (read_only_rules.md): entrable('CTRY_CD', TRUE);
-        NULL;  -- APEX (read_only_rules.md): entrable('ADD_CTRY_CD', TRUE);
+        -- APEX-DA: entrable('CTRY_CD', TRUE);
+        -- APEX-DA: entrable('ADD_CTRY_CD', TRUE);
         FORMS_APX.SET_GLOBAL('INS', '0');
     END IMPORTERS_WHEN_CREATE_RECORD;
 
@@ -801,52 +797,52 @@ AS
         v_impr_name VARCHAR2(500);
         c_no_rename CONSTANT VARCHAR2(100) := 'لا يمكن تعديل الإسم الرجاء مراجعة المساندة الفنية';
     BEGIN
-        NULL;  -- APEX (read_only_rules.md): entrable('COMM_RGSTRTN_TYPE', FALSE);
-        NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID_EXPRD_DT', FALSE);
-        NULL;  -- APEX (read_only_rules.md): entrable('CITY_CODE_OF_ID', FALSE);
+        -- APEX-DA: entrable('COMM_RGSTRTN_TYPE', FALSE);
+        -- APEX-DA: entrable('BUS_ID_EXPRD_DT', FALSE);
+        -- APEX-DA: entrable('CITY_CODE_OF_ID', FALSE);
         FORMS_APX.SET_GLOBAL('FUNS_BUSID', '0');
         FORMS_APX.SET_GLOBAL('FUNS_IMP', '0');
         FORMS_APX.SET_GLOBAL('CHK_IMP_TYP', '0');
-        IF p_rec.impr_nbr IS NULL THEN
-            NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID', TRUE);
-            NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID_EXPRD_DT', TRUE);
-            NULL;  -- APEX (read_only_rules.md): entrable('ARBC_IMPR_NAME', TRUE);
-            NULL;  -- APEX (read_only_rules.md): entrable('CITY_CODE_OF_ID', TRUE);
-            IF p_ctx.class_cd = 1 AND p_ctx.user_type = 3 THEN
-                NULL;  -- APEX (read_only_rules.md): entrable('IMPR_EXPR_TYPE', FALSE);
-            ELSE
-                NULL;  -- APEX (read_only_rules.md): entrable('IMPR_EXPR_TYPE', TRUE);
-            END IF;
-            NULL;  -- APEX (read_only_rules.md): entrable('IMPR_TYPE_CD', TRUE);
-            NULL;  -- APEX (read_only_rules.md): entrable('IMPR_POB_NBR', TRUE);
-            NULL;  -- APEX (read_only_rules.md): entrable('IMPR_ZIP_CD', TRUE);
-            NULL;  -- APEX (read_only_rules.md): entrable('IMPR_TEL_NBR', TRUE);
-            NULL;  -- APEX (read_only_rules.md): entrable('IMPR_FAX_NBR', TRUE);
-            NULL;  -- APEX (read_only_rules.md): entrable('IMPR_TELEX_NBR', TRUE);
-            NULL;  -- APEX (read_only_rules.md): entrable('COMM_RGSTRTN_TYPE', FALSE);
-        ELSE
-            NULL;  -- APEX (read_only_rules.md): ui_focus('IMPR_NBR');
-            NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID', FALSE);
-            NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID_EXPRD_DT', FALSE);
-            NULL;  -- APEX (read_only_rules.md): entrable('ARBC_IMPR_NAME', FALSE);
-            NULL;  -- APEX (read_only_rules.md): entrable('COMM_RGSTRTN_TYPE', FALSE);
-            NULL;  -- APEX (read_only_rules.md): entrable('CITY_CODE_OF_ID', FALSE);
-            NULL;  -- APEX (read_only_rules.md): entrable('IMPR_EXPR_TYPE', FALSE);
-            NULL;  -- APEX (read_only_rules.md): entrable('IMPR_TYPE_CD', FALSE);
-            NULL;  -- APEX (read_only_rules.md): entrable('BRNH_CITY_CD', FALSE);
-            NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID_BRNCH', FALSE);
-            NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID_TYPE_CD', FALSE);
-            NULL;  -- APEX (read_only_rules.md): entrable('CAR_AGENT_FLAG', FALSE);
-        END IF;
+        -- APEX-DA: IF p_rec.impr_nbr IS NULL THEN
+            -- APEX-DA: entrable('BUS_ID', TRUE);
+            -- APEX-DA: entrable('BUS_ID_EXPRD_DT', TRUE);
+            -- APEX-DA: entrable('ARBC_IMPR_NAME', TRUE);
+            -- APEX-DA: entrable('CITY_CODE_OF_ID', TRUE);
+            -- APEX-DA: IF p_ctx.class_cd = 1 AND p_ctx.user_type = 3 THEN
+                -- APEX-DA: entrable('IMPR_EXPR_TYPE', FALSE);
+            -- APEX-DA: ELSE
+                -- APEX-DA: entrable('IMPR_EXPR_TYPE', TRUE);
+            -- APEX-DA: END IF;
+            -- APEX-DA: entrable('IMPR_TYPE_CD', TRUE);
+            -- APEX-DA: entrable('IMPR_POB_NBR', TRUE);
+            -- APEX-DA: entrable('IMPR_ZIP_CD', TRUE);
+            -- APEX-DA: entrable('IMPR_TEL_NBR', TRUE);
+            -- APEX-DA: entrable('IMPR_FAX_NBR', TRUE);
+            -- APEX-DA: entrable('IMPR_TELEX_NBR', TRUE);
+            -- APEX-DA: entrable('COMM_RGSTRTN_TYPE', FALSE);
+        -- APEX-DA: ELSE
+            -- APEX-DA: ui_focus('IMPR_NBR');
+            -- APEX-DA: entrable('BUS_ID', FALSE);
+            -- APEX-DA: entrable('BUS_ID_EXPRD_DT', FALSE);
+            -- APEX-DA: entrable('ARBC_IMPR_NAME', FALSE);
+            -- APEX-DA: entrable('COMM_RGSTRTN_TYPE', FALSE);
+            -- APEX-DA: entrable('CITY_CODE_OF_ID', FALSE);
+            -- APEX-DA: entrable('IMPR_EXPR_TYPE', FALSE);
+            -- APEX-DA: entrable('IMPR_TYPE_CD', FALSE);
+            -- APEX-DA: entrable('BRNH_CITY_CD', FALSE);
+            -- APEX-DA: entrable('BUS_ID_BRNCH', FALSE);
+            -- APEX-DA: entrable('BUS_ID_TYPE_CD', FALSE);
+            -- APEX-DA: entrable('CAR_AGENT_FLAG', FALSE);
+        -- APEX-DA: END IF;
 
         IF p_ctx.code = 'IMPR1110F2' THEN
             FORMS_APX.SET_GLOBAL('FUNS_BUSID', '1');
-            NULL;  -- APEX (read_only_rules.md): entrable('COMM_RGSTRTN_TYPE', TRUE);
-            NULL;  -- APEX (read_only_rules.md): entrable('CITY_CODE_OF_ID', TRUE);
-            NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID', TRUE);
-            NULL;  -- APEX (read_only_rules.md): entrable('BRNH_CITY_CD', TRUE);
-            NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID_BRNCH', TRUE);
-            NULL;  -- APEX (read_only_rules.md): ui_focus('COMM_RGSTRTN_TYPE');
+            -- APEX-DA: entrable('COMM_RGSTRTN_TYPE', TRUE);
+            -- APEX-DA: entrable('CITY_CODE_OF_ID', TRUE);
+            -- APEX-DA: entrable('BUS_ID', TRUE);
+            -- APEX-DA: entrable('BRNH_CITY_CD', TRUE);
+            -- APEX-DA: entrable('BUS_ID_BRNCH', TRUE);
+            -- APEX-DA: ui_focus('COMM_RGSTRTN_TYPE');
             p_ctx.code := NULL;
         ELSIF p_ctx.code = 'IMPR1110F1' THEN
             IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
@@ -870,8 +866,8 @@ AS
                 END IF;
             ELSE
                 p_ctx.code := NULL;
-                NULL;  -- APEX (read_only_rules.md): entrable('ARBC_IMPR_NAME', TRUE);
-                NULL;  -- APEX (read_only_rules.md): ui_focus('ARBC_IMPR_NAME');
+                -- APEX-DA: entrable('ARBC_IMPR_NAME', TRUE);
+                -- APEX-DA: ui_focus('ARBC_IMPR_NAME');
             END IF;
             p_ctx.code := NULL;
         ELSIF p_ctx.code = 'IMPR1110F5' THEN
@@ -885,40 +881,43 @@ AS
                         IF p_answer = c_yes THEN       -- CONFIRM: NEW_RECORD_CONFIRM_TEXT
                             p_rec.arbc_impr_name := v_impr_name;
                         ELSE
-                            NULL;  -- APEX (read_only_rules.md): entrable('ARBC_IMPR_NAME', TRUE);
-                            NULL;  -- APEX (read_only_rules.md): ui_focus('ARBC_IMPR_NAME');
+                            NULL;
+                            -- APEX-DA: entrable('ARBC_IMPR_NAME', TRUE);
+                            -- APEX-DA: ui_focus('ARBC_IMPR_NAME');
                         END IF;
                         p_ctx.code := NULL;
                     ELSE
-                        NULL;  -- APEX (read_only_rules.md): entrable('ARBC_IMPR_NAME', TRUE);
-                        NULL;  -- APEX (read_only_rules.md): ui_focus('ARBC_IMPR_NAME');
+                        -- APEX-DA: entrable('ARBC_IMPR_NAME', TRUE);
+                        -- APEX-DA: ui_focus('ARBC_IMPR_NAME');
                         IF p_rec.comm_rgstrtn_type = 1 THEN   -- Forms resets CODE only in this branch
                             p_ctx.code := NULL;
                         END IF;
                     END IF;
                 ELSE
-                    NULL;  -- APEX (read_only_rules.md): entrable('ARBC_IMPR_NAME', TRUE);
-                    NULL;  -- APEX (read_only_rules.md): ui_focus('ARBC_IMPR_NAME');
+                    NULL;
+                    -- APEX-DA: entrable('ARBC_IMPR_NAME', TRUE);
+                    -- APEX-DA: ui_focus('ARBC_IMPR_NAME');
                 END IF;
             ELSE
-                NULL;  -- APEX (read_only_rules.md): entrable('ARBC_IMPR_NAME', TRUE);
-                NULL;  -- APEX (read_only_rules.md): ui_focus('ARBC_IMPR_NAME');
+                NULL;
+                -- APEX-DA: entrable('ARBC_IMPR_NAME', TRUE);
+                -- APEX-DA: ui_focus('ARBC_IMPR_NAME');
             END IF;
             p_ctx.code := NULL;
         ELSIF p_ctx.code = 'IMPR1110F3' THEN
             FORMS_APX.SET_GLOBAL('FUNS_IMP', '1');
             FORMS_APX.SET_GLOBAL('CHK_IMP_TYP', '1');
-            NULL;  -- APEX (read_only_rules.md): entrable('IMPR_TYPE_CD', TRUE);
-            NULL;  -- APEX (read_only_rules.md): ui_focus('IMPR_TYPE_CD');
+            -- APEX-DA: entrable('IMPR_TYPE_CD', TRUE);
+            -- APEX-DA: ui_focus('IMPR_TYPE_CD');
             IF p_ctx.class_cd = 19 AND p_ctx.user_type = 1 THEN
                 IF p_rec.impr_type_cd <> 4 THEN
                     -- INTRFACE.MAKE_BLOCK_FULL_OPERATION('IMPORTERS',FALSE,TRUE,FALSE): update only
-                    NULL;  -- APEX (read_only_rules.md): ui('IMPORTERS', 'BLOCK_UPDATE_ONLY', TRUE);
+                    -- APEX-DA: ui('IMPORTERS', 'BLOCK_UPDATE_ONLY', TRUE);
                     p_rec.impr_type_cd := 19;
                     FORMS_APX.MESSAGE(' تم تعديل النشاط التجاري الى "مؤسسة/شركة/استثمارية "  ');
                     -- HIGH: Forms COMMIT here (fires PRE-UPDATE/UPDATE/POST-UPDATE). Recorded as
                     -- DO_COMMIT: the page must submit with request SAVE right after this call.
-                    NULL;  -- APEX (read_only_rules.md): ui('IMPORTERS', 'DO_COMMIT', TRUE);
+                    -- APEX-DA: ui('IMPORTERS', 'DO_COMMIT', TRUE);
                 END IF;
                 IF p_rec.impr_type_cd = 4 THEN
                     FORMS_APX.MESSAGE('لا يمكن التعديل  للمستورد الشخصي الا من خلال الدعم الفني التطبيقات');
@@ -926,17 +925,17 @@ AS
             END IF;
             p_ctx.code := NULL;
         ELSIF p_ctx.code = 'IMPR1110F4' THEN
-            NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID_EXPRD_DT', TRUE);
-            NULL;  -- APEX (read_only_rules.md): ui_focus('BUS_ID_EXPRD_DT');
+            -- APEX-DA: entrable('BUS_ID_EXPRD_DT', TRUE);
+            -- APEX-DA: ui_focus('BUS_ID_EXPRD_DT');
             p_ctx.code := NULL;
         ELSIF p_ctx.code = 'IMPR1110SF6' THEN
-            NULL;  -- APEX (read_only_rules.md): entrable('CAR_AGENT_FLAG', TRUE);
-            NULL;  -- APEX (read_only_rules.md): ui_focus('CAR_AGENT_FLAG');
+            -- APEX-DA: entrable('CAR_AGENT_FLAG', TRUE);
+            -- APEX-DA: ui_focus('CAR_AGENT_FLAG');
             p_ctx.code := NULL;
         END IF;
 
-        NULL;  -- APEX (read_only_rules.md): ui('CITY_CODE_OF_ID', 'REQUIRED', FALSE);
-        NULL;  -- APEX (read_only_rules.md): ui('BRNH_CITY_CD', 'REQUIRED', FALSE);
+        -- APEX-DA: ui('CITY_CODE_OF_ID', 'REQUIRED', FALSE);
+        -- APEX-DA: ui('BRNH_CITY_CD', 'REQUIRED', FALSE);
         ctry_100_defaults(p_rec);
     END IMPORTERS_NEW_RECORD_INSTANCE;
 
@@ -978,13 +977,6 @@ AS
             CLOSE c_p_name;
         END IF;
     END IMPORTERS_PRE_RECORD;
-
-    -- Source: IMPORTERS.WHEN-CLEAR-BLOCK
-    PROCEDURE IMPORTERS_WHEN_CLEAR_BLOCK
-    IS
-    BEGIN
-        FORMS_APX.SET_GLOBAL('STAT_CLR', '1');
-    END IMPORTERS_WHEN_CLEAR_BLOCK;
 
     -- Source: IMPORTERS.POST-QUERY
     --@ORIG IMPORTERS.POST-QUERY
@@ -1414,7 +1406,7 @@ AS
         p_rec.b_id_nbr    := p_rec.id_nbr;
         p_rec.b_email     := p_rec.email;
         FORMS_APX.SET_GLOBAL('STAT_QUE', '1');
-        NULL;  -- APEX (read_only_rules.md): TYPE_ENTRABLE_QUERY(p_rec);
+        -- APEX-DA: TYPE_ENTRABLE_QUERY(p_rec);
         IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
             IF p_rec.bus_id_brnch IS NOT NULL THEN
                 BEGIN
@@ -1553,20 +1545,21 @@ AS
                    AND bus_id         = p_rec.bus_id
                    AND bus_id_brnch   = p_rec.bus_id_brnch
                    AND ctry_cd        = p_rec.ctry_cd;
-                IF p_rec.wasl_city_name IS NOT NULL THEN
-                    NULL;  -- APEX (read_only_rules.md): ui('CITY_CODE', 'VISIBLE', FALSE);
-                    NULL;  -- APEX (read_only_rules.md): ui('CITY_CODE2', 'VISIBLE', FALSE);
-                    NULL;  -- APEX (read_only_rules.md): ui('CITY_NAME', 'VISIBLE', FALSE);
-                ELSE
-                    NULL;  -- APEX (read_only_rules.md): ui('WASL_CITY_NAME', 'VISIBLE', FALSE);
-                END IF;
+                -- APEX-DA: IF p_rec.wasl_city_name IS NOT NULL THEN
+                    -- APEX-DA: ui('CITY_CODE', 'VISIBLE', FALSE);
+                    -- APEX-DA: ui('CITY_CODE2', 'VISIBLE', FALSE);
+                    -- APEX-DA: ui('CITY_NAME', 'VISIBLE', FALSE);
+                -- APEX-DA: ELSE
+                    -- APEX-DA: ui('WASL_CITY_NAME', 'VISIBLE', FALSE);
+                -- APEX-DA: END IF;
             EXCEPTION
                 WHEN NO_DATA_FOUND THEN
                     p_rec.wasl_city_name := p_rec.city_name;
-                    NULL;  -- APEX (read_only_rules.md): ui('WASL_CITY_NAME', 'VISIBLE', FALSE);
+                    -- APEX-DA: ui('WASL_CITY_NAME', 'VISIBLE', FALSE);
             END;
         ELSE
-            NULL;  -- APEX (read_only_rules.md): ui('WASL_CITY_NAME', 'VISIBLE', FALSE);
+            NULL;
+            -- APEX-DA: ui('WASL_CITY_NAME', 'VISIBLE', FALSE);
         END IF;
         -- CGFK$RESET_BLOCK_WHERE_CLAUSE: not needed (no DEFAULT_WHERE manipulation in APEX)
     END IMPORTERS_POST_QUERY;
@@ -1792,14 +1785,14 @@ AS
 
         chk_dupl_imp_brkr(p_rec, p_ctx);
         IF p_rec.impr_tel_nbr IS NULL THEN
-            NULL;  -- APEX (read_only_rules.md): entrable('IMPR_TEL_NBR', TRUE);
+            -- APEX-DA: entrable('IMPR_TEL_NBR', TRUE);
             FORMS_APX.FORM_TRIGGER_FAILURE('يجب ادخال رقم الهاتف');
         END IF;
         IF ((p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd IN (1, 3, 5, 6, 8, 12))
             OR (p_rec.bus_id_type_cd = 3 AND p_rec.impr_type_cd = 4)
             OR (p_rec.bus_id_type_cd = 4 AND p_rec.impr_type_cd = 4)) THEN
             IF p_rec.bus_id_exprd_dt IS NULL THEN
-                NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID_EXPRD_DT', TRUE);
+                -- APEX-DA: entrable('BUS_ID_EXPRD_DT', TRUE);
                 FORMS_APX.DISPLAY_ARABIC_ERROR(9, 220);
             END IF;
         END IF;
@@ -1857,7 +1850,7 @@ AS
                     FORMS_APX.DISPLAY_ARABIC_ERROR(9, 230);
                 END IF;
             ELSE
-                NULL;  -- APEX (read_only_rules.md): entrable('COMM_RGSTRTN_TYPE', TRUE);
+                -- APEX-DA: entrable('COMM_RGSTRTN_TYPE', TRUE);
                 FORMS_APX.DISPLAY_ARABIC_ERROR(9, 240);
             END IF;
         END IF;
@@ -1917,7 +1910,7 @@ AS
             FORMS_APX.SET_GLOBAL('SET', v_impr_nbr);
             IF FORMS_APX.GET_GLOBAL('SET') IS NOT NULL THEN
                 p_rec.hq_impr_nbr := FORMS_APX.GET_GLOBAL('SET');
-                NULL;  -- APEX (read_only_rules.md): lock_key_items;
+                -- APEX-DA: lock_key_items;
             END IF;
         ELSE
             FORMS_APX.FORM_TRIGGER_FAILURE(v_msg_txt);
@@ -1978,8 +1971,8 @@ AS
         IF FORMS_APX.GET_GLOBAL('SET') IS NOT NULL THEN
             p_rec.impr_nbr    := FORMS_APX.GET_GLOBAL('SET');
             p_rec.hq_impr_nbr := FORMS_APX.GET_GLOBAL('SET');
-            NULL;  -- APEX (read_only_rules.md): lock_key_items;
-            NULL;  -- APEX (read_only_rules.md): entrable('IMPR_TEL_NBR', FALSE);
+            -- APEX-DA: lock_key_items;
+            -- APEX-DA: entrable('IMPR_TEL_NBR', FALSE);
         END IF;
         return_impr_id(p_rec, p_ctx);
     END IMPORTERS_POST_INSERT;
@@ -2141,7 +2134,7 @@ AS
             OR (p_rec.bus_id_type_cd = 3 AND p_rec.impr_type_cd = 4)
             OR (p_rec.bus_id_type_cd = 4 AND p_rec.impr_type_cd = 4)) THEN
             IF p_rec.bus_id_exprd_dt IS NULL THEN
-                NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID_EXPRD_DT', TRUE);
+                -- APEX-DA: entrable('BUS_ID_EXPRD_DT', TRUE);
                 FORMS_APX.DISPLAY_ARABIC_ERROR(9, 220);
             END IF;
         END IF;
@@ -2212,7 +2205,7 @@ AS
                     FORMS_APX.DISPLAY_ARABIC_ERROR(9, 230);
                 END IF;
             ELSE
-                NULL;  -- APEX (read_only_rules.md): entrable('COMM_RGSTRTN_TYPE', TRUE);
+                -- APEX-DA: entrable('COMM_RGSTRTN_TYPE', TRUE);
                 FORMS_APX.DISPLAY_ARABIC_ERROR(9, 240);
             END IF;
         END IF;
@@ -2246,7 +2239,7 @@ AS
     PROCEDURE IMPORTERS_POST_UPDATE (p_rec IN OUT NOCOPY T_RECORD)
     IS
     BEGIN
-        NULL;  -- APEX (read_only_rules.md): lock_key_items;
+        -- APEX-DA: lock_key_items;
         IF db_journal.is_journaling_on THEN
             db_journal.journaling_off;
         END IF;
@@ -2853,7 +2846,8 @@ AS
                        AND it.status         = 1
                        AND it.bus_id_type_cd = idt.bus_id_type_cd;
                 ELSIF bus_id_count > 1 THEN
-                    NULL;  -- APEX (read_only_rules.md): ui('IMPR_TYPE_CD', 'OPEN_LOV', TRUE);
+                    NULL;
+                    -- APEX-DA: ui('IMPR_TYPE_CD', 'OPEN_LOV', TRUE);
                 ELSE
                     p_rec.impr_type_cd := NULL;
                     FORMS_APX.DISPLAY_ARABIC_ERROR(2, 170);
@@ -2869,13 +2863,13 @@ AS
         END IF;
 
         IF FORMS_APX.GET_GLOBAL('FUNS_IMP') = '0' THEN
-            IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
-                NULL;  -- APEX (read_only_rules.md): entrable('COMM_RGSTRTN_TYPE', TRUE);
-                NULL;  -- APEX (read_only_rules.md): ui('COMM_RGSTRTN_TYPE', 'REQUIRED', TRUE);
-            ELSE
-                NULL;  -- APEX (read_only_rules.md): entrable('COMM_RGSTRTN_TYPE', FALSE);
-                NULL;  -- APEX (read_only_rules.md): ui('COMM_RGSTRTN_TYPE', 'REQUIRED', FALSE);
-            END IF;
+            -- APEX-DA: IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
+                -- APEX-DA: entrable('COMM_RGSTRTN_TYPE', TRUE);
+                -- APEX-DA: ui('COMM_RGSTRTN_TYPE', 'REQUIRED', TRUE);
+            -- APEX-DA: ELSE
+                -- APEX-DA: entrable('COMM_RGSTRTN_TYPE', FALSE);
+                -- APEX-DA: ui('COMM_RGSTRTN_TYPE', 'REQUIRED', FALSE);
+            -- APEX-DA: END IF;
             IF p_rec.impr_type_cd IN (1, 2, 5, 8, 11) THEN
                 p_rec.ctry_cd     := 100;
                 p_rec.add_ctry_cd := 100;
@@ -2897,7 +2891,7 @@ AS
                     p_rec.bus_id := 'ملكى' || impr_seq;
                 END IF;
             ELSIF p_rec.impr_type_cd = 12 THEN
-                NULL;  -- APEX (read_only_rules.md): TYPE_ENTRABLE_QUERY(p_rec);
+                -- APEX-DA: TYPE_ENTRABLE_QUERY(p_rec);
                 IF p_rec.ctry_cd IS NOT NULL THEN
                     SELECT COUNT(*)
                       INTO v_count
@@ -2921,13 +2915,13 @@ AS
             END IF;
             -- entrable state per type: identical to the POST-QUERY branches, except type 11
             -- (POST-QUERY same) and types 16/17/18/20 (only here) - handled below.
-            IF p_rec.impr_type_cd IN (16, 17, 18, 20) THEN
-                NULL;  -- APEX (read_only_rules.md): entrable('CTRY_CD', FALSE); entrable('ADD_CTRY_CD', FALSE);
-                NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID', FALSE); entrable('BUS_ID_BRNCH', FALSE);
-                NULL;  -- APEX (read_only_rules.md): entrable('CITY_CODE_OF_ID', FALSE); ui('CITY_CODE_OF_ID2', 'ENABLED', FALSE);
-            ELSE
-                NULL;  -- APEX (read_only_rules.md): TYPE_ENTRABLE_QUERY(p_rec);
-            END IF;
+            -- APEX-DA: IF p_rec.impr_type_cd IN (16, 17, 18, 20) THEN
+                -- APEX-DA: entrable('CTRY_CD', FALSE); entrable('ADD_CTRY_CD', FALSE);
+                -- APEX-DA: entrable('BUS_ID', FALSE); entrable('BUS_ID_BRNCH', FALSE);
+                -- APEX-DA: entrable('CITY_CODE_OF_ID', FALSE); ui('CITY_CODE_OF_ID2', 'ENABLED', FALSE);
+            -- APEX-DA: ELSE
+                -- APEX-DA: TYPE_ENTRABLE_QUERY(p_rec);
+            -- APEX-DA: END IF;
             IF p_rec.ctry_cd IS NOT NULL THEN
                 SELECT crty_arbc_name
                   INTO p_rec.crty_arbc_name
@@ -2972,13 +2966,13 @@ AS
     --   END IF ;
     --   END;
     -- <<<
-    PROCEDURE IMPR_TYPE_CD_POST_CHANGE (p_rec IN T_RECORD)
+    PROCEDURE IMPR_TYPE_CD_POST_CHANGE
     IS
     BEGIN
         FORMS_APX.SET_GLOBAL('FLAGUPDATE', '1');
-        IF p_rec.impr_type_cd IN (1, 3, 5, 6, 8, 19) THEN
-            NULL;  -- APEX (read_only_rules.md): ui('CITY_CODE_OF_ID', 'REQUIRED', TRUE);
-        END IF;
+        -- APEX-DA: IF p_rec.impr_type_cd IN (1, 3, 5, 6, 8, 19) THEN
+            -- APEX-DA: ui('CITY_CODE_OF_ID', 'REQUIRED', TRUE);
+        -- APEX-DA: END IF;
     END IMPR_TYPE_CD_POST_CHANGE;
 
     -- Source: IMPORTERS.IMPR_TYPE_CD.WHEN-NEW-ITEM-INSTANCE
@@ -3018,7 +3012,8 @@ AS
     IS
     BEGIN
         IF FORMS_APX.GET_GLOBAL('EXEC_QUERY_NOW') = '1' THEN
-            NULL;  -- APEX (read_only_rules.md): ui('IMPORTERS', 'REQUERY', TRUE);
+            NULL;
+            -- APEX-DA: ui('IMPORTERS', 'REQUERY', TRUE);
         END IF;
         ctry_100_defaults(p_rec);
     END IMPR_TYPE_CD_NEW_ITEM_INSTANCE;
@@ -3121,13 +3116,13 @@ AS
             IF p_rec.impr_type_cd = 4 AND p_rec.bus_id_type_cd = 3
                OR p_rec.impr_type_cd = 4 AND p_rec.bus_id_type_cd = 5 THEN
                 p_rec.ctry_cd := 100;
-                NULL;  -- APEX (read_only_rules.md): ui('CTRY_CD', 'ENABLED', FALSE);
+                -- APEX-DA: ui('CTRY_CD', 'ENABLED', FALSE);
                 SELECT crty_arbc_name INTO p_rec.add_crty_arbc_name
                   FROM countries
                  WHERE ctry_cd = 100;
             END IF;
             p_rec.add_ctry_cd := 100;
-            NULL;  -- APEX (read_only_rules.md): ui('ADD_CTRY_CD', 'ENABLED', FALSE);
+            -- APEX-DA: ui('ADD_CTRY_CD', 'ENABLED', FALSE);
             SELECT crty_arbc_name INTO p_rec.crty_arbc_name
               FROM countries
              WHERE ctry_cd = 100;
@@ -3160,15 +3155,16 @@ AS
     BEGIN
         IF p_rec.comm_rgstrtn_type = 1 THEN
             p_rec.bus_id_brnch := NULL;
-            NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID_BRNCH', FALSE);
-            NULL;  -- APEX (read_only_rules.md): entrable('BRNH_CITY_CD', FALSE);
-            NULL;  -- APEX (read_only_rules.md): ui('BRNH_CITY_CD', 'REQUIRED', FALSE);
-            NULL;  -- APEX (read_only_rules.md): ui('BUS_ID_BRNCH', 'VALID', TRUE);
+            -- APEX-DA: entrable('BUS_ID_BRNCH', FALSE);
+            -- APEX-DA: entrable('BRNH_CITY_CD', FALSE);
+            -- APEX-DA: ui('BRNH_CITY_CD', 'REQUIRED', FALSE);
+            -- APEX-DA: ui('BUS_ID_BRNCH', 'VALID', TRUE);
         ELSIF p_rec.comm_rgstrtn_type = 2 THEN
-            NULL;  -- APEX (read_only_rules.md): ui('BRNH_CITY_CD', 'REQUIRED', TRUE);
-            NULL;  -- APEX (read_only_rules.md): entrable('BRNH_CITY_CD', TRUE);
-            NULL;  -- APEX (read_only_rules.md): entrable('BUS_ID_BRNCH', TRUE);
-            NULL;  -- APEX (read_only_rules.md): ui('BUS_ID_BRNCH', 'VALID', FALSE);
+            NULL;
+            -- APEX-DA: ui('BRNH_CITY_CD', 'REQUIRED', TRUE);
+            -- APEX-DA: entrable('BRNH_CITY_CD', TRUE);
+            -- APEX-DA: entrable('BUS_ID_BRNCH', TRUE);
+            -- APEX-DA: ui('BUS_ID_BRNCH', 'VALID', FALSE);
         END IF;
     END COMM_RGSTRTN_TYPE_LIST_CHANGED;
 
@@ -3290,16 +3286,6 @@ AS
             END;
         END IF;
     END CITY_CODE_OF_ID_VALIDATE_ITEM;
-
-    -- Source: IMPORTERS.CITY_CODE_OF_ID.WHEN-NEW-ITEM-INSTANCE
-    PROCEDURE CITY_CODE_OF_ID_WHEN_NEW_ITEM (p_rec IN T_RECORD)
-    IS
-    BEGIN
-        IF p_rec.comm_rgstrtn_type = 2 THEN
-            NULL;  -- APEX (read_only_rules.md): ui('BRNH_CITY_CD', 'REQUIRED', TRUE);
-            NULL;  -- APEX (read_only_rules.md): ui('BRNH_CITY_CD', 'VALID', FALSE);
-        END IF;
-    END CITY_CODE_OF_ID_WHEN_NEW_ITEM;
 
     -- Suspended importer with the same BUS_ID (the WARNING inside BUS_ID_WHEN_VALIDATE_ITEM). 0 = no warning.
     FUNCTION BUS_ID_SUSPENDED_IMPORTER (p_rec IN T_RECORD) RETURN NUMBER
@@ -3553,7 +3539,6 @@ AS
     --   END;
     -- <<<
     PROCEDURE BUS_ID_WHEN_VALIDATE_ITEM (p_rec         IN OUT NOCOPY T_RECORD,
-                          p_ctx         IN T_CONTEXT,
                           p_cr_answer   IN PLS_INTEGER DEFAULT c_yes,
                           p_susp_answer IN PLS_INTEGER DEFAULT c_yes)
     IS
@@ -3673,31 +3658,34 @@ AS
                           FROM comm_impr_rgstr
                          WHERE bus_id   = p_rec.bus_id
                            AND brnchreg = 0;
-                        NULL;  -- APEX (read_only_rules.md): cr_fields_entrable(FALSE, TRUE);
+                        -- APEX-DA: cr_fields_entrable(FALSE, TRUE);
                     ELSE
                         v_ret := lib_usr.gnrl.get_customs_setting('COMM_TABLE_UNCHECK', 9);
                         IF NVL(v_ret, 0) = 0 THEN
                             FORMS_APX.DISPLAY_ARABIC_ERROR(9, 190);
                         ELSE
-                            NULL;  -- APEX (read_only_rules.md): cr_fields_entrable(TRUE, TRUE);
+                            NULL;
+                            -- APEX-DA: cr_fields_entrable(TRUE, TRUE);
                         END IF;
                     END IF;
                 END IF;
             ELSE
-                NULL;  -- APEX (read_only_rules.md): entrable('ACTIVITY', TRUE);
+                NULL;
+                -- APEX-DA: entrable('ACTIVITY', TRUE);
             END IF;
         END IF;
-        IF p_rec.bus_id IS NOT NULL AND p_rec.activity IS NULL THEN
-            NULL;  -- APEX (read_only_rules.md): entrable('ACTIVITY', TRUE);
-        ELSE
-            NULL;  -- APEX (read_only_rules.md): entrable('ACTIVITY', FALSE);
-        END IF;
+        -- APEX-DA: IF p_rec.bus_id IS NOT NULL AND p_rec.activity IS NULL THEN
+            -- APEX-DA: entrable('ACTIVITY', TRUE);
+        -- APEX-DA: ELSE
+            -- APEX-DA: entrable('ACTIVITY', FALSE);
+        -- APEX-DA: END IF;
         check_bus_id;
         IF p_rec.impr_type_cd = 4 AND p_rec.bus_id_type_cd = 5 THEN
             p_rec.b_id_nbr := p_rec.bus_id;
-            NULL;  -- APEX (read_only_rules.md): ui('B_ID_NBR', 'ENABLED', FALSE);
+            -- APEX-DA: ui('B_ID_NBR', 'ENABLED', FALSE);
         ELSE
-            NULL;  -- APEX (read_only_rules.md): ui('B_ID_NBR', 'ENABLED', TRUE);
+            NULL;
+            -- APEX-DA: ui('B_ID_NBR', 'ENABLED', TRUE);
         END IF;
         IF p_rec.impr_type_cd = 4 AND p_rec.bus_id_type_cd IN (5, 3) THEN
             IF NOT check_idno(p_rec.bus_id) THEN
@@ -3754,14 +3742,14 @@ AS
     BEGIN
         IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
             IF p_rec.comm_rgstrtn_type IS NULL THEN
-                NULL;  -- APEX (read_only_rules.md): ui('BUS_ID', 'REQUIRED', FALSE);
+                -- APEX-DA: ui('BUS_ID', 'REQUIRED', FALSE);
                 FORMS_APX.DISPLAY_ARABIC_INFO(9, 240);
-                NULL;  -- APEX (read_only_rules.md): ui_focus('COMM_RGSTRTN_TYPE');
+                -- APEX-DA: ui_focus('COMM_RGSTRTN_TYPE');
             END IF;
-            IF p_rec.comm_rgstrtn_type = 2 THEN
-                NULL;  -- APEX (read_only_rules.md): ui('BRNH_CITY_CD', 'REQUIRED', TRUE);
-                NULL;  -- APEX (read_only_rules.md): ui('BRNH_CITY_CD', 'VALID', FALSE);
-            END IF;
+            -- APEX-DA: IF p_rec.comm_rgstrtn_type = 2 THEN
+                -- APEX-DA: ui('BRNH_CITY_CD', 'REQUIRED', TRUE);
+                -- APEX-DA: ui('BRNH_CITY_CD', 'VALID', FALSE);
+            -- APEX-DA: END IF;
         END IF;
         IF p_rec.city_code_of_id IS NOT NULL
            AND (FORMS_APX.GET_GLOBAL('MINS_COMM_CD') IS NOT NULL OR p_rec.id_mins_comm_cd IS NOT NULL)
@@ -3802,15 +3790,6 @@ AS
         WHEN NO_DATA_FOUND THEN
             FORMS_APX.DISPLAY_ARABIC_ERROR(1, 120);
     END BRNH_CITY_CD_VALIDATE_ITEM;
-
-    -- Source: IMPORTERS.BRNH_CITY_CD.WHEN-NEW-ITEM-INSTANCE
-    PROCEDURE BRNH_CITY_CD_NEW_ITEM_INSTANCE
-    IS
-    BEGIN
-        NULL;  -- APEX (read_only_rules.md): ui('BRNH_CITY_CD', 'REQUIRED', FALSE);
-        NULL;  -- APEX (read_only_rules.md): ui('BUS_ID_BRNCH', 'REQUIRED', TRUE);
-        NULL;  -- APEX (read_only_rules.md): ui('BUS_ID_BRNCH', 'VALID', FALSE);
-    END BRNH_CITY_CD_NEW_ITEM_INSTANCE;
 
     -- Source: IMPORTERS.BUS_ID_BRNCH.WHEN-VALIDATE-ITEM
     -- p_cr_answer: alert 9-120 ("سيتم تحويل الرقم الفرعي إلى الرقم ...") - ALERT_BUTTON1 = c_yes.
@@ -3956,7 +3935,6 @@ AS
     --   END;
     -- <<<
     PROCEDURE BUS_ID_BRNCH_VALIDATE_ITEM (p_rec       IN OUT NOCOPY T_RECORD,
-                                p_ctx       IN T_CONTEXT,
                                 p_cr_answer IN PLS_INTEGER DEFAULT c_yes)
     IS
         v_all_bus_id      VARCHAR2(10);
@@ -4007,7 +3985,8 @@ AS
                     END IF;
                 END IF;
             ELSE
-                NULL;  -- APEX (read_only_rules.md): ui('BUS_ID_BRNCH', 'REQUIRED', FALSE);
+                NULL;
+                -- APEX-DA: ui('BUS_ID_BRNCH', 'REQUIRED', FALSE);
             END IF;
             chk_impr_dupl(p_rec);
             IF FORMS_APX.GET_GLOBAL('FUNS_BUSID') = '0' THEN
@@ -4029,13 +4008,14 @@ AS
                                   FROM comm_impr_rgstr
                                  WHERE bus_id       = p_rec.bus_id
                                    AND brnch_bus_id = p_rec.bus_id_brnch;
-                                NULL;  -- APEX (read_only_rules.md): cr_fields_entrable(FALSE, FALSE);
+                                -- APEX-DA: cr_fields_entrable(FALSE, FALSE);
                             ELSE
                                 v_ret := lib_usr.gnrl.get_customs_setting('COMM_TABLE_UNCHECK', 9);
                                 IF NVL(v_ret, 0) = 0 THEN
                                     FORMS_APX.DISPLAY_ARABIC_ERROR(9, 190);
                                 ELSE
-                                    NULL;  -- APEX (read_only_rules.md): cr_fields_entrable(TRUE, FALSE);
+                                    NULL;
+                                    -- APEX-DA: cr_fields_entrable(TRUE, FALSE);
                                 END IF;
                             END IF;
                         END IF;
@@ -4101,11 +4081,11 @@ AS
     IS
         v_mins_comm_cd NUMBER;
     BEGIN
-        IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
-            IF p_rec.bus_id IS NULL OR p_rec.city_code_of_id IS NULL THEN
-                NULL;  -- APEX (read_only_rules.md): ui('BUS_ID_BRNCH', 'REQUIRED', FALSE);
-            END IF;
-        END IF;
+        -- APEX-DA: IF p_rec.bus_id_type_cd = 2 AND p_rec.impr_type_cd != 12 THEN
+            -- APEX-DA: IF p_rec.bus_id IS NULL OR p_rec.city_code_of_id IS NULL THEN
+                -- APEX-DA: ui('BUS_ID_BRNCH', 'REQUIRED', FALSE);
+            -- APEX-DA: END IF;
+        -- APEX-DA: END IF;
         IF p_rec.city_code = 100 THEN       -- SUGGESTION: CITY_CODE (city) compared with 100 (country code?) - kept
             IF p_rec.brnh_city_cd IS NOT NULL THEN
                 BEGIN
@@ -4310,7 +4290,7 @@ AS
             p_rec.add_ctry_cd        := NULL;
             p_rec.add_crty_arbc_name := NULL;
         END IF;
-        NULL;  -- APEX (read_only_rules.md): ui_focus('ENG_IMPR_NAME');
+        -- APEX-DA: ui_focus('ENG_IMPR_NAME');
     END ARBC_IMPR_NAME_KEY_NEXT_ITEM;
 
     -- Source: IMPORTERS.ENG_IMPR_NAME.WHEN-VALIDATE-ITEM
@@ -5328,8 +5308,8 @@ AS
     BEGIN
         p_rec.impr_expr_type := 1;
         p_rec.express_post   := 2;
-        NULL;  -- APEX (read_only_rules.md): ui('IMPR_EXPR_TYPE', 'ENABLED', FALSE);
-        NULL;  -- APEX (read_only_rules.md): ui('EXPRESS_POST', 'ENABLED', FALSE);
+        -- APEX-DA: ui('IMPR_EXPR_TYPE', 'ENABLED', FALSE);
+        -- APEX-DA: ui('EXPRESS_POST', 'ENABLED', FALSE);
     END broker_int;
 
     -- Source: PU ADJ_FUNS (TMPLT function menu -> SET_FUNCTION_ENABLED() recorder; APEX: button/menu conditions)
@@ -6892,8 +6872,7 @@ AS
                                       P_ADD_CRTY_ARBC_NAME IN OUT VARCHAR2,
                                       P_CURR_PORT_CD            IN     NUMBER,
                                       P_CLASS_CD                IN     NUMBER,
-                                      V_USR_TYPE                IN     NUMBER,
-                                      P_LETTER_NBR        IN     VARCHAR2)
+                                      V_USR_TYPE                IN     NUMBER)
     IS
         r T_RECORD;
         c T_CONTEXT;
@@ -6901,7 +6880,6 @@ AS
         c.curr_port_cd := P_CURR_PORT_CD;
         c.class_cd := P_CLASS_CD;
         c.user_type := V_USR_TYPE;
-        c.letter_nbr := P_LETTER_NBR;
         r.impr_type_cd := P_IMPR_TYPE_CD;
         r.bus_id_type_cd := P_BUS_ID_TYPE_CD;
         r.ctry_cd := P_CTRY_CD;
@@ -7012,7 +6990,7 @@ AS
         r.b_id_nbr := P_B_ID_NBR;
         r.impr_id_type := P_IMPR_ID_TYPE;
         IF r.hq_impr_nbr IS NOT NULL THEN HQ_IMPR_NBR_POST_CHANGE; END IF;
-        IF r.impr_type_cd IS NOT NULL THEN IMPR_TYPE_CD_POST_CHANGE(r); END IF;
+        IF r.impr_type_cd IS NOT NULL THEN IMPR_TYPE_CD_POST_CHANGE; END IF;
         IF r.bus_id_type_cd IS NOT NULL THEN BUS_ID_TYPE_CD_POST_CHANGE(r); END IF;
         IF r.bus_id IS NOT NULL THEN BUS_ID_POST_CHANGE; END IF;
         IF r.bus_id_brnch IS NOT NULL THEN BUS_ID_BRNCH_POST_CHANGE; END IF;
@@ -7072,8 +7050,7 @@ AS
 
     -- Source: IMPORTERS.PRE-RECORD + WHEN-NEW-RECORD-INSTANCE (function modes F1..F5, SF6; type-19 rule without COMMIT)
     -- APEX  : Process "WHEN-NEW-RECORD-INSTANCE" (Before Header, after POST-QUERY / WHEN-CREATE-RECORD); FOS after a function (Confirm with NEW_RECORD_CONFIRM_TEXT first)
-    PROCEDURE WHEN_NEW_RECORD_INSTANCE (P_IMPR_NBR            IN     importers.impr_nbr%TYPE,
-                                        P_IMPR_TYPE_CD       IN OUT importers.impr_type_cd%TYPE,
+    PROCEDURE WHEN_NEW_RECORD_INSTANCE (P_IMPR_TYPE_CD       IN OUT importers.impr_type_cd%TYPE,
                                         P_BUS_ID_TYPE_CD      IN     importers.bus_id_type_cd%TYPE,
                                         P_COMM_RGSTRTN_TYPE   IN     importers.comm_rgstrtn_type%TYPE,
                                         P_BUS_ID              IN     importers.bus_id%TYPE,
@@ -7098,7 +7075,6 @@ AS
         c.class_cd := P_CLASS_CD;
         c.user_type := V_USR_TYPE;
         c.code := P_CODE;
-        r.impr_nbr := P_IMPR_NBR;
         r.impr_type_cd := P_IMPR_TYPE_CD;
         r.bus_id_type_cd := P_BUS_ID_TYPE_CD;
         r.comm_rgstrtn_type := P_COMM_RGSTRTN_TYPE;
@@ -7143,15 +7119,6 @@ AS
         r.bus_id_brnch := P_BUS_ID_BRNCH;
         RETURN NEW_RECORD_CONFIRM_TEXT(r, c);
     END NEW_RECORD_CONFIRM_TEXT;
-
-    -- Source: IMPORTERS.WHEN-CLEAR-BLOCK
-    -- APEX  : Process "WHEN-CLEAR-BLOCK" (request CLEAR of the page 0 toolbar)
-    PROCEDURE WHEN_CLEAR_BLOCK
-    IS
-
-    BEGIN
-        IMPORTERS_WHEN_CLEAR_BLOCK;
-    END WHEN_CLEAR_BLOCK;
 
     -- Source: IMPORTERS.PORT_CD.WHEN-VALIDATE-ITEM
     -- APEX  : Validation "PORT_CD VALIDATION" (request CREATE / SAVE): returns the error text
@@ -7273,7 +7240,7 @@ AS
         r.itidt_note := P_ITIDT_NOTE;
         r.status := P_STATUS;
         r.add_crty_arbc_name := P_ADD_CRTY_ARBC_NAME;
-        IMPR_TYPE_CD_POST_CHANGE(r);
+        IMPR_TYPE_CD_POST_CHANGE;
         IMPR_TYPE_CD_VALIDATE_ITEM(r, c);
         RETURN NULL;
     EXCEPTION
@@ -7313,7 +7280,7 @@ AS
         r.itidt_note := P_ITIDT_NOTE;
         r.status := P_STATUS;
         r.add_crty_arbc_name := P_ADD_CRTY_ARBC_NAME;
-        IMPR_TYPE_CD_POST_CHANGE(r);
+        IMPR_TYPE_CD_POST_CHANGE;
         IMPR_TYPE_CD_VALIDATE_ITEM(r, c);
         P_IMPR_TYPE_CD := r.impr_type_cd;
         P_BUS_ID_TYPE_CD := r.bus_id_type_cd;
@@ -7523,16 +7490,6 @@ AS
         P_L_CT_CITY_STATUS2 := r.l_ct_city_status2;
     END CITY_CODE_OF_ID_VALIDATE_ITEM;
 
-    -- Source: IMPORTERS.CITY_CODE_OF_ID.WHEN-NEW-ITEM-INSTANCE
-    -- APEX  : DA "CITY_CODE_OF_ID WHEN-NEW-ITEM-INSTANCE": FOS, Items to Return = the IN OUT / OUT items
-    PROCEDURE CITY_CODE_OF_ID_WHEN_NEW_ITEM (P_COMM_RGSTRTN_TYPE IN     importers.comm_rgstrtn_type%TYPE)
-    IS
-        r T_RECORD;
-    BEGIN
-        r.comm_rgstrtn_type := P_COMM_RGSTRTN_TYPE;
-        CITY_CODE_OF_ID_WHEN_NEW_ITEM(r);
-    END CITY_CODE_OF_ID_WHEN_NEW_ITEM;
-
     -- Source: IMPORTERS.BUS_ID.POST-CHANGE + WHEN-VALIDATE-ITEM
     -- APEX  : Validation "BUS_ID VALIDATION" (request CREATE / SAVE): returns the error text
     FUNCTION BUS_ID_VALIDATION (P_PORT_CD           IN     importers.port_cd%TYPE,
@@ -7568,7 +7525,6 @@ AS
         RETURN VARCHAR2
     IS
         r T_RECORD;
-        c T_CONTEXT;
     BEGIN
         r.port_cd := P_PORT_CD;
         r.impr_nbr := P_IMPR_NBR;
@@ -7602,7 +7558,7 @@ AS
         r.row_id := P_ROW_ID;
         r.rec_status := CASE WHEN r.row_id IS NULL THEN 'NEW' ELSE 'QUERY' END;
         BUS_ID_POST_CHANGE;
-        BUS_ID_WHEN_VALIDATE_ITEM(r, c, c_yes, c_yes);
+        BUS_ID_WHEN_VALIDATE_ITEM(r, c_yes, c_yes);
         RETURN NULL;
     EXCEPTION
         WHEN OTHERS THEN
@@ -7645,7 +7601,6 @@ AS
                                          P_SUSPEND_ANSWER    IN     PLS_INTEGER DEFAULT NULL)
     IS
         r T_RECORD;
-        c T_CONTEXT;
     BEGIN
         r.port_cd := P_PORT_CD;
         r.impr_nbr := P_IMPR_NBR;
@@ -7679,7 +7634,7 @@ AS
         r.row_id := P_ROW_ID;
         r.rec_status := CASE WHEN r.row_id IS NULL THEN 'NEW' ELSE 'QUERY' END;
         BUS_ID_POST_CHANGE;
-        BUS_ID_WHEN_VALIDATE_ITEM(r, c, NVL(P_ANSWER, c_yes), NVL(P_SUSPEND_ANSWER, c_yes));
+        BUS_ID_WHEN_VALIDATE_ITEM(r, NVL(P_ANSWER, c_yes), NVL(P_SUSPEND_ANSWER, c_yes));
         P_BUS_ID_STATUS := r.bus_id_status;
         P_BUS_ID_EXPRD_DT := TO_CHAR(r.bus_id_exprd_dt, FORMS_APX.HIJRI_DATE_FORMAT);
         P_CITY_CODE_OF_ID := r.city_code_of_id;
@@ -7853,7 +7808,7 @@ AS
         r.bus_id_brnch_entr := CASE WHEN BUS_ID_BRNCH_IS_READ_ONLY(r.impr_nbr, P_CODE, r.impr_type_cd,
                                             r.bus_id_type_cd, r.comm_rgstrtn_type) THEN 'N' ELSE 'Y' END;
         BUS_ID_BRNCH_POST_CHANGE;
-        BUS_ID_BRNCH_VALIDATE_ITEM(r, c, c_yes);
+        BUS_ID_BRNCH_VALIDATE_ITEM(r, c_yes);
         RETURN NULL;
     EXCEPTION
         WHEN OTHERS THEN
@@ -7931,7 +7886,7 @@ AS
         r.bus_id_brnch_entr := CASE WHEN BUS_ID_BRNCH_IS_READ_ONLY(r.impr_nbr, P_CODE, r.impr_type_cd,
                                             r.bus_id_type_cd, r.comm_rgstrtn_type) THEN 'N' ELSE 'Y' END;
         BUS_ID_BRNCH_POST_CHANGE;
-        BUS_ID_BRNCH_VALIDATE_ITEM(r, c, NVL(P_ANSWER, c_yes));
+        BUS_ID_BRNCH_VALIDATE_ITEM(r, NVL(P_ANSWER, c_yes));
         P_BUS_ID_STATUS := r.bus_id_status;
         P_BUS_ID_EXPRD_DT := TO_CHAR(r.bus_id_exprd_dt, FORMS_APX.HIJRI_DATE_FORMAT);
         P_CITY_CODE_OF_ID := r.city_code_of_id;
@@ -7956,20 +7911,12 @@ AS
 
     -- Source: IMPORTERS.BUS_ID_BRNCH.WHEN-NEW-ITEM-INSTANCE
     -- APEX  : DA "BUS_ID_BRNCH WHEN-NEW-ITEM-INSTANCE": FOS, Items to Return = the IN OUT / OUT items
-    PROCEDURE BUS_ID_BRNCH_NEW_ITEM_INSTANCE (P_IMPR_TYPE_CD    IN     importers.impr_type_cd%TYPE,
-                                              P_BUS_ID_TYPE_CD  IN     importers.bus_id_type_cd%TYPE,
-                                              P_CITY_CODE_OF_ID IN     importers.city_code_of_id%TYPE,
-                                              P_BUS_ID          IN     importers.bus_id%TYPE,
-                                              P_BUS_ID_BRNCH    IN     importers.bus_id_brnch%TYPE,
-                                              P_CITY_CODE       IN     importers.city_code%TYPE,
-                                              P_BRNH_CITY_CD    IN     NUMBER)
+    PROCEDURE BUS_ID_BRNCH_NEW_ITEM_INSTANCE (P_BUS_ID_BRNCH IN     importers.bus_id_brnch%TYPE,
+                                              P_CITY_CODE    IN     importers.city_code%TYPE,
+                                              P_BRNH_CITY_CD IN     NUMBER)
     IS
         r T_RECORD;
     BEGIN
-        r.impr_type_cd := P_IMPR_TYPE_CD;
-        r.bus_id_type_cd := P_BUS_ID_TYPE_CD;
-        r.city_code_of_id := P_CITY_CODE_OF_ID;
-        r.bus_id := P_BUS_ID;
         r.bus_id_brnch := P_BUS_ID_BRNCH;
         r.city_code := P_CITY_CODE;
         r.brnh_city_cd := P_BRNH_CITY_CD;

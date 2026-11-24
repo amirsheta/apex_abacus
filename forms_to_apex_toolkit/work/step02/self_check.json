@@ -1,18 +1,18 @@
 {
- "spec_members": 105,
- "body_implementations": 196,
- "forward_declarations": 85,
+ "spec_members": 103,
+ "body_implementations": 191,
+ "forward_declarations": 82,
  "findings": {},
  "members_over_80_lines": [
   [
    "IMPORTERS_NEW_RECORD_INSTANCE",
-   146,
-   146
+   149,
+   149
   ],
   [
    "IMPORTERS_POST_QUERY",
-   251,
-   251
+   252,
+   252
   ],
   [
    "IMPORTERS_PRE_INSERT",
@@ -26,18 +26,18 @@
   ],
   [
    "IMPR_TYPE_CD_VALIDATE_ITEM",
-   151,
-   151
+   152,
+   152
   ],
   [
    "BUS_ID_WHEN_VALIDATE_ITEM",
-   165,
-   165
+   167,
+   167
   ],
   [
    "BUS_ID_BRNCH_VALIDATE_ITEM",
-   101,
-   101
+   102,
+   102
   ],
   [
    "GET_CR_DATA",

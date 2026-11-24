@@ -213,7 +213,10 @@ Full rules: `docs/f345_reference_standard.md` §9 and §10. Summary:
    BOOLEAN package functions (`<ITEM>_IS_READ_ONLY`, `<ITEM>_IS_REQUIRED`).
 2. **Minimal JavaScript.** No JavaScript file per form, no AJAX-callback "engine", no client-side UI
    state. An *Execute JavaScript Code* action may have at most 3 lines; anything more needs a reason in
-   the page spec and the user's approval.
+   the page spec and the user's approval. Number Field items get the CSS class `number_only`, and editable grid number columns (Text / Number Field
+   on NUMBER data) get it as column CSS class; the page has one DA `NUMBER ONLY` (Page Load, one-line
+   *Execute JavaScript Code*, `scripts/number_only.py`): while typing or pasting only digits stay (Arabic-Indic digits
+   become 0-9); user request 2026-11-24. f345 has no class-based handler (FTEX.js `pageItemOnlyNumber` is per item).
 3. **One readable package per form.** No adapter packages and no all-items record copied through
    session state: each member takes only the items it uses (IN / IN OUT parameters named by §4). Fixed section order
    (version → helpers → form level → each block: query, record, items in navigation order, DML,

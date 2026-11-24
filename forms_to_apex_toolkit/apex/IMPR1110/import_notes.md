@@ -57,6 +57,14 @@ Revision 1 is kept in `rollback/IMPR1110/step04_rev1/` (export, generator, notes
 Unchanged: page numbers and names (1110 / 111001 / 111002), page 0 toolbar, no Authorization Scheme
 (access from the application's privileges, `CLAUDE.md` §8), 13 shared LOVs, 32 new application items.
 
+### Package 012 (2026-11-24): unused code removed
+
+Regenerated with package 012 (logic extraction §5a): DA `CITY_CODE_OF_ID WHEN-NEW-ITEM-INSTANCE` is gone (its
+member only held UI calls), and the calls of `WHEN_NEW_FORM_INSTANCE`, `WHEN_NEW_RECORD_INSTANCE` and
+`BUS_ID_BRNCH_NEW_ITEM_INSTANCE` pass fewer items. Compile package 012 **before** importing this export: the old
+export calls parameters that 012 no longer has, and this export calls signatures that 011 does not have
+(PLS-00306 either way). Previous files: `rollback/IMPR1110/step04_v011/`.
+
 ## 3. Placeholders
 
 The script has `set define off`. Four tokens, each appearing twice (header comment + `component_begin`):
@@ -127,6 +135,8 @@ If the component import fails on application 202530 (as on 2026-11-18, `WWV_FLOW
 `WWV_FLOW_LISTS_PK`), import **`apex/f202530_full.sql`** instead: App Builder → Import → File Type
 **"Database Application, Page or Component Export"**, install as application 202530, replace the
 existing application. Back up 202530 first: the full import replaces the whole application.
+
+Change 2026-11-24 (user request): Number Field items accept only digits. They carry the CSS class `number_only`, and the page has one DA `NUMBER ONLY` (Page Load, one line of *Execute JavaScript Code*, `scripts/number_only.py`): while typing or pasting, every character that is not a digit is removed, and Arabic-Indic / Persian digits become 0-9. Not on popup LOVs (they keep the name search) or phone fields. Editable grid number columns get the same class (column *CSS Classes*); none exists today: the grid number columns are hidden, select lists or read-only (pages 111001). Check: type a letter, `-` or `.` in `P1110_IMPR_NBR`, `P1110_IMPR_POB_NBR`, `P1110_IMPR_ZIP_CD` → nothing appears; type ١٢٣ → 123; paste `12ab3` → 123.
 
 Change 2026-11-24 (user request): the common helpers are in `FORMS_APX` 004 only (see prerequisite 2); IMPR1110 011 no longer defines `CHECK_ERROR`, `REQUIRED_VALIDATION`, `HIJRI_DATE_FORMAT`, `GET_MODULE_ID`, `HEADER_TITLE`, `ARABIC_MESSAGE`, `DISPLAY_ARABIC_ERROR` / `_INFO`, `CG_MESSAGE`, `cur_hij_date` or the aliases `FORM_TRIGGER_FAILURE`, `INFO`, `GET_GLOBAL`, `SET_GLOBAL`; it calls `FORMS_APX.<NAME>`. Only visible change: the required-field text.
 

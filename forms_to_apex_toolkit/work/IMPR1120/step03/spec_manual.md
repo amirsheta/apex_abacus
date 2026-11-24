@@ -154,7 +154,7 @@ Label template *Optional - Above* (`11621983529556869749`) with `#DEFAULT#:t-For
 | `P1120_PORT_CD` | PORT_CD | Popup LOV (Additional Output `PORT_NAME` → `P1120_PORT_NAME`) | رمز الجمرك | PL/SQL Expression `IMPR1120.PORT_CD_IS_READ_ONLY(P_CURR_PORT_CD => :P_CURR_PORT_CD) OR :P0_PAGE_PK IS NOT NULL` | `LOV_SD_PORTS` | 4 | `IMPORTERS.PORT_CD` |
 | `P1120_PORT_NAME` | – (Source None) | Display Only | – | always | – | 40 | `IMPORTERS.PORT_NAME` |
 | `P1120_HQ_IMPR_NBR` | HQ_IMPR_NBR | Display Only | الرقم الموحد بالمصلحة | always | – | 11 | `IMPORTERS.HQ_IMPR_NBR` |
-| `P1120_IMPR_NBR` | IMPR_NBR | Number Field | الرقم الجمركى | Item `P0_PAGE_PK` is not null | – | 11 | `IMPORTERS.IMPR_NBR` |
+| `P1120_IMPR_NBR` | IMPR_NBR | Number Field, CSS class `number_only` | الرقم الجمركى | Item `P0_PAGE_PK` is not null | – | 11 | `IMPORTERS.IMPR_NBR` |
 | `P1120_IMPR_TYPE_CD` | IMPR_TYPE_CD | Display Only | رمز النشاط التجارى | always | – | 4 | `IMPORTERS.IMPR_TYPE_CD` |
 | `P1120_IMPR_TYPE_NAME` | – | Display Only | – | always | – | 40 | `IMPORTERS.IMPR_TYPE_NAME` |
 | `P1120_CTRY_CD` | CTRY_CD | Display Only | الجنسيه | always | – | 4 | `IMPORTERS.CTRY_CD` |
@@ -286,6 +286,7 @@ All server calls use **FOS – Execute PL/SQL Code** (`COM.FOS.EXECUTE_PLSQL_COD
 
 | DA | Page | Event / selection | Action 1 | Action 2 | Items to Submit / Return | Fire on init | Source |
 |---|---|---|---|---|---|---|---|
+| `NUMBER ONLY` | 1120 | Page Load | *Execute JavaScript Code* (1 line, `scripts/number_only.py`): one delegated `input` handler for `.number_only` keeps only digits (Arabic-Indic / Persian digits become 0-9); Fire on Initialization = Yes | – | – | No | Forms NUMBER item (user request 2026-11-24) |
 | `IMPR_NBR WHEN-VALIDATE-ITEM` | 1120 | Change, item `P1120_IMPR_NBR`; client condition item is not null | FOS `FORMS_APX.CHECK_ERROR(IMPR1120.IMPR_NBR_VALIDATION(P_PORT_CD => :P1120_PORT_CD, P_IMPR_NBR => :P1120_IMPR_NBR));` | native Submit Page, request `EXECUTE_QUERY` | Submit `P1120_PORT_CD`, `P1120_IMPR_NBR` | No | IMPR_NBR WVI + IMPR_TYPE_CD WNII (EXECUTE_QUERY) |
 | `IMPR_SUSPN SUSPN_STRT_DT WHEN-VALIDATE-ITEM` | 1120 | Change, column `SUSPN_STRT_DT` of IG `IMPR_SUSPN` | FOS `FORMS_APX.CHECK_ERROR(IMPR1120.SUSPN_STRT_DT_VALIDATION(SUSPN_STRT_DT => :SUSPN_STRT_DT, PORT_CD => :PORT_CD, IMPR_NBR => :IMPR_NBR, SUSPN_SEQ => :SUSPN_SEQ));` | – | Submit `SUSPN_STRT_DT`, `PORT_CD`, `IMPR_NBR`, `SUSPN_SEQ` | No | SUSPN_STRT_DT WVI |
 | `IMPR_SUSPN SUSPN_END_DT WHEN-VALIDATE-ITEM` | 1120 | Change, column `SUSPN_END_DT` | FOS `FORMS_APX.CHECK_ERROR(IMPR1120.SUSPN_END_DT_VALIDATION(SUSPN_STRT_DT => :SUSPN_STRT_DT, SUSPN_END_DT => :SUSPN_END_DT, PORT_CD => :PORT_CD, IMPR_NBR => :IMPR_NBR, SUSPN_SEQ => :SUSPN_SEQ));` | – | Submit `SUSPN_STRT_DT`, `SUSPN_END_DT`, `PORT_CD`, `IMPR_NBR`, `SUSPN_SEQ` | No | SUSPN_END_DT WVI |

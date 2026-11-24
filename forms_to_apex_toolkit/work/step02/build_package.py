@@ -20,6 +20,8 @@ import re, json, collections, sys, os
 sys.path.insert(0, 'scripts')
 import parameter_names
 import forms_apx_helpers
+sys.path.insert(0, 'work/step02')
+import drop_unused
 
 SRC_SPEC = 'rollback/IMPR1110/step02_rev1/impr1110_spec.sql'
 SRC_BODY = 'rollback/IMPR1110/step02_rev1/impr1110_body.sql'
@@ -86,7 +88,14 @@ DROP = {
     'IMPORTERS_INSERT', 'IMPORTERS_UPDATE',
     # PRE-QUERY -> WHERE clause of the search page <page>01
     'IMPORTERS_PRE_QUERY',
+    # unused (package 012): WHEN-CLEAR-BLOCK only sets :GLOBAL.STAT_CLR, which no code reads (page 0 CLEAR is a
+    # redirect); BRNH_CITY_CD WHEN-NEW-ITEM-INSTANCE held only UI calls (REQUIRED / VALID properties)
+    # and CITY_CODE_OF_ID WHEN-NEW-ITEM-INSTANCE (UI calls only, under one IF)
+    'IMPORTERS_WHEN_CLEAR_BLOCK', 'BRNH_CITY_CD_NEW_ITEM_INSTANCE', 'CITY_CODE_OF_ID_WHEN_NEW_ITEM',
 }
+# formal parameters the converted logic never reads (package 012)
+UNUSED_PARAMETERS = [('BUS_ID_WHEN_VALIDATE_ITEM', 'p_ctx'), ('BUS_ID_BRNCH_VALIDATE_ITEM', 'p_ctx'),
+                     ('IMPR_TYPE_CD_POST_CHANGE', 'p_rec')]   # p_rec read only by UI calls (now comments)
 REMOVED_CALLS = {'UI_RESET', 'UI', 'ENTRABLE', 'UI_FOCUS', 'TYPE_ENTRABLE_QUERY', 'LOCK_KEY_ITEMS', 'CR_FIELDS_ENTRABLE'}
 # rev1 section markers: everything after these banners is adapter / old entry code
 cut = body_src.find('SESSION-STATE ADAPTER (formerly package IMPR1110_APX')
@@ -115,6 +124,12 @@ def transform(text):
 logic_text, removed_total, leftovers = [], 0, []
 for m in logic:
     t, n, left = transform(m['text'])
+    t, _ = drop_unused.drop_ui_stubs(t)          # UI placeholders -> "-- APEX-DA:" comments, dead IFs commented out
+    for member, parameter in UNUSED_PARAMETERS:
+        if m['name'] == member:
+            t, k = drop_unused.drop_parameter(t, member, parameter)
+            if not k: sys.exit('parameter %s not found in %s' % (parameter, member))
+            m['header'] = drop_unused.drop_parameter(m['header'] + '\n    IS', member, parameter)[0][:-len('\n    IS')]
     removed_total += n
     leftovers += [(m['name'], x) for x in left]
     logic_text.append((m, t))
@@ -177,13 +192,13 @@ ITEMS = collections.OrderedDict([
     ('PORT_CD',         (None, 'PORT_CD_WHEN_VALIDATE_ITEM(r);')),
     ('HQ_IMPR_NBR',     ('HQ_IMPR_NBR_POST_CHANGE;', None)),
     ('IMPR_NBR',        (None, 'IMPR_NBR_WHEN_VALIDATE_ITEM(r);')),
-    ('IMPR_TYPE_CD',    ('IMPR_TYPE_CD_POST_CHANGE(r);', 'IMPR_TYPE_CD_VALIDATE_ITEM(r, c);')),
+    ('IMPR_TYPE_CD',    ('IMPR_TYPE_CD_POST_CHANGE;', 'IMPR_TYPE_CD_VALIDATE_ITEM(r, c);')),
     ('BUS_ID_EXPRD_DT', (None, 'BUS_ID_EXPRD_DT_VALIDATE_ITEM(r, {F});')),
     ('BUS_ID_TYPE_CD',  ('BUS_ID_TYPE_CD_POST_CHANGE(r);', None)),
     ('CITY_CODE_OF_ID', (None, 'CITY_CODE_OF_ID_VALIDATE_ITEM(r);')),
-    ('BUS_ID',          ('BUS_ID_POST_CHANGE;', 'BUS_ID_WHEN_VALIDATE_ITEM(r, c, {A}, {S});')),
+    ('BUS_ID',          ('BUS_ID_POST_CHANGE;', 'BUS_ID_WHEN_VALIDATE_ITEM(r, {A}, {S});')),
     ('BRNH_CITY_CD',    (None, 'BRNH_CITY_CD_VALIDATE_ITEM(r);')),
-    ('BUS_ID_BRNCH',    ('BUS_ID_BRNCH_POST_CHANGE;', 'BUS_ID_BRNCH_VALIDATE_ITEM(r, c, {A});')),
+    ('BUS_ID_BRNCH',    ('BUS_ID_BRNCH_POST_CHANGE;', 'BUS_ID_BRNCH_VALIDATE_ITEM(r, {A});')),
     ('CTRY_CD',         (None, 'CTRY_CD_WHEN_VALIDATE_ITEM(r);')),
     ('IMPR_EXPR_TYPE',  ('IMPR_EXPR_TYPE_POST_CHANGE;', None)),
     ('ARBC_IMPR_NAME',  (None, 'ARBC_IMPR_NAME_VALIDATE_ITEM(r);')),
@@ -222,7 +237,7 @@ add('BLOCK IMPORTERS - query', 'POST_QUERY', 'P',
     'IMPORTERS.POST-QUERY, after the POST-CHANGE triggers Forms fires for the fetched items',
     'Process "POST-QUERY" (Before Header, after "Initialize form IMPORTERS"; :P0_PAGE_PK is not null)',
     ['IF r.hq_impr_nbr IS NOT NULL THEN HQ_IMPR_NBR_POST_CHANGE; END IF;',
-     'IF r.impr_type_cd IS NOT NULL THEN IMPR_TYPE_CD_POST_CHANGE(r); END IF;',
+     'IF r.impr_type_cd IS NOT NULL THEN IMPR_TYPE_CD_POST_CHANGE; END IF;',
      'IF r.bus_id_type_cd IS NOT NULL THEN BUS_ID_TYPE_CD_POST_CHANGE(r); END IF;',
      'IF r.bus_id IS NOT NULL THEN BUS_ID_POST_CHANGE; END IF;',
      'IF r.bus_id_brnch IS NOT NULL THEN BUS_ID_BRNCH_POST_CHANGE; END IF;',
@@ -239,8 +254,6 @@ add('BLOCK IMPORTERS - record', 'WHEN_NEW_RECORD_INSTANCE', 'P',
 add('BLOCK IMPORTERS - record', 'NEW_RECORD_CONFIRM_TEXT', 'F',
     'IMPORTERS.WHEN-NEW-RECORD-INSTANCE, question of IMPR1110F1 / IMPR1110F5 ("سيتم تعديل الإسم إلى ...")',
     'FOS returns P1110_CONFIRM_TEXT; native Confirm when it is not null', [], ret='NEW_RECORD_CONFIRM_TEXT(r, c)')
-add('BLOCK IMPORTERS - record', 'WHEN_CLEAR_BLOCK', 'P', 'IMPORTERS.WHEN-CLEAR-BLOCK',
-    'Process "WHEN-CLEAR-BLOCK" (request CLEAR of the page 0 toolbar)', ['IMPORTERS_WHEN_CLEAR_BLOCK;'])
 
 for it, (pc, wvi) in ITEMS.items():
     seq_v = [x for x in (pc, wvi) if x]
@@ -256,7 +269,6 @@ for it, (pc, wvi) in ITEMS.items():
 for name, it, src, call in [
         ('IMPR_TYPE_CD_NEW_ITEM_INSTANCE', 'IMPR_TYPE_CD', 'WHEN-NEW-ITEM-INSTANCE', 'IMPR_TYPE_CD_NEW_ITEM_INSTANCE(r);'),
         ('IMPR_TYPE_CD_LOV_RETURN', 'IMPR_TYPE_CD', 'KEY-LISTVAL (values the LOV returns)', 'IMPR_TYPE_CD_LOV_RETURN(r);'),
-        ('CITY_CODE_OF_ID_WHEN_NEW_ITEM', 'CITY_CODE_OF_ID', 'WHEN-NEW-ITEM-INSTANCE', 'CITY_CODE_OF_ID_WHEN_NEW_ITEM(r);'),
         ('BUS_ID_WHEN_NEW_ITEM_INSTANCE', 'BUS_ID', 'WHEN-NEW-ITEM-INSTANCE', 'BUS_ID_WHEN_NEW_ITEM_INSTANCE(r);'),
         ('BUS_ID_BRNCH_NEW_ITEM_INSTANCE', 'BUS_ID_BRNCH', 'WHEN-NEW-ITEM-INSTANCE', 'BUS_ID_BRNCH_NEW_ITEM_INSTANCE(r);'),
         ('COMM_RGSTRTN_TYPE_LIST_CHANGED', 'COMM_RGSTRTN_TYPE', 'WHEN-LIST-CHANGED', 'COMM_RGSTRTN_TYPE_LIST_CHANGED(r);'),
@@ -399,7 +411,7 @@ def spec_decl(m):
 
 # ------------------------------------------------------------------ assemble the spec
 vb = re.search(r'(?s)(   V_PKG_VERSION .*?\|\| V_MODIFIED_BY;\n)', spec_src).group(1)
-vb = re.sub(r"'VERSION NO\. IS:' \|\| '\d+'", "'VERSION NO. IS:' || '011'", vb, count=1)
+vb = re.sub(r"'VERSION NO\. IS:' \|\| '\d+'", "'VERSION NO. IS:' || '012'", vb, count=1)
 vb = re.sub(r"V_LAST_MODIFY_DT    VARCHAR2 \(10\) := '[^']*'", "V_LAST_MODIFY_DT    VARCHAR2 (10) := '%s'" % DATE, vb)
 grants = spec_src[spec_src.index('\n-- -----------------------------------------------------------------------------\n-- Synonym and grants'):]
 def banner(t):
@@ -420,7 +432,7 @@ order += [s for s in sections if s not in order]
 spec = ['-- =============================================================================',
         '-- Package     : IMPR1110  (form IMPR1110.fmb "إضافة وتعديل بيانات مستورد")',
         '-- Owner       : LIB_APX_USR (public synonym IMPR1110; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)',
-        '-- Version     : 011 (%s: 006 = step 02 revision 2 + step 03 changes (DATE items as text, ROWID page key);' % DATE,
+        '-- Version     : 012 (%s: 006 = step 02 revision 2 + step 03 changes (DATE items as text, ROWID page key);' % DATE,
         '--               007 = parameter names by scripts/parameter_names.py; 008 = no doubled P_P_ (P_CODE => :P1110_P_CODE),',
         '--               APP_P_PRSNL_IMPR / APP_P_LETTER_NBR in PARAMETERS_ENTRY. No logic change. 007: rollback/IMPR1110/step04_v007/;',
         "--               009 = P0_PAGE_PK_CHECK restores the URL-safe ROWID of page 111001 ('-' / '_' -> '+' / '/'; a '+'",
@@ -429,7 +441,12 @@ spec = ['-- ====================================================================
         '--               HIJRI_DATE_FORMAT (default YYYY-MM-MI, was the constant MI-MM-YYYY). 009: rollback/IMPR1110/step04_v009/;',
         '--               011 = common helpers in FORMS_APX 004 (CHECK_ERROR, REQUIRED_VALIDATION, HIJRI_DATE_FORMAT, GET_MODULE_ID,',
         '--               HEADER_TITLE, ARABIC_MESSAGE, CG_MESSAGE, cur_hij_date ...), called as FORMS_APX.<NAME>; pages call',
-        '--               FORMS_APX directly. No logic change except REQUIRED_VALIDATION text. 010: rollback/IMPR1110/step04_v010/)',
+        '--               FORMS_APX directly. No logic change except REQUIRED_VALIDATION text. 010: rollback/IMPR1110/step04_v010/;',
+        '--               012 = unused code removed: WHEN_CLEAR_BLOCK (+ private IMPORTERS_WHEN_CLEAR_BLOCK: :GLOBAL.STAT_CLR is',
+        '--               never read), BRNH_CITY_CD_NEW_ITEM_INSTANCE (UI calls only), p_ctx of BUS_ID_WHEN_VALIDATE_ITEM /',
+        '--               BUS_ID_BRNCH_VALIDATE_ITEM, CITY_CODE_OF_ID_WHEN_NEW_ITEM, p_rec of IMPR_TYPE_CD_POST_CHANGE (UI calls',
+        '--               only), and the items entry points read only for UI calls; the NULL placeholders of the Forms UI calls are "-- APEX-DA:" comments',
+        '--               (CLAUDE.md 6.8). No logic change. 011: rollback/IMPR1110/step04_v011/)',
         '-- Author      : Claude Code',
         '-- Status      : NOT COMPILED.',
         '-- Layout      : VERSION -> f345 HELPERS -> FORM LEVEL -> BLOCK IMPORTERS (query, record, items in Forms',
@@ -454,9 +471,9 @@ spec_text = '\n'.join(spec)
 # ------------------------------------------------------------------ assemble the body
 logic_fwd = ['    ' + m['header'] + ';' for m, _ in logic_text]
 body = ['-- =============================================================================',
-        '-- Package body: IMPR1110 (version 011, %s) - see the spec header. NOT COMPILED.' % DATE,
+        '-- Package body: IMPR1110 (version 012, %s) - see the spec header. NOT COMPILED.' % DATE,
         '-- Layout      : 1 private types and declarations, 2 forward declarations, 3 private helpers and the',
-        '--               converted Forms logic (record based, Forms order, UI calls replaced by "NULL; -- APEX ..."),',
+        '--               converted Forms logic (record based, Forms order, Forms UI calls kept as "-- APEX-DA:" comments),',
         '--               4 read-only / required rules, 5 f345 helpers, 6 APEX entry points (spec order), 7 version.',
         '-- Generated   : by work/step02/build_package.py from rollback/IMPR1110/step02_rev1/ (do not edit by hand)',
         '-- =============================================================================',

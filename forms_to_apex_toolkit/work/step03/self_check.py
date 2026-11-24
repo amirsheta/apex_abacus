@@ -18,6 +18,7 @@ codes = [('process ' + p['name'], p['code']) for p in d['processes']] + \
         [('DA %s #%d' % (x['name'], n), a['code']) for x in d['das'] for n, a in enumerate(x['actions'], 1)] + \
         [('item ' + i['name'], i['read_only'] + ' ' + i['condition']) for i in d['items']]
 used = set()
+BINDS = {m.upper(): v for m, v in json.load(open('work/step02/parameter_binds.json', encoding='utf-8')).items()}
 for where, code in codes:
     for b in re.findall(r'(?<![\w$])[:]([A-Z][A-Z0-9_$#]*)', code):
         if b not in known: add('bind without item', (where, b))
@@ -25,10 +26,18 @@ for where, code in codes:
     for m in re.findall(r'IMPR1110\.(\w+)', code):
         used.add(m.upper())
         if m.upper() not in public: add('member not in package spec', (where, m))
-    for p, b in re.findall(r'(\w+) => :(\w+)', code):
-        if p in ('I_VALUE', 'p_values'): continue          # generic parameters (REQUIRED_VALIDATION, APEX_PAGE.GET_URL)
-        if re.sub(r'^(IO|I|O)_', '', p) != b and not b.endswith('_LOCKED') and b not in ('P1110_FUNCTION_CODE',):
-            add('parameter / bind name differ', (where, p, b))
+    # parameter naming rule (scripts/parameter_names.py, 2026-11-23): each named parameter of an IMPR1110 call
+    # must be the one the package generator derived from that bind (work/step02/parameter_binds.json)
+    for cm in re.finditer(r'IMPR1110\.(\w+)\s*\(', code):
+        member, depth, k = cm.group(1).upper(), 1, cm.end()
+        while depth and k < len(code):
+            depth += {'(': 1, ')': -1}.get(code[k], 0); k += 1
+        binds = BINDS.get(member, {})
+        for p, b in re.findall(r'(\w+) => :(\w+)', code[cm.end():k]):
+            if p not in binds:
+                add('parameter not in package spec', (where, member, p))
+            elif re.sub(r'^(IO|I|O)_', '', binds[p]) != b and not b.endswith('_LOCKED') and b != 'P1110_FUNCTION_CODE':
+                add('parameter bound to another item', (where, member, p, b))
 for x in d['das']:
     for a in x['actions']:
         for i in a['submit'] + a['ret']:
@@ -39,7 +48,7 @@ for x in d['das']:
 body = open('plsql/IMPR1110/impr1110_body.sql', encoding='utf-8').read()
 flags_body = body[body.index('PROCEDURE READ_ONLY_FLAGS'):]
 flags_body = flags_body[:flags_body.index('END READ_ONLY_FLAGS')]
-not_used = sorted(m for m in public - used - {'PKG_VERSION', 'CHECK_ERROR', 'WHEN_CLEAR_BLOCK', 'MOBILE_OK', 'MOBILE_CANCEL'}
+not_used = sorted(m for m in public - used - {'PKG_VERSION', 'MOBILE_OK', 'MOBILE_CANCEL'}
                   if not (m.endswith('_IS_READ_ONLY') and (m + '(') in flags_body))
 if not_used: add('public member not used by any component', not_used)
 names = [p['name'] for p in d['processes']] + [v['name'] for v in d['validations']] + [x['name'] for x in d['das']]

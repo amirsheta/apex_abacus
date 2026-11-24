@@ -22,6 +22,8 @@ Usage (from forms_to_apex_toolkit):
 import os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, 'scripts'))
+import number_only      # Number Field items: CSS class number_only + one page-load handler
 REF = os.path.join(ROOT, 'apex', 'Reference', 'f345.sql')
 IMPR1110_EXPORT = os.path.join(ROOT, 'apex', 'IMPR1110', 'f345_impr1110.sql')
 PKG = os.path.join(ROOT, 'plsql', 'IMPR1120', 'impr1120_spec.sql')
@@ -126,8 +128,9 @@ def page_item(page, plug_key, seq, it, form_region=False):
         p.append(('p_cSize', '30'))
     if it.get('maxlen') and k not in ('NATIVE_DISPLAY_ONLY', 'NATIVE_HIDDEN'):
         p.append(('p_cMaxlength', str(it['maxlen'])))
-    if it.get('tag_css'):
-        p.append(('p_tag_css_classes', q(it['tag_css'])))
+    css = number_only.add_class(it.get('tag_css')) if k == 'NATIVE_NUMBER_FIELD' else it.get('tag_css')
+    if css:
+        p.append(('p_tag_css_classes', q(css)))
     if k != 'NATIVE_HIDDEN':
         p.append(('p_begin_on_new_line', q('YES' if it.get('newline', True) else 'NO')))
         if it.get('span'):
@@ -172,7 +175,7 @@ FILTER = [('p_enable_filter', 'true'), ('p_filter_operators', q('C:S:CASE_INSENS
           ('p_enable_sort_group', 'true'), ('p_enable_control_break', 'true'), ('p_enable_hide', 'true')]
 
 def ig_column(page, c, seq):
-    """c: name, kind (HIDDEN / TEXT / SELECT / DISPLAY / LINK), data_type, heading, pk, req, maxlen, css, lov_key,
+    """c: name, kind (HIDDEN / TEXT / NUMBER / SELECT / DISPLAY / LINK; TEXT / NUMBER on NUMBER data get number_only), data_type, heading, pk, req, maxlen, css, lov_key,
        default_plsql, read_only, link_target, link_text, comment"""
     key = '%s:col:%s' % (page, c['name'])
     nid(key, 2)
@@ -184,18 +187,22 @@ def ig_column(page, c, seq):
               ('p_use_as_row_header', 'false'), ('p_enable_sort_group', 'false'),
               ('p_is_primary_key', 'true' if c.get('pk') else 'false'), ('p_duplicate_value', 'true'), ('p_include_in_export', 'false')]
     else:
-        item_type = dict(TEXT='NATIVE_TEXT_FIELD', SELECT='NATIVE_SELECT_LIST', DISPLAY='NATIVE_DISPLAY_ONLY', LINK='NATIVE_LINK')[k]
+        item_type = dict(TEXT='NATIVE_TEXT_FIELD', NUMBER='NATIVE_NUMBER_FIELD', SELECT='NATIVE_SELECT_LIST',
+                         DISPLAY='NATIVE_DISPLAY_ONLY', LINK='NATIVE_LINK')[k]
         p += [('p_item_type', q(item_type)), ('p_heading', q(c['heading'])), ('p_heading_alignment', q('CENTER')),
               ('p_display_sequence', str(seq)), ('p_value_alignment', q('CENTER'))]
+        css = c.get('css')
+        if k in ('TEXT', 'NUMBER') and c['data_type'] == 'NUMBER':
+            css = number_only.add_class(css)          # editable number column: digits only (scripts/number_only.py)
         if k == 'TEXT':
             p += [('p_attribute_01', q('N')), ('p_attribute_02', q('N')), ('p_attribute_04', q('TEXT')), ('p_attribute_05', q('BOTH'))]
-            if c.get('css'):
-                p.append(('p_item_css_classes', q(c['css'])))
+        if k in ('TEXT', 'NUMBER') and css:
+            p.append(('p_item_css_classes', q(css)))
         elif k == 'DISPLAY':
             p += [('p_attribute_02', q('VALUE')), ('p_attribute_05', q('PLAIN'))]
         elif k == 'LINK':
             p += [('p_link_target', q(c['link_target'])), ('p_link_text', q(c['link_text'])), ('p_link_attributes', q('target="_top"'))]
-        if k in ('TEXT', 'SELECT'):
+        if k in ('TEXT', 'NUMBER', 'SELECT'):
             p.append(('p_is_required', 'true' if c.get('req') else 'false'))
         if c.get('maxlen'):
             p.append(('p_max_length', str(c['maxlen'])))
@@ -327,7 +334,8 @@ def da(page, seq, name, trigger, event, actions, s, cond=None):
         ak = '%s:daa:%s:%d' % (page, name, i * 10)
         nid(ak, 9)
         out.append(call('create_page_da_action', [('p_id', ref(ak)), ('p_event_id', ref(ek)), ('p_event_result', q('TRUE')),
-                                                  ('p_action_sequence', str(i * 10)), ('p_execute_on_page_init', q('N'))] + a))
+                                                  ('p_action_sequence', str(i * 10)),
+                                                  ('p_execute_on_page_init', q('Y' if trigger[0] == 'READY' else 'N'))] + a))   # Page Load: as f345 'Hide'
     return '\n'.join(out)
 
 # ----------------------------------------------------------------------------- design (spec 0-13)
@@ -665,6 +673,8 @@ end;
         A(process(PG, key, seq, point, name, code, cond, s, ptype=kw.get('ptype', 'NATIVE_PLSQL'),
                   extra=kw.get('extra'), region=kw.get('region')))
     # dynamic actions (spec 10)
+    A(da(PG, 5, 'NUMBER ONLY', ('READY',), 'ready',
+         [[('p_action', q('NATIVE_JAVASCRIPT_CODE')), ('p_attribute_01', q(number_only.JS))]], number_only.COMMENT))
     A(da(PG, 10, 'IMPR_NBR WHEN-VALIDATE-ITEM', ('ITEM', 'P1120_IMPR_NBR'), 'change', [
         fos('FORMS_APX.CHECK_ERROR(IMPR1120.IMPR_NBR_VALIDATION(P_PORT_CD => :P1120_PORT_CD, P_IMPR_NBR => :P1120_IMPR_NBR));',
             ['P1120_PORT_CD', 'P1120_IMPR_NBR']),
@@ -815,7 +825,7 @@ def selfcheck(text):
     code = '\n'.join(l for l in text.splitlines() if not l.startswith('--') and not re.match(r'^[ ,]p_\w*comment=>', l))
     if re.search(r'\bAI_[A-Z]', code): problems.append('AI_ item name found')
     if re.search(r'pkg_', code, re.I): problems.append('page calls pkg_')
-    for bad in ('ON_DEMAND', 'p_javascript_file_urls', 'AJAX_FUNCTION', 'NATIVE_JAVASCRIPT_CODE', 'create_security_scheme'):
+    for bad in ('ON_DEMAND', 'p_javascript_file_urls', 'AJAX_FUNCTION', 'create_security_scheme'):
         if bad in code: problems.append('not allowed: ' + bad)
     defined = re.findall(r'[ ,]p_id=>wwv_flow_api\.id\((\d+)\)', text)
     if len(defined) != len(set(defined)): problems.append('duplicate p_id')
@@ -879,6 +889,22 @@ def selfcheck(text):
         for i in b.split(','):
             if i not in page_items | columns and not i.startswith('P0_'): problems.append('FOS item %s missing' % i)
     if text.count('\nbegin\n') != text.count('\nend;\n/'): problems.append('begin/end not balanced')
+    # Execute JavaScript Code: at most 3 lines (CLAUDE.md §4c); the only one is the number_only handler
+    for j in re.findall(r"p_action=>'NATIVE_JAVASCRIPT_CODE'\n,p_attribute_01=>(.*?)\n(?=[,)])", text, re.S):
+        if j.count("',\n") + 1 > 3: problems.append('JavaScript action > 3 lines')
+        if unq(j) != number_only.JS: problems.append('unexpected JavaScript action: ' + j[:60])
+    # editable grid number columns (Text / Number Field on NUMBER data) carry number_only too (user request 2026-11-24)
+    for c in text.split('wwv_flow_api.create_region_column(')[1:]:
+        c = c[:c.find('\n);')]
+        if re.search(r"p_item_type=>'NATIVE_(NUMBER|TEXT)_FIELD'", c) and "p_data_type=>'NUMBER'" in c and number_only.CLASS not in c:
+            problems.append('grid number column without class %s: %s' % (number_only.CLASS, re.search(r"p_name=>'([^']+)'", c).group(1)))
+    for pg in re.split(r'\nprompt --application/pages/page_', text)[1:]:
+        if number_only.CLASS + "'" in pg and "p_name=>'NUMBER ONLY'" not in pg:
+            problems.append('page %s uses class %s without the NUMBER ONLY handler' % (pg.split('\n', 1)[0], number_only.CLASS))
+    for c in text.split('wwv_flow_api.create_page_item(')[1:]:
+        c = c[:c.find('\n);')]
+        if "p_display_as=>'NATIVE_NUMBER_FIELD'" in c and number_only.CLASS not in c:
+            problems.append('number field without class %s: %s' % (number_only.CLASS, re.search(r"p_name=>'([^']+)'", c).group(1)))
     # a region column (and create_interactive_grid) belongs to the region created last before it
     current = None
     for m in re.finditer(r"wwv_flow_api\.(create_page_plug|create_page|create_region_column|create_interactive_grid)\(\n p_id=>wwv_flow_api\.id\((\d+)\)(.*?)\n\);", text, re.S):

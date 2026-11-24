@@ -49,10 +49,6 @@
 [
 "V_USR_TYPE",
 "IN"
-],
-[
-"P_LETTER_NBR",
-"IN"
 ]
 ]
 },
@@ -278,10 +274,6 @@
 "apex": "Process \"WHEN-NEW-RECORD-INSTANCE\" (Before Header, after POST-QUERY / WHEN-CREATE-RECORD); FOS after a function (Confirm with NEW_RECORD_CONFIRM_TEXT first)",
 "params": [
 [
-"P_IMPR_NBR",
-"IN"
-],
-[
 "P_IMPR_TYPE_CD",
 "IN OUT"
 ],
@@ -383,14 +375,6 @@
 "IN"
 ]
 ]
-},
-{
-"section": "BLOCK IMPORTERS - record",
-"name": "WHEN_CLEAR_BLOCK",
-"kind": "P",
-"source": "IMPORTERS.WHEN-CLEAR-BLOCK",
-"apex": "Process \"WHEN-CLEAR-BLOCK\" (request CLEAR of the page 0 toolbar)",
-"params": []
 },
 {
 "section": "ITEM PORT_CD",
@@ -2005,19 +1989,6 @@
 ]
 },
 {
-"section": "ITEM CITY_CODE_OF_ID",
-"name": "CITY_CODE_OF_ID_WHEN_NEW_ITEM",
-"kind": "P",
-"source": "IMPORTERS.CITY_CODE_OF_ID.WHEN-NEW-ITEM-INSTANCE",
-"apex": "DA \"CITY_CODE_OF_ID WHEN-NEW-ITEM-INSTANCE\": FOS, Items to Return = the IN OUT / OUT items",
-"params": [
-[
-"P_COMM_RGSTRTN_TYPE",
-"IN"
-]
-]
-},
-{
 "section": "ITEM BUS_ID",
 "name": "BUS_ID_WHEN_NEW_ITEM_INSTANCE",
 "kind": "P",
@@ -2057,22 +2028,6 @@
 "source": "IMPORTERS.BUS_ID_BRNCH.WHEN-NEW-ITEM-INSTANCE",
 "apex": "DA \"BUS_ID_BRNCH WHEN-NEW-ITEM-INSTANCE\": FOS, Items to Return = the IN OUT / OUT items",
 "params": [
-[
-"P_IMPR_TYPE_CD",
-"IN"
-],
-[
-"P_BUS_ID_TYPE_CD",
-"IN"
-],
-[
-"P_CITY_CODE_OF_ID",
-"IN"
-],
-[
-"P_BUS_ID",
-"IN"
-],
 [
 "P_BUS_ID_BRNCH",
 "IN"

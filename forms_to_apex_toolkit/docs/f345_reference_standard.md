@@ -225,6 +225,7 @@ Every Forms behaviour is built from native APEX components. JavaScript is the la
 | `SET_ITEM_PROPERTY(VISIBLE)` | Native *Show* / *Hide*, or a server-side condition on the item |
 | `SET_ITEM_PROPERTY(REQUIRED)` | Validation `<ITEM> REQUIRED` with a server-side condition (`<FORM>.<ITEM>_IS_REQUIRED(...)`). No client-side "required" script |
 | `GO_ITEM` | Native *Set Focus* |
+| Number item (Forms data type NUMBER: typing a letter is refused) | Number Field with CSS class `number_only` (editable IG number column: column *CSS Classes* `number_only`) + page DA `NUMBER ONLY` (Page Load, one-line *Execute JavaScript Code* from `scripts/number_only.py`: keeps only digits, Arabic-Indic digits become 0-9). Not on popup LOVs (name search) or phone fields (`+`, spaces) |
 | `SHOW_ALERT` stop / `MESSAGE` + `FORM_TRIGGER_FAILURE` | `FORMS_APX.CHECK_ERROR` / `FORMS_APX.FORM_TRIGGER_FAILURE` - FOS shows the error (`p_attribute_05 => '#SQLERRM#'`) |
 | `SHOW_ALERT` caution (Yes / No) | Native *Confirm* action (fixed text, from a Text Message), then the server action. Only when the text is computed on the server: one line `apex.message.confirm($v('P<page>_CONFIRM_TEXT'), ...)` |
 | `EXECUTE_QUERY` / re-query | Page submit with a request, or native *Refresh* |

@@ -1,11 +1,11 @@
 {
- "logic_members": 94,
- "ui_calls_replaced": 130,
- "entries": 76,
+ "logic_members": 91,
+ "ui_calls_replaced": 125,
+ "entries": 74,
  "rules": 27,
  "helpers": 7,
  "renamed_parameters": 159,
  "qualified_in_sql": 4,
- "spec_lines": 1284,
- "body_lines": 9134
+ "spec_lines": 1275,
+ "body_lines": 9081
 }

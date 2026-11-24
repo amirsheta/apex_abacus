@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Package     : IMPR1110  (form IMPR1110.fmb "إضافة وتعديل بيانات مستورد")
 -- Owner       : LIB_APX_USR (public synonym IMPR1110; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
--- Version     : 011 (24-11-2026: 006 = step 02 revision 2 + step 03 changes (DATE items as text, ROWID page key);
+-- Version     : 012 (24-11-2026: 006 = step 02 revision 2 + step 03 changes (DATE items as text, ROWID page key);
 --               007 = parameter names by scripts/parameter_names.py; 008 = no doubled P_P_ (P_CODE => :P1110_P_CODE),
 --               APP_P_PRSNL_IMPR / APP_P_LETTER_NBR in PARAMETERS_ENTRY. No logic change. 007: rollback/IMPR1110/step04_v007/;
 --               009 = P0_PAGE_PK_CHECK restores the URL-safe ROWID of page 111001 ('-' / '_' -> '+' / '/'; a '+'
@@ -10,7 +10,12 @@
 --               HIJRI_DATE_FORMAT (default YYYY-MM-MI, was the constant MI-MM-YYYY). 009: rollback/IMPR1110/step04_v009/;
 --               011 = common helpers in FORMS_APX 004 (CHECK_ERROR, REQUIRED_VALIDATION, HIJRI_DATE_FORMAT, GET_MODULE_ID,
 --               HEADER_TITLE, ARABIC_MESSAGE, CG_MESSAGE, cur_hij_date ...), called as FORMS_APX.<NAME>; pages call
---               FORMS_APX directly. No logic change except REQUIRED_VALIDATION text. 010: rollback/IMPR1110/step04_v010/)
+--               FORMS_APX directly. No logic change except REQUIRED_VALIDATION text. 010: rollback/IMPR1110/step04_v010/;
+--               012 = unused code removed: WHEN_CLEAR_BLOCK (+ private IMPORTERS_WHEN_CLEAR_BLOCK: :GLOBAL.STAT_CLR is
+--               never read), BRNH_CITY_CD_NEW_ITEM_INSTANCE (UI calls only), p_ctx of BUS_ID_WHEN_VALIDATE_ITEM /
+--               BUS_ID_BRNCH_VALIDATE_ITEM, CITY_CODE_OF_ID_WHEN_NEW_ITEM, p_rec of IMPR_TYPE_CD_POST_CHANGE (UI calls
+--               only), and the items entry points read only for UI calls; the NULL placeholders of the Forms UI calls are "-- APEX-DA:" comments
+--               (CLAUDE.md 6.8). No logic change. 011: rollback/IMPR1110/step04_v011/)
 -- Author      : Claude Code
 -- Status      : NOT COMPILED.
 -- Layout      : VERSION -> f345 HELPERS -> FORM LEVEL -> BLOCK IMPORTERS (query, record, items in Forms
@@ -25,7 +30,7 @@
 SET DEFINE OFF
 
 CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
-   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '011';
+   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '012';
    V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    FUNCTION PKG_VERSION
@@ -127,8 +132,7 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
                                       P_ADD_CRTY_ARBC_NAME IN OUT VARCHAR2,
                                       P_CURR_PORT_CD            IN     NUMBER,
                                       P_CLASS_CD                IN     NUMBER,
-                                      V_USR_TYPE                IN     NUMBER,
-                                      P_LETTER_NBR        IN     VARCHAR2);
+                                      V_USR_TYPE                IN     NUMBER);
 
     -- =========================================================================
     -- BLOCK IMPORTERS - query
@@ -195,8 +199,7 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
 
     -- Source: IMPORTERS.PRE-RECORD + WHEN-NEW-RECORD-INSTANCE (function modes F1..F5, SF6; type-19 rule without COMMIT)
     -- APEX  : Process "WHEN-NEW-RECORD-INSTANCE" (Before Header, after POST-QUERY / WHEN-CREATE-RECORD); FOS after a function (Confirm with NEW_RECORD_CONFIRM_TEXT first)
-    PROCEDURE WHEN_NEW_RECORD_INSTANCE (P_IMPR_NBR            IN     importers.impr_nbr%TYPE,
-                                        P_IMPR_TYPE_CD       IN OUT importers.impr_type_cd%TYPE,
+    PROCEDURE WHEN_NEW_RECORD_INSTANCE (P_IMPR_TYPE_CD       IN OUT importers.impr_type_cd%TYPE,
                                         P_BUS_ID_TYPE_CD      IN     importers.bus_id_type_cd%TYPE,
                                         P_COMM_RGSTRTN_TYPE   IN     importers.comm_rgstrtn_type%TYPE,
                                         P_BUS_ID              IN     importers.bus_id%TYPE,
@@ -223,10 +226,6 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
                                       P_BUS_ID_BRNCH      IN     importers.bus_id_brnch%TYPE,
                                       P_CODE            IN     VARCHAR2)
         RETURN VARCHAR2;
-
-    -- Source: IMPORTERS.WHEN-CLEAR-BLOCK
-    -- APEX  : Process "WHEN-CLEAR-BLOCK" (request CLEAR of the page 0 toolbar)
-    PROCEDURE WHEN_CLEAR_BLOCK;
 
     -- =========================================================================
     -- ITEM PORT_CD
@@ -438,10 +437,6 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
                                              P_ID_MINS_COMM_CD   IN OUT NUMBER,
                                              P_L_CT_CITY_STATUS2 IN OUT NUMBER,
                                              P_ROW_ID             IN     VARCHAR2);
-
-    -- Source: IMPORTERS.CITY_CODE_OF_ID.WHEN-NEW-ITEM-INSTANCE
-    -- APEX  : DA "CITY_CODE_OF_ID WHEN-NEW-ITEM-INSTANCE": FOS, Items to Return = the IN OUT / OUT items
-    PROCEDURE CITY_CODE_OF_ID_WHEN_NEW_ITEM (P_COMM_RGSTRTN_TYPE IN     importers.comm_rgstrtn_type%TYPE);
 
     -- Section: ITEM CITY_CODE_OF_ID
     -- Source: importer type table (group 2), WNRI (lock, unlocked by IMPR1110F2).
@@ -657,13 +652,9 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
 
     -- Source: IMPORTERS.BUS_ID_BRNCH.WHEN-NEW-ITEM-INSTANCE
     -- APEX  : DA "BUS_ID_BRNCH WHEN-NEW-ITEM-INSTANCE": FOS, Items to Return = the IN OUT / OUT items
-    PROCEDURE BUS_ID_BRNCH_NEW_ITEM_INSTANCE (P_IMPR_TYPE_CD    IN     importers.impr_type_cd%TYPE,
-                                              P_BUS_ID_TYPE_CD  IN     importers.bus_id_type_cd%TYPE,
-                                              P_CITY_CODE_OF_ID IN     importers.city_code_of_id%TYPE,
-                                              P_BUS_ID          IN     importers.bus_id%TYPE,
-                                              P_BUS_ID_BRNCH    IN     importers.bus_id_brnch%TYPE,
-                                              P_CITY_CODE       IN     importers.city_code%TYPE,
-                                              P_BRNH_CITY_CD    IN     NUMBER);
+    PROCEDURE BUS_ID_BRNCH_NEW_ITEM_INSTANCE (P_BUS_ID_BRNCH IN     importers.bus_id_brnch%TYPE,
+                                              P_CITY_CODE    IN     importers.city_code%TYPE,
+                                              P_BRNH_CITY_CD IN     NUMBER);
 
     -- Section: ITEM BUS_ID_BRNCH
     -- Source: importer type table (group 2), COMM_RGSTRTN_TYPE WHEN-LIST-CHANGED, WNRI (lock, IMPR1110F2)

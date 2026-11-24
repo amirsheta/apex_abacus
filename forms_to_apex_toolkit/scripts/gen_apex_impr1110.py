@@ -22,6 +22,8 @@ Usage (from forms_to_apex_toolkit):  python3 -I scripts/gen_apex_impr1110.py [--
 import os, re, sys, json
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, 'scripts'))
+import number_only      # Number Field items: CSS class number_only + one page-load handler
 DESIGN = os.path.join(ROOT, 'work', 'step03', 'page_design.json')
 XML = os.path.join(ROOT, 'forms', 'IMPR', 'IMPR1110_fmb.xml')
 REF = os.path.join(ROOT, 'apex', 'Reference', 'f345.sql')
@@ -159,8 +161,9 @@ def page_item(page, plug_key, seq, it, form_region=False):
         p.append(('p_cMaxlength', str(it['maxlen'])))
     if k == 'NATIVE_TEXTAREA':
         p.append(('p_cHeight', '4'))
-    if it.get('tag_css'):
-        p.append(('p_tag_css_classes', q(it['tag_css'])))
+    css = number_only.add_class(it.get('tag_css')) if k == 'NATIVE_NUMBER_FIELD' else it.get('tag_css')
+    if css:
+        p.append(('p_tag_css_classes', q(css)))
     if k != 'NATIVE_HIDDEN':
         p.append(('p_begin_on_new_line', q('YES' if it.get('newline', True) else 'NO')))
         if it.get('span'):
@@ -608,6 +611,15 @@ end;
     # dynamic actions (spec 10)
     for n, d in enumerate(D['das'], 1):
         A(da_event(PG, n, d))
+    # Number Field items accept only digits (user request 2026-11-24): one delegated handler for .number_only
+    ek = '%s:da:NUMBER ONLY' % PG
+    nid(ek, 8); nid(ek + ':10', 9)
+    A(call('create_page_da_event', [('p_id', ref(ek)), ('p_name', q('NUMBER ONLY')), ('p_event_sequence', '5'),
+                                    ('p_bind_type', q('bind')), ('p_bind_event_type', q('ready')),
+                                    ('p_da_event_comment', src(number_only.COMMENT))]))
+    A(call('create_page_da_action', [('p_id', ref(ek + ':10')), ('p_event_id', ref(ek)), ('p_event_result', q('TRUE')),
+                                     ('p_action_sequence', '10'), ('p_execute_on_page_init', q('Y')),
+                                     ('p_action', q('NATIVE_JAVASCRIPT_CODE')), ('p_attribute_01', q(number_only.JS))]))
     W(block('application/pages/page_01110', '\n'.join(P)))
 
     # ---------------------------------------------------------------- page 111001 (search)
@@ -908,6 +920,20 @@ def selfcheck(text):
     for j in js:
         if j.count("',\n") + 1 > 3: problems.append('JavaScript action > 3 lines')
     if text.count('\nbegin\n') != text.count('\nend;\n/'): problems.append('begin/end not balanced')
+    # editable grid number columns (Text / Number Field on NUMBER data) carry number_only too (user request 2026-11-24)
+    for c in text.split('wwv_flow_api.create_region_column(')[1:]:
+        c = c[:c.find('\n);')]
+        if re.search(r"p_item_type=>'NATIVE_(NUMBER|TEXT)_FIELD'", c) and "p_data_type=>'NUMBER'" in c and number_only.CLASS not in c:
+            problems.append('grid number column without class %s: %s' % (number_only.CLASS, re.search(r"p_name=>'([^']+)'", c).group(1)))
+    for pg in re.split(r'\nprompt --application/pages/page_', text)[1:]:
+        if number_only.CLASS + "'" in pg and "p_name=>'NUMBER ONLY'" not in pg:
+            problems.append('page %s uses class %s without the NUMBER ONLY handler' % (pg.split('\n', 1)[0], number_only.CLASS))
+    for c in text.split('wwv_flow_api.create_page_item(')[1:]:
+        c = c[:c.find('\n);')]
+        if "p_display_as=>'NATIVE_NUMBER_FIELD'" in c and number_only.CLASS not in c:
+            problems.append('number field without class %s: %s' % (number_only.CLASS, re.search(r"p_name=>'([^']+)'", c).group(1)))
+    if number_only.CLASS in text and text.count(number_only.JS.replace("'", "''")) < 1:
+        problems.append('class %s used but no NUMBER ONLY handler' % number_only.CLASS)
     counts = {k: len(re.findall(r'wwv_flow_api\.%s\(' % k, text)) for k in [
         'create_page', 'create_page_plug', 'create_page_item', 'create_page_button', 'create_page_validation',
         'create_page_process', 'create_page_da_event', 'create_page_da_action', 'create_page_computation', 'create_page_branch',

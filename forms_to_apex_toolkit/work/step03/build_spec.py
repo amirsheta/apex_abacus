@@ -221,7 +221,6 @@ for e in ENTRIES:
     if it in FLAG_DRIVERS: acts.append(flags_action())
     da('%s WHEN-VALIDATE-ITEM' % it, 'Change', 'Item P1110_%s' % it, acts, e['source'])
 NAV = {'IMPR_TYPE_CD_NEW_ITEM_INSTANCE': ('IMPR_TYPE_CD WHEN-NEW-ITEM-INSTANCE', 'Get Focus'),
-       'CITY_CODE_OF_ID_WHEN_NEW_ITEM': ('CITY_CODE_OF_ID WHEN-NEW-ITEM-INSTANCE', 'Get Focus'),
        'BUS_ID_WHEN_NEW_ITEM_INSTANCE': ('BUS_ID WHEN-NEW-ITEM-INSTANCE', 'Get Focus'),
        'BUS_ID_BRNCH_NEW_ITEM_INSTANCE': ('BUS_ID_BRNCH WHEN-NEW-ITEM-INSTANCE', 'Get Focus'),
        'BANK_IBAN_NEW_ITEM_INSTANCE': ('BANK_IBAN WHEN-NEW-ITEM-INSTANCE', 'Get Focus'),
@@ -383,7 +382,6 @@ MEMBER_MAP = {
     'IMPR1110.IMPORTERS_PRE_RECORD': ('PROCESS', 'WHEN-NEW-RECORD-INSTANCE', 'IMPR1110.WHEN_NEW_RECORD_INSTANCE'),
     'IMPR1110.IMPORTERS_NEW_RECORD_INSTANCE': ('PROCESS', 'WHEN-NEW-RECORD-INSTANCE + DA WHEN-NEW-RECORD-INSTANCE', 'IMPR1110.WHEN_NEW_RECORD_INSTANCE'),
     'IMPR1110.IMPORTERS_WHEN_CREATE_RECORD': ('PROCESS', 'WHEN-CREATE-RECORD', 'IMPR1110.WHEN_CREATE_RECORD'),
-    'IMPR1110.IMPORTERS_WHEN_CLEAR_BLOCK': ('PLSQL', 'not called: page 0 CLEAR is a redirect; :GLOBAL.STAT_CLR is never read', 'IMPR1110.WHEN_CLEAR_BLOCK'),
     'IMPR1110.IMPORTERS_ON_ERROR': ('PLSQL', 'error text of every <ITEM> VALIDATION (PRIVATE_ERROR_TEXT)', None),
 }
 NOTE_FIX = [(r'IMPR1110\.AJAX_FUNCTION -> exec_funs', 'one DA per function code -> IMPR1110.EXEC_FUNS'),
@@ -395,8 +393,16 @@ NOTE_FIX = [(r'IMPR1110\.AJAX_FUNCTION -> exec_funs', 'one DA per function code 
             (r'-> ui OPEN_LOV', '-> (LOV opens from the item)'), (r'-> ui REQUERY', '-> page submit EXECUTE_QUERY'),
             (r'\+ entrable/required \(ui\)', '+ read-only / required rules'), (r'; entrable state', '; read-only rules'),
             (r'Entrable state \+ ', ''), (r'\(page_new_record\)', '')]
+# package 012 (unused code removed): Forms triggers whose converted code was only UI calls or an unread global
+DROPPED_MEMBERS = {
+    'IMPR1110.IMPORTERS_WHEN_CLEAR_BLOCK': 'only sets :GLOBAL.STAT_CLR, which no code reads; page 0 CLEAR is a redirect (package 012)',
+    'IMPR1110.BRNH_CITY_CD_NEW_ITEM_INSTANCE': 'only UI calls (REQUIRED / VALID of BRNH_CITY_CD, BUS_ID_BRNCH): required rules and validations cover them (package 012)',
+    'IMPR1110.CITY_CODE_OF_ID_WHEN_NEW_ITEM': 'only UI calls (BRNH_CITY_CD REQUIRED when COMM_RGSTRTN_TYPE = 2): BRNH_CITY_CD_IS_REQUIRED covers it (package 012)',
+}
 def remap(r):
     typ, name, comp, comp_name, page, member, status, notes = r
+    if member in DROPPED_MEMBERS:
+        return [typ, name, None, None, None, None, 'DROPPED', DROPPED_MEMBERS[member]]
     if member in MEMBER_MAP:
         comp, comp_name, member = MEMBER_MAP[member]
     elif member and typ == 'TRIGGER' and member.startswith('IMPR1110.'):

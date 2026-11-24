@@ -18,6 +18,7 @@ import os, re, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'scripts'))
 import number_only      # page 0 DA "NUMBER ONLY" (user decision 2026-11-24)
+import functions_drawer # page 0 region FUNCS: the functions side drawer of every page (user request 2026-11-24)
 REF = os.path.join(ROOT, 'apex', 'Reference', 'f345.sql')
 
 def main(argv):
@@ -50,6 +51,13 @@ def main(argv):
     if re.search(r'wwv_flow_api\.id\((%s|%s)\)' % (number_only.PAGE0_EVENT_ID, number_only.PAGE0_ACTION_ID), ref):
         sys.exit('page 0 NUMBER ONLY ids already used in f345.sql')
     ref = ref[:p0_end] + '\n' + number_only.page0_dynamic_action() + ref[p0_end:]
+    # page 0 region FUNCS (functions side drawer, scripts/functions_drawer.py): f345 has the FUNCS button but no
+    # region; the form pages no longer carry their own. It lists the f345 list Page Functions as it is (the copied
+    # list with an icon per function was removed 2026-11-24: it failed at import).
+    p0_end = ref.index('\nend;\n/\nprompt --', p0)
+    if "p_region_name=>'FUNCS'" in ref[p0:p0_end] or 'wwv_flow_api.id(%s)' % functions_drawer.PAGE0_REGION_ID in ref:
+        sys.exit('f345.sql page 0 already has a FUNCS region / its id is used')
+    ref = ref[:p0_end] + '\n' + functions_drawer.page0_region() + '\n' + functions_drawer.page0_dynamic_action() + ref[p0_end:]
 
     # ---- component bodies
     bodies, pages = [], []
@@ -60,6 +68,8 @@ def main(argv):
         if not m:
             sys.exit('%s: no component_begin ... end_environment section' % c)
         body = m.group(1)
+        if functions_drawer.check_form_page(body):
+            sys.exit('%s: %s' % (c, functions_drawer.check_form_page(body)[0]))
         if re.search(r'component_(begin|end)|import_(begin|end)', body):
             sys.exit('%s: nested begin/end calls' % c)
         bodies.append('-- ' + '=' * 77 + '\n-- merged from %s\n-- ' % c + '=' * 77 + '\n' + body)

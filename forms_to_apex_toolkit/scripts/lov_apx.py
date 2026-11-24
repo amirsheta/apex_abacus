@@ -41,6 +41,24 @@ def lov_attributes(call_text, q):
             ('p_return_column_name', q('R')), ('p_display_column_name', q('D'))]
 
 
+def column_definitions(cols):
+    """create_list_of_values_cols rows (column, heading, data type, visible) for the list columns cols.
+    APEX fetches only the defined columns for a Popup LOV: as in the real 21.2 export (f202604, every LOV with
+    column definitions defines its return and display columns), D (code, visible) and R (return, hidden) are
+    always defined. A LOV without list columns (Select List) gets none."""
+    if not cols:
+        return []
+    rows = [(c, h, dt, True) for c, h, dt in cols]
+    if 'D' not in [c for c, _, _ in cols]:
+        raise SystemExit('LOV columns must start with the display column D: %s' % cols)
+    d = [r for r in rows if r[0] == 'D'][0]
+    return rows + [('R', d[1], d[2], False)]
+
+
+def column_attributes(visible):
+    return [] if visible else [('p_is_visible', "'N'")]
+
+
 def package_functions():
     """{FUNCTION: [PARAMETER, ...]} from the package spec"""
     spec = open(PACKAGE_FILE, encoding='utf-8').read().split('CREATE OR REPLACE PACKAGE BODY')[0]
@@ -54,6 +72,7 @@ def package_functions():
 def check(text):
     problems = []
     functions = package_functions()
+    lov_columns = dict(re.findall(r"p_lov_name=>'(\w+)'(.*?)\nend;", text, re.S))
     for block in re.findall(r'wwv_flow_api\.create_list_of_values\((.*?)\n\);', text, re.S):
         name = re.search(r"p_lov_name=>'(\w+)'", block).group(1)
         if "p_location=>'STATIC'" in block:
@@ -72,6 +91,9 @@ def check(text):
         for parameter in re.findall(r'(\w+)\s*=>', args):
             if parameter.upper() not in functions[function]:
                 problems.append('LOV %s: LOV_APX.%s has no parameter %s' % (name, function, parameter))
+        cols = re.findall(r"p_query_column_name=>'(\w+)'", lov_columns.get(name, ''))
+        if cols and not {'D', 'R'} <= set(cols):
+            problems.append('LOV %s: column definitions without D and R (Popup LOV shows no rows), has %s' % (name, cols))
         for k in ("p_return_column_name=>'R'", "p_display_column_name=>'D'"):
             if k not in block:
                 problems.append('LOV %s: without %s' % (name, k))

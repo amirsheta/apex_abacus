@@ -201,7 +201,11 @@ Icon** (`11621986167597869752`) and `#DEFAULT#:t-Button--iconLeft`:
 
 A form page only has to: keep its record key in `P0_PAGE_PK`, define its `01` search page,
 optionally create `P<page>_REPORT` and listen for the `REPORT_SHOW` / `REPORT_PRINT` custom events,
-and provide a `FUNCS` inline-dialog region if it has functions. A page-specific button that has no
+and list its functions in *Page Functions* (`SC_SYSTEM_OBJECTS`; optional filter `P<page>_ADJ_FUNS`). The menu itself
+is **one region `FUNCS` on page 0** (user request 2026-11-24, `scripts/functions_drawer.py`, added by
+`scripts/build_full_app.py`): an Inline Dialog shown as a side drawer (full height, left side, slides in) with a search
+box (page 0 DA `FUNCS SEARCH`, one line of JavaScript) and the list template *Media List*; all its text is Arabic. It lists the f345 list *Page Functions* as it is
+(no icon per function: a copied list with an icon column failed at import, removed 2026-11-24). A form page never has its own `FUNCS` region (the generators and the build check it). A page-specific button that has no
 equivalent on page 0 gets the Text with Icon template, the same options, and a `cg-b-*` CSS class.
 
 ## 8. Interactive Grid defaults
@@ -252,7 +256,7 @@ owner `LIB_APX_USR`), and used by every system. The APEX shared LOV only calls i
 | Type (`p_source_type`) | `FUNC_BODY_RETURNING_SQL` (PL/SQL Function Body returning SQL Query) |
 | Function body (`p_lov_query`) | `return LOV_APX.<FUNCTION>(<P_X_ITEM> => '<ITEM NAME>', ...);` |
 | Location / Return / Display | `LOCAL` / `R` / `D` |
-| Column definitions | as before (`create_list_of_values_cols`, Arabic headings) |
+| Column definitions | `D` (code, visible, Arabic heading), the list columns, then `R` hidden (`p_is_visible=>'N'`). A Popup LOV fetches only the defined columns: without `D` and `R` it shows no rows (fix 2026-11-24; as every LOV of the real 21.2 export f202604) |
 
 Rules of the package:
 - one function per list, full-word names (`PORTS`, `PORTS_WITH_TYPES`, `COUNTRIES`, `GULF_COUNTRIES`, `CITIES`,
@@ -263,6 +267,10 @@ Rules of the package:
   names are checked with `DBMS_ASSERT.SIMPLE_SQL_NAME`, literals with `DBMS_ASSERT.ENQUOTE_LITERAL`;
 - the returned query runs as the parsing schema (`CUSTOMS`): table names unqualified, no table grants to
   `LIB_APX_USR`; `CUSTOMS` needs EXECUTE on `LOV_APX` (granted at the end of the file).
+
+A Popup LOV whose query uses other items sends them with *Items to Submit*, never *Cascading LOV Parent Items*:
+a cascade clears the item when a parent changes and undoes the parent's WHEN-VALIDATE-ITEM DA. Select Lists
+keep the cascade (their options must reload).
 
 Static LOVs (values from the XML) stay `STATIC`. `scripts/lov_apx.py` builds the attributes and checks each
 export (function and parameter names must exist in the package spec).

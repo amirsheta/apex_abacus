@@ -22,6 +22,7 @@ import os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'scripts'))
+import item_icons      # Post Text icon next to every entry item, from the item name (f202604 convention)
 import lov_apx         # shared LOVs: function body returning SQL, code in LOV_APX (CLAUDE.md 4d)
 REF = os.path.join(ROOT, 'apex', 'Reference', 'f345.sql')
 PKG = os.path.join(ROOT, 'plsql', 'SUPPORT_ENTRY', 'support_entry_spec.sql')
@@ -235,11 +236,11 @@ end;
         body = [call('create_list_of_values', [
             ('p_id', nid('lov:' + name, 95)), ('p_lov_name', q(name))] + lov_apx.lov_attributes(sql, q),
             'Source: ' + comment)]
-        for i, (col, head, dtype) in enumerate(cols):
+        for i, (col, head, dtype, visible) in enumerate(lov_apx.column_definitions(cols)):
             body.append(call('create_list_of_values_cols', [
                 ('p_id', nid('lovcol:%s:%s' % (name, col), 96)), ('p_lov_id', ref('lov:' + name)),
                 ('p_query_column_name', q(col)), ('p_heading', q(head)),
-                ('p_display_sequence', str((i + 1) * 10)), ('p_data_type', q(dtype))]))
+                ('p_display_sequence', str((i + 1) * 10)), ('p_data_type', q(dtype))] + lov_apx.column_attributes(visible)))
         out.append(block('application/shared_components/user_interface/lovs/' + name.lower(), '\n'.join(body)))
 
     # ---- page 9001
@@ -284,6 +285,8 @@ end;
                                                      'p_attribute_04', 'p_attribute_05')]
         if not hidden:
             params += [('p_field_template', fid('LABEL_OPT')), ('p_item_template_options', q(ITEM_OPTS))]
+        if item_icons.post_text(name, disp):
+            params.append(('p_post_element_text', q(item_icons.post_text(name, disp))))
         params.append(('p_is_persistent', q('N')))
         params += [e for e in extra if e[0].startswith('p_attribute_')]
         params.append(('p_item_comment', src(comment)))
@@ -354,7 +357,7 @@ def names_of(text, api):
     return out
 
 def selfcheck(text):
-    problems = lov_apx.check(text)
+    problems = item_icons.check(text) + lov_apx.check(text)
     ref_txt = open(REF, encoding='utf-8', errors='replace').read()
     pkg_txt = re.sub(r'--[^\n]*', '', open(PKG, encoding='utf-8').read())
     if 'wwv_flow_imp' in text: problems.append('wwv_flow_imp found')

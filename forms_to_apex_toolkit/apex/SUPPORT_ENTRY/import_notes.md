@@ -39,6 +39,10 @@ common package `LOV_APX` (`plsql_templates/lov_apx.sql`, version 001), e.g.
 `return LOV_APX.CITIES(P_COUNTRY_ITEM => 'P1110_ADD_CTRY_CD');`. The queries are the same as before.
 Static LOVs are unchanged.
 
+**Fix for "Popup LOV opens without rows" (2026-11-24):** the shared LOVs now also define the display column `D`
+(the code) and the return column `R` (hidden). APEX fetches only the defined columns for a Popup LOV, and the
+return column was missing. Reimport the export (or the full application) after installing `LOV_APX`.
+
 - **Install `plsql_templates/lov_apx.sql` before the import** (package, public synonym `LOV_APX`, EXECUTE to
   `CUSTOMS` and the other grantees). Without it every LOV of these pages fails with PLS-00201.
 - **Verify after the import (one LOV is enough):** Shared Components → List of Values → `LOV_SUPP_TITLES` → Source:
@@ -46,6 +50,12 @@ Static LOVs are unchanged.
   Display `D`. `p_source_type => 'FUNC_BODY_RETURNING_SQL'` is not in f345 or in the real 21.2 export
   `f202604.sql`. If the import rejects it, tell Claude Code: the value is one constant in `scripts/lov_apx.py`.
 - At runtime: open the LOV of `P9001_SUPP_TITLE_CD`; the list shows the same rows as before.
+
+**Item icons (2026-11-24, user request):** every Text Field, Number Field, Popup LOV and Textarea item has an icon
+beside it, as *Post Text* `<span class="cg-ic fa fa-…" aria-hidden="true"></span>`, chosen from the item name
+(`scripts/item_icons.py`: _DT → calendar, PORT → building, CTRY → globe, CITY → map marker, EMAIL → @, TEL → phone,
+MOBILE → mobile, NAME → tag, _NBR / _CD → hashtag ...). Same markup as the real 21.2 export f202604; the f345
+theme styles `.cg-ic`. Display Only, Select List and Hidden items have none.
 
 ## 2. Placeholders
 

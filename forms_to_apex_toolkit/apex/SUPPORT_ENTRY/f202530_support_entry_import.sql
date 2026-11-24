@@ -93,6 +93,15 @@ wwv_flow_api.create_list_of_values_cols(
 ,p_display_sequence=>30
 ,p_data_type=>'VARCHAR2'
 );
+wwv_flow_api.create_list_of_values_cols(
+ p_id=>wwv_flow_api.id(900196000040)
+,p_lov_id=>wwv_flow_api.id(900195000010)
+,p_query_column_name=>'R'
+,p_heading=>unistr('\0631\0645\0632 \0627\0644\062C\0645\0631\0643')
+,p_display_sequence=>40
+,p_data_type=>'NUMBER'
+,p_is_visible=>'N'
+);
 end;
 /
 
@@ -109,7 +118,7 @@ wwv_flow_api.create_list_of_values(
 ,p_display_column_name=>'D'
 );
 wwv_flow_api.create_list_of_values_cols(
- p_id=>wwv_flow_api.id(900196000040)
+ p_id=>wwv_flow_api.id(900196000050)
 ,p_lov_id=>wwv_flow_api.id(900195000020)
 ,p_query_column_name=>'D'
 ,p_heading=>unistr('\0631\0645\0632 \0645\0639\062A\0645\062F \0627\0644\062E\0637\0627\0628')
@@ -117,12 +126,21 @@ wwv_flow_api.create_list_of_values_cols(
 ,p_data_type=>'NUMBER'
 );
 wwv_flow_api.create_list_of_values_cols(
- p_id=>wwv_flow_api.id(900196000050)
+ p_id=>wwv_flow_api.id(900196000060)
 ,p_lov_id=>wwv_flow_api.id(900195000020)
 ,p_query_column_name=>'SUPP_TITLE_NM'
 ,p_heading=>unistr('\0645\0639\062A\0645\062F \0627\0644\062E\0637\0627\0628')
 ,p_display_sequence=>20
 ,p_data_type=>'VARCHAR2'
+);
+wwv_flow_api.create_list_of_values_cols(
+ p_id=>wwv_flow_api.id(900196000070)
+,p_lov_id=>wwv_flow_api.id(900195000020)
+,p_query_column_name=>'R'
+,p_heading=>unistr('\0631\0645\0632 \0645\0639\062A\0645\062F \0627\0644\062E\0637\0627\0628')
+,p_display_sequence=>30
+,p_data_type=>'NUMBER'
+,p_is_visible=>'N'
 );
 end;
 /
@@ -262,6 +280,7 @@ wwv_flow_api.create_page_item(
 ,p_colspan=>3
 ,p_field_template=>wwv_flow_api.id(11621983529556869749)
 ,p_item_template_options=>'#DEFAULT#:t-Form-fieldContainer--stretchInputs'
+,p_post_element_text=>'<span class="cg-ic fa fa-building-o" aria-hidden="true"></span>'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'DIALOG'
 ,p_attribute_02=>'FIRST_ROWSET'
@@ -300,6 +319,7 @@ wwv_flow_api.create_page_item(
 ,p_colspan=>3
 ,p_field_template=>wwv_flow_api.id(11621983529556869749)
 ,p_item_template_options=>'#DEFAULT#:t-Form-fieldContainer--stretchInputs'
+,p_post_element_text=>'<span class="cg-ic fa fa-building-o" aria-hidden="true"></span>'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'DIALOG'
 ,p_attribute_02=>'FIRST_ROWSET'
@@ -336,6 +356,7 @@ wwv_flow_api.create_page_item(
 ,p_colspan=>6
 ,p_field_template=>wwv_flow_api.id(11621983529556869749)
 ,p_item_template_options=>'#DEFAULT#:t-Form-fieldContainer--stretchInputs'
+,p_post_element_text=>'<span class="cg-ic fa fa-file-text-o" aria-hidden="true"></span>'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
 ,p_attribute_02=>'N'
@@ -359,6 +380,7 @@ wwv_flow_api.create_page_item(
 ,p_tag_attributes=>unistr('placeholder="\0633\0646\0629-\0634\0647\0631-\064A\0648\0645"')
 ,p_field_template=>wwv_flow_api.id(11621983529556869749)
 ,p_item_template_options=>'#DEFAULT#:t-Form-fieldContainer--stretchInputs'
+,p_post_element_text=>'<span class="cg-ic fa fa-calendar" aria-hidden="true"></span>'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
 ,p_attribute_02=>'N'

@@ -24,6 +24,8 @@ import os, re, sys, json
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'scripts'))
 import number_only      # Number Field items: CSS class number_only + one page-load handler
+import functions_drawer # the FUNCS region is on page 0, never on a form page
+import item_icons      # Post Text icon next to every entry item, from the item name (f202604 convention)
 import lov_apx         # shared LOVs: function body returning SQL, code in LOV_APX (CLAUDE.md 4d)
 DESIGN = os.path.join(ROOT, 'work', 'step03', 'page_design.json')
 XML = os.path.join(ROOT, 'forms', 'IMPR', 'IMPR1110_fmb.xml')
@@ -152,7 +154,12 @@ def page_item(page, plug_key, seq, it, form_region=False):
         p += [('p_named_lov', q(it['lov'])), ('p_lov_display_null', q('YES'))]
         if k != 'NATIVE_POPUP_LOV':
             p.append(('p_lov_null_text', q('-')))
-        if it.get('cascade'):
+        if it.get('cascade') and k == 'NATIVE_POPUP_LOV':
+            # Popup LOV: the parents only feed the LOV query (Items to Submit, as the real 21.2 export f202604).
+            # A cascading parent would clear the item whenever a parent changes - after the WHEN-VALIDATE-ITEM DA
+            # of the parent had set it and its name item (Forms never clears it), so the name items went stale.
+            p.append(('p_ajax_items_to_submit', q(it['cascade'])))
+        elif it.get('cascade'):
             p.append(('p_lov_cascade_parent_items', q(it['cascade'])))
             p.append(('p_ajax_optimize_refresh', q('Y')))
             UNCERTAIN.add('p_lov_cascade_parent_items / p_ajax_optimize_refresh (cascading LOV parents)')
@@ -165,6 +172,8 @@ def page_item(page, plug_key, seq, it, form_region=False):
     css = number_only.add_class(it.get('tag_css')) if k == 'NATIVE_NUMBER_FIELD' else it.get('tag_css')
     if css:
         p.append(('p_tag_css_classes', q(css)))
+    if item_icons.post_text(name, k):
+        p.append(('p_post_element_text', q(item_icons.post_text(name, k))))
     if k != 'NATIVE_HIDDEN':
         p.append(('p_begin_on_new_line', q('YES' if it.get('newline', True) else 'NO')))
         if it.get('span'):
@@ -378,23 +387,23 @@ NEW_PARAMS = [('P_BRKR_PORT_CD', ':PARAMETER.P_BRKR_PORT_CD of the menu (CIC_MEN
               ('P_LETTER_NBR', ':PARAMETER.LETTER_NBR of IMPR1110 (set by the caller, read once by PARAMETERS ENTRY)')]
 LOVS = [  # spec section 6
     ('LOV_SD_PORTS', lov_apx.call('PORTS', P_PORT_TYPE_ITEM='P_PORT_TYPE'),
-     [('PORT_NAME', 'اسم الجمرك', 'VARCHAR2')], 'LOV form LOV_SD_PORTS / CGFK$IMPORTERS_PORT_CD'),
+     [('D', 'رمز الجمرك', 'NUMBER'), ('PORT_NAME', 'اسم الجمرك', 'VARCHAR2')], 'LOV form LOV_SD_PORTS / CGFK$IMPORTERS_PORT_CD'),
     ('LOV_IMPR_TYPE', lov_apx.call('IMPORTER_TYPES', P_ALL_STATUSES_ITEM='G_CHK_IMP_TYP'),
-     [('IMPR_TYPE_NAME', 'النشاط التجاري', 'VARCHAR2')], 'LOV form LOV_Impr_Type (type part) / CGFK$IMPORTERS_IMPR_TYPE_CD'),
+     [('D', 'رمز النشاط', 'NUMBER'), ('IMPR_TYPE_NAME', 'النشاط التجاري', 'VARCHAR2')], 'LOV form LOV_Impr_Type (type part) / CGFK$IMPORTERS_IMPR_TYPE_CD'),
     ('LOV_IMPR_TYPE_BUS_ID', lov_apx.call('BUSINESS_ID_TYPES', P_IMPORTER_TYPE_ITEM='P1110_IMPR_TYPE_CD', P_ALL_STATUSES_ITEM='G_CHK_IMP_TYP'),
      [], 'LOV form LOV_Impr_Type (bus-id-type part)'),
     ('LOV_CITIES_IMP_ID', lov_apx.call('CITIES_OF_BUSINESS_ID', P_COUNTRY_ITEM='P1110_CTRY_CD', P_IMPORTER_TYPE_ITEM='P1110_IMPR_TYPE_CD', P_BUSINESS_ID_TYPE_ITEM='P1110_BUS_ID_TYPE_CD'),
-     [('CITY_ARB_NAME', 'المدينة', 'VARCHAR2'), ('MINS_COMM_CD', 'رمز الوزارة', 'NUMBER')], 'LOV form LOV_CITIES_IMP (CITY_CODE_OF_ID) / CGFK$IMPORTERS_CITY_CODE_OF_ID'),
+     [('D', 'رمز المدينة', 'NUMBER'), ('CITY_ARB_NAME', 'المدينة', 'VARCHAR2'), ('MINS_COMM_CD', 'رمز الوزارة', 'NUMBER')], 'LOV form LOV_CITIES_IMP (CITY_CODE_OF_ID) / CGFK$IMPORTERS_CITY_CODE_OF_ID'),
     ('LOV_CITIES_IMP_BRNH', lov_apx.call('CITIES', P_COUNTRY_ITEM='P1110_CTRY_CD', P_WITH_MINISTRY_CODE=True),
-     [('CITY_ARB_NAME', 'المدينة', 'VARCHAR2'), ('MINS_COMM_CD', 'رمز الوزارة', 'NUMBER')], 'LOV form LOV_CITIES_IMP (BRNH_CITY_CD)'),
+     [('D', 'رمز المدينة', 'NUMBER'), ('CITY_ARB_NAME', 'المدينة', 'VARCHAR2'), ('MINS_COMM_CD', 'رمز الوزارة', 'NUMBER')], 'LOV form LOV_CITIES_IMP (BRNH_CITY_CD)'),
     ('LOV_CITIES', lov_apx.call('CITIES', P_COUNTRY_ITEM='P1110_ADD_CTRY_CD'),
-     [('CITY_ARB_NAME', 'المدينة', 'VARCHAR2')], 'LOV form LOV_CITIES / CGFK$IMPORTERS_ADD_CTRY_CD (city part)'),
+     [('D', 'رمز المدينة', 'NUMBER'), ('CITY_ARB_NAME', 'المدينة', 'VARCHAR2')], 'LOV form LOV_CITIES / CGFK$IMPORTERS_ADD_CTRY_CD (city part)'),
     ('LOV_COUNTRIES', lov_apx.call('COUNTRIES'),
-     [('CRTY_ARBC_NAME', 'الدولة', 'VARCHAR2')], 'LOV form LOV_COUNTRIES / CGFK$IMPORTERS_ADD_CTRY_CD'),
+     [('D', 'رمز الدولة', 'NUMBER'), ('CRTY_ARBC_NAME', 'الدولة', 'VARCHAR2')], 'LOV form LOV_COUNTRIES / CGFK$IMPORTERS_ADD_CTRY_CD'),
     ('LOV_COUNTRIES_GULF', lov_apx.call('GULF_COUNTRIES', P_IMPORTER_TYPE_ITEM='P1110_IMPR_TYPE_CD', P_BUSINESS_ID_TYPE_ITEM='P1110_BUS_ID_TYPE_CD'),
-     [('CRTY_ARBC_NAME', 'الدولة', 'VARCHAR2')], 'PU CALL_LOV_COUNTRIES / CALL_LOV_COUN_GULF - CTRY_CD'),
+     [('D', 'رمز الدولة', 'NUMBER'), ('CRTY_ARBC_NAME', 'الدولة', 'VARCHAR2')], 'PU CALL_LOV_COUNTRIES / CALL_LOV_COUN_GULF - CTRY_CD'),
     ('LOV_IMPR', lov_apx.call('IMPORTERS', P_PORT_ITEM='P_CURR_PORT_CD'),
-     [('ARBC_IMPR_NAME', 'الاسم', 'VARCHAR2'), ('BUS_ID', 'الرقم الإستدلالي', 'VARCHAR2'), ('BUS_ID_BRNCH', 'الرقم الفرعي', 'VARCHAR2'), ('IMPR_TEL_NBR', 'تليفون', 'VARCHAR2')],
+     [('D', 'رقم المستورد', 'NUMBER'), ('ARBC_IMPR_NAME', 'الاسم', 'VARCHAR2'), ('BUS_ID', 'الرقم الإستدلالي', 'VARCHAR2'), ('BUS_ID_BRNCH', 'الرقم الفرعي', 'VARCHAR2'), ('IMPR_TEL_NBR', 'تليفون', 'VARCHAR2')],
      'LOV form LOV_IMPR'),
     ('LOV_COMM_RGSTRTN_TYPE', lov_apx.call('REFERENCE_CODES', P_DOMAIN='COMM_RGSTRTN_TYPE'), [],
      'list item IMPORTERS.COMM_RGSTRTN_TYPE (CGDV$POPULATE_DYNAMIC_LISTS)'),
@@ -475,12 +484,13 @@ end;
         nid('9000:lov:' + name, 5)
         b = [call('create_list_of_values', [
             ('p_id', ref('9000:lov:' + name)), ('p_lov_name', q(name))] + lov_apx.lov_attributes(sql, q), 'Source: ' + s + ' / spec 6')]
-        for i, (c, h, dt) in enumerate(cols):
+        for i, (c, h, dt, visible) in enumerate(lov_apx.column_definitions(cols)):
             key = '9000:lovc:%s:%s' % (name, c)
             nid(key, 6)
             b.append(call('create_list_of_values_cols', [
                 ('p_id', ref(key)), ('p_lov_id', ref('9000:lov:' + name)), ('p_query_column_name', q(c)),
-                ('p_heading', q(h)), ('p_display_sequence', str((i + 1) * 10)), ('p_data_type', q(dt))]))
+                ('p_heading', q(h)), ('p_display_sequence', str((i + 1) * 10)), ('p_data_type', q(dt))]
+                + lov_apx.column_attributes(visible)))
         W(block('application/shared_components/user_interface/lovs/' + name.lower(), '\n'.join(b)))
     for name, vals, s in STATIC_LOVS:
         nid('9000:lov:' + name, 5)
@@ -531,13 +541,7 @@ end;
         ('p_plug_query_options', q('DERIVED_REPORT_COLUMNS')),
         ('p_plug_comment', src('IMPR1110.IMPORTERS (single record, WHERE PORT_CD = :PARAMETER.P_CURR_PORT_CD, key mode ROWID) / spec 3'))]))
     UNCERTAIN.add('p_query_where on the NATIVE_FORM region (AGR1100 has no WHERE clause)')
-    nid('1110:plug:FUNCS', 1)
-    A(call('create_page_plug', [
-        ('p_id', ref('1110:plug:FUNCS')), ('p_plug_name', q('الوظائف')), ('p_region_name', q('FUNCS')),
-        ('p_region_css_classes', q('cg-funcs')), ('p_region_template_options', q('#DEFAULT#:js-dialog-size480x320')),
-        ('p_plug_template', fid('REGION_DIALOG')), ('p_plug_display_sequence', '990'), ('p_plug_source_type', q('NATIVE_LIST')),
-        ('p_list_id', fid('LIST_PAGE_FUNS')), ('p_list_template_id', fid('LIST_FUNS_TPL')), ('p_plug_query_num_rows', '15'),
-        ('p_plug_comment', src('IMPR1110.LSIDE / TMPLT function menu (FORM.KEY-F9), opened by page 0 FUNCS; f345 list Page Functions filtered by P1110_ADJ_FUNS / spec 3'))]))
+    # functions menu: region FUNCS on page 0 (side drawer of every page, scripts/functions_drawer.py)
     nid('1110:branch:STAY', 3)
     A(call('create_page_branch', [
         ('p_id', ref('1110:branch:STAY')), ('p_branch_name', q('IMPR1110 - stay in the form')),
@@ -853,7 +857,7 @@ def names_of(text, api):
     return out
 
 def selfcheck(text):
-    problems = lov_apx.check(text)
+    problems = item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
     ref_txt = open(REF, encoding='utf-8', errors='replace').read()
     pkg_txt = re.sub(r'--[^\n]*', '', open(PKG, encoding='utf-8').read())
     if 'wwv_flow_imp' in text: problems.append('wwv_flow_imp found')

@@ -174,7 +174,12 @@ Rules:
 5. Standard buttons come from the **page 0 toolbar** of f345 (`CREATE` · `SAVE` · `DELETE` ·
    `SEARCH` · `CLEAR` · `FUNCS` / `REPORT_SHOW` · `REPORT_PRINT` · `BACK`). Form pages do **not**
    define their own copies; they keep the current record key in `P0_PAGE_PK` and handle the
-   requests `CREATE`, `SAVE` and `DELETE`.
+   requests `CREATE`, `SAVE` and `DELETE`. The functions menu is also on page 0: one region `FUNCS`
+   shown as a side drawer for all pages (`scripts/functions_drawer.py`, added by `build_full_app.py`);
+   a form page never has its own `FUNCS` region.
+6. Every Text Field, Number Field, Popup LOV and Textarea item has an icon as Post Text
+   `<span class="cg-ic fa fa-<icon>" aria-hidden="true"></span>` chosen from its name (`scripts/item_icons.py`,
+   the convention of the real 21.2 export f202604; f345 styles `.cg-ic`). The generators check it.
 
 ---
 
@@ -233,6 +238,8 @@ Full rules: `docs/f345_reference_standard.md` §9a; code and check: `scripts/lov
    of the common package **`LOV_APX`** (`plsql_templates/lov_apx.sql`, owner `LIB_APX_USR`, public synonym,
    grants as §3), e.g. `return LOV_APX.CITIES(P_COUNTRY_ITEM => 'P1110_ADD_CTRY_CD');`. Return column `R`,
    display column `D`. Static LOVs (fixed values from the XML) stay Static.
+   Column definitions always include `D` (visible) and `R` (hidden): a Popup LOV fetches only the defined
+   columns and shows no rows without them (`lov_apx.column_definitions()`).
 2. LOVs are common to all systems: one function per list (ports, countries, cities, importers, CG_REF_CODES
    domains ...), full-word names; reuse a function before adding one, and add parameters rather than a copy.
 3. The functions never read session state: the caller passes the item **name** (`P_<X>_ITEM => 'P1110_CTRY_CD'`)

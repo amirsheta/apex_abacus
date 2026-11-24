@@ -24,6 +24,8 @@ import os, re, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'scripts'))
 import number_only      # Number Field items: CSS class number_only + one page-load handler
+import functions_drawer # the FUNCS region is on page 0, never on a form page
+import item_icons      # Post Text icon next to every entry item, from the item name (f202604 convention)
 import lov_apx         # shared LOVs: function body returning SQL, code in LOV_APX (CLAUDE.md 4d)
 REF = os.path.join(ROOT, 'apex', 'Reference', 'f345.sql')
 IMPR1110_EXPORT = os.path.join(ROOT, 'apex', 'IMPR1110', 'f345_impr1110.sql')
@@ -132,6 +134,8 @@ def page_item(page, plug_key, seq, it, form_region=False):
     css = number_only.add_class(it.get('tag_css')) if k == 'NATIVE_NUMBER_FIELD' else it.get('tag_css')
     if css:
         p.append(('p_tag_css_classes', q(css)))
+    if item_icons.post_text(name, k):
+        p.append(('p_post_element_text', q(item_icons.post_text(name, k))))
     if k != 'NATIVE_HIDDEN':
         p.append(('p_begin_on_new_line', q('YES' if it.get('newline', True) else 'NO')))
         if it.get('span'):
@@ -575,13 +579,7 @@ end;
     for c in ig(PG, '1120:plug:IMPR_SUSPN', True, ['APEX$ROW_ACTION', 'APEX$ROW_SELECTOR'] + [c['name'] for c in SUSPN_COLUMNS],
                 'لا توجد توقيفات سارية'):
         A(c)
-    nid('1120:plug:FUNCS', 1)
-    A(call('create_page_plug', [
-        ('p_id', ref('1120:plug:FUNCS')), ('p_plug_name', q('الوظائف')), ('p_region_name', q('FUNCS')),
-        ('p_region_css_classes', q('cg-funcs')), ('p_region_template_options', q('#DEFAULT#:js-dialog-size480x320')),
-        ('p_plug_template', fid('REGION_DIALOG')), ('p_plug_display_sequence', '990'), ('p_plug_source_type', q('NATIVE_LIST')),
-        ('p_list_id', fid('LIST_PAGE_FUNS')), ('p_list_template_id', fid('LIST_FUNS_TPL')), ('p_plug_query_num_rows', '15'),
-        ('p_plug_comment', src('IMPR1120.LSIDE / TMPLT function menu (FORM.KEY-F9), opened by page 0 FUNCS; f345 list Page Functions / spec 3'))]))
+    # functions menu: region FUNCS on page 0 (side drawer of every page, scripts/functions_drawer.py)
     # branches (spec 12)
     nid('1120:branch:QUERY', 3)
     A(call('create_page_branch', [
@@ -812,7 +810,7 @@ def unq(s):
     return s[1:-1].replace("''", "'") if s.startswith("'") else s
 
 def selfcheck(text):
-    problems = lov_apx.check(text)
+    problems = item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
     ref_txt = open(REF, encoding='utf-8', errors='replace').read()
     i1110 = open(IMPR1110_EXPORT, encoding='utf-8', errors='replace').read()
     pkg_txt = re.sub(r'--[^\n]*', '', open(PKG, encoding='utf-8').read())

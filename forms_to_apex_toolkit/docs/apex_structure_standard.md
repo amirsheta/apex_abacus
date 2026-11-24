@@ -51,7 +51,7 @@ with the application's ID offset). They never re-create f345's shared components
 | Tab canvas | "Tabs Container" region; each tab page = sub-region whose Static ID is the tab page name | *Tabs Container* |
 | Stacked canvas | Inline Dialog region, or a modal page `<page>02…09` | *Inline Dialog* |
 | Screen header | Hero region with the screen title (process `HEADER TITLE`) | *Blank with Attributes*, `cg-hero` |
-| Function side menu (TMPLT / LSIDE) | Inline Dialog `FUNCS` with the f345 list *Page Functions* | *Inline Dialog*, `cg-funcs` |
+| Function side menu (TMPLT / LSIDE) | Inline Dialog `FUNCS` with the f345 list *Page Functions* | one region `FUNCS` on **page 0** for all pages: Inline Dialog shown as a side drawer, `cg-funcs cg-funcs-drawer`, list template *Media List* (`scripts/functions_drawer.py`) |
 
 Rules:
 - Region **Static ID** = Forms block name (UPPERCASE). JavaScript and DAs refer to the region by this ID,

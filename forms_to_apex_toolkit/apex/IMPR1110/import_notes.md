@@ -91,6 +91,17 @@ common package `LOV_APX` (`plsql_templates/lov_apx.sql`, version 001), e.g.
 `return LOV_APX.CITIES(P_COUNTRY_ITEM => 'P1110_ADD_CTRY_CD');`. The queries are the same as before.
 Static LOVs are unchanged.
 
+**Fix for "name items not updated after a pick" (2026-11-24):** the Popup LOVs P1110_CTRY_CD, P1110_CITY_CODE_OF_ID,
+P1110_BRNH_CITY_CD and P1110_CITY_CODE had *Cascading LOV Parent Items*, so APEX emptied them whenever a parent
+changed, right after the parent's WHEN-VALIDATE-ITEM DA had set them and their name items (Forms never clears
+them). They now send the parents through *Items to Submit* (`p_ajax_items_to_submit`, as the real 21.2 export):
+the LOV query still sees the parent values and nothing is cleared. The Select List P1110_BUS_ID_TYPE_CD keeps its
+cascade (its options must reload when the importer type changes).
+
+**Fix for "Popup LOV opens without rows" (2026-11-24):** the shared LOVs now also define the display column `D`
+(the code) and the return column `R` (hidden). APEX fetches only the defined columns for a Popup LOV, and the
+return column was missing. Reimport the export (or the full application) after installing `LOV_APX`.
+
 - **Install `plsql_templates/lov_apx.sql` before the import** (package, public synonym `LOV_APX`, EXECUTE to
   `CUSTOMS` and the other grantees). Without it every LOV of these pages fails with PLS-00201.
 - **Verify after the import (one LOV is enough):** Shared Components → List of Values → `LOV_COUNTRIES` → Source:
@@ -98,6 +109,26 @@ Static LOVs are unchanged.
   Display `D`. `p_source_type => 'FUNC_BODY_RETURNING_SQL'` is not in f345 or in the real 21.2 export
   `f202604.sql`. If the import rejects it, tell Claude Code: the value is one constant in `scripts/lov_apx.py`.
 - At runtime: open the LOV of `P1110_CTRY_CD`; the list shows the same rows as before.
+
+**Functions side drawer (2026-11-24, user request):** the functions menu (الوظائف) is one region `FUNCS` on
+**page 0** for all pages (`scripts/functions_drawer.py`): an Inline Dialog shown as a side drawer (full height on
+the LEFT, slides in) with a search box on top, listing *Page Functions* with the Media List template; every
+text in it is Arabic (title, search placeholder, "no function" message, close button إغلاق). This page has no FUNCS region any
+more. The full application file `apex/f202530_full.sql` already adds it to page 0, with the page 0 DA `FUNCS SEARCH`
+(Page Load, one line of *Execute JavaScript Code* = `functions_drawer.JS`: filters the rows while typing, Arabic
+letter forms normalised). After a component-only import, add both once by hand: Page Designer → page 0 → Create Region: Title الوظائف, Type *List*, List *Page Functions*,
+Template *Inline Dialog*, Static ID `FUNCS`, CSS Classes `cg-funcs cg-funcs-drawer`, Header Text = `<style>` +
+`functions_drawer.CSS` + `</style>` + `functions_drawer.HEADER`, Footer Text = `functions_drawer.FOOTER`, List Template *Media List* (Show Icons), Server-side Condition
+*Rows returned* = `functions_drawer.CONDITION`. Check: open page 1110, click الوظائف → a drawer slides in on the
+left, the cursor is in the search box; type part of a name (for example مستورد) → only matching rows stay,
+nothing matching → لا توجد وظيفة بهذا الاسم; a click closes it and runs the function; reopen → search is empty.
+
+
+**Item icons (2026-11-24, user request):** every Text Field, Number Field, Popup LOV and Textarea item has an icon
+beside it, as *Post Text* `<span class="cg-ic fa fa-…" aria-hidden="true"></span>`, chosen from the item name
+(`scripts/item_icons.py`: _DT → calendar, PORT → building, CTRY → globe, CITY → map marker, EMAIL → @, TEL → phone,
+MOBILE → mobile, NAME → tag, _NBR / _CD → hashtag ...). Same markup as the real 21.2 export f202604; the f345
+theme styles `.cg-ic`. Display Only, Select List and Hidden items have none.
 
 ## 3. Placeholders
 

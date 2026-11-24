@@ -5071,23 +5071,6 @@ wwv_flow_api.create_page_da_action(
 'apex.event.gCancelFlag = true;',
 'apex.message.confirm($v(''P1110_PRE_INSERT_QUESTION''), function (ok) { if (ok) { $s(''P1110_ANSWER'', ''1''); apex.page.submit(''CREATE''); } });'))
 );
-wwv_flow_api.create_page_da_event(
- p_id=>wwv_flow_api.id(111008000630)
-,p_name=>'NUMBER ONLY'
-,p_event_sequence=>5
-,p_bind_type=>'bind'
-,p_bind_event_type=>'ready'
-,p_da_event_comment=>'Source: Number Field items (CSS class number_only) accept only digits while typing (user request 2026-11-24); f345 has no class-based handler (FTEX.js pageItemOnlyNumber is per item)'
-);
-wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000980)
-,p_event_id=>wwv_flow_api.id(111008000630)
-,p_event_result=>'TRUE'
-,p_action_sequence=>10
-,p_execute_on_page_init=>'Y'
-,p_action=>'NATIVE_JAVASCRIPT_CODE'
-,p_attribute_01=>'$(document).off("input.numberOnly").on("input.numberOnly", ".number_only", function () { var v = this.value.replace(/[\u0660-\u0669\u06F0-\u06F9]/g, function (d) { var c = d.charCodeAt(0); return String(c - (c >= 1776 ? 1776 : 1632)); }).replace(/[^0-9]/g, ""); if (v !== this.value) { this.value = v; } });'
-);
 end;
 /
 

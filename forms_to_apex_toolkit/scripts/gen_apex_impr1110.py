@@ -611,15 +611,7 @@ end;
     # dynamic actions (spec 10)
     for n, d in enumerate(D['das'], 1):
         A(da_event(PG, n, d))
-    # Number Field items accept only digits (user request 2026-11-24): one delegated handler for .number_only
-    ek = '%s:da:NUMBER ONLY' % PG
-    nid(ek, 8); nid(ek + ':10', 9)
-    A(call('create_page_da_event', [('p_id', ref(ek)), ('p_name', q('NUMBER ONLY')), ('p_event_sequence', '5'),
-                                    ('p_bind_type', q('bind')), ('p_bind_event_type', q('ready')),
-                                    ('p_da_event_comment', src(number_only.COMMENT))]))
-    A(call('create_page_da_action', [('p_id', ref(ek + ':10')), ('p_event_id', ref(ek)), ('p_event_result', q('TRUE')),
-                                     ('p_action_sequence', '10'), ('p_execute_on_page_init', q('Y')),
-                                     ('p_action', q('NATIVE_JAVASCRIPT_CODE')), ('p_attribute_01', q(number_only.JS))]))
+    # the number_only handler is the page 0 DA NUMBER ONLY (scripts/number_only.py, added by build_full_app.py)
     W(block('application/pages/page_01110', '\n'.join(P)))
 
     # ---------------------------------------------------------------- page 111001 (search)
@@ -925,15 +917,12 @@ def selfcheck(text):
         c = c[:c.find('\n);')]
         if re.search(r"p_item_type=>'NATIVE_(NUMBER|TEXT)_FIELD'", c) and "p_data_type=>'NUMBER'" in c and number_only.CLASS not in c:
             problems.append('grid number column without class %s: %s' % (number_only.CLASS, re.search(r"p_name=>'([^']+)'", c).group(1)))
-    for pg in re.split(r'\nprompt --application/pages/page_', text)[1:]:
-        if number_only.CLASS + "'" in pg and "p_name=>'NUMBER ONLY'" not in pg:
-            problems.append('page %s uses class %s without the NUMBER ONLY handler' % (pg.split('\n', 1)[0], number_only.CLASS))
+    # the class works through the page 0 DA NUMBER ONLY (added by scripts/build_full_app.py): no copy on form pages
+    if "p_name=>'NUMBER ONLY'" in text: problems.append('NUMBER ONLY DA on a form page (it belongs to page 0)')
     for c in text.split('wwv_flow_api.create_page_item(')[1:]:
         c = c[:c.find('\n);')]
         if "p_display_as=>'NATIVE_NUMBER_FIELD'" in c and number_only.CLASS not in c:
             problems.append('number field without class %s: %s' % (number_only.CLASS, re.search(r"p_name=>'([^']+)'", c).group(1)))
-    if number_only.CLASS in text and text.count(number_only.JS.replace("'", "''")) < 1:
-        problems.append('class %s used but no NUMBER ONLY handler' % number_only.CLASS)
     counts = {k: len(re.findall(r'wwv_flow_api\.%s\(' % k, text)) for k in [
         'create_page', 'create_page_plug', 'create_page_item', 'create_page_button', 'create_page_validation',
         'create_page_process', 'create_page_da_event', 'create_page_da_action', 'create_page_computation', 'create_page_branch',

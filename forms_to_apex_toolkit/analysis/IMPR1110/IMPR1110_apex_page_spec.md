@@ -419,10 +419,11 @@ the fetched record (ADJ_FUNS, MOBILE_URL, PRE_INSERT_QUESTION) run After Header.
 
 ### 10.1 How the DAs are built
 
-- **`NUMBER ONLY`** (Page Load, sequence 5, user request 2026-11-24): one *Execute JavaScript Code* line from
-  `scripts/number_only.py`, a delegated `input` handler for `.number_only`: only digits stay while typing or pasting
-  (Arabic-Indic / Persian digits become 0-9). The Number Field items `P1110_IMPR_NBR`, `P1110_IMPR_POB_NBR` and
-  `P1110_IMPR_ZIP_CD` have the CSS class `number_only`. Popup LOVs (name search) and phone fields (`+`, spaces) do not.
+- **Digits only** (user requests 2026-11-24): the Number Field items `P1110_IMPR_NBR`, `P1110_IMPR_POB_NBR` and
+  `P1110_IMPR_ZIP_CD` have the CSS class `number_only`. The handler is the **page 0** DA `NUMBER ONLY` (one
+  *Execute JavaScript Code* line from `scripts/number_only.py`, a delegated `input` handler: only digits stay while
+  typing or pasting, Arabic-Indic / Persian digits become 0-9), added by `scripts/build_full_app.py`; page 1110 has
+  no copy. Popup LOVs (name search) and phone fields (`+`, spaces) have no class.
 
 - **FOS - Execute PL/SQL Code** (f345 plug-in `COM.FOS.EXECUTE_PLSQL_CODE`) with the attributes of standard §9:
   `p_attribute_01` = the call below; `p_attribute_02` = *Items to Submit* (only items the user can change,

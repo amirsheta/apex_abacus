@@ -1260,23 +1260,6 @@ wwv_flow_api.create_page_process(
 );
 wwv_flow_api.create_page_da_event(
  p_id=>wwv_flow_api.id(112008000010)
-,p_name=>'NUMBER ONLY'
-,p_event_sequence=>5
-,p_bind_type=>'bind'
-,p_bind_event_type=>'ready'
-,p_da_event_comment=>'Source: Number Field items (CSS class number_only) accept only digits while typing (user request 2026-11-24); f345 has no class-based handler (FTEX.js pageItemOnlyNumber is per item)'
-);
-wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(112009000010)
-,p_event_id=>wwv_flow_api.id(112008000010)
-,p_event_result=>'TRUE'
-,p_action_sequence=>10
-,p_execute_on_page_init=>'Y'
-,p_action=>'NATIVE_JAVASCRIPT_CODE'
-,p_attribute_01=>'$(document).off("input.numberOnly").on("input.numberOnly", ".number_only", function () { var v = this.value.replace(/[\u0660-\u0669\u06F0-\u06F9]/g, function (d) { var c = d.charCodeAt(0); return String(c - (c >= 1776 ? 1776 : 1632)); }).replace(/[^0-9]/g, ""); if (v !== this.value) { this.value = v; } });'
-);
-wwv_flow_api.create_page_da_event(
- p_id=>wwv_flow_api.id(112008000020)
 ,p_name=>'IMPR_NBR WHEN-VALIDATE-ITEM'
 ,p_event_sequence=>10
 ,p_triggering_element_type=>'ITEM'
@@ -1287,8 +1270,8 @@ wwv_flow_api.create_page_da_event(
 ,p_da_event_comment=>'Source: IMPR1120.IMPORTERS.IMPR_NBR.WHEN-VALIDATE-ITEM + IMPR_TYPE_CD.WHEN-NEW-ITEM-INSTANCE (EXECUTE_QUERY) / spec 10'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(112009000020)
-,p_event_id=>wwv_flow_api.id(112008000020)
+ p_id=>wwv_flow_api.id(112009000010)
+,p_event_id=>wwv_flow_api.id(112008000010)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
 ,p_execute_on_page_init=>'N'
@@ -1300,8 +1283,8 @@ wwv_flow_api.create_page_da_action(
 ,p_wait_for_result=>'Y'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(112009000030)
-,p_event_id=>wwv_flow_api.id(112008000020)
+ p_id=>wwv_flow_api.id(112009000020)
+,p_event_id=>wwv_flow_api.id(112008000010)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>20
 ,p_execute_on_page_init=>'N'
@@ -1310,7 +1293,7 @@ wwv_flow_api.create_page_da_action(
 ,p_attribute_02=>'Y'
 );
 wwv_flow_api.create_page_da_event(
- p_id=>wwv_flow_api.id(112008000030)
+ p_id=>wwv_flow_api.id(112008000020)
 ,p_name=>'IMPR_SUSPN SUSPN_STRT_DT WHEN-VALIDATE-ITEM'
 ,p_event_sequence=>110
 ,p_triggering_element_type=>'COLUMN'
@@ -1321,8 +1304,8 @@ wwv_flow_api.create_page_da_event(
 ,p_da_event_comment=>'Source: IMPR1120.IMPR_SUSPN.SUSPN_STRT_DT.WHEN-VALIDATE-ITEM / spec 10'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(112009000040)
-,p_event_id=>wwv_flow_api.id(112008000030)
+ p_id=>wwv_flow_api.id(112009000030)
+,p_event_id=>wwv_flow_api.id(112008000020)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
 ,p_execute_on_page_init=>'N'
@@ -1334,7 +1317,7 @@ wwv_flow_api.create_page_da_action(
 ,p_wait_for_result=>'Y'
 );
 wwv_flow_api.create_page_da_event(
- p_id=>wwv_flow_api.id(112008000040)
+ p_id=>wwv_flow_api.id(112008000030)
 ,p_name=>'IMPR_SUSPN SUSPN_END_DT WHEN-VALIDATE-ITEM'
 ,p_event_sequence=>120
 ,p_triggering_element_type=>'COLUMN'
@@ -1345,8 +1328,8 @@ wwv_flow_api.create_page_da_event(
 ,p_da_event_comment=>'Source: IMPR1120.IMPR_SUSPN.SUSPN_END_DT.WHEN-VALIDATE-ITEM / spec 10'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(112009000050)
-,p_event_id=>wwv_flow_api.id(112008000040)
+ p_id=>wwv_flow_api.id(112009000040)
+,p_event_id=>wwv_flow_api.id(112008000030)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
 ,p_execute_on_page_init=>'N'
@@ -1358,7 +1341,7 @@ wwv_flow_api.create_page_da_action(
 ,p_wait_for_result=>'Y'
 );
 wwv_flow_api.create_page_da_event(
- p_id=>wwv_flow_api.id(112008000050)
+ p_id=>wwv_flow_api.id(112008000040)
 ,p_name=>'IMPR_SUSPN SUSPN_RSN_CD WHEN-VALIDATE-ITEM'
 ,p_event_sequence=>130
 ,p_triggering_element_type=>'COLUMN'
@@ -1369,8 +1352,8 @@ wwv_flow_api.create_page_da_event(
 ,p_da_event_comment=>'Source: IMPR1120.IMPR_SUSPN.SUSPN_RSN_CD.WHEN-VALIDATE-ITEM / spec 10'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(112009000060)
-,p_event_id=>wwv_flow_api.id(112008000050)
+ p_id=>wwv_flow_api.id(112009000050)
+,p_event_id=>wwv_flow_api.id(112008000040)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
 ,p_execute_on_page_init=>'N'
@@ -1383,7 +1366,7 @@ wwv_flow_api.create_page_da_action(
 ,p_wait_for_result=>'Y'
 );
 wwv_flow_api.create_page_da_event(
- p_id=>wwv_flow_api.id(112008000060)
+ p_id=>wwv_flow_api.id(112008000050)
 ,p_name=>'IMPR_SUSPN SUSPN_SIDE_CD WHEN-LIST-CHANGED'
 ,p_event_sequence=>140
 ,p_triggering_element_type=>'COLUMN'
@@ -1394,8 +1377,8 @@ wwv_flow_api.create_page_da_event(
 ,p_da_event_comment=>'Source: IMPR1120.IMPR_SUSPN.SUSPN_SIDE_CD.WHEN-LIST-CHANGED / spec 10'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(112009000070)
-,p_event_id=>wwv_flow_api.id(112008000060)
+ p_id=>wwv_flow_api.id(112009000060)
+,p_event_id=>wwv_flow_api.id(112008000050)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
 ,p_execute_on_page_init=>'N'

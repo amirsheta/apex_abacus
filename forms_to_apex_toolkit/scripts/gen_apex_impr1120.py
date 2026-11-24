@@ -673,8 +673,7 @@ end;
         A(process(PG, key, seq, point, name, code, cond, s, ptype=kw.get('ptype', 'NATIVE_PLSQL'),
                   extra=kw.get('extra'), region=kw.get('region')))
     # dynamic actions (spec 10)
-    A(da(PG, 5, 'NUMBER ONLY', ('READY',), 'ready',
-         [[('p_action', q('NATIVE_JAVASCRIPT_CODE')), ('p_attribute_01', q(number_only.JS))]], number_only.COMMENT))
+    # the number_only handler is the page 0 DA NUMBER ONLY (scripts/number_only.py, added by build_full_app.py)
     A(da(PG, 10, 'IMPR_NBR WHEN-VALIDATE-ITEM', ('ITEM', 'P1120_IMPR_NBR'), 'change', [
         fos('FORMS_APX.CHECK_ERROR(IMPR1120.IMPR_NBR_VALIDATION(P_PORT_CD => :P1120_PORT_CD, P_IMPR_NBR => :P1120_IMPR_NBR));',
             ['P1120_PORT_CD', 'P1120_IMPR_NBR']),
@@ -892,15 +891,14 @@ def selfcheck(text):
     # Execute JavaScript Code: at most 3 lines (CLAUDE.md §4c); the only one is the number_only handler
     for j in re.findall(r"p_action=>'NATIVE_JAVASCRIPT_CODE'\n,p_attribute_01=>(.*?)\n(?=[,)])", text, re.S):
         if j.count("',\n") + 1 > 3: problems.append('JavaScript action > 3 lines')
-        if unq(j) != number_only.JS: problems.append('unexpected JavaScript action: ' + j[:60])
+        problems.append('unexpected JavaScript action: ' + j[:60])
     # editable grid number columns (Text / Number Field on NUMBER data) carry number_only too (user request 2026-11-24)
     for c in text.split('wwv_flow_api.create_region_column(')[1:]:
         c = c[:c.find('\n);')]
         if re.search(r"p_item_type=>'NATIVE_(NUMBER|TEXT)_FIELD'", c) and "p_data_type=>'NUMBER'" in c and number_only.CLASS not in c:
             problems.append('grid number column without class %s: %s' % (number_only.CLASS, re.search(r"p_name=>'([^']+)'", c).group(1)))
-    for pg in re.split(r'\nprompt --application/pages/page_', text)[1:]:
-        if number_only.CLASS + "'" in pg and "p_name=>'NUMBER ONLY'" not in pg:
-            problems.append('page %s uses class %s without the NUMBER ONLY handler' % (pg.split('\n', 1)[0], number_only.CLASS))
+    # the class works through the page 0 DA NUMBER ONLY (added by scripts/build_full_app.py): no copy on form pages
+    if "p_name=>'NUMBER ONLY'" in text: problems.append('NUMBER ONLY DA on a form page (it belongs to page 0)')
     for c in text.split('wwv_flow_api.create_page_item(')[1:]:
         c = c[:c.find('\n);')]
         if "p_display_as=>'NATIVE_NUMBER_FIELD'" in c and number_only.CLASS not in c:

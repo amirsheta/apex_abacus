@@ -16,6 +16,8 @@ The component files may still contain their __PLACEHOLDERS__: only their body is
 import os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, 'scripts'))
+import number_only      # page 0 DA "NUMBER ONLY" (user decision 2026-11-24)
 REF = os.path.join(ROOT, 'apex', 'Reference', 'f345.sql')
 
 def main(argv):
@@ -38,6 +40,16 @@ def main(argv):
             sys.exit('f345.sql: expected exactly one %r' % old)
         ref = ref.replace(old, new)
         n += 1
+
+    # ---- page 0 (global page): add the DA "NUMBER ONLY" for the CSS class number_only. The component exports
+    # cannot change page 0, so it is added here; apex/Reference/f345.sql itself stays unchanged.
+    p0 = ref.index('prompt --application/pages/page_00000\n')
+    p0_end = ref.index('\nend;\n/\nprompt --', p0)
+    if "p_name=>'NUMBER ONLY'" in ref[p0:p0_end]:
+        sys.exit('f345.sql page 0 already has a NUMBER ONLY dynamic action')
+    if re.search(r'wwv_flow_api\.id\((%s|%s)\)' % (number_only.PAGE0_EVENT_ID, number_only.PAGE0_ACTION_ID), ref):
+        sys.exit('page 0 NUMBER ONLY ids already used in f345.sql')
+    ref = ref[:p0_end] + '\n' + number_only.page0_dynamic_action() + ref[p0_end:]
 
     # ---- component bodies
     bodies, pages = [], []

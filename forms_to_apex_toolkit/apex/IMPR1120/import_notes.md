@@ -48,6 +48,21 @@ The self-check covers:
 
 A test with a wrong parameter name, an unknown member and an unknown bind confirmed that the check reports each of them.
 
+### Shared LOVs in LOV_APX (2026-11-24, CLAUDE.md §4d)
+
+Every SQL shared LOV of this export now has the type *PL/SQL Function Body returning SQL Query* and calls the
+common package `LOV_APX` (`plsql_templates/lov_apx.sql`, version 001), e.g.
+`return LOV_APX.CITIES(P_COUNTRY_ITEM => 'P1110_ADD_CTRY_CD');`. The queries are the same as before.
+Static LOVs are unchanged.
+
+- **Install `plsql_templates/lov_apx.sql` before the import** (package, public synonym `LOV_APX`, EXECUTE to
+  `CUSTOMS` and the other grantees). Without it every LOV of these pages fails with PLS-00201.
+- **Verify after the import (one LOV is enough):** Shared Components → List of Values → `LOV_SUSPN_SIDE_CD` → Source:
+  *Type* = PL/SQL Function Body returning SQL Query, the body shows the `LOV_APX` call, Return `R` /
+  Display `D`. `p_source_type => 'FUNC_BODY_RETURNING_SQL'` is not in f345 or in the real 21.2 export
+  `f202604.sql`. If the import rejects it, tell Claude Code: the value is one constant in `scripts/lov_apx.py`.
+- At runtime: open the grid column `SUSPN_SIDE_CD` (الجهة) of region IMPR_SUSPN; the select list shows the same rows as before.
+
 ## 2. Placeholders
 
 The script has `set define off`. There are four tokens:

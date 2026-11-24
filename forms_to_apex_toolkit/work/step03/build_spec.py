@@ -248,8 +248,13 @@ for code, kind in [('IMPR1110F1', 'support'), ('IMPR1110F2', 'support'), ('IMPR1
                 dict(action='Set Value', code="Static '%s' -> P1110_FUNCTION_CODE" % code, submit=[], ret=[], note='fires DA EXEC_FUNS')]
     elif kind == 'support':
         acts = [dict(action='Set Value', code="Static '%s' -> P1110_FUNCTION_PENDING" % code, submit=[], ret=[], note=''),
+                dict(action='FOS - Execute PL/SQL Code',
+                     code='SUPPORT_ENTRY.OPEN_DIALOG(P_MODE => 0, P_CURR_PORT_CD => :P1110_PORT_CD, P_SUPPORT_URL => :P1110_SUPPORT_URL);',
+                     submit=[P + 'PORT_CD'], ret=[P + 'SUPPORT_URL'],
+                     note='page 9001 SUPPORT_ENTRY (its spec §0.2 / §10.1): keeps 1110 in G_SUPPORT_ENTRY_CALLER, sets G_LAST_PAGE := 9001 '
+                          '(f345 SCREEN ENTRY RESET leaves P0_PAGE_PK alone) and returns the URL (P_MODE = 0, P_CURR_PORT_CD = PORT_CD, checksum)'),
                 js(["apex.navigation.redirect($v('P1110_SUPPORT_URL'));"],
-                   'open the SUPPORT_ENTRY dialog (form converted separately, decision §15 #12; its page and URL item are TODO)')]
+                   'open the SUPPORT_ENTRY dialog page 9001 (URL from SUPPORT_ENTRY.OPEN_DIALOG)')]
     elif kind == 'direct':
         acts = [fos('EXEC_FUNS', overrides={'FUNCTION_CODE': "'%s'" % code})]
     elif kind == 'mci':
@@ -268,7 +273,7 @@ for code, kind in [('IMPR1110F1', 'support'), ('IMPR1110F2', 'support'), ('IMPR1
 da('SUPPORT_ENTRY DIALOG CLOSED', 'Dialog Closed', 'JavaScript Expression: document',
    [dict(action='Set Value', code="Static NULL -> P1110_FUNCTION_CODE, Suppress Change Event = Yes", submit=[], ret=[], note=''),
     dict(action='Set Value', code="JavaScript Expression $v('P1110_FUNCTION_PENDING') -> P1110_FUNCTION_CODE", submit=[], ret=[], note='fires DA EXEC_FUNS')],
-   'CALL_FORM(SUPPORT_ENTRY) return (functions F1, F2, F3, F5)', condition='TODO: dialog = SUPPORT_ENTRY page')
+   'CALL_FORM(SUPPORT_ENTRY) return (functions F1, F2, F3, F5)', condition='dialog page 9001')
 da('EXEC_FUNS', 'Change', 'Item P1110_FUNCTION_CODE',
    [fos('EXEC_FUNS'),
     dict(fos('NEW_RECORD_CONFIRM_TEXT'), code=':%sCONFIRM_TEXT := %s;' % (P, call('NEW_RECORD_CONFIRM_TEXT')), ret=[P + 'CONFIRM_TEXT']),
@@ -294,9 +299,9 @@ items.append(dict(name=P + 'BROKER_USER', column='-', type='Hidden (Value Protec
 items.append(dict(name=P + 'PRE_INSERT_QUESTION', column='-', type='Hidden (Value Protected = Yes)', label='-', required='No', mask='-',
                   default='-', lov='-', parents='-', maxlen='-', layout='hidden', read_only='-', condition='', source='-',
                   notes='text of the broker question (Text Message IMPR1110_PRE_INSERT_CONFIRM), read by DA PRE-INSERT CONFIRM', submit='No (server value)'))
-items.append(dict(name=P + 'SUPPORT_URL', column='-', type='Hidden (Value Protected = Yes)', label='-', required='No', mask='-',
+items.append(dict(name=P + 'SUPPORT_URL', column='-', type='Hidden (Value Protected = No)', label='-', required='No', mask='-',
                   default='-', lov='-', parents='-', maxlen='-', layout='hidden', read_only='-', condition='', source='-',
-                  notes='URL of the SUPPORT_ENTRY dialog (TODO: page of the separately converted form)', submit='No (server value)'))
+                  notes='URL of dialog page 9001 SUPPORT_ENTRY, returned by FOS SUPPORT_ENTRY.OPEN_DIALOG (not protected: set by Ajax)', submit='No (server value)'))
 
 # ------------------------------------------------------------------ processes / computations
 def proc(seq, point, name, code, cond, source):
@@ -416,8 +421,9 @@ def remap(r):
                'LOV_UPDATE_MOBLIE': 'IMPR1110.CENTRAL_MOBILE / LOV_UPDATE_MOBLIE'}
         member = pub.get(name, 'IMPR1110 (private %s)' % name)
     if typ == 'CALLED_FORM' and name == 'SUPPORT_ENTRY':
-        comp, comp_name, page = 'PAGE', 'SUPPORT_ENTRY page (form converted on its own, SC subsystem - decision §15 #12)', None
-        notes = 'TODO: page number and URL item P1110_SUPPORT_URL; on close it must set G_LETTER_NBR / G_SUPP_TITLE_CD / G_LETTER_DT / G_PORT_CD'
+        comp, comp_name, page = 'PAGE', '9001 SUPPORT_ENTRY (modal dialog, converted on its own - decision §15 #12)', '9001'
+        notes = 'FOS SUPPORT_ENTRY.OPEN_DIALOG -> P1110_SUPPORT_URL; on close it sets G_LETTER_NBR / G_SUPP_TITLE_CD / G_LETTER_DT / G_PORT_CD'
+        member, status = 'SUPPORT_ENTRY.OPEN_DIALOG', 'MAPPED'
     if typ == 'PARAMETER' and name in ('LETTER_NBR', 'CODE', 'PRSNL_IMPR'):
         comp_name = P + 'P_' + name
     if typ == 'ITEM' and name.startswith('IMPORTERS.'):

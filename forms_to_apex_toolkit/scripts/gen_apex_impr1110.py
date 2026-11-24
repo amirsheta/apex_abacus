@@ -24,6 +24,7 @@ import os, re, sys, json
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'scripts'))
 import number_only      # Number Field items: CSS class number_only + one page-load handler
+import lov_apx         # shared LOVs: function body returning SQL, code in LOV_APX (CLAUDE.md 4d)
 DESIGN = os.path.join(ROOT, 'work', 'step03', 'page_design.json')
 XML = os.path.join(ROOT, 'forms', 'IMPR', 'IMPR1110_fmb.xml')
 REF = os.path.join(ROOT, 'apex', 'Reference', 'f345.sql')
@@ -282,12 +283,9 @@ def da_event(page, n, d):
         prm += [('p_triggering_condition_type', q('NOT_NULL'))]
     elif cond.startswith('JavaScript expression: '):
         prm += [('p_triggering_condition_type', q('JAVASCRIPT_EXPRESSION')), ('p_triggering_expression', q(cond[len('JavaScript expression: '):]))]
-    elif cond == 'dialog page 111002':
+    elif re.match(r'dialog page \d+$', cond):
         prm += [('p_triggering_condition_type', q('JAVASCRIPT_EXPRESSION')),
-                ('p_triggering_expression', q('this.data && this.data.dialogPageId == %d' % PG_MOB))]
-    elif cond.startswith('TODO: dialog = SUPPORT_ENTRY'):
-        prm += [('p_triggering_condition_type', q('JAVASCRIPT_EXPRESSION')),
-                ('p_triggering_expression', q("this.data && this.data.dialogPageId != %d && $v('P1110_FUNCTION_PENDING') !== ''" % PG_MOB))]
+                ('p_triggering_expression', q('this.data && this.data.dialogPageId == %s' % cond.split()[-1]))]
     if len(prm) > 5 and any(k == 'p_triggering_condition_type' for k, _ in prm):
         UNCERTAIN.add('DA client-side condition p_triggering_condition_type / p_triggering_expression (not in f345)')
     ev = d['event']
@@ -379,28 +377,28 @@ NEW_PARAMS = [('P_BRKR_PORT_CD', ':PARAMETER.P_BRKR_PORT_CD of the menu (CIC_MEN
               ('P_PRSNL_IMPR', ':PARAMETER.PRSNL_IMPR of IMPR1110 (set by the caller, read once by PARAMETERS ENTRY)'),
               ('P_LETTER_NBR', ':PARAMETER.LETTER_NBR of IMPR1110 (set by the caller, read once by PARAMETERS ENTRY)')]
 LOVS = [  # spec section 6
-    ('LOV_SD_PORTS', 'SELECT port_cd d, port_cd r, port_name FROM sd_ports WHERE port_status = 1 AND port_type = NVL(:P_PORT_TYPE, port_type) ORDER BY port_cd',
+    ('LOV_SD_PORTS', lov_apx.call('PORTS', P_PORT_TYPE_ITEM='P_PORT_TYPE'),
      [('PORT_NAME', 'اسم الجمرك', 'VARCHAR2')], 'LOV form LOV_SD_PORTS / CGFK$IMPORTERS_PORT_CD'),
-    ('LOV_IMPR_TYPE', "SELECT DISTINCT itidt.impr_type_cd d, itidt.impr_type_cd r, it.impr_type_name FROM impr_type_id_types itidt, impr_types it WHERE it.impr_type_cd = itidt.impr_type_cd AND itidt.impr_type_cd > 0 AND (:G_CHK_IMP_TYP = '1' OR itidt.status = 1) ORDER BY 2",
+    ('LOV_IMPR_TYPE', lov_apx.call('IMPORTER_TYPES', P_ALL_STATUSES_ITEM='G_CHK_IMP_TYP'),
      [('IMPR_TYPE_NAME', 'النشاط التجاري', 'VARCHAR2')], 'LOV form LOV_Impr_Type (type part) / CGFK$IMPORTERS_IMPR_TYPE_CD'),
-    ('LOV_IMPR_TYPE_BUS_ID', "SELECT bit.bus_id_type_name d, itidt.bus_id_type_cd r FROM impr_type_id_types itidt, bus_id_types bit WHERE bit.bus_id_type_cd = itidt.bus_id_type_cd AND itidt.impr_type_cd = :P1110_IMPR_TYPE_CD AND itidt.impr_type_cd > 0 AND (:G_CHK_IMP_TYP = '1' OR itidt.status = 1) ORDER BY itidt.bus_id_type_cd",
+    ('LOV_IMPR_TYPE_BUS_ID', lov_apx.call('BUSINESS_ID_TYPES', P_IMPORTER_TYPE_ITEM='P1110_IMPR_TYPE_CD', P_ALL_STATUSES_ITEM='G_CHK_IMP_TYP'),
      [], 'LOV form LOV_Impr_Type (bus-id-type part)'),
-    ('LOV_CITIES_IMP_ID', 'SELECT city_cd d, city_cd r, city_arb_name, mins_comm_cd FROM cities WHERE city_status = 1 AND ctry_cd = NVL(CASE WHEN :P1110_IMPR_TYPE_CD = 3 AND :P1110_BUS_ID_TYPE_CD = 2 THEN 100 ELSE TO_NUMBER(:P1110_CTRY_CD) END, ctry_cd) ORDER BY ctry_cd, city_cd',
+    ('LOV_CITIES_IMP_ID', lov_apx.call('CITIES_OF_BUSINESS_ID', P_COUNTRY_ITEM='P1110_CTRY_CD', P_IMPORTER_TYPE_ITEM='P1110_IMPR_TYPE_CD', P_BUSINESS_ID_TYPE_ITEM='P1110_BUS_ID_TYPE_CD'),
      [('CITY_ARB_NAME', 'المدينة', 'VARCHAR2'), ('MINS_COMM_CD', 'رمز الوزارة', 'NUMBER')], 'LOV form LOV_CITIES_IMP (CITY_CODE_OF_ID) / CGFK$IMPORTERS_CITY_CODE_OF_ID'),
-    ('LOV_CITIES_IMP_BRNH', 'SELECT city_cd d, city_cd r, city_arb_name, mins_comm_cd FROM cities WHERE city_status = 1 AND ctry_cd = NVL(:P1110_CTRY_CD, ctry_cd) ORDER BY ctry_cd, city_cd',
+    ('LOV_CITIES_IMP_BRNH', lov_apx.call('CITIES', P_COUNTRY_ITEM='P1110_CTRY_CD', P_WITH_MINISTRY_CODE=True),
      [('CITY_ARB_NAME', 'المدينة', 'VARCHAR2'), ('MINS_COMM_CD', 'رمز الوزارة', 'NUMBER')], 'LOV form LOV_CITIES_IMP (BRNH_CITY_CD)'),
-    ('LOV_CITIES', 'SELECT city_cd d, city_cd r, city_arb_name FROM cities WHERE city_status = 1 AND ctry_cd = NVL(:P1110_ADD_CTRY_CD, ctry_cd) ORDER BY ctry_cd, city_cd',
+    ('LOV_CITIES', lov_apx.call('CITIES', P_COUNTRY_ITEM='P1110_ADD_CTRY_CD'),
      [('CITY_ARB_NAME', 'المدينة', 'VARCHAR2')], 'LOV form LOV_CITIES / CGFK$IMPORTERS_ADD_CTRY_CD (city part)'),
-    ('LOV_COUNTRIES', 'SELECT ctry_cd d, ctry_cd r, crty_arbc_name FROM countries WHERE ctry_status = 1 AND ctry_cd NOT IN (-1) ORDER BY ctry_cd',
+    ('LOV_COUNTRIES', lov_apx.call('COUNTRIES'),
      [('CRTY_ARBC_NAME', 'الدولة', 'VARCHAR2')], 'LOV form LOV_COUNTRIES / CGFK$IMPORTERS_ADD_CTRY_CD'),
-    ('LOV_COUNTRIES_GULF', 'SELECT ctry_cd d, ctry_cd r, crty_arbc_name FROM countries WHERE (:P1110_IMPR_TYPE_CD = 4 AND :P1110_BUS_ID_TYPE_CD = 16 AND ctry_cd IN (113,116,117,119,120,100)) OR (NOT (NVL(:P1110_IMPR_TYPE_CD,0) = 4 AND NVL(:P1110_BUS_ID_TYPE_CD,0) = 16) AND ctry_status = 1) ORDER BY ctry_cd',
+    ('LOV_COUNTRIES_GULF', lov_apx.call('GULF_COUNTRIES', P_IMPORTER_TYPE_ITEM='P1110_IMPR_TYPE_CD', P_BUSINESS_ID_TYPE_ITEM='P1110_BUS_ID_TYPE_CD'),
      [('CRTY_ARBC_NAME', 'الدولة', 'VARCHAR2')], 'PU CALL_LOV_COUNTRIES / CALL_LOV_COUN_GULF - CTRY_CD'),
-    ('LOV_IMPR', 'SELECT impr_nbr d, impr_nbr r, arbc_impr_name, bus_id, bus_id_brnch, impr_tel_nbr FROM importers WHERE port_cd = :P_CURR_PORT_CD',
+    ('LOV_IMPR', lov_apx.call('IMPORTERS', P_PORT_ITEM='P_CURR_PORT_CD'),
      [('ARBC_IMPR_NAME', 'الاسم', 'VARCHAR2'), ('BUS_ID', 'الرقم الإستدلالي', 'VARCHAR2'), ('BUS_ID_BRNCH', 'الرقم الفرعي', 'VARCHAR2'), ('IMPR_TEL_NBR', 'تليفون', 'VARCHAR2')],
      'LOV form LOV_IMPR'),
-    ('LOV_COMM_RGSTRTN_TYPE', "SELECT rv_meaning d, rv_low_value r FROM cg_ref_codes WHERE rv_domain = 'COMM_RGSTRTN_TYPE' ORDER BY 2", [],
+    ('LOV_COMM_RGSTRTN_TYPE', lov_apx.call('REFERENCE_CODES', P_DOMAIN='COMM_RGSTRTN_TYPE'), [],
      'list item IMPORTERS.COMM_RGSTRTN_TYPE (CGDV$POPULATE_DYNAMIC_LISTS)'),
-    ('LOV_ALLOWED_EXPORT', "SELECT rv_meaning d, rv_low_value r FROM cg_ref_codes WHERE rv_domain = 'ALLOWED EXPORT' ORDER BY 2", [],
+    ('LOV_ALLOWED_EXPORT', lov_apx.call('REFERENCE_CODES', P_DOMAIN='ALLOWED EXPORT'), [],
      'list item IMPORTERS.IMPR_EXPR_TYPE (CGDV$POPULATE_DYNAMIC_LISTS)')]
 STATIC_LOVS = [('LOV_EXPRESS_POST', [('لا', '0'), ('نعم', '1'), ('تم انشاءه بواسطة البريد السريع', '2')], 'list item IMPORTERS.EXPRESS_POST'),
                ('LOV_CAR_AGENT_FLAG', [('ليس وكيل سيارات', '0'), ('وكيل سيارات', '1')], 'pop list IMPORTERS.CAR_AGENT_FLAG')]
@@ -421,7 +419,7 @@ def gen():
 --               No JavaScript file, no AJAX callback process.
 -- Contents    : component export INTO the application installed from f345: pages 1110 (main),
 --               111001 (search), 111002 (mobile) + the shared components they need.
---               The SUPPORT_ENTRY page (functions F1, F2, F3, F5) belongs to its own form - not here.
+--               Functions F1, F2, F3, F5 open page 9001 SUPPORT_ENTRY (its own export apex/SUPPORT_ENTRY/).
 -- Placeholders: __WORKSPACE_ID__, __APP_ID__, __SCHEMA_NAME__, __ID_OFFSET__ - see apex/IMPR1110/import_notes.md
 -- WARNING     : generated wwv_flow_api code is not an officially supported way to build APEX
 --               applications. Import into a DEV workspace first, back up the application,
@@ -472,11 +470,11 @@ end;
                                                          'in the minutes MI). Must match the f345 Hijri picker (page 0, iYYYY-iMM-iDD).'))],
                  'Source: Forms mask CGSO$HDATE_ARB (MI-MM-YYYY / MI-MM-RRRR), now one Application Setting')))
     UNCERTAIN.add('create_app_setting (Application Setting HIJRI_DATE_FORMAT; not in f345): p_name, p_value, p_is_required, p_comments')
+    UNCERTAIN.add(lov_apx.UNCERTAIN)
     for name, sql, cols, s in LOVS:
         nid('9000:lov:' + name, 5)
         b = [call('create_list_of_values', [
-            ('p_id', ref('9000:lov:' + name)), ('p_lov_name', q(name)), ('p_source_type', q('SQL')), ('p_location', q('LOCAL')),
-            ('p_lov_query', lit(sql)), ('p_return_column_name', q('R')), ('p_display_column_name', q('D'))], 'Source: ' + s + ' / spec 6')]
+            ('p_id', ref('9000:lov:' + name)), ('p_lov_name', q(name))] + lov_apx.lov_attributes(sql, q), 'Source: ' + s + ' / spec 6')]
         for i, (c, h, dt) in enumerate(cols):
             key = '9000:lovc:%s:%s' % (name, c)
             nid(key, 6)
@@ -855,7 +853,7 @@ def names_of(text, api):
     return out
 
 def selfcheck(text):
-    problems = []
+    problems = lov_apx.check(text)
     ref_txt = open(REF, encoding='utf-8', errors='replace').read()
     pkg_txt = re.sub(r'--[^\n]*', '', open(PKG, encoding='utf-8').read())
     if 'wwv_flow_imp' in text: problems.append('wwv_flow_imp found')

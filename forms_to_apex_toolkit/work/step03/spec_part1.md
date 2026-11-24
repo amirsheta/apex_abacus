@@ -72,7 +72,7 @@
 | `LSIDE` (OLB) | function side menu | inline dialog `FUNCS` with list *Page Functions* | Inline Dialog `11621894586660869699` | f345 |
 | `EDI_MSG` (OLB) | EDI ticker | – (dropped, decision §15 #9) | – | APEX session timeout replaces the timers |
 | called form `LOV_UPDATE_IMPR_MOBILE` | dialog of function IMPR1110_MOB | modal page **111002** | Modal Dialog page | f345 `<page>02` |
-| called form `SUPPORT_ENTRY` | support-letter entry (functions F1, F2, F3, F5) | its own page, converted as a separate form (SC subsystem, decision §15 #12) | – | **TODO**: page number not known yet |
+| called form `SUPPORT_ENTRY` | support-letter entry (functions F1, F2, F3, F5) | shared modal page **9001** `SUPPORT_ENTRY`, converted as a separate form (SC subsystem, decision §15 #12; `analysis/SUPPORT_ENTRY/SUPPORT_ENTRY_apex_page_spec.md`) | Modal Dialog page | opened through `SUPPORT_ENTRY.OPEN_DIALOG` |
 
 ## 2. Pages
 
@@ -83,8 +83,9 @@
 | 111002 | `IMPR1110_MOBILE` / `IMPR1110-MOBILE` | تعديل رقم الجوال | Modal Dialog 480 × 320 | theme default for dialogs | called form `LOV_UPDATE_IMPR_MOBILE` | function IMPR1110_MOB (Page Functions) | No |
 
 Page 111002 needs process `G_LAST_PAGE KEEP` (After Header, `:G_LAST_PAGE := 1110;`). Without it, f345
-SCREEN ENTRY RESET clears the open record when the user comes back to 1110 (standard §4). The SUPPORT_ENTRY
-page will need the same process.
+SCREEN ENTRY RESET clears the open record when the user comes back to 1110 (standard §4). Page 9001
+SUPPORT_ENTRY is not a `1110xx` page, so the caller runs `SUPPORT_ENTRY.OPEN_DIALOG` first (it sets
+`G_LAST_PAGE := 9001` and keeps 1110 in `G_SUPPORT_ENTRY_CALLER`); 9001's `G_LAST_PAGE KEEP` puts 1110 back.
 
 ## 3. Regions
 

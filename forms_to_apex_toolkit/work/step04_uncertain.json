@@ -13,5 +13,6 @@
  "p_query_where on the NATIVE_FORM region (AGR1100 has no WHERE clause)",
  "p_read_only_when2 => PLSQL with p_read_only_when_type => EXPRESSION (f345 shows the pattern only for p_display_when)",
  "search IG 111001: p_lazy_loading true, p_show_total_row_count false, toolbar ACTIONS_MENU:RESET (search field removed)",
+ "shared LOV p_source_type 'FUNC_BODY_RETURNING_SQL' with the function body in p_lov_query (no function-body LOV in f345 or the real 21.2 export f202604; p_function_body_language left out = PL/SQL)",
  "wwv_flow_api.create_message (Text Message; f345 has none) - p_message_language ar-sa"
 ]

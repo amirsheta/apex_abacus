@@ -24,6 +24,7 @@ import os, re, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'scripts'))
 import number_only      # Number Field items: CSS class number_only + one page-load handler
+import lov_apx         # shared LOVs: function body returning SQL, code in LOV_APX (CLAUDE.md 4d)
 REF = os.path.join(ROOT, 'apex', 'Reference', 'f345.sql')
 IMPR1110_EXPORT = os.path.join(ROOT, 'apex', 'IMPR1110', 'f345_impr1110.sql')
 PKG = os.path.join(ROOT, 'plsql', 'IMPR1120', 'impr1120_spec.sql')
@@ -459,9 +460,9 @@ SEARCH_COLUMNS = [
     ('CRTY_ARBC_NAME', 'الدولة', 'VARCHAR2'), ('CITY_CODE_OF_ID', 'مصدر الرقم الإستدلالي', 'NUMBER'),
     ('IMPR_EXPR_TYPE', 'النشاط الجمركي', 'NUMBER')]
 NEW_LOVS = [  # spec 6
-    ('LOV_IMPR_SUSPN_RSN_CD', "SELECT rv_meaning d, rv_low_value r FROM cg_ref_codes WHERE rv_domain = 'IMPR_SUSPN_RSN_CD' ORDER BY 2",
+    ('LOV_IMPR_SUSPN_RSN_CD', lov_apx.call('REFERENCE_CODES', P_DOMAIN='IMPR_SUSPN_RSN_CD'),
      'list item IMPR_SUSPN.SUSPN_RSN_CD (CGDV$POPULATE_DYNAMIC_LISTS)'),
-    ('LOV_SUSPN_SIDE_CD', "SELECT rv_meaning d, rv_low_value r FROM cg_ref_codes WHERE rv_domain = 'SUSPN SIDE CD' ORDER BY 2",
+    ('LOV_SUSPN_SIDE_CD', lov_apx.call('REFERENCE_CODES', P_DOMAIN='SUSPN SIDE CD'),
      'pop list IMPR_SUSPN.SUSPN_SIDE_CD (CGDV$POPULATE_DYNAMIC_LISTS)')]
 MSG_IS_1_IMP_FK = 'بيانات الربط مع ملف المستوردين غير صحيحة - أعد إدخال البيانات'
 
@@ -514,11 +515,11 @@ end;
 /
 ''' % DATE)
     # ---------------------------------------------------------------- shared components (spec 13.3)
+    UNCERTAIN.add(lov_apx.UNCERTAIN)
     for name, sql, s in NEW_LOVS:
         nid('9120:lov:' + name, 5)
         W(block('application/shared_components/user_interface/lovs/' + name.lower(), call('create_list_of_values', [
-            ('p_id', ref('9120:lov:' + name)), ('p_lov_name', q(name)), ('p_source_type', q('SQL')), ('p_location', q('LOCAL')),
-            ('p_lov_query', lit(sql)), ('p_return_column_name', q('R')), ('p_display_column_name', q('D'))],
+            ('p_id', ref('9120:lov:' + name)), ('p_lov_name', q(name))] + lov_apx.lov_attributes(sql, q),
             'Source: IMPR1120 ' + s + ' / spec 6')))
     nid('9120:msg:IS_1_IMP_FK', 3)
     W(block('application/shared_components/globalization/messages/is_1_imp_fk',
@@ -811,7 +812,7 @@ def unq(s):
     return s[1:-1].replace("''", "'") if s.startswith("'") else s
 
 def selfcheck(text):
-    problems = []
+    problems = lov_apx.check(text)
     ref_txt = open(REF, encoding='utf-8', errors='replace').read()
     i1110 = open(IMPR1110_EXPORT, encoding='utf-8', errors='replace').read()
     pkg_txt = re.sub(r'--[^\n]*', '', open(PKG, encoding='utf-8').read())

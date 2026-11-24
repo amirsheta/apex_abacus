@@ -39,9 +39,9 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(912005000010)
 ,p_lov_name=>'LOV_IMPR_SUSPN_RSN_CD'
-,p_source_type=>'SQL'
+,p_lov_query=>'return LOV_APX.REFERENCE_CODES(P_DOMAIN => ''IMPR_SUSPN_RSN_CD'');'
+,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
-,p_lov_query=>'SELECT rv_meaning d, rv_low_value r FROM cg_ref_codes WHERE rv_domain = ''IMPR_SUSPN_RSN_CD'' ORDER BY 2'
 ,p_return_column_name=>'R'
 ,p_display_column_name=>'D'
 );
@@ -54,9 +54,9 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(912005000020)
 ,p_lov_name=>'LOV_SUSPN_SIDE_CD'
-,p_source_type=>'SQL'
+,p_lov_query=>'return LOV_APX.REFERENCE_CODES(P_DOMAIN => ''SUSPN SIDE CD'');'
+,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
-,p_lov_query=>'SELECT rv_meaning d, rv_low_value r FROM cg_ref_codes WHERE rv_domain = ''SUSPN SIDE CD'' ORDER BY 2'
 ,p_return_column_name=>'R'
 ,p_display_column_name=>'D'
 );

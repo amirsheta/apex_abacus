@@ -19,6 +19,8 @@ Page 111002 buttons: §3.
 
 ## 6. LOVs
 
+**Type (CLAUDE.md §4d, 2026-11-24):** every SQL LOV below is a *PL/SQL Function Body returning SQL Query* that calls the common package `LOV_APX` (`plsql_templates/lov_apx.sql`); the SQL column is the query the function returns. `LOV_SD_PORTS` → `PORTS(P_PORT_TYPE_ITEM => 'P_PORT_TYPE')`; `LOV_IMPR_TYPE` → `IMPORTER_TYPES(P_ALL_STATUSES_ITEM => 'G_CHK_IMP_TYP')`; `LOV_IMPR_TYPE_BUS_ID` → `BUSINESS_ID_TYPES`; `LOV_CITIES_IMP_ID` → `CITIES_OF_BUSINESS_ID`; `LOV_CITIES_IMP_BRNH` → `CITIES(P_COUNTRY_ITEM => 'P1110_CTRY_CD', P_WITH_MINISTRY_CODE => TRUE)`; `LOV_CITIES` → `CITIES(P_COUNTRY_ITEM => 'P1110_ADD_CTRY_CD')`; `LOV_COUNTRIES` → `COUNTRIES`; `LOV_COUNTRIES_GULF` → `GULF_COUNTRIES`; `LOV_IMPR` → `IMPORTERS(P_PORT_ITEM => 'P_CURR_PORT_CD')`; `LOV_COMM_RGSTRTN_TYPE` / `LOV_ALLOWED_EXPORT` → `REFERENCE_CODES(P_DOMAIN => ...)`.
+
 Built from the LOV forms' block query (`forms/COMMON/lov_forms/*.xml`) with the parameters IMPR1110 passes,
 as in revision 1. Binds now use the f345 items. Popup LOVs show the code in the field (Display = return
 value, as in Forms); the name is shown by the separate display item, which the item's WHEN-VALIDATE-ITEM

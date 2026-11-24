@@ -225,6 +225,21 @@ Full rules: `docs/f345_reference_standard.md` §9 and §10. Summary:
    buttons → program units → private helpers → UI comments). One Forms trigger = one member,
    about 80 lines at most.
 
+## 4d. Shared LOVs in LOV_APX (MANDATORY, user decision 2026-11-24)
+
+Full rules: `docs/f345_reference_standard.md` §9a; code and check: `scripts/lov_apx.py`.
+
+1. Every SQL shared LOV has the type **PL/SQL Function Body returning SQL Query** and only calls one function
+   of the common package **`LOV_APX`** (`plsql_templates/lov_apx.sql`, owner `LIB_APX_USR`, public synonym,
+   grants as §3), e.g. `return LOV_APX.CITIES(P_COUNTRY_ITEM => 'P1110_ADD_CTRY_CD');`. Return column `R`,
+   display column `D`. Static LOVs (fixed values from the XML) stay Static.
+2. LOVs are common to all systems: one function per list (ports, countries, cities, importers, CG_REF_CODES
+   domains ...), full-word names; reuse a function before adding one, and add parameters rather than a copy.
+3. The functions never read session state: the caller passes the item **name** (`P_<X>_ITEM => 'P1110_CTRY_CD'`)
+   and the returned SQL keeps it as a bind variable; names go through `DBMS_ASSERT`.
+4. Every generator calls `lov_apx.check()`: the function and its parameter names must exist in `lov_apx.sql`.
+   A new or changed function raises the LOV_APX version (previous version under `rollback/LOV_APX/`).
+
 ---
 
 ## 5. Key Mapping (Forms → APEX 21.2)

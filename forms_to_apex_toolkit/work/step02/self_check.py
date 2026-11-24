@@ -135,7 +135,7 @@ for k, pat, t in [('spec owner', r'CREATE OR REPLACE PACKAGE LIB_APX_USR\.IMPR11
                   ('synonym', r'CREATE OR REPLACE PUBLIC SYNONYM IMPR1110 FOR LIB_APX_USR\.IMPR1110;', spec),
                   ('grant LIB_USR', r'GRANT EXECUTE ON LIB_APX_USR\.IMPR1110 TO LIB_USR;', spec),
                   ('grant SECURITY_DEFAULT', r'TO SECURITY_DEFAULT;', spec), ('grant SECURITY_PROD', r'TO SECURITY_PROD;', spec),
-                  ('grant CUSTOMS', r'TO CUSTOMS;', spec), ('version 012', r"'VERSION NO\. IS:' \|\| '012'", spec),
+                  ('grant CUSTOMS', r'TO CUSTOMS;', spec), ('version 013', r"'VERSION NO\. IS:' \|\| '013'", spec),
                   ('PKG_VERSION body', r'FUNCTION PKG_VERSION\s+RETURN VARCHAR2\s+IS\s+BEGIN\s+RETURN V_INFO;', body)]:
     if not re.search(pat, t): add('package frame missing', k)
 

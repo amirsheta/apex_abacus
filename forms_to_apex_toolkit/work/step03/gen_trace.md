@@ -564,7 +564,7 @@
 | 562 | CALLED_FORM | LOV_COUNTRIES_GULF | LOV | inline LOV of P1110_CTRY_CD | - | - | MAPPED | LOV form (forms/COMMON/lov_forms) |
 | 563 | CALLED_FORM | LOV_IMPR | LOV | LOV_IMPR | - | - | MAPPED | LOV form (forms/COMMON/lov_forms) |
 | 564 | CALLED_FORM | LOV_UPDATE_IMPR_MOBILE | PAGE | 111002 IMPR1110_MOBILE (Modal Dialog) | 111002 | IMPR1110.CENTRAL_MOBILE | MAPPED | dialog of function IMPR1110_MOB |
-| 565 | CALLED_FORM | SUPPORT_ENTRY | PAGE | SUPPORT_ENTRY page (form converted on its own, SC subsystem - decision §15 #12) | - | - | TODO | TODO: page number and URL item P1110_SUPPORT_URL; on close it must set G_LETTER_NBR / G_SUPP_TITLE_CD / G_LETTER_DT / G_PORT_CD |
+| 565 | CALLED_FORM | SUPPORT_ENTRY | PAGE | 9001 SUPPORT_ENTRY (modal dialog, converted on its own - decision §15 #12) | 9001 | SUPPORT_ENTRY.OPEN_DIALOG | MAPPED | FOS SUPPORT_ENTRY.OPEN_DIALOG -> P1110_SUPPORT_URL; on close it sets G_LETTER_NBR / G_SUPP_TITLE_CD / G_LETTER_DT / G_PORT_CD |
 | 566 | CALLED_FORM | IMPR1115 | PAGE | link to the IMPR1115 page | - | - | TODO | function IMPR1115_SCR - when IMPR1115 is converted |
 | 567 | CALLED_FORM | V_CALLED_FORM (TMPLT menu) | PAGE | - | - | - | TODO | screens of SC_SYSTEM_OBJECTS called by EXECUTE_FUNCTION -> navigation menu |
 | 568 | ALERT | USR_CONFIRM_B | - | - | - | - | DROPPED | OLB alert used only through STR.DispAlert; texts are inline in the code (MISSING SOURCE CIC_OLB) |

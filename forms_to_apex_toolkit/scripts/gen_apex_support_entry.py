@@ -22,6 +22,7 @@ import os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'scripts'))
+import lov_apx         # shared LOVs: function body returning SQL, code in LOV_APX (CLAUDE.md 4d)
 REF = os.path.join(ROOT, 'apex', 'Reference', 'f345.sql')
 PKG = os.path.join(ROOT, 'plsql', 'SUPPORT_ENTRY', 'support_entry_spec.sql')
 OUT_DIR = os.path.join(ROOT, 'apex', 'SUPPORT_ENTRY')
@@ -43,6 +44,7 @@ UNCERTAIN = {
     "DA triggering element type JQUERY_SELECTOR with p_triggering_element '#AGREE,#AGREE_EDIT' / '#CANCEL,#CANCEL_EDIT'",
     "p_item_default on a Hidden item (P9001_P_MODE default 1; used by IMPR1110, not in f345)",
     "create_list_of_values_cols for the return / display column D as well (shows the code in the Popup LOV)",
+    lov_apx.UNCERTAIN,
 }
 
 # ----------------------------------------------------------------------------- helpers (as gen_apex_impr1110.py)
@@ -223,19 +225,16 @@ end;
         ('p_item_comment', src('SUPPORT_ENTRY - caller page for G_LAST_PAGE KEEP (f345 SCREEN ENTRY RESET), set by SUPPORT_ENTRY.OPEN_DIALOG / spec 0.2, 13.2'))])))
     lovs = [
         ('LOV_SD_PORTS_TYPES', 'SUPPORT_ENTRY LOV LOV_SD_PORTS / RG LOV_SD_PORTS (decision D2) / spec 6',
-         "SELECT sd_ports.port_cd d, sd_ports.port_cd r, cg_ref_codes.rv_meaning, sd_ports.port_name "
-         "FROM cg_ref_codes, sd_ports WHERE cg_ref_codes.rv_low_value = sd_ports.port_type "
-         "AND cg_ref_codes.rv_domain = 'PORT_TYPE_CD' ORDER BY sd_ports.port_cd",
+         lov_apx.call('PORTS_WITH_TYPES'),
          [('D', 'رمز الجمرك', 'NUMBER'), ('RV_MEANING', 'نوع الجمرك', 'VARCHAR2'), ('PORT_NAME', 'اسم الجمرك', 'VARCHAR2')]),
         ('LOV_SUPP_TITLES', 'SUPPORT_ENTRY LOV LOV_SUPP_TITLES / RG LOV_SUPP_TITLES / spec 6',
-         "SELECT supp_title_cd d, supp_title_cd r, supp_title_nm FROM supp_titles WHERE title_status = 1 ORDER BY supp_title_cd",
+         lov_apx.call('SUPPORT_TITLES'),
          [('D', 'رمز معتمد الخطاب', 'NUMBER'), ('SUPP_TITLE_NM', 'معتمد الخطاب', 'VARCHAR2')]),
     ]
     for name, comment, sql, cols in lovs:
         body = [call('create_list_of_values', [
-            ('p_id', nid('lov:' + name, 95)), ('p_lov_name', q(name)), ('p_source_type', q('SQL')),
-            ('p_location', q('LOCAL')), ('p_lov_query', q(sql)),
-            ('p_return_column_name', q('R')), ('p_display_column_name', q('D'))], 'Source: ' + comment)]
+            ('p_id', nid('lov:' + name, 95)), ('p_lov_name', q(name))] + lov_apx.lov_attributes(sql, q),
+            'Source: ' + comment)]
         for i, (col, head, dtype) in enumerate(cols):
             body.append(call('create_list_of_values_cols', [
                 ('p_id', nid('lovcol:%s:%s' % (name, col), 96)), ('p_lov_id', ref('lov:' + name)),
@@ -355,7 +354,7 @@ def names_of(text, api):
     return out
 
 def selfcheck(text):
-    problems = []
+    problems = lov_apx.check(text)
     ref_txt = open(REF, encoding='utf-8', errors='replace').read()
     pkg_txt = re.sub(r'--[^\n]*', '', open(PKG, encoding='utf-8').read())
     if 'wwv_flow_imp' in text: problems.append('wwv_flow_imp found')

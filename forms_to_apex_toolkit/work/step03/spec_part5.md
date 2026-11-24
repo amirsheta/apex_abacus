@@ -1,5 +1,5 @@
 
-`P1110_SUPPORT_URL` (URL of the SUPPORT_ENTRY dialog): **TODO**, added when that form's page exists.
+`P1110_SUPPORT_URL` (URL of dialog page 9001): **no computation** – FOS `SUPPORT_ENTRY.OPEN_DIALOG` returns it when a function F1 / F2 / F3 / F5 is chosen (the item is not value protected).
 
 ## 10. Dynamic Actions (page 1110)
 

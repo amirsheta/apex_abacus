@@ -72,7 +72,7 @@
 | `LSIDE` (OLB) | function side menu | inline dialog `FUNCS` with list *Page Functions* | Inline Dialog `11621894586660869699` | f345 |
 | `EDI_MSG` (OLB) | EDI ticker | – (dropped, decision §15 #9) | – | APEX session timeout replaces the timers |
 | called form `LOV_UPDATE_IMPR_MOBILE` | dialog of function IMPR1110_MOB | modal page **111002** | Modal Dialog page | f345 `<page>02` |
-| called form `SUPPORT_ENTRY` | support-letter entry (functions F1, F2, F3, F5) | its own page, converted as a separate form (SC subsystem, decision §15 #12) | – | **TODO**: page number not known yet |
+| called form `SUPPORT_ENTRY` | support-letter entry (functions F1, F2, F3, F5) | shared modal page **9001** `SUPPORT_ENTRY`, converted as a separate form (SC subsystem, decision §15 #12; `analysis/SUPPORT_ENTRY/SUPPORT_ENTRY_apex_page_spec.md`) | Modal Dialog page | opened through `SUPPORT_ENTRY.OPEN_DIALOG` |
 
 ## 2. Pages
 
@@ -83,8 +83,9 @@
 | 111002 | `IMPR1110_MOBILE` / `IMPR1110-MOBILE` | تعديل رقم الجوال | Modal Dialog 480 × 320 | theme default for dialogs | called form `LOV_UPDATE_IMPR_MOBILE` | function IMPR1110_MOB (Page Functions) | No |
 
 Page 111002 needs process `G_LAST_PAGE KEEP` (After Header, `:G_LAST_PAGE := 1110;`). Without it, f345
-SCREEN ENTRY RESET clears the open record when the user comes back to 1110 (standard §4). The SUPPORT_ENTRY
-page will need the same process.
+SCREEN ENTRY RESET clears the open record when the user comes back to 1110 (standard §4). Page 9001
+SUPPORT_ENTRY is not a `1110xx` page, so the caller runs `SUPPORT_ENTRY.OPEN_DIALOG` first (it sets
+`G_LAST_PAGE := 9001` and keeps 1110 in `G_SUPPORT_ENTRY_CALLER`); 9001's `G_LAST_PAGE KEEP` puts 1110 back.
 
 ## 3. Regions
 
@@ -264,7 +265,7 @@ Rules:
 | `P1110_CAR_AGENT_FLAG_LOCKED` | - | Hidden (Value Protected = No) | - | No | - | - | - | - | - | hidden | - | - | No (server value) | - | read-only flag Y / N of CAR_AGENT_FLAG |
 | `P1110_BROKER_USER` | - | Hidden (Value Protected = Yes) | - | No | - | - | - | - | - | hidden | - | - | No (server value) | - | Y for brokers (class 1, type 3): client condition of DA PRE-INSERT CONFIRM |
 | `P1110_PRE_INSERT_QUESTION` | - | Hidden (Value Protected = Yes) | - | No | - | - | - | - | - | hidden | - | - | No (server value) | - | text of the broker question (Text Message IMPR1110_PRE_INSERT_CONFIRM), read by DA PRE-INSERT CONFIRM |
-| `P1110_SUPPORT_URL` | - | Hidden (Value Protected = Yes) | - | No | - | - | - | - | - | hidden | - | - | No (server value) | - | URL of the SUPPORT_ENTRY dialog (TODO: page of the separately converted form) |
+| `P1110_SUPPORT_URL` | - | Hidden (Value Protected = No) | - | No | - | - | - | - | - | hidden | - | - | No (server value) | - | URL of dialog page 9001 SUPPORT_ENTRY, returned by FOS SUPPORT_ENTRY.OPEN_DIALOG (not protected: set by Ajax) |
 
 ---
 
@@ -285,6 +286,8 @@ Page 1110 has **no buttons of its own**. Every Forms toolbar button maps to page
 Page 111002 buttons: §3.
 
 ## 6. LOVs
+
+**Type (CLAUDE.md §4d, 2026-11-24):** every SQL LOV below is a *PL/SQL Function Body returning SQL Query* that calls the common package `LOV_APX` (`plsql_templates/lov_apx.sql`); the SQL column is the query the function returns. `LOV_SD_PORTS` → `PORTS(P_PORT_TYPE_ITEM => 'P_PORT_TYPE')`; `LOV_IMPR_TYPE` → `IMPORTER_TYPES(P_ALL_STATUSES_ITEM => 'G_CHK_IMP_TYP')`; `LOV_IMPR_TYPE_BUS_ID` → `BUSINESS_ID_TYPES`; `LOV_CITIES_IMP_ID` → `CITIES_OF_BUSINESS_ID`; `LOV_CITIES_IMP_BRNH` → `CITIES(P_COUNTRY_ITEM => 'P1110_CTRY_CD', P_WITH_MINISTRY_CODE => TRUE)`; `LOV_CITIES` → `CITIES(P_COUNTRY_ITEM => 'P1110_ADD_CTRY_CD')`; `LOV_COUNTRIES` → `COUNTRIES`; `LOV_COUNTRIES_GULF` → `GULF_COUNTRIES`; `LOV_IMPR` → `IMPORTERS(P_PORT_ITEM => 'P_CURR_PORT_CD')`; `LOV_COMM_RGSTRTN_TYPE` / `LOV_ALLOWED_EXPORT` → `REFERENCE_CODES(P_DOMAIN => ...)`.
 
 Built from the LOV forms' block query (`forms/COMMON/lov_forms/*.xml`) with the parameters IMPR1110 passes,
 as in revision 1. Binds now use the f345 items. Popup LOVs show the code in the field (Display = return
@@ -413,7 +416,7 @@ the fetched record (ADJ_FUNS, MOBILE_URL, PRE_INSERT_QUESTION) run After Header.
 | P111002_CENTRAL_MOBILE | Before Header (page 111002) | PL/SQL Expression | `IMPR1110.CENTRAL_MOBILE(P_IMPR_NBR => :P111002_IMPR_NBR, P_CURR_PORT_CD => :P_CURR_PORT_CD)` | - | PU LOV_UPDATE_MOBLIE (P_CENTRAL_MOBILE parameter) |
 | P111002_MOBILE_NO | Before Header (page 111002) | PL/SQL Expression | `:P111002_CENTRAL_MOBILE` | :P111002_MOBILE_NO is null | LOV_UPDATE_IMPR_MOBILE.BLK.WHEN-NEW-BLOCK-INSTANCE |
 
-`P1110_SUPPORT_URL` (URL of the SUPPORT_ENTRY dialog): **TODO**, added when that form's page exists.
+`P1110_SUPPORT_URL` (URL of dialog page 9001): **no computation** – FOS `SUPPORT_ENTRY.OPEN_DIALOG` returns it when a function F1 / F2 / F3 / F5 is chosen (the item is not value protected).
 
 ## 10. Dynamic Actions (page 1110)
 
@@ -516,13 +519,17 @@ The table is generated. *Code / setting* is the exact call; one row per action.
 | 46 | `CAR_AGENT_FLAG READ ONLY` | Change | Item P1110_CAR_AGENT_FLAG_LOCKED | Item P1110_CAR_AGENT_FLAG_LOCKED = Y | 1 | Disable | items P1110_CAR_AGENT_FLAG | - | - | Yes | True action | read_only_rules.md (Make_Field_Entrable / SET_ITEM_PROPERTY ENABLED) |
 | - | - | - | - | - | 2 | Enable | items P1110_CAR_AGENT_FLAG | - | - | - | False action | - |
 | 47 | `IMPR1110F1 EXECUTE-FUNCTION` | Custom: IMPR1110F1 | JavaScript Expression: document | - | 1 | Set Value | Static 'IMPR1110F1' -> P1110_FUNCTION_PENDING | - | - | No | - | PU EXEC_FUNS / TMPLT EXECUTE_FUNCTION (IMPR1110F1) |
-| - | - | - | - | - | 2 | Execute JavaScript Code | `apex.navigation.redirect($v('P1110_SUPPORT_URL'));` | - | - | - | open the SUPPORT_ENTRY dialog (form converted separately, decision §15 #12; its page and URL item are TODO) | - |
+| - | - | - | - | - | 2 | FOS - Execute PL/SQL Code | `SUPPORT_ENTRY.OPEN_DIALOG(P_MODE => 0, P_CURR_PORT_CD => :P1110_PORT_CD, P_SUPPORT_URL => :P1110_SUPPORT_URL);` | P1110_PORT_CD | P1110_SUPPORT_URL | - | page 9001 SUPPORT_ENTRY (its spec §0.2 / §10.1): keeps 1110 in G_SUPPORT_ENTRY_CALLER, sets G_LAST_PAGE := 9001 (f345 SCREEN ENTRY RESET leaves P0_PAGE_PK alone) and returns the URL (P_MODE = 0, P_CURR_PORT_CD = PORT_CD, checksum) | - |
+| - | - | - | - | - | 3 | Execute JavaScript Code | `apex.navigation.redirect($v('P1110_SUPPORT_URL'));` | - | - | - | open the SUPPORT_ENTRY dialog page 9001 (URL from SUPPORT_ENTRY.OPEN_DIALOG) | - |
 | 48 | `IMPR1110F2 EXECUTE-FUNCTION` | Custom: IMPR1110F2 | JavaScript Expression: document | - | 1 | Set Value | Static 'IMPR1110F2' -> P1110_FUNCTION_PENDING | - | - | No | - | PU EXEC_FUNS / TMPLT EXECUTE_FUNCTION (IMPR1110F2) |
-| - | - | - | - | - | 2 | Execute JavaScript Code | `apex.navigation.redirect($v('P1110_SUPPORT_URL'));` | - | - | - | open the SUPPORT_ENTRY dialog (form converted separately, decision §15 #12; its page and URL item are TODO) | - |
+| - | - | - | - | - | 2 | FOS - Execute PL/SQL Code | `SUPPORT_ENTRY.OPEN_DIALOG(P_MODE => 0, P_CURR_PORT_CD => :P1110_PORT_CD, P_SUPPORT_URL => :P1110_SUPPORT_URL);` | P1110_PORT_CD | P1110_SUPPORT_URL | - | page 9001 SUPPORT_ENTRY (its spec §0.2 / §10.1): keeps 1110 in G_SUPPORT_ENTRY_CALLER, sets G_LAST_PAGE := 9001 (f345 SCREEN ENTRY RESET leaves P0_PAGE_PK alone) and returns the URL (P_MODE = 0, P_CURR_PORT_CD = PORT_CD, checksum) | - |
+| - | - | - | - | - | 3 | Execute JavaScript Code | `apex.navigation.redirect($v('P1110_SUPPORT_URL'));` | - | - | - | open the SUPPORT_ENTRY dialog page 9001 (URL from SUPPORT_ENTRY.OPEN_DIALOG) | - |
 | 49 | `IMPR1110F3 EXECUTE-FUNCTION` | Custom: IMPR1110F3 | JavaScript Expression: document | - | 1 | Set Value | Static 'IMPR1110F3' -> P1110_FUNCTION_PENDING | - | - | No | - | PU EXEC_FUNS / TMPLT EXECUTE_FUNCTION (IMPR1110F3) |
-| - | - | - | - | - | 2 | Execute JavaScript Code | `apex.navigation.redirect($v('P1110_SUPPORT_URL'));` | - | - | - | open the SUPPORT_ENTRY dialog (form converted separately, decision §15 #12; its page and URL item are TODO) | - |
+| - | - | - | - | - | 2 | FOS - Execute PL/SQL Code | `SUPPORT_ENTRY.OPEN_DIALOG(P_MODE => 0, P_CURR_PORT_CD => :P1110_PORT_CD, P_SUPPORT_URL => :P1110_SUPPORT_URL);` | P1110_PORT_CD | P1110_SUPPORT_URL | - | page 9001 SUPPORT_ENTRY (its spec §0.2 / §10.1): keeps 1110 in G_SUPPORT_ENTRY_CALLER, sets G_LAST_PAGE := 9001 (f345 SCREEN ENTRY RESET leaves P0_PAGE_PK alone) and returns the URL (P_MODE = 0, P_CURR_PORT_CD = PORT_CD, checksum) | - |
+| - | - | - | - | - | 3 | Execute JavaScript Code | `apex.navigation.redirect($v('P1110_SUPPORT_URL'));` | - | - | - | open the SUPPORT_ENTRY dialog page 9001 (URL from SUPPORT_ENTRY.OPEN_DIALOG) | - |
 | 50 | `IMPR1110F5 EXECUTE-FUNCTION` | Custom: IMPR1110F5 | JavaScript Expression: document | - | 1 | Set Value | Static 'IMPR1110F5' -> P1110_FUNCTION_PENDING | - | - | No | - | PU EXEC_FUNS / TMPLT EXECUTE_FUNCTION (IMPR1110F5) |
-| - | - | - | - | - | 2 | Execute JavaScript Code | `apex.navigation.redirect($v('P1110_SUPPORT_URL'));` | - | - | - | open the SUPPORT_ENTRY dialog (form converted separately, decision §15 #12; its page and URL item are TODO) | - |
+| - | - | - | - | - | 2 | FOS - Execute PL/SQL Code | `SUPPORT_ENTRY.OPEN_DIALOG(P_MODE => 0, P_CURR_PORT_CD => :P1110_PORT_CD, P_SUPPORT_URL => :P1110_SUPPORT_URL);` | P1110_PORT_CD | P1110_SUPPORT_URL | - | page 9001 SUPPORT_ENTRY (its spec §0.2 / §10.1): keeps 1110 in G_SUPPORT_ENTRY_CALLER, sets G_LAST_PAGE := 9001 (f345 SCREEN ENTRY RESET leaves P0_PAGE_PK alone) and returns the URL (P_MODE = 0, P_CURR_PORT_CD = PORT_CD, checksum) | - |
+| - | - | - | - | - | 3 | Execute JavaScript Code | `apex.navigation.redirect($v('P1110_SUPPORT_URL'));` | - | - | - | open the SUPPORT_ENTRY dialog page 9001 (URL from SUPPORT_ENTRY.OPEN_DIALOG) | - |
 | 51 | `IMPR1110F4 EXECUTE-FUNCTION` | Custom: IMPR1110F4 | JavaScript Expression: document | - | 1 | Set Value | Static NULL -> P1110_FUNCTION_CODE, Suppress Change Event = Yes | - | - | No | so the next value always fires a change | PU EXEC_FUNS / TMPLT EXECUTE_FUNCTION (IMPR1110F4) |
 | - | - | - | - | - | 2 | Set Value | Static 'IMPR1110F4' -> P1110_FUNCTION_CODE | - | - | - | fires DA EXEC_FUNS | - |
 | 52 | `IMPR_CAR_AGENT EXECUTE-FUNCTION` | Custom: IMPR_CAR_AGENT | JavaScript Expression: document | - | 1 | Set Value | Static NULL -> P1110_FUNCTION_CODE, Suppress Change Event = Yes | - | - | No | so the next value always fires a change | PU EXEC_FUNS / TMPLT EXECUTE_FUNCTION (IMPR_CAR_AGENT) |
@@ -533,7 +540,7 @@ The table is generated. *Code / setting* is the exact call; one row per action.
 | - | - | - | - | - | 2 | Execute JavaScript Code | `apex.message.confirm($v('P1110_CONFIRM_TEXT'), function (ok) {<br>    if (ok) { $s('P1110_ANSWER', '1'); apex.event.trigger(document, 'impr1110-update-importer'); } });` | - | - | - | question text computed on the server (UPDATE_IMPORTER_MSG) | - |
 | 56 | `IMPR1110_MOB EXECUTE-FUNCTION` | Custom: IMPR1110_MOB | JavaScript Expression: document | - | 1 | FOS - Execute PL/SQL Code | `IMPR1110.EXEC_FUNS(P_PORT_CD => :P1110_PORT_CD, P_IMPR_NBR => :P1110_IMPR_NBR, P_BUS_ID => :P1110_BUS_ID, P_BUS_ID_BRNCH => :P1110_BUS_ID_BRNCH, P_ARBC_IMPR_NAME => :P1110_ARBC_IMPR_NAME, P_CURR_PORT_CD => :P_CURR_PORT_CD, SSO_APP_USER => :SSO_APP_USER, P_GLOBAL_V_WS_ID => :P_GLOBAL_V_WS_ID, P_CLASS_CD => :P_CLASS_CD, V_USR_TYPE => :V_USR_TYPE, P_LETTER_NBR => :P1110_P_LETTER_NBR, P_CODE => :P1110_P_CODE, P_BRKR_PORT_CD => :P_BRKR_PORT_CD, P_LIC_TYPE => :P_LIC_TYPE, P_BRKR_NBR => :P_BRKR_NBR, FUNCTION_CODE => 'IMPR1110_MOB');` | P1110_PORT_CD, P1110_IMPR_NBR, P1110_BUS_ID, P1110_BUS_ID_BRNCH, P1110_ARBC_IMPR_NAME, P_CURR_PORT_CD, P_GLOBAL_V_WS_ID, P_CLASS_CD, P_BRKR_PORT_CD, P_LIC_TYPE, P_BRKR_NBR | P1110_P_LETTER_NBR, P1110_P_CODE | No | checks IMPR_NBR > 3000000 | PU EXEC_FUNS / TMPLT EXECUTE_FUNCTION (IMPR1110_MOB) |
 | - | - | - | - | - | 2 | Execute JavaScript Code | `apex.navigation.redirect($v('P1110_MOBILE_URL'));` | - | - | - | open dialog page 111002 (URL from apex_page.get_url, modal) | - |
-| 57 | `SUPPORT_ENTRY DIALOG CLOSED` | Dialog Closed | JavaScript Expression: document | TODO: dialog = SUPPORT_ENTRY page | 1 | Set Value | Static NULL -> P1110_FUNCTION_CODE, Suppress Change Event = Yes | - | - | No | - | CALL_FORM(SUPPORT_ENTRY) return (functions F1, F2, F3, F5) |
+| 57 | `SUPPORT_ENTRY DIALOG CLOSED` | Dialog Closed | JavaScript Expression: document | dialog page 9001 | 1 | Set Value | Static NULL -> P1110_FUNCTION_CODE, Suppress Change Event = Yes | - | - | No | - | CALL_FORM(SUPPORT_ENTRY) return (functions F1, F2, F3, F5) |
 | - | - | - | - | - | 2 | Set Value | JavaScript Expression $v('P1110_FUNCTION_PENDING') -> P1110_FUNCTION_CODE | - | - | - | fires DA EXEC_FUNS | - |
 | 58 | `EXEC_FUNS` | Change | Item P1110_FUNCTION_CODE | Item P1110_FUNCTION_CODE is not null | 1 | FOS - Execute PL/SQL Code | `IMPR1110.EXEC_FUNS(P_PORT_CD => :P1110_PORT_CD, P_IMPR_NBR => :P1110_IMPR_NBR, P_BUS_ID => :P1110_BUS_ID, P_BUS_ID_BRNCH => :P1110_BUS_ID_BRNCH, P_ARBC_IMPR_NAME => :P1110_ARBC_IMPR_NAME, P_CURR_PORT_CD => :P_CURR_PORT_CD, SSO_APP_USER => :SSO_APP_USER, P_GLOBAL_V_WS_ID => :P_GLOBAL_V_WS_ID, P_CLASS_CD => :P_CLASS_CD, V_USR_TYPE => :V_USR_TYPE, P_LETTER_NBR => :P1110_P_LETTER_NBR, P_CODE => :P1110_P_CODE, P_BRKR_PORT_CD => :P_BRKR_PORT_CD, P_LIC_TYPE => :P_LIC_TYPE, P_BRKR_NBR => :P_BRKR_NBR, FUNCTION_CODE => :P1110_FUNCTION_CODE);` | P1110_PORT_CD, P1110_IMPR_NBR, P1110_BUS_ID, P1110_BUS_ID_BRNCH, P1110_ARBC_IMPR_NAME, P_CURR_PORT_CD, P_GLOBAL_V_WS_ID, P_CLASS_CD, P_BRKR_PORT_CD, P_LIC_TYPE, P_BRKR_NBR, P1110_FUNCTION_CODE | P1110_P_LETTER_NBR, P1110_P_CODE | No | - | PU EXEC_FUNS + IMPORTERS.WHEN-NEW-RECORD-INSTANCE |
 | - | - | - | - | - | 2 | FOS - Execute PL/SQL Code | `:P1110_CONFIRM_TEXT := IMPR1110.NEW_RECORD_CONFIRM_TEXT(P_IMPR_TYPE_CD => :P1110_IMPR_TYPE_CD, P_BUS_ID_TYPE_CD => :P1110_BUS_ID_TYPE_CD, P_COMM_RGSTRTN_TYPE => :P1110_COMM_RGSTRTN_TYPE, P_BUS_ID => :P1110_BUS_ID, P_BUS_ID_BRNCH => :P1110_BUS_ID_BRNCH, P_CODE => :P1110_P_CODE);` | P1110_IMPR_TYPE_CD, P1110_BUS_ID_TYPE_CD, P1110_COMM_RGSTRTN_TYPE, P1110_BUS_ID, P1110_BUS_ID_BRNCH | P1110_CONFIRM_TEXT | - | - | - |
@@ -549,7 +556,7 @@ The table is generated. *Code / setting* is the exact call; one row per action.
 | # | DA | Lines | Why native actions are not enough |
 |---|---|---|---|
 | 1 | `BUS_ID WHEN-VALIDATE-ITEM` | 2 | WARNING alert "يوجد مستورد … موقوف له نفس الرقم الإستدلالي" with the importer number computed on the server; the answer must be known before the WHEN-VALIDATE-ITEM code runs. Native *Confirm* has a fixed text |
-| 2–5 | `IMPR1110F1` / `F2` / `F3` / `F5 EXECUTE-FUNCTION` | 1 each | open the SUPPORT_ENTRY dialog (`apex.navigation.redirect` of a modal-page URL); there is no native "open dialog" action in 21.2 |
+| 2–5 | `IMPR1110F1` / `F2` / `F3` / `F5 EXECUTE-FUNCTION` | 1 each | open dialog page 9001 SUPPORT_ENTRY (`apex.navigation.redirect` of the URL returned by `SUPPORT_ENTRY.OPEN_DIALOG`); there is no native "open dialog" action in 21.2 |
 | 6 | `IMPR_MCI_SERVICE EXECUTE-FUNCTION` | 2 | question text computed by `UPDATE_IMPORTER_MSG` |
 | 7 | `IMPR1110_MOB EXECUTE-FUNCTION` | 1 | open dialog page 111002 after the server check |
 | 8 | `EXEC_FUNS` | 2 | CONFIRM of IMPR1110F1 / F5 "سيتم تعديل الإسم إلى …" with the new name computed on the server, then the WHEN-NEW-RECORD-INSTANCE DA |
@@ -590,7 +597,7 @@ Error handling function: the f345 `APP_ERROR_HANDLER` (application attribute, no
 | page 0 SEARCH | – | 111001 (dialog) | `P0_PAGE_PK` is null | – | ENTER_QUERY / EXECUTE_QUERY |
 | link column of 111001 | – | 1110 | – | `P0_PAGE_PK` = ROWID (checksum) | EXECUTE_QUERY result |
 | function `IMPR1110_MOB` | – | 111002 (dialog) | `IMPR_NBR > 3000000` (checked by `EXEC_FUNS`) | `P111002_IMPR_NBR` (checksum, `P1110_MOBILE_URL`) | `CALL_FORM('LOV_UPDATE_IMPR_MOBILE.fmx')` |
-| functions IMPR1110F1 / F2 / F3 / F5 | – | SUPPORT_ENTRY page (dialog) | – | P_MODE = 0, P_CURR_PORT_CD = PORT_CD | `CALL_FORM('SUPPORT_ENTRY.FMX')` – **TODO** |
+| functions IMPR1110F1 / F2 / F3 / F5 | – | 9001 SUPPORT_ENTRY (dialog) | – | `P9001_P_MODE` = 0, `P9001_P_CURR_PORT_CD` = PORT_CD (checksum, URL from `SUPPORT_ENTRY.OPEN_DIALOG` into `P1110_SUPPORT_URL`); on close DA `SUPPORT_ENTRY DIALOG CLOSED` → `EXEC_FUNS` (continues only when `G_LETTER_NBR` is set) | `CALL_FORM('SUPPORT_ENTRY.FMX')` |
 | function `IMPR1115_SCR` | – | page IMPR1115 when converted (the f345 list links to a page named after the file) | – | `P_IMPR_NO` = IMPR_NBR | TMPLT CALL_FORM – **TODO** |
 | other forms that open IMPR1110 | – | 1110 | – | application items `P_PRSNL_IMPR`, `P_LETTER_NBR` (read once by `PARAMETERS ENTRY`) | CALL_FORM with PRSNL_IMPR / LETTER_NBR |
 | page 0 BACK | – | home application | – | – | EXIT_FORM |
@@ -1199,7 +1206,7 @@ points of §7–§10.
 | 562 | CALLED_FORM | LOV_COUNTRIES_GULF | LOV | inline LOV of P1110_CTRY_CD | - | - | MAPPED | LOV form (forms/COMMON/lov_forms) |
 | 563 | CALLED_FORM | LOV_IMPR | LOV | LOV_IMPR | - | - | MAPPED | LOV form (forms/COMMON/lov_forms) |
 | 564 | CALLED_FORM | LOV_UPDATE_IMPR_MOBILE | PAGE | 111002 IMPR1110_MOBILE (Modal Dialog) | 111002 | IMPR1110.CENTRAL_MOBILE | MAPPED | dialog of function IMPR1110_MOB |
-| 565 | CALLED_FORM | SUPPORT_ENTRY | PAGE | SUPPORT_ENTRY page (form converted on its own, SC subsystem - decision §15 #12) | - | - | TODO | TODO: page number and URL item P1110_SUPPORT_URL; on close it must set G_LETTER_NBR / G_SUPP_TITLE_CD / G_LETTER_DT / G_PORT_CD |
+| 565 | CALLED_FORM | SUPPORT_ENTRY | PAGE | 9001 SUPPORT_ENTRY (modal dialog, converted on its own - decision §15 #12) | 9001 | SUPPORT_ENTRY.OPEN_DIALOG | MAPPED | FOS SUPPORT_ENTRY.OPEN_DIALOG -> P1110_SUPPORT_URL; on close it sets G_LETTER_NBR / G_SUPP_TITLE_CD / G_LETTER_DT / G_PORT_CD |
 | 566 | CALLED_FORM | IMPR1115 | PAGE | link to the IMPR1115 page | - | - | TODO | function IMPR1115_SCR - when IMPR1115 is converted |
 | 567 | CALLED_FORM | V_CALLED_FORM (TMPLT menu) | PAGE | - | - | - | TODO | screens of SC_SYSTEM_OBJECTS called by EXECUTE_FUNCTION -> navigation menu |
 | 568 | ALERT | USR_CONFIRM_B | - | - | - | - | DROPPED | OLB alert used only through STR.DispAlert; texts are inline in the code (MISSING SOURCE CIC_OLB) |
@@ -1325,7 +1332,7 @@ Open items:
 | # | Item | Blocks |
 |---|---|---|
 | 1 | HIGH (extraction §7 #1): how IMPR_NBR gets its value on insert (`CREATE_UNI_IMPR_NEBRAS`, a DB trigger, or a view). The ROWID key works either way, but the native insert must give the same row as Forms | CREATE |
-| 2 | SUPPORT_ENTRY is converted as its own form (decision §15 #12): its page number, the `P1110_SUPPORT_URL` computation, and the G_ items it sets on close | functions F1, F2, F3, F5 |
+| 2 | DONE (package 013): SUPPORT_ENTRY is page 9001; F1 / F2 / F3 / F5 call `SUPPORT_ENTRY.OPEN_DIALOG`, `PRE_UPDATE` passes `FORMS_APX.HIJRI_TEXT_TO_DATE(G_LETTER_DT)` to `DB_JOURNAL.JOURNALING_ON`. Import page 9001 and compile `SUPPORT_ENTRY` 002 with IMPR1110 | functions F1, F2, F3, F5 |
 | 3 | `SYS_OS_FILE_NAME` values of the 11 functions: the custom-event names and the `ADJ_FUNS` list must match them exactly (with or without `.fmx`) | functions |
 | 4 | Security: an item disabled by a `READ ONLY` DA is enforced only in the browser. A changed request could still update a locked column. SUGGESTION: a server-side check in PRE_UPDATE that compares the locked columns with the database row, using the same `<ITEM>_IS_READ_ONLY` functions | SAVE |
 | 5 | Forms runs `IMPR_TYPE_CD_LOV_RETURN` only after an LOV pick; the design runs it on every change of IMPR_TYPE_CD (TODO-VERIFY in step 05) | IMPR_TYPE_CD |

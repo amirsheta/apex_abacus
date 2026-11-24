@@ -2158,7 +2158,7 @@ AS
         add_activity(2, p_rec, p_ctx);
         IF FORMS_APX.GET_GLOBAL('LETTER_NBR') IS NOT NULL THEN
             db_journal.journaling_on(FORMS_APX.GET_GLOBAL('PORT_CD'), FORMS_APX.GET_GLOBAL('SUPP_TITLE_CD'),
-                                     FORMS_APX.GET_GLOBAL('LETTER_NBR'), FORMS_APX.GET_GLOBAL('LETTER_DT'));
+                                     FORMS_APX.GET_GLOBAL('LETTER_NBR'), FORMS_APX.HIJRI_TEXT_TO_DATE(FORMS_APX.GET_GLOBAL('LETTER_DT')));
         END IF;
 
         p_rec.arbc_impr_name  := LTRIM(RTRIM(p_rec.arbc_impr_name));

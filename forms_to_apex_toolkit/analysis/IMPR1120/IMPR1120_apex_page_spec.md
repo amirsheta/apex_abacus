@@ -217,6 +217,8 @@ The Forms toolbar and LOV buttons map to page 0 or to the popup LOV icon (§14).
 
 ## 6. LOVs
 
+**Type (CLAUDE.md §4d, 2026-11-24):** every SQL LOV below is a *PL/SQL Function Body returning SQL Query* that calls the common package `LOV_APX` (`plsql_templates/lov_apx.sql`); the SQL column is the query the function returns. `LOV_IMPR_SUSPN_RSN_CD` / `LOV_SUSPN_SIDE_CD` → `REFERENCE_CODES(P_DOMAIN => 'IMPR_SUSPN_RSN_CD' / 'SUSPN SIDE CD')`; `LOV_SD_PORTS` and `LOV_ALLOWED_EXPORT` come from IMPR1110's export.
+
 | Forms LOV / list | APEX LOV | Type | SQL (display, return) | Used by | Item type | Notes |
 |---|---|---|---|---|---|---|
 | `CGFK$IMPORTERS_PORT_CD` / LOV form `LOV_SD_PORTS` | **`LOV_SD_PORTS`** (exists from IMPR1110) | SQL | `SELECT port_cd d, port_cd r, port_name FROM sd_ports WHERE port_status = 1 AND port_type = NVL(:P_PORT_TYPE, port_type) ORDER BY port_cd` | `P1120_PORT_CD` | Popup LOV, Additional Output PORT_NAME | Forms passes `STATUS = 1` only outside Enter-Query (§16 #8) |

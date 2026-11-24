@@ -65,6 +65,40 @@ member only held UI calls), and the calls of `WHEN_NEW_FORM_INSTANCE`, `WHEN_NEW
 export calls parameters that 012 no longer has, and this export calls signatures that 011 does not have
 (PLS-00306 either way). Previous files: `rollback/IMPR1110/step04_v011/`.
 
+### Package 013 (2026-11-24): functions F1, F2, F3, F5 open page 9001 SUPPORT_ENTRY
+
+- DAs `IMPR1110F1` / `F2` / `F3` / `F5 EXECUTE-FUNCTION`: 1 Set Value `P1110_FUNCTION_PENDING`; **2 FOS
+  `SUPPORT_ENTRY.OPEN_DIALOG(P_MODE => 0, P_CURR_PORT_CD => :P1110_PORT_CD, P_SUPPORT_URL => :P1110_SUPPORT_URL)`**
+  (Items to Submit `P1110_PORT_CD`, Items to Return `P1110_SUPPORT_URL`; sets `G_LAST_PAGE := 9001` and keeps 1110 in
+  `G_SUPPORT_ENTRY_CALLER`, so f345 SCREEN ENTRY RESET does not clear the open importer); 3 JavaScript redirect.
+- `P1110_SUPPORT_URL`: Hidden, Value Protected **No** (it is set by Ajax; a protected item would fail the next
+  page submit with a checksum error), no computation.
+- DA `SUPPORT_ENTRY DIALOG CLOSED`: client condition `this.data.dialogPageId == 9001` (was "not 111002").
+  It copies `P1110_FUNCTION_PENDING` into `P1110_FUNCTION_CODE` → DA `EXEC_FUNS`, which continues only when
+  page 9001 set `G_LETTER_NBR` (AGREE); CANCEL clears it, so nothing changes.
+- Package 013: `PRE_UPDATE` passes `FORMS_APX.HIJRI_TEXT_TO_DATE(G_LETTER_DT)` to `DB_JOURNAL.JOURNALING_ON`
+  (its parameter is a DATE; 9001 keeps the date as text in `HIJRI_DATE_FORMAT`). Only that line changed.
+- Install order: `FORMS_APX` 004 → `LOV_APX` 001 (`plsql_templates/lov_apx.sql`) → `IMPR1110` **013** → `SUPPORT_ENTRY` 002 (`plsql/SUPPORT_ENTRY/`) → this export
+  → `apex/SUPPORT_ENTRY/f202530_support_entry_import.sql` (or the full `apex/f202530_full.sql`, which holds both).
+  Without page 9001 and package `SUPPORT_ENTRY` the four functions fail (FOS shows PLS-00201 / page not found).
+  Previous files: `rollback/IMPR1110/step04_v012/`.
+
+
+### Shared LOVs in LOV_APX (2026-11-24, CLAUDE.md §4d)
+
+Every SQL shared LOV of this export now has the type *PL/SQL Function Body returning SQL Query* and calls the
+common package `LOV_APX` (`plsql_templates/lov_apx.sql`, version 001), e.g.
+`return LOV_APX.CITIES(P_COUNTRY_ITEM => 'P1110_ADD_CTRY_CD');`. The queries are the same as before.
+Static LOVs are unchanged.
+
+- **Install `plsql_templates/lov_apx.sql` before the import** (package, public synonym `LOV_APX`, EXECUTE to
+  `CUSTOMS` and the other grantees). Without it every LOV of these pages fails with PLS-00201.
+- **Verify after the import (one LOV is enough):** Shared Components → List of Values → `LOV_COUNTRIES` → Source:
+  *Type* = PL/SQL Function Body returning SQL Query, the body shows the `LOV_APX` call, Return `R` /
+  Display `D`. `p_source_type => 'FUNC_BODY_RETURNING_SQL'` is not in f345 or in the real 21.2 export
+  `f202604.sql`. If the import rejects it, tell Claude Code: the value is one constant in `scripts/lov_apx.py`.
+- At runtime: open the LOV of `P1110_CTRY_CD`; the list shows the same rows as before.
+
 ## 3. Placeholders
 
 The script has `set define off`. Four tokens, each appearing twice (header comment + `component_begin`):
@@ -89,7 +123,7 @@ four tokens, and `grep -n '{{' apex/IMPR1110/f345_impr1110.sql` must print nothi
 1. **Target application installed from f345** (`apex/Reference/f345.sql`): theme 42 / ZATCA Forms,
    page 0 toolbar, login, plug-ins, application items. This export never creates them.
 2. **Package `FORMS_APX` version 004 compiled first** (`plsql_templates/forms_apx.sql`, owner `LIB_APX_USR`, public synonym and grants at the end): since 2026-11-24 it holds the helpers common to every form (`CHECK_ERROR`, `REQUIRED_VALIDATION`, `GET_MODULE_ID`, `HEADER_TITLE`, `ROWID_FROM_URL`, `HIJRI_DATE_FORMAT` and the Hijri date helpers, `ARABIC_MESSAGE`, `CG_MESSAGE`, `CUR_HIJ_DATE` ...); the form packages and the pages call `FORMS_APX.<NAME>`. It now needs `STR_DB`, `HIJDATE_DB` and `SC_SYSTEM_OBJECTS` (as the form packages did). `SELECT FORMS_APX.PKG_VERSION FROM dual` shows `004`.
-3. **Package `IMPR1110` compiled** in `__SCHEMA_NAME__` as `LIB_APX_USR.IMPR1110`, version 011:
+3. **Package `IMPR1110` compiled** in `__SCHEMA_NAME__` as `LIB_APX_USR.IMPR1110`, version 013:
    `plsql/IMPR1110/impr1110_spec.sql` then `impr1110_body.sql`. The `<ITEM> REQUIRED` validations call
    `FORMS_APX.REQUIRED_VALIDATION(ITEM_VALUE, ITEM_LABEL)` (text "يجب إدخال <label>", was "<label> must be
    entered"); PARAMETERS / HEADER TITLE call `FORMS_APX.GET_MODULE_ID` / `FORMS_APX.HEADER_TITLE`. The spec ends with
@@ -101,7 +135,7 @@ four tokens, and `grep -n '{{' apex/IMPR1110/f345_impr1110.sql` must print nothi
 4. **FOS *Execute PL/SQL Code* plug-in** from f345: internal name `COM.FOS.EXECUTE_PLSQL_CODE`,
    display name "FOS - Execute PL/SQL Code" (`apex/Reference/f345.sql`, `create_plugin`). Every DA
    action uses `p_action => 'PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE'`. If the plug-in is missing the
-   import still runs but all 51 FOS actions are unusable.
+   import still runs but all 54 FOS actions are unusable.
 5. **Shared components the export creates** (they do not exist in f345):
    - 13 LOVs: `LOV_SD_PORTS`, `LOV_IMPR_TYPE`, `LOV_IMPR_TYPE_BUS_ID`, `LOV_CITIES_IMP_ID`,
      `LOV_CITIES_IMP_BRNH`, `LOV_CITIES`, `LOV_COUNTRIES`, `LOV_COUNTRIES_GULF`, `LOV_IMPR`,
@@ -163,8 +197,9 @@ fail: delete or rename it first.
 ## 6. Child modal pages and `P0_PAGE_PK`
 
 f345 `SCREEN ENTRY RESET` keeps the open record only for `<page>` and `<page>01`. Any other child
-modal page loses `P0_PAGE_PK` when the user returns to 1110. In this export the only such page is
-**111002 `IMPR1110_MOBILE`**, and it is protected: process `G_LAST_PAGE KEEP` (After Header,
+modal page loses `P0_PAGE_PK` when the user returns to 1110. Page 9001 SUPPORT_ENTRY (own export) is protected
+by `SUPPORT_ENTRY.OPEN_DIALOG` in the F1 / F2 / F3 / F5 DAs plus its own `G_LAST_PAGE KEEP`. In this export the only
+such page is **111002 `IMPR1110_MOBILE`**, and it is protected: process `G_LAST_PAGE KEEP` (After Header,
 `:G_LAST_PAGE := 1110;`, `create_page_process` on page 111002) is present in the export. Page 111001
 needs no protection (it is `<page>01`). Verify both after the import (§9 step 5).
 
@@ -254,6 +289,10 @@ Send the full error text (API name and line): the generator can drop or replace 
 8. `FUNCS` → each function (F4, IMPR_CAR_AGENT, IMPR_MCI_SERVICE, IMPR1110_MOB → 111002 → mobile
    written back, then `SAVE` keeps the record).
 9. `P0_PAGE_PK` survives the return from 111002 (`G_LAST_PAGE KEEP`).
+10. Functions F1, F2, F3, F5 with an importer open: dialog 9001 opens with the importer's port and buttons موافق /
+    تراجع → AGREE with all four values → the dialog closes, the function runs (F1 / F5: name question when the
+    commercial register gives a new name), the importer stays on 1110 and the items of that function become
+    editable → SAVE writes the journal row with the letter. CANCEL or the X → nothing changes on 1110.
 
 ## 10. Open items / TODO
 
@@ -262,7 +301,7 @@ Reported only — nothing in this step changes them.
 | # | Item | Source |
 |---|---|---|
 | 1 | HIGH: how `IMPR_NBR` gets its value on insert (`CREATE_UNI_IMPR_NEBRAS`, a DB trigger, or a view). The ROWID key works either way, but the native insert must give the same row as Forms | spec §16 #1 |
-| 2 | SUPPORT_ENTRY is converted as its own form: its page number, the `P1110_SUPPORT_URL` computation and the `G_` items it sets on close are still open, so functions F1, F2, F3, F5 lead nowhere yet | spec §16 #2 |
+| 2 | DONE (013): F1, F2, F3, F5 open page 9001 SUPPORT_ENTRY through `SUPPORT_ENTRY.OPEN_DIALOG`; import both exports and compile both packages | spec §16 #2 |
 | 3 | `SYS_OS_FILE_NAME` values of the 11 functions: the custom-event names and the `ADJ_FUNS` list must match them exactly (with or without `.fmx`) | spec §16 #3 |
 | 4 | Security: an item disabled by a `READ ONLY` DA is enforced only in the browser; a changed request could still update a locked column. SUGGESTION: server-side check in PRE_UPDATE | spec §16 #4 |
 | 5 | `IMPR_TYPE_CD_LOV_RETURN` runs on every change of `IMPR_TYPE_CD`, not only after an LOV pick (TODO-VERIFY in step 05) | spec §16 #5 |

@@ -32,6 +32,21 @@
 
 Never generated: theme, templates, page 0, plug-ins, application processes, Authorization Schemes (CLAUDE.md §8).
 
+### Shared LOVs in LOV_APX (2026-11-24, CLAUDE.md §4d)
+
+Every SQL shared LOV of this export now has the type *PL/SQL Function Body returning SQL Query* and calls the
+common package `LOV_APX` (`plsql_templates/lov_apx.sql`, version 001), e.g.
+`return LOV_APX.CITIES(P_COUNTRY_ITEM => 'P1110_ADD_CTRY_CD');`. The queries are the same as before.
+Static LOVs are unchanged.
+
+- **Install `plsql_templates/lov_apx.sql` before the import** (package, public synonym `LOV_APX`, EXECUTE to
+  `CUSTOMS` and the other grantees). Without it every LOV of these pages fails with PLS-00201.
+- **Verify after the import (one LOV is enough):** Shared Components → List of Values → `LOV_SUPP_TITLES` → Source:
+  *Type* = PL/SQL Function Body returning SQL Query, the body shows the `LOV_APX` call, Return `R` /
+  Display `D`. `p_source_type => 'FUNC_BODY_RETURNING_SQL'` is not in f345 or in the real 21.2 export
+  `f202604.sql`. If the import rejects it, tell Claude Code: the value is one constant in `scripts/lov_apx.py`.
+- At runtime: open the LOV of `P9001_SUPP_TITLE_CD`; the list shows the same rows as before.
+
 ## 2. Placeholders
 
 | Token | Value for 202530 | How to get it |
@@ -83,11 +98,10 @@ The protection (spec §0.2) has two halves and both must be present:
 
 | Where | What | In this export |
 |---|---|---|
-| caller (IMPR1110 page 1110) | FOS `SUPPORT_ENTRY.OPEN_DIALOG(P_MODE => 0, P_CURR_PORT_CD => :P1110_PORT_CD, P_SUPPORT_URL => :P1110_SUPPORT_URL);` right before `apex.navigation.redirect($v('P1110_SUPPORT_URL'))` | **no – IMPR1110 export, its own session** (page spec §10.1) |
+| caller (IMPR1110 page 1110) | FOS `SUPPORT_ENTRY.OPEN_DIALOG(P_MODE => 0, P_CURR_PORT_CD => :P1110_PORT_CD, P_SUPPORT_URL => :P1110_SUPPORT_URL);` right before `apex.navigation.redirect($v('P1110_SUPPORT_URL'))` | yes – IMPR1110 export with package IMPR1110 013 (2026-11-24) |
 | page 9001 | After Header `G_LAST_PAGE KEEP`: `:G_LAST_PAGE := NVL(:G_SUPPORT_ENTRY_CALLER, :G_LAST_PAGE);` | yes |
 
-**Until the IMPR1110 export is updated the dialog cannot be used from 1110**: `P1110_SUPPORT_URL` is still empty
-there (TODO in IMPR1110). Test page 9001 on its own as in §7 step 3.
+The IMPR1110 export is updated (package IMPR1110 013): functions F1, F2, F3, F5 call `OPEN_DIALOG` and open 9001.
 
 ## 6. Uncertain parameters – verify after import
 
@@ -102,6 +116,7 @@ Used in this export but not present in f345 (name or effect unconfirmed for 21.2
    column list of `LOV_SD_PORTS_TYPES` and `LOV_SUPP_TITLES`.
 
 Omitted on purpose: Popup LOV *Manual Entry* (attribute not in f345 / IMPR1110): a code can only be picked from the list.
+
 
 ## 7. Post-import review and test
 

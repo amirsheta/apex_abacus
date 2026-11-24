@@ -98,4 +98,4 @@
 | `P1110_CAR_AGENT_FLAG_LOCKED` | - | Hidden (Value Protected = No) | - | No | - | - | - | - | - | hidden | - | - | No (server value) | - | read-only flag Y / N of CAR_AGENT_FLAG |
 | `P1110_BROKER_USER` | - | Hidden (Value Protected = Yes) | - | No | - | - | - | - | - | hidden | - | - | No (server value) | - | Y for brokers (class 1, type 3): client condition of DA PRE-INSERT CONFIRM |
 | `P1110_PRE_INSERT_QUESTION` | - | Hidden (Value Protected = Yes) | - | No | - | - | - | - | - | hidden | - | - | No (server value) | - | text of the broker question (Text Message IMPR1110_PRE_INSERT_CONFIRM), read by DA PRE-INSERT CONFIRM |
-| `P1110_SUPPORT_URL` | - | Hidden (Value Protected = Yes) | - | No | - | - | - | - | - | hidden | - | - | No (server value) | - | URL of the SUPPORT_ENTRY dialog (TODO: page of the separately converted form) |
+| `P1110_SUPPORT_URL` | - | Hidden (Value Protected = No) | - | No | - | - | - | - | - | hidden | - | - | No (server value) | - | URL of dialog page 9001 SUPPORT_ENTRY, returned by FOS SUPPORT_ENTRY.OPEN_DIALOG (not protected: set by Ajax) |

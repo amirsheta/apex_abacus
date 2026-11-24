@@ -20,7 +20,7 @@ Open items:
 | # | Item | Blocks |
 |---|---|---|
 | 1 | HIGH (extraction §7 #1): how IMPR_NBR gets its value on insert (`CREATE_UNI_IMPR_NEBRAS`, a DB trigger, or a view). The ROWID key works either way, but the native insert must give the same row as Forms | CREATE |
-| 2 | SUPPORT_ENTRY is converted as its own form (decision §15 #12): its page number, the `P1110_SUPPORT_URL` computation, and the G_ items it sets on close | functions F1, F2, F3, F5 |
+| 2 | DONE (package 013): SUPPORT_ENTRY is page 9001; F1 / F2 / F3 / F5 call `SUPPORT_ENTRY.OPEN_DIALOG`, `PRE_UPDATE` passes `FORMS_APX.HIJRI_TEXT_TO_DATE(G_LETTER_DT)` to `DB_JOURNAL.JOURNALING_ON`. Import page 9001 and compile `SUPPORT_ENTRY` 002 with IMPR1110 | functions F1, F2, F3, F5 |
 | 3 | `SYS_OS_FILE_NAME` values of the 11 functions: the custom-event names and the `ADJ_FUNS` list must match them exactly (with or without `.fmx`) | functions |
 | 4 | Security: an item disabled by a `READ ONLY` DA is enforced only in the browser. A changed request could still update a locked column. SUGGESTION: a server-side check in PRE_UPDATE that compares the locked columns with the database row, using the same `<ITEM>_IS_READ_ONLY` functions | SAVE |
 | 5 | Forms runs `IMPR_TYPE_CD_LOV_RETURN` only after an LOV pick; the design runs it on every change of IMPR_TYPE_CD (TODO-VERIFY in step 05) | IMPR_TYPE_CD |

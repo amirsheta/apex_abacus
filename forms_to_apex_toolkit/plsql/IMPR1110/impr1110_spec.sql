@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Package     : IMPR1110  (form IMPR1110.fmb "إضافة وتعديل بيانات مستورد")
 -- Owner       : LIB_APX_USR (public synonym IMPR1110; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)
--- Version     : 012 (24-11-2026: 006 = step 02 revision 2 + step 03 changes (DATE items as text, ROWID page key);
+-- Version     : 013 (24-11-2026: 006 = step 02 revision 2 + step 03 changes (DATE items as text, ROWID page key);
 --               007 = parameter names by scripts/parameter_names.py; 008 = no doubled P_P_ (P_CODE => :P1110_P_CODE),
 --               APP_P_PRSNL_IMPR / APP_P_LETTER_NBR in PARAMETERS_ENTRY. No logic change. 007: rollback/IMPR1110/step04_v007/;
 --               009 = P0_PAGE_PK_CHECK restores the URL-safe ROWID of page 111001 ('-' / '_' -> '+' / '/'; a '+'
@@ -15,7 +15,10 @@
 --               never read), BRNH_CITY_CD_NEW_ITEM_INSTANCE (UI calls only), p_ctx of BUS_ID_WHEN_VALIDATE_ITEM /
 --               BUS_ID_BRNCH_VALIDATE_ITEM, CITY_CODE_OF_ID_WHEN_NEW_ITEM, p_rec of IMPR_TYPE_CD_POST_CHANGE (UI calls
 --               only), and the items entry points read only for UI calls; the NULL placeholders of the Forms UI calls are "-- APEX-DA:" comments
---               (CLAUDE.md 6.8). No logic change. 011: rollback/IMPR1110/step04_v011/)
+--               (CLAUDE.md 6.8). No logic change. 011: rollback/IMPR1110/step04_v011/;
+--               013 = SUPPORT_ENTRY is page 9001: PRE_UPDATE passes FORMS_APX.HIJRI_TEXT_TO_DATE(G_LETTER_DT) to
+--               DB_JOURNAL.JOURNALING_ON (DATE parameter; the dialog keeps the date as text in HIJRI_DATE_FORMAT).
+--               012: rollback/IMPR1110/step04_v012/)
 -- Author      : Claude Code
 -- Status      : NOT COMPILED.
 -- Layout      : VERSION -> f345 HELPERS -> FORM LEVEL -> BLOCK IMPORTERS (query, record, items in Forms
@@ -30,7 +33,7 @@
 SET DEFINE OFF
 
 CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR1110 AS
-   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '012';
+   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '013';
    V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '001';
    FUNCTION PKG_VERSION

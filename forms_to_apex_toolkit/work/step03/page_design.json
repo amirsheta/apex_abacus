@@ -1767,7 +1767,7 @@
   {
    "name": "P1110_SUPPORT_URL",
    "column": "-",
-   "type": "Hidden (Value Protected = Yes)",
+   "type": "Hidden (Value Protected = No)",
    "label": "-",
    "required": "No",
    "mask": "-",
@@ -1779,7 +1779,7 @@
    "read_only": "-",
    "condition": "",
    "source": "-",
-   "notes": "URL of the SUPPORT_ENTRY dialog (TODO: page of the separately converted form)",
+   "notes": "URL of dialog page 9001 SUPPORT_ENTRY, returned by FOS SUPPORT_ENTRY.OPEN_DIALOG (not protected: set by Ajax)",
    "submit": "No (server value)"
   }
  ],
@@ -3625,11 +3625,22 @@
      "note": ""
     },
     {
+     "action": "FOS - Execute PL/SQL Code",
+     "code": "SUPPORT_ENTRY.OPEN_DIALOG(P_MODE => 0, P_CURR_PORT_CD => :P1110_PORT_CD, P_SUPPORT_URL => :P1110_SUPPORT_URL);",
+     "submit": [
+      "P1110_PORT_CD"
+     ],
+     "ret": [
+      "P1110_SUPPORT_URL"
+     ],
+     "note": "page 9001 SUPPORT_ENTRY (its spec §0.2 / §10.1): keeps 1110 in G_SUPPORT_ENTRY_CALLER, sets G_LAST_PAGE := 9001 (f345 SCREEN ENTRY RESET leaves P0_PAGE_PK alone) and returns the URL (P_MODE = 0, P_CURR_PORT_CD = PORT_CD, checksum)"
+    },
+    {
      "action": "Execute JavaScript Code",
      "code": "apex.navigation.redirect($v('P1110_SUPPORT_URL'));",
      "submit": [],
      "ret": [],
-     "note": "open the SUPPORT_ENTRY dialog (form converted separately, decision §15 #12; its page and URL item are TODO)",
+     "note": "open the SUPPORT_ENTRY dialog page 9001 (URL from SUPPORT_ENTRY.OPEN_DIALOG)",
      "js": 1
     }
    ],
@@ -3650,11 +3661,22 @@
      "note": ""
     },
     {
+     "action": "FOS - Execute PL/SQL Code",
+     "code": "SUPPORT_ENTRY.OPEN_DIALOG(P_MODE => 0, P_CURR_PORT_CD => :P1110_PORT_CD, P_SUPPORT_URL => :P1110_SUPPORT_URL);",
+     "submit": [
+      "P1110_PORT_CD"
+     ],
+     "ret": [
+      "P1110_SUPPORT_URL"
+     ],
+     "note": "page 9001 SUPPORT_ENTRY (its spec §0.2 / §10.1): keeps 1110 in G_SUPPORT_ENTRY_CALLER, sets G_LAST_PAGE := 9001 (f345 SCREEN ENTRY RESET leaves P0_PAGE_PK alone) and returns the URL (P_MODE = 0, P_CURR_PORT_CD = PORT_CD, checksum)"
+    },
+    {
      "action": "Execute JavaScript Code",
      "code": "apex.navigation.redirect($v('P1110_SUPPORT_URL'));",
      "submit": [],
      "ret": [],
-     "note": "open the SUPPORT_ENTRY dialog (form converted separately, decision §15 #12; its page and URL item are TODO)",
+     "note": "open the SUPPORT_ENTRY dialog page 9001 (URL from SUPPORT_ENTRY.OPEN_DIALOG)",
      "js": 1
     }
    ],
@@ -3675,11 +3697,22 @@
      "note": ""
     },
     {
+     "action": "FOS - Execute PL/SQL Code",
+     "code": "SUPPORT_ENTRY.OPEN_DIALOG(P_MODE => 0, P_CURR_PORT_CD => :P1110_PORT_CD, P_SUPPORT_URL => :P1110_SUPPORT_URL);",
+     "submit": [
+      "P1110_PORT_CD"
+     ],
+     "ret": [
+      "P1110_SUPPORT_URL"
+     ],
+     "note": "page 9001 SUPPORT_ENTRY (its spec §0.2 / §10.1): keeps 1110 in G_SUPPORT_ENTRY_CALLER, sets G_LAST_PAGE := 9001 (f345 SCREEN ENTRY RESET leaves P0_PAGE_PK alone) and returns the URL (P_MODE = 0, P_CURR_PORT_CD = PORT_CD, checksum)"
+    },
+    {
      "action": "Execute JavaScript Code",
      "code": "apex.navigation.redirect($v('P1110_SUPPORT_URL'));",
      "submit": [],
      "ret": [],
-     "note": "open the SUPPORT_ENTRY dialog (form converted separately, decision §15 #12; its page and URL item are TODO)",
+     "note": "open the SUPPORT_ENTRY dialog page 9001 (URL from SUPPORT_ENTRY.OPEN_DIALOG)",
      "js": 1
     }
    ],
@@ -3700,11 +3733,22 @@
      "note": ""
     },
     {
+     "action": "FOS - Execute PL/SQL Code",
+     "code": "SUPPORT_ENTRY.OPEN_DIALOG(P_MODE => 0, P_CURR_PORT_CD => :P1110_PORT_CD, P_SUPPORT_URL => :P1110_SUPPORT_URL);",
+     "submit": [
+      "P1110_PORT_CD"
+     ],
+     "ret": [
+      "P1110_SUPPORT_URL"
+     ],
+     "note": "page 9001 SUPPORT_ENTRY (its spec §0.2 / §10.1): keeps 1110 in G_SUPPORT_ENTRY_CALLER, sets G_LAST_PAGE := 9001 (f345 SCREEN ENTRY RESET leaves P0_PAGE_PK alone) and returns the URL (P_MODE = 0, P_CURR_PORT_CD = PORT_CD, checksum)"
+    },
+    {
      "action": "Execute JavaScript Code",
      "code": "apex.navigation.redirect($v('P1110_SUPPORT_URL'));",
      "submit": [],
      "ret": [],
-     "note": "open the SUPPORT_ENTRY dialog (form converted separately, decision §15 #12; its page and URL item are TODO)",
+     "note": "open the SUPPORT_ENTRY dialog page 9001 (URL from SUPPORT_ENTRY.OPEN_DIALOG)",
      "js": 1
     }
    ],
@@ -3901,7 +3945,7 @@
    "name": "SUPPORT_ENTRY DIALOG CLOSED",
    "event": "Dialog Closed",
    "selection": "JavaScript Expression: document",
-   "condition": "TODO: dialog = SUPPORT_ENTRY page",
+   "condition": "dialog page 9001",
    "actions": [
     {
      "action": "Set Value",
@@ -9796,11 +9840,11 @@
    "CALLED_FORM",
    "SUPPORT_ENTRY",
    "PAGE",
-   "SUPPORT_ENTRY page (form converted on its own, SC subsystem - decision §15 #12)",
-   null,
-   null,
-   "TODO",
-   "TODO: page number and URL item P1110_SUPPORT_URL; on close it must set G_LETTER_NBR / G_SUPP_TITLE_CD / G_LETTER_DT / G_PORT_CD"
+   "9001 SUPPORT_ENTRY (modal dialog, converted on its own - decision §15 #12)",
+   "9001",
+   "SUPPORT_ENTRY.OPEN_DIALOG",
+   "MAPPED",
+   "FOS SUPPORT_ENTRY.OPEN_DIALOG -> P1110_SUPPORT_URL; on close it sets G_LETTER_NBR / G_SUPP_TITLE_CD / G_LETTER_DT / G_PORT_CD"
   ],
   [
    "CALLED_FORM",

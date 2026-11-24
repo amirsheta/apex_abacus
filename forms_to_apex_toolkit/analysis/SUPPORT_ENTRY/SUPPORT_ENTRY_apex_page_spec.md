@@ -121,6 +121,8 @@ UI-BTN-001 (shared button size) applies through the theme; no page-level sizing.
 
 ## 6. LOVs
 
+**Type (CLAUDE.md §4d, 2026-11-24):** every SQL LOV below is a *PL/SQL Function Body returning SQL Query* that calls the common package `LOV_APX` (`plsql_templates/lov_apx.sql`); the SQL column is the query the function returns. `LOV_SD_PORTS_TYPES` → `PORTS_WITH_TYPES`; `LOV_SUPP_TITLES` → `SUPPORT_TITLES`.
+
 | Forms LOV | APEX shared LOV | Type | SQL (display, return) | Used by | Item type | Notes |
 |---|---|---|---|---|---|---|
 | `LOV_SD_PORTS` (RG `LOV_SD_PORTS`) | **`LOV_SD_PORTS_TYPES`** (new, D2; IMPR1110's `LOV_SD_PORTS` has another query and stays) | SQL | `SELECT sd_ports.port_cd d, sd_ports.port_cd r, cg_ref_codes.rv_meaning, sd_ports.port_name FROM cg_ref_codes, sd_ports WHERE cg_ref_codes.rv_low_value = sd_ports.port_type AND cg_ref_codes.rv_domain = 'PORT_TYPE_CD' ORDER BY sd_ports.port_cd` | `P9001_P_PORT_CD` | Popup LOV | columns: رمز الجمرك (D), نوع الجمرك (RV_MEANING), اسم الجمرك (PORT_NAME); the name item is filled by the DA (Forms return item PORT_NAME → P_PORT_NAME) |

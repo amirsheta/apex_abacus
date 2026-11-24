@@ -4,7 +4,7 @@
 | # | DA | Lines | Why native actions are not enough |
 |---|---|---|---|
 | 1 | `BUS_ID WHEN-VALIDATE-ITEM` | 2 | WARNING alert "يوجد مستورد … موقوف له نفس الرقم الإستدلالي" with the importer number computed on the server; the answer must be known before the WHEN-VALIDATE-ITEM code runs. Native *Confirm* has a fixed text |
-| 2–5 | `IMPR1110F1` / `F2` / `F3` / `F5 EXECUTE-FUNCTION` | 1 each | open the SUPPORT_ENTRY dialog (`apex.navigation.redirect` of a modal-page URL); there is no native "open dialog" action in 21.2 |
+| 2–5 | `IMPR1110F1` / `F2` / `F3` / `F5 EXECUTE-FUNCTION` | 1 each | open dialog page 9001 SUPPORT_ENTRY (`apex.navigation.redirect` of the URL returned by `SUPPORT_ENTRY.OPEN_DIALOG`); there is no native "open dialog" action in 21.2 |
 | 6 | `IMPR_MCI_SERVICE EXECUTE-FUNCTION` | 2 | question text computed by `UPDATE_IMPORTER_MSG` |
 | 7 | `IMPR1110_MOB EXECUTE-FUNCTION` | 1 | open dialog page 111002 after the server check |
 | 8 | `EXEC_FUNS` | 2 | CONFIRM of IMPR1110F1 / F5 "سيتم تعديل الإسم إلى …" with the new name computed on the server, then the WHEN-NEW-RECORD-INSTANCE DA |
@@ -45,7 +45,7 @@ Error handling function: the f345 `APP_ERROR_HANDLER` (application attribute, no
 | page 0 SEARCH | – | 111001 (dialog) | `P0_PAGE_PK` is null | – | ENTER_QUERY / EXECUTE_QUERY |
 | link column of 111001 | – | 1110 | – | `P0_PAGE_PK` = ROWID (checksum) | EXECUTE_QUERY result |
 | function `IMPR1110_MOB` | – | 111002 (dialog) | `IMPR_NBR > 3000000` (checked by `EXEC_FUNS`) | `P111002_IMPR_NBR` (checksum, `P1110_MOBILE_URL`) | `CALL_FORM('LOV_UPDATE_IMPR_MOBILE.fmx')` |
-| functions IMPR1110F1 / F2 / F3 / F5 | – | SUPPORT_ENTRY page (dialog) | – | P_MODE = 0, P_CURR_PORT_CD = PORT_CD | `CALL_FORM('SUPPORT_ENTRY.FMX')` – **TODO** |
+| functions IMPR1110F1 / F2 / F3 / F5 | – | 9001 SUPPORT_ENTRY (dialog) | – | `P9001_P_MODE` = 0, `P9001_P_CURR_PORT_CD` = PORT_CD (checksum, URL from `SUPPORT_ENTRY.OPEN_DIALOG` into `P1110_SUPPORT_URL`); on close DA `SUPPORT_ENTRY DIALOG CLOSED` → `EXEC_FUNS` (continues only when `G_LETTER_NBR` is set) | `CALL_FORM('SUPPORT_ENTRY.FMX')` |
 | function `IMPR1115_SCR` | – | page IMPR1115 when converted (the f345 list links to a page named after the file) | – | `P_IMPR_NO` = IMPR_NBR | TMPLT CALL_FORM – **TODO** |
 | other forms that open IMPR1110 | – | 1110 | – | application items `P_PRSNL_IMPR`, `P_LETTER_NBR` (read once by `PARAMETERS ENTRY`) | CALL_FORM with PRSNL_IMPR / LETTER_NBR |
 | page 0 BACK | – | home application | – | – | EXIT_FORM |

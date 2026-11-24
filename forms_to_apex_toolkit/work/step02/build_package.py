@@ -411,7 +411,7 @@ def spec_decl(m):
 
 # ------------------------------------------------------------------ assemble the spec
 vb = re.search(r'(?s)(   V_PKG_VERSION .*?\|\| V_MODIFIED_BY;\n)', spec_src).group(1)
-vb = re.sub(r"'VERSION NO\. IS:' \|\| '\d+'", "'VERSION NO. IS:' || '012'", vb, count=1)
+vb = re.sub(r"'VERSION NO\. IS:' \|\| '\d+'", "'VERSION NO. IS:' || '013'", vb, count=1)
 vb = re.sub(r"V_LAST_MODIFY_DT    VARCHAR2 \(10\) := '[^']*'", "V_LAST_MODIFY_DT    VARCHAR2 (10) := '%s'" % DATE, vb)
 grants = spec_src[spec_src.index('\n-- -----------------------------------------------------------------------------\n-- Synonym and grants'):]
 def banner(t):
@@ -432,7 +432,7 @@ order += [s for s in sections if s not in order]
 spec = ['-- =============================================================================',
         '-- Package     : IMPR1110  (form IMPR1110.fmb "إضافة وتعديل بيانات مستورد")',
         '-- Owner       : LIB_APX_USR (public synonym IMPR1110; EXECUTE granted to LIB_USR, SECURITY_DEFAULT, SECURITY_PROD, CUSTOMS)',
-        '-- Version     : 012 (%s: 006 = step 02 revision 2 + step 03 changes (DATE items as text, ROWID page key);' % DATE,
+        '-- Version     : 013 (%s: 006 = step 02 revision 2 + step 03 changes (DATE items as text, ROWID page key);' % DATE,
         '--               007 = parameter names by scripts/parameter_names.py; 008 = no doubled P_P_ (P_CODE => :P1110_P_CODE),',
         '--               APP_P_PRSNL_IMPR / APP_P_LETTER_NBR in PARAMETERS_ENTRY. No logic change. 007: rollback/IMPR1110/step04_v007/;',
         "--               009 = P0_PAGE_PK_CHECK restores the URL-safe ROWID of page 111001 ('-' / '_' -> '+' / '/'; a '+'",
@@ -446,7 +446,10 @@ spec = ['-- ====================================================================
         '--               never read), BRNH_CITY_CD_NEW_ITEM_INSTANCE (UI calls only), p_ctx of BUS_ID_WHEN_VALIDATE_ITEM /',
         '--               BUS_ID_BRNCH_VALIDATE_ITEM, CITY_CODE_OF_ID_WHEN_NEW_ITEM, p_rec of IMPR_TYPE_CD_POST_CHANGE (UI calls',
         '--               only), and the items entry points read only for UI calls; the NULL placeholders of the Forms UI calls are "-- APEX-DA:" comments',
-        '--               (CLAUDE.md 6.8). No logic change. 011: rollback/IMPR1110/step04_v011/)',
+        '--               (CLAUDE.md 6.8). No logic change. 011: rollback/IMPR1110/step04_v011/;',
+        '--               013 = SUPPORT_ENTRY is page 9001: PRE_UPDATE passes FORMS_APX.HIJRI_TEXT_TO_DATE(G_LETTER_DT) to',
+        '--               DB_JOURNAL.JOURNALING_ON (DATE parameter; the dialog keeps the date as text in HIJRI_DATE_FORMAT).',
+        '--               012: rollback/IMPR1110/step04_v012/)',
         '-- Author      : Claude Code',
         '-- Status      : NOT COMPILED.',
         '-- Layout      : VERSION -> f345 HELPERS -> FORM LEVEL -> BLOCK IMPORTERS (query, record, items in Forms',
@@ -508,6 +511,13 @@ MOVED_HERE = ['ARABIC_MESSAGE', 'DISPLAY_ARABIC_ERROR', 'DISPLAY_ARABIC_INFO', '
               'FORM_TRIGGER_FAILURE', 'INFO', 'GET_GLOBAL', 'SET_GLOBAL']
 spec_text = forms_apx_helpers.qualify(forms_apx_helpers.remove_members(spec_text, MOVED_HERE))
 body_text = forms_apx_helpers.qualify(forms_apx_helpers.remove_members(body_text, MOVED_HERE))
+# ---- package 013: G_LETTER_DT is the Hijri date as text in FORMS_APX.HIJRI_DATE_FORMAT (written by page 9001
+# SUPPORT_ENTRY); DB_JOURNAL.JOURNALING_ON takes a DATE (plsql/Shared/DB_JOURNAL.pks)
+JOURNAL_DATE = ("FORMS_APX.GET_GLOBAL('LETTER_DT'));",
+                "FORMS_APX.HIJRI_TEXT_TO_DATE(FORMS_APX.GET_GLOBAL('LETTER_DT')));")
+if body_text.count(JOURNAL_DATE[0]) != 1:
+    sys.exit('journaling_on call with G_LETTER_DT not found once')
+body_text = body_text.replace(JOURNAL_DATE[0], JOURNAL_DATE[1])
 moved_left = forms_apx_helpers.leftovers(spec_text + body_text)
 if moved_left:
     sys.exit('common helpers still defined in IMPR1110 (belong to FORMS_APX): %s' % moved_left)

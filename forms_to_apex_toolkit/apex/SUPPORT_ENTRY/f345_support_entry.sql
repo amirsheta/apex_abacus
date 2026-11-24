@@ -63,9 +63,9 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(900195000010)
 ,p_lov_name=>'LOV_SD_PORTS_TYPES'
-,p_source_type=>'SQL'
+,p_lov_query=>'return LOV_APX.PORTS_WITH_TYPES;'
+,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
-,p_lov_query=>'SELECT sd_ports.port_cd d, sd_ports.port_cd r, cg_ref_codes.rv_meaning, sd_ports.port_name FROM cg_ref_codes, sd_ports WHERE cg_ref_codes.rv_low_value = sd_ports.port_type AND cg_ref_codes.rv_domain = ''PORT_TYPE_CD'' ORDER BY sd_ports.port_cd'
 ,p_return_column_name=>'R'
 ,p_display_column_name=>'D'
 );
@@ -102,9 +102,9 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(900195000020)
 ,p_lov_name=>'LOV_SUPP_TITLES'
-,p_source_type=>'SQL'
+,p_lov_query=>'return LOV_APX.SUPPORT_TITLES;'
+,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
-,p_lov_query=>'SELECT supp_title_cd d, supp_title_cd r, supp_title_nm FROM supp_titles WHERE title_status = 1 ORDER BY supp_title_cd'
 ,p_return_column_name=>'R'
 ,p_display_column_name=>'D'
 );

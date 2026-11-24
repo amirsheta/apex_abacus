@@ -10,7 +10,7 @@
 --               No JavaScript file, no AJAX callback process.
 -- Contents    : component export INTO the application installed from f345: pages 1110 (main),
 --               111001 (search), 111002 (mobile) + the shared components they need.
---               The SUPPORT_ENTRY page (functions F1, F2, F3, F5) belongs to its own form - not here.
+--               Functions F1, F2, F3, F5 open page 9001 SUPPORT_ENTRY (its own export apex/SUPPORT_ENTRY/).
 -- Placeholders: __WORKSPACE_ID__, __APP_ID__, __SCHEMA_NAME__, __ID_OFFSET__ - see apex/IMPR1110/import_notes.md
 -- WARNING     : generated wwv_flow_api code is not an officially supported way to build APEX
 --               applications. Import into a DEV workspace first, back up the application,
@@ -260,9 +260,9 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(900005000010)
 ,p_lov_name=>'LOV_SD_PORTS'
-,p_source_type=>'SQL'
+,p_lov_query=>'return LOV_APX.PORTS(P_PORT_TYPE_ITEM => ''P_PORT_TYPE'');'
+,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
-,p_lov_query=>'SELECT port_cd d, port_cd r, port_name FROM sd_ports WHERE port_status = 1 AND port_type = NVL(:P_PORT_TYPE, port_type) ORDER BY port_cd'
 ,p_return_column_name=>'R'
 ,p_display_column_name=>'D'
 );
@@ -283,9 +283,9 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(900005000020)
 ,p_lov_name=>'LOV_IMPR_TYPE'
-,p_source_type=>'SQL'
+,p_lov_query=>'return LOV_APX.IMPORTER_TYPES(P_ALL_STATUSES_ITEM => ''G_CHK_IMP_TYP'');'
+,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
-,p_lov_query=>'SELECT DISTINCT itidt.impr_type_cd d, itidt.impr_type_cd r, it.impr_type_name FROM impr_type_id_types itidt, impr_types it WHERE it.impr_type_cd = itidt.impr_type_cd AND itidt.impr_type_cd > 0 AND (:G_CHK_IMP_TYP = ''1'' OR itidt.status = 1) ORDER BY 2'
 ,p_return_column_name=>'R'
 ,p_display_column_name=>'D'
 );
@@ -306,9 +306,9 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(900005000030)
 ,p_lov_name=>'LOV_IMPR_TYPE_BUS_ID'
-,p_source_type=>'SQL'
+,p_lov_query=>'return LOV_APX.BUSINESS_ID_TYPES(P_IMPORTER_TYPE_ITEM => ''P1110_IMPR_TYPE_CD'', P_ALL_STATUSES_ITEM => ''G_CHK_IMP_TYP'');'
+,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
-,p_lov_query=>'SELECT bit.bus_id_type_name d, itidt.bus_id_type_cd r FROM impr_type_id_types itidt, bus_id_types bit WHERE bit.bus_id_type_cd = itidt.bus_id_type_cd AND itidt.impr_type_cd = :P1110_IMPR_TYPE_CD AND itidt.impr_type_cd > 0 AND (:G_CHK_IMP_TYP = ''1'' OR itidt.status = 1) ORDER BY itidt.bus_id_type_cd'
 ,p_return_column_name=>'R'
 ,p_display_column_name=>'D'
 );
@@ -321,9 +321,9 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(900005000040)
 ,p_lov_name=>'LOV_CITIES_IMP_ID'
-,p_source_type=>'SQL'
+,p_lov_query=>'return LOV_APX.CITIES_OF_BUSINESS_ID(P_COUNTRY_ITEM => ''P1110_CTRY_CD'', P_IMPORTER_TYPE_ITEM => ''P1110_IMPR_TYPE_CD'', P_BUSINESS_ID_TYPE_ITEM => ''P1110_BUS_ID_TYPE_CD'');'
+,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
-,p_lov_query=>'SELECT city_cd d, city_cd r, city_arb_name, mins_comm_cd FROM cities WHERE city_status = 1 AND ctry_cd = NVL(CASE WHEN :P1110_IMPR_TYPE_CD = 3 AND :P1110_BUS_ID_TYPE_CD = 2 THEN 100 ELSE TO_NUMBER(:P1110_CTRY_CD) END, ctry_cd) ORDER BY ctry_cd, city_cd'
 ,p_return_column_name=>'R'
 ,p_display_column_name=>'D'
 );
@@ -352,9 +352,9 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(900005000050)
 ,p_lov_name=>'LOV_CITIES_IMP_BRNH'
-,p_source_type=>'SQL'
+,p_lov_query=>'return LOV_APX.CITIES(P_COUNTRY_ITEM => ''P1110_CTRY_CD'', P_WITH_MINISTRY_CODE => TRUE);'
+,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
-,p_lov_query=>'SELECT city_cd d, city_cd r, city_arb_name, mins_comm_cd FROM cities WHERE city_status = 1 AND ctry_cd = NVL(:P1110_CTRY_CD, ctry_cd) ORDER BY ctry_cd, city_cd'
 ,p_return_column_name=>'R'
 ,p_display_column_name=>'D'
 );
@@ -383,9 +383,9 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(900005000060)
 ,p_lov_name=>'LOV_CITIES'
-,p_source_type=>'SQL'
+,p_lov_query=>'return LOV_APX.CITIES(P_COUNTRY_ITEM => ''P1110_ADD_CTRY_CD'');'
+,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
-,p_lov_query=>'SELECT city_cd d, city_cd r, city_arb_name FROM cities WHERE city_status = 1 AND ctry_cd = NVL(:P1110_ADD_CTRY_CD, ctry_cd) ORDER BY ctry_cd, city_cd'
 ,p_return_column_name=>'R'
 ,p_display_column_name=>'D'
 );
@@ -406,9 +406,9 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(900005000070)
 ,p_lov_name=>'LOV_COUNTRIES'
-,p_source_type=>'SQL'
+,p_lov_query=>'return LOV_APX.COUNTRIES;'
+,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
-,p_lov_query=>'SELECT ctry_cd d, ctry_cd r, crty_arbc_name FROM countries WHERE ctry_status = 1 AND ctry_cd NOT IN (-1) ORDER BY ctry_cd'
 ,p_return_column_name=>'R'
 ,p_display_column_name=>'D'
 );
@@ -429,9 +429,9 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(900005000080)
 ,p_lov_name=>'LOV_COUNTRIES_GULF'
-,p_source_type=>'SQL'
+,p_lov_query=>'return LOV_APX.GULF_COUNTRIES(P_IMPORTER_TYPE_ITEM => ''P1110_IMPR_TYPE_CD'', P_BUSINESS_ID_TYPE_ITEM => ''P1110_BUS_ID_TYPE_CD'');'
+,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
-,p_lov_query=>'SELECT ctry_cd d, ctry_cd r, crty_arbc_name FROM countries WHERE (:P1110_IMPR_TYPE_CD = 4 AND :P1110_BUS_ID_TYPE_CD = 16 AND ctry_cd IN (113,116,117,119,120,100)) OR (NOT (NVL(:P1110_IMPR_TYPE_CD,0) = 4 AND NVL(:P1110_BUS_ID_TYPE_CD,0) = 16) AND ctry_status = 1) ORDER BY ctry_cd'
 ,p_return_column_name=>'R'
 ,p_display_column_name=>'D'
 );
@@ -452,9 +452,9 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(900005000090)
 ,p_lov_name=>'LOV_IMPR'
-,p_source_type=>'SQL'
+,p_lov_query=>'return LOV_APX.IMPORTERS(P_PORT_ITEM => ''P_CURR_PORT_CD'');'
+,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
-,p_lov_query=>'SELECT impr_nbr d, impr_nbr r, arbc_impr_name, bus_id, bus_id_brnch, impr_tel_nbr FROM importers WHERE port_cd = :P_CURR_PORT_CD'
 ,p_return_column_name=>'R'
 ,p_display_column_name=>'D'
 );
@@ -499,9 +499,9 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(900005000100)
 ,p_lov_name=>'LOV_COMM_RGSTRTN_TYPE'
-,p_source_type=>'SQL'
+,p_lov_query=>'return LOV_APX.REFERENCE_CODES(P_DOMAIN => ''COMM_RGSTRTN_TYPE'');'
+,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
-,p_lov_query=>'SELECT rv_meaning d, rv_low_value r FROM cg_ref_codes WHERE rv_domain = ''COMM_RGSTRTN_TYPE'' ORDER BY 2'
 ,p_return_column_name=>'R'
 ,p_display_column_name=>'D'
 );
@@ -514,9 +514,9 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(900005000110)
 ,p_lov_name=>'LOV_ALLOWED_EXPORT'
-,p_source_type=>'SQL'
+,p_lov_query=>'return LOV_APX.REFERENCE_CODES(P_DOMAIN => ''ALLOWED EXPORT'');'
+,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
-,p_lov_query=>'SELECT rv_meaning d, rv_low_value r FROM cg_ref_codes WHERE rv_domain = ''ALLOWED EXPORT'' ORDER BY 2'
 ,p_return_column_name=>'R'
 ,p_display_column_name=>'D'
 );
@@ -2457,8 +2457,8 @@ wwv_flow_api.create_page_item(
 ,p_item_plug_id=>wwv_flow_api.id(111001000020)
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
-,p_attribute_01=>'Y'
-,p_item_comment=>'Source: IMPR1110 - URL of the SUPPORT_ENTRY dialog (TODO: page of the separately converted form)'
+,p_attribute_01=>'N'
+,p_item_comment=>'Source: IMPR1110 - URL of dialog page 9001 SUPPORT_ENTRY, returned by FOS SUPPORT_ENTRY.OPEN_DIALOG (not protected: set by Ajax)'
 );
 wwv_flow_api.create_page_computation(
  p_id=>wwv_flow_api.id(111005000010)
@@ -4572,6 +4572,20 @@ wwv_flow_api.create_page_da_action(
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>20
 ,p_execute_on_page_init=>'N'
+,p_action=>'PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE'
+,p_attribute_01=>'SUPPORT_ENTRY.OPEN_DIALOG(P_MODE => 0, P_CURR_PORT_CD => :P1110_PORT_CD, P_SUPPORT_URL => :P1110_SUPPORT_URL);'
+,p_attribute_02=>'P1110_PORT_CD'
+,p_attribute_03=>'P1110_SUPPORT_URL'
+,p_attribute_05=>'#SQLERRM#'
+,p_attribute_15=>'suppressChangeEvent:escape-message'
+,p_wait_for_result=>'Y'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(111009000720)
+,p_event_id=>wwv_flow_api.id(111008000470)
+,p_event_result=>'TRUE'
+,p_action_sequence=>30
+,p_execute_on_page_init=>'N'
 ,p_action=>'NATIVE_JAVASCRIPT_CODE'
 ,p_attribute_01=>'apex.navigation.redirect($v(''P1110_SUPPORT_URL''));'
 );
@@ -4587,7 +4601,7 @@ wwv_flow_api.create_page_da_event(
 ,p_da_event_comment=>'Source: PU EXEC_FUNS / TMPLT EXECUTE_FUNCTION (IMPR1110F2) / spec 10'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000720)
+ p_id=>wwv_flow_api.id(111009000730)
 ,p_event_id=>wwv_flow_api.id(111008000480)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
@@ -4601,10 +4615,24 @@ wwv_flow_api.create_page_da_action(
 ,p_wait_for_result=>'Y'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000730)
+ p_id=>wwv_flow_api.id(111009000740)
 ,p_event_id=>wwv_flow_api.id(111008000480)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>20
+,p_execute_on_page_init=>'N'
+,p_action=>'PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE'
+,p_attribute_01=>'SUPPORT_ENTRY.OPEN_DIALOG(P_MODE => 0, P_CURR_PORT_CD => :P1110_PORT_CD, P_SUPPORT_URL => :P1110_SUPPORT_URL);'
+,p_attribute_02=>'P1110_PORT_CD'
+,p_attribute_03=>'P1110_SUPPORT_URL'
+,p_attribute_05=>'#SQLERRM#'
+,p_attribute_15=>'suppressChangeEvent:escape-message'
+,p_wait_for_result=>'Y'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(111009000750)
+,p_event_id=>wwv_flow_api.id(111008000480)
+,p_event_result=>'TRUE'
+,p_action_sequence=>30
 ,p_execute_on_page_init=>'N'
 ,p_action=>'NATIVE_JAVASCRIPT_CODE'
 ,p_attribute_01=>'apex.navigation.redirect($v(''P1110_SUPPORT_URL''));'
@@ -4621,7 +4649,7 @@ wwv_flow_api.create_page_da_event(
 ,p_da_event_comment=>'Source: PU EXEC_FUNS / TMPLT EXECUTE_FUNCTION (IMPR1110F3) / spec 10'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000740)
+ p_id=>wwv_flow_api.id(111009000760)
 ,p_event_id=>wwv_flow_api.id(111008000490)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
@@ -4635,10 +4663,24 @@ wwv_flow_api.create_page_da_action(
 ,p_wait_for_result=>'Y'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000750)
+ p_id=>wwv_flow_api.id(111009000770)
 ,p_event_id=>wwv_flow_api.id(111008000490)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>20
+,p_execute_on_page_init=>'N'
+,p_action=>'PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE'
+,p_attribute_01=>'SUPPORT_ENTRY.OPEN_DIALOG(P_MODE => 0, P_CURR_PORT_CD => :P1110_PORT_CD, P_SUPPORT_URL => :P1110_SUPPORT_URL);'
+,p_attribute_02=>'P1110_PORT_CD'
+,p_attribute_03=>'P1110_SUPPORT_URL'
+,p_attribute_05=>'#SQLERRM#'
+,p_attribute_15=>'suppressChangeEvent:escape-message'
+,p_wait_for_result=>'Y'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(111009000780)
+,p_event_id=>wwv_flow_api.id(111008000490)
+,p_event_result=>'TRUE'
+,p_action_sequence=>30
 ,p_execute_on_page_init=>'N'
 ,p_action=>'NATIVE_JAVASCRIPT_CODE'
 ,p_attribute_01=>'apex.navigation.redirect($v(''P1110_SUPPORT_URL''));'
@@ -4655,7 +4697,7 @@ wwv_flow_api.create_page_da_event(
 ,p_da_event_comment=>'Source: PU EXEC_FUNS / TMPLT EXECUTE_FUNCTION (IMPR1110F5) / spec 10'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000760)
+ p_id=>wwv_flow_api.id(111009000790)
 ,p_event_id=>wwv_flow_api.id(111008000500)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
@@ -4669,10 +4711,24 @@ wwv_flow_api.create_page_da_action(
 ,p_wait_for_result=>'Y'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000770)
+ p_id=>wwv_flow_api.id(111009000800)
 ,p_event_id=>wwv_flow_api.id(111008000500)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>20
+,p_execute_on_page_init=>'N'
+,p_action=>'PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE'
+,p_attribute_01=>'SUPPORT_ENTRY.OPEN_DIALOG(P_MODE => 0, P_CURR_PORT_CD => :P1110_PORT_CD, P_SUPPORT_URL => :P1110_SUPPORT_URL);'
+,p_attribute_02=>'P1110_PORT_CD'
+,p_attribute_03=>'P1110_SUPPORT_URL'
+,p_attribute_05=>'#SQLERRM#'
+,p_attribute_15=>'suppressChangeEvent:escape-message'
+,p_wait_for_result=>'Y'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(111009000810)
+,p_event_id=>wwv_flow_api.id(111008000500)
+,p_event_result=>'TRUE'
+,p_action_sequence=>30
 ,p_execute_on_page_init=>'N'
 ,p_action=>'NATIVE_JAVASCRIPT_CODE'
 ,p_attribute_01=>'apex.navigation.redirect($v(''P1110_SUPPORT_URL''));'
@@ -4689,7 +4745,7 @@ wwv_flow_api.create_page_da_event(
 ,p_da_event_comment=>'Source: PU EXEC_FUNS / TMPLT EXECUTE_FUNCTION (IMPR1110F4) / spec 10'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000780)
+ p_id=>wwv_flow_api.id(111009000820)
 ,p_event_id=>wwv_flow_api.id(111008000510)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
@@ -4702,7 +4758,7 @@ wwv_flow_api.create_page_da_action(
 ,p_wait_for_result=>'Y'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000790)
+ p_id=>wwv_flow_api.id(111009000830)
 ,p_event_id=>wwv_flow_api.id(111008000510)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>20
@@ -4727,7 +4783,7 @@ wwv_flow_api.create_page_da_event(
 ,p_da_event_comment=>'Source: PU EXEC_FUNS / TMPLT EXECUTE_FUNCTION (IMPR_CAR_AGENT) / spec 10'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000800)
+ p_id=>wwv_flow_api.id(111009000840)
 ,p_event_id=>wwv_flow_api.id(111008000520)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
@@ -4740,7 +4796,7 @@ wwv_flow_api.create_page_da_action(
 ,p_wait_for_result=>'Y'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000810)
+ p_id=>wwv_flow_api.id(111009000850)
 ,p_event_id=>wwv_flow_api.id(111008000520)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>20
@@ -4765,7 +4821,7 @@ wwv_flow_api.create_page_da_event(
 ,p_da_event_comment=>'Source: PU EXEC_FUNS / TMPLT EXECUTE_FUNCTION (CREATE_BRKR_IMPR_AUTH) / spec 10'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000820)
+ p_id=>wwv_flow_api.id(111009000860)
 ,p_event_id=>wwv_flow_api.id(111008000530)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
@@ -4790,7 +4846,7 @@ wwv_flow_api.create_page_da_event(
 ,p_da_event_comment=>'Source: PU EXEC_FUNS / TMPLT EXECUTE_FUNCTION (IMPR1115_GZT) / spec 10'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000830)
+ p_id=>wwv_flow_api.id(111009000870)
 ,p_event_id=>wwv_flow_api.id(111008000540)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
@@ -4815,7 +4871,7 @@ wwv_flow_api.create_page_da_event(
 ,p_da_event_comment=>'Source: PU EXEC_FUNS / TMPLT EXECUTE_FUNCTION (IMPR_MCI_SERVICE) / spec 10'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000840)
+ p_id=>wwv_flow_api.id(111009000880)
 ,p_event_id=>wwv_flow_api.id(111008000550)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
@@ -4829,7 +4885,7 @@ wwv_flow_api.create_page_da_action(
 ,p_wait_for_result=>'Y'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000850)
+ p_id=>wwv_flow_api.id(111009000890)
 ,p_event_id=>wwv_flow_api.id(111008000550)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>20
@@ -4851,7 +4907,7 @@ wwv_flow_api.create_page_da_event(
 ,p_da_event_comment=>'Source: PU EXEC_FUNS / TMPLT EXECUTE_FUNCTION (IMPR1110_MOB) / spec 10'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000860)
+ p_id=>wwv_flow_api.id(111009000900)
 ,p_event_id=>wwv_flow_api.id(111008000560)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
@@ -4865,7 +4921,7 @@ wwv_flow_api.create_page_da_action(
 ,p_wait_for_result=>'Y'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000870)
+ p_id=>wwv_flow_api.id(111009000910)
 ,p_event_id=>wwv_flow_api.id(111008000560)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>20
@@ -4880,13 +4936,13 @@ wwv_flow_api.create_page_da_event(
 ,p_triggering_element_type=>'JAVASCRIPT_EXPRESSION'
 ,p_triggering_element=>'document'
 ,p_triggering_condition_type=>'JAVASCRIPT_EXPRESSION'
-,p_triggering_expression=>'this.data && this.data.dialogPageId != 111002 && $v(''P1110_FUNCTION_PENDING'') !== '''''
+,p_triggering_expression=>'this.data && this.data.dialogPageId == 9001'
 ,p_bind_type=>'bind'
 ,p_bind_event_type=>'apexafterclosedialog'
 ,p_da_event_comment=>'Source: CALL_FORM(SUPPORT_ENTRY) return (functions F1, F2, F3, F5) / spec 10'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000880)
+ p_id=>wwv_flow_api.id(111009000920)
 ,p_event_id=>wwv_flow_api.id(111008000570)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
@@ -4899,7 +4955,7 @@ wwv_flow_api.create_page_da_action(
 ,p_wait_for_result=>'Y'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000890)
+ p_id=>wwv_flow_api.id(111009000930)
 ,p_event_id=>wwv_flow_api.id(111008000570)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>20
@@ -4924,7 +4980,7 @@ wwv_flow_api.create_page_da_event(
 ,p_da_event_comment=>'Source: PU EXEC_FUNS + IMPORTERS.WHEN-NEW-RECORD-INSTANCE / spec 10'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000900)
+ p_id=>wwv_flow_api.id(111009000940)
 ,p_event_id=>wwv_flow_api.id(111008000580)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
@@ -4938,7 +4994,7 @@ wwv_flow_api.create_page_da_action(
 ,p_wait_for_result=>'Y'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000910)
+ p_id=>wwv_flow_api.id(111009000950)
 ,p_event_id=>wwv_flow_api.id(111008000580)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>20
@@ -4952,7 +5008,7 @@ wwv_flow_api.create_page_da_action(
 ,p_wait_for_result=>'Y'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000920)
+ p_id=>wwv_flow_api.id(111009000960)
 ,p_event_id=>wwv_flow_api.id(111008000580)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>30
@@ -4974,7 +5030,7 @@ wwv_flow_api.create_page_da_event(
 ,p_da_event_comment=>'Source: IMPORTERS.PRE-RECORD + WHEN-NEW-RECORD-INSTANCE after a function / spec 10'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000930)
+ p_id=>wwv_flow_api.id(111009000970)
 ,p_event_id=>wwv_flow_api.id(111008000590)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
@@ -4988,7 +5044,7 @@ wwv_flow_api.create_page_da_action(
 ,p_wait_for_result=>'Y'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000940)
+ p_id=>wwv_flow_api.id(111009000980)
 ,p_event_id=>wwv_flow_api.id(111008000590)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>20
@@ -5013,7 +5069,7 @@ wwv_flow_api.create_page_da_event(
 ,p_da_event_comment=>'Source: PU UPDATE_IMPORTER (function IMPR_MCI_SERVICE) / spec 10'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000950)
+ p_id=>wwv_flow_api.id(111009000990)
 ,p_event_id=>wwv_flow_api.id(111008000600)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
@@ -5038,7 +5094,7 @@ wwv_flow_api.create_page_da_event(
 ,p_da_event_comment=>'Source: PU LOV_UPDATE_MOBLIE after CALL_FORM(LOV_UPDATE_IMPR_MOBILE) / spec 10'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000960)
+ p_id=>wwv_flow_api.id(111009001000)
 ,p_event_id=>wwv_flow_api.id(111008000610)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
@@ -5061,7 +5117,7 @@ wwv_flow_api.create_page_da_event(
 ,p_da_event_comment=>'Source: IMPORTERS.PRE-INSERT (CONFIRM for brokers, class 1 / type 3) / spec 10'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(111009000970)
+ p_id=>wwv_flow_api.id(111009001010)
 ,p_event_id=>wwv_flow_api.id(111008000620)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10

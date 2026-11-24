@@ -242,6 +242,31 @@ Not allowed:
 - *Execute JavaScript Code* actions longer than **3 lines**. If more seems necessary, write down why in
   the page spec and ask before generating it.
 
+## 9a. Shared LOVs: function body returning SQL in LOV_APX (user decision 2026-11-24)
+
+The SQL of a shared LOV is written once, in the common package `LOV_APX` (`plsql_templates/lov_apx.sql`,
+owner `LIB_APX_USR`), and used by every system. The APEX shared LOV only calls it:
+
+| Attribute | Value |
+|---|---|
+| Type (`p_source_type`) | `FUNC_BODY_RETURNING_SQL` (PL/SQL Function Body returning SQL Query) |
+| Function body (`p_lov_query`) | `return LOV_APX.<FUNCTION>(<P_X_ITEM> => '<ITEM NAME>', ...);` |
+| Location / Return / Display | `LOCAL` / `R` / `D` |
+| Column definitions | as before (`create_list_of_values_cols`, Arabic headings) |
+
+Rules of the package:
+- one function per list, full-word names (`PORTS`, `PORTS_WITH_TYPES`, `COUNTRIES`, `GULF_COUNTRIES`, `CITIES`,
+  `CITIES_OF_BUSINESS_ID`, `IMPORTER_TYPES`, `BUSINESS_ID_TYPES`, `IMPORTERS`, `REFERENCE_CODES`, `SUPPORT_TITLES`);
+  a function returns `SELECT <display> d, <return> r, <list columns> ...`;
+- no session-state read: a page or application item is passed by **name** and stays a bind variable in the
+  returned SQL (`:P1110_CTRY_CD`), so APEX binds it, the cursor is shared and cascading LOVs work;
+  names are checked with `DBMS_ASSERT.SIMPLE_SQL_NAME`, literals with `DBMS_ASSERT.ENQUOTE_LITERAL`;
+- the returned query runs as the parsing schema (`CUSTOMS`): table names unqualified, no table grants to
+  `LIB_APX_USR`; `CUSTOMS` needs EXECUTE on `LOV_APX` (granted at the end of the file).
+
+Static LOVs (values from the XML) stay `STATIC`. `scripts/lov_apx.py` builds the attributes and checks each
+export (function and parameter names must exist in the package spec).
+
 ## 10. Package organisation (one readable package per form)
 
 One package `<FORM>` per form, owned by `LIB_APX_USR` (CLAUDE.md §3.2). No adapter packages, and no

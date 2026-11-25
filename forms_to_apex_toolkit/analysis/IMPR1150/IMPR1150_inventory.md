@@ -1,6 +1,45 @@
+# IMPR1150 – Inventory & Migration Risk Assessment
+
+- **Form:** IMPR1150 (module name in the XML: `IMPR1150_PROD_CENTRL`) – activation of the importers registered on the Fasah platform (block comment "المستوردين من منصحة فسح"; functions `IMPR1150_ACTIVATE` / `IMPR1150_REJECT`)
+- **Source:** `forms/IMPR/IMPR1150_fmb.xml` (frmf2xml output)
+- **Target:** Oracle APEX 21.2 on Oracle Database 12.1.0.2, reference application f345 (CLAUDE.md §4b, §4c)
+- **Produced:** 2026-11-25 (step 01): mechanical sections by `scripts/gen_inv.py`; manual analysis in sections 1, 13–15 (sources in `work/IMPR1150/inv_man/`).
+- **Sources used besides the form XML:** library text `forms/COMMON/libraries/CIC_LIB.pld` (NIB, STR, INTRFACE, TMPLT, ACTIVITY), DB package `plsql/Shared/ACTIVITY_DB.*`; the IMPR1130 / IMPR1116 inventories for the shared OLB frame findings.
+- **Scope rule:** anything not available is marked **MISSING SOURCE** and is not guessed: the libraries OFGTEL, SEC_LIB, OFGTAB, PICKLIST, POS, SCDLL, VCDLL; the text of message 9-150 (`STR_DB`, read at run time by `FORMS_APX.ARABIC_MESSAGE`).
 
 ## 1. Summary
 
+**Complexity: COMPLEX by the rubric** (driven by Designer and OLB frame boilerplate) · **business logic: SIMPLE** · **Effort ESTIMATE: 3–4 developer-days**
+
+### 1.1 Counts
+
+| Object | Count | Notes |
+|---|---|---|
+| Blocks | 6 | 2 base-table: `IMPORTERS_CENTRAL` (single record shown, query only in practice: Update / Delete Allowed = false, query source switched to the HQ table over the database link) and `IMPORTER_DOCS` (6 rows, query only, local `IMPORTERS_DOCS`); 4 OLB frame blocks (TITLE, EDI_MSG, LSIDE, TOOLBAR) |
+| Items | 112 | IMPORTERS_CENTRAL 26, IMPORTER_DOCS 6, LSIDE 50, TOOLBAR 16, TITLE 12, EDI_MSG 2 |
+| Triggers | 242 | Form 26 · Block 12 · Item 204; 77 contain code; 25 of the item triggers are the Designer KEY-LISTVAL "may the LOV be shown" check |
+| Trigger PL/SQL lines | 2,060 total / 1,356 active | business code ≈ 150 active lines (2 WHEN-VALIDATE-ITEM, PRE-QUERY, POST-QUERY, PRE-UPDATE, WNII) |
+| Program units | 22 | 829 total / 414 active lines; business: `EXEC_FUNS` (activate / reject), `ADJ_FUNS`, `DETIL_DATA`, `OPEN_FILE_DOS`, `CGUV$CHK_IMP_CNTRL_PK` |
+| Relations (master–detail) | 0 | the documents block is coordinated by its WHERE clause (`:IMPORTERS_CENTRAL.IMPR_NBR`) and `DETIL_DATA` |
+| LOVs / Record groups | 1 / 1 (+1 runtime RG `CGDV$DLRG` for the list item PENDING_ACTIVE) | both from `CG_REF_CODES` |
+| Canvases / Windows | 5 / 1 | `CG$PAGE_1` holds both blocks |
+| Alerts | 9 | OLB alerts; only CFG_ERROR / CFG_INFORMATION are used (STR.DISPALERT) |
+| Module parameters | 21 | all inherited from the OLB; no parameter of the form's own |
+| Attached libraries | 17 | the same list as IMPR1110 / IMPR1130 |
+| Database link | 1 | `HQPRD.HQ.CUSTOMS.GOV`: `CUSTOMS.IMPORTERS_CENTRAL@HQPRD.HQ.CUSTOMS.GOV` read (query source, WHEN-VALIDATE-ITEM counts) and updated (EXEC_FUNS) |
+
+### 1.2 Complexity rubric
+
+| Metric | Value | Category |
+|---|---|---|
+| Data blocks | 2 base-table (6 with the frame) | Simple / Medium |
+| Triggers (total) | 242 | **Complex** |
+| Lines of PL/SQL | 2,889 total / 1,770 active | **Complex** |
+| Master–detail relations | 0 | Simple |
+| Called forms / libraries | 1 dynamic (EXECUTE_FUNCTION) + 17 libraries | **Complex** |
+| Special features | database link (read and update), HOST (open a document on the client PC), timers (NIB) | **Complex** |
+
+**Justification.** The size is the OLB frame and Designer boilerplate. The real screen: type an importer number or a business id, the form checks that a *pending* importer (PENDING_ACTIVE 0) exists at HQ, queries it from the HQ table, shows its documents, and offers two functions: **activate** (PENDING_ACTIVE 1, activity 1) and **reject** with a reason (PENDING_ACTIVE 2, activity 2), both updating the HQ table over the database link and committing.
 
 ## 2. Module header
 
@@ -4683,9 +4722,44 @@ Extracted from active (non-comment) code. Record-group queries are listed in sec
 
 ## 13. Menu & Security
 
+### 13.1 Menu and functions
+
+| Property | Value |
+|---|---|
+| Menu module | `CIC_MENU`; SET_MENU_ITEM_PROPERTY not used |
+| In-form "menu" | `LSIDE` side menu / `KEY-F9`: the module functions from `SC_SYSTEM_OBJECTS` (TMPLT). `ADJ_FUNS` enables `IMPR1150_ACTIVATE` and `IMPR1150_REJECT` only while `NVL(PENDING_ACTIVE, 0) = 0`; `EXEC_FUNS` runs them |
+
+### 13.2 Data security
+
+| Mechanism | Location | Details |
+|---|---|---|
+| Port scope | block WHERE `PORT_CD = :PARAMETER.P_CURR_PORT_CD` + PRE-QUERY `PORT_CD := 99` | only a user of port 99 (HQ) sees a record |
+| Function rights | `SC_SYSOBJ_ROLE_PRIVS` through TMPLT | who may activate / reject = who has the function in the security system |
+| Activity log | `ACTIVITY.ADD_ACTIVITY(9, 9, 1 / 2, PORT_CD!IMPR_NBR)` | every activation / rejection |
+
+### 13.3 APEX mapping notes
+
+- Page access: the application's existing privileges (CLAUDE.md §8); no authorization schemes.
+- Functions: f345 *Page Functions* list (same role tables) filtered by `P1150_ADJ_FUNS`; the server checks the status again before the update.
 
 ## 14. Risk Assessment
 
+| # | Risk item | Location | Level | Reason | Proposed APEX approach |
+|---|---|---|---|---|---|
+| 1 | Read and update through the database link `HQPRD.HQ.CUSTOMS.GOV` | WNFI SET_BLOCK_PROPERTY, IMPR_NBR / BUS_ID WVI, EXEC_FUNS | High | The link must exist for the APEX parsing schema (region queries) **and** for `LIB_APX_USR` (definer-rights package); distributed transaction | Keep the link (user decision 2026-11-25); import notes list the grants / link needed |
+| 2 | COMMIT inside the functions (FORMS_DDL('COMMIT')) | EXEC_FUNS | Medium | REJECT commits the update **before** the activity log; a failed log leaves the importer rejected | Kept in `EXEC_FUNS` (preserve behaviour) |
+| 3 | Open a document with `HOST('cmd /c START path\name')` on the client PC | IMPORTER_DOCS.OPEN_DEC, PU OPEN_FILE_DOS | High | No web equivalent: a browser cannot start a program or read a Windows share | The grid shows the full name; how the document is opened has to be agreed (§15 #1) |
+| 4 | Query by BUS_ID may return several HQ records | PRE-QUERY | Low | Forms scrolls them with KEY-DOWN / UP | APEX shows the pending one (else the first); others through the search page |
+| 5 | Functions enabled on an empty record | ADJ_FUNS `NVL(:PENDING_ACTIVE, 0) = 0` | Low | ACTIVATE without an importer updates nothing but writes an activity row | Preserved; `-- SUGGESTION:` refuse without IMPR_NBR (§15 #3) |
+| 6 | UPDATE sets column `IMPR_REJCT_RESON` while the item shows `IMPR_REJCT_RESON_CD` | EXEC_FUNS REJECT | Medium | Two columns, or a mistake in Forms | Preserved as written; to verify against the table (§15 #2) |
 
 ## 15. Open Questions / Missing Sources
 
+| # | Open question / missing source | Status (2026-11-25) | Why it matters | Needed from |
+|---|---|---|---|---|
+| 1 | How should a document of IMPORTER_DOCS be opened (Forms: HOST START on the user's PC, path = DOC_PATH\DOC_NAME)? Options: file served by the DB (BFILE / directory) or a web URL | Open: the grid shows the full name only | OPEN_DEC button | Business owner / DBA |
+| 2 | Column of the rejection reason: Forms updates `IMPR_REJCT_RESON` (free text) while the screen shows `IMPR_REJCT_RESON_CD` (CG_REF_CODES list) | Open: preserved as written | REJECT may fail at run time (ORA-00904) | DBA |
+| 3 | Functions on an empty record (activity row without importer) | Open: preserved, `-- SUGGESTION:` | Activity log | Business owner |
+| 4 | Text of message 9-150 | **MISSING SOURCE** (read at run time by `FORMS_APX.ARABIC_MESSAGE`) | Validation message | Data owner |
+| 5 | Texts for the refused CREATE / DELETE (as IMPR1116) and for a disabled function | Open: placeholders | Messages | Business owner |
+| 6 | Database link `HQPRD.HQ.CUSTOMS.GOV` for LIB_APX_USR and the parsing schema | Open | Compilation / run time | DBA |

@@ -260,9 +260,10 @@ owner `LIB_APX_USR`), and used by every system. The APEX shared LOV only calls i
 
 Rules of the package:
 - one function per list. Names (user decision 2026-11-25): a function used by one LOV only is named like that LOV
-  (`LOV_SD_PORTS`, `LOV_SD_PORTS_TYPES`, `LOV_COUNTRIES`, `LOV_IMPR_TYPE`, `LOV_CITIES_IMP_ID`, `LOV_SINGLE_IMPORTERS`,
+  (`LOV_SD_PORTS`, `LOV_SD_PORTS_TYPES`, `LOV_COUNTRIES`, `LOV_IMPR_TYPE`, `LOV_CITIES_IMP_ID`,
   `LOV_HARMONIZED_TARIFF`, `LOV_SUPP_TITLES`); a function shared by several LOVs keeps a generic full-word name
-  (`REFERENCE_CODES`, `CITIES`, `IMPORTERS`, `BUSINESS_ID_TYPES`, `GULF_COUNTRIES`); a function returns
+  (`REFERENCE_CODES`, `CITIES`, `IMPORTERS`, `BUSINESS_ID_TYPES`, `GULF_COUNTRIES`, `SINGLE_IMPORTERS` - renamed back
+  from `LOV_SINGLE_IMPORTERS` in LOV_APX 005 when IMPR2150 became its second user); a function returns
   `SELECT <display> d, <return> r, <list columns> ...`;
 - no session-state read: a page or application item is passed by **name** and stays a bind variable in the
   returned SQL (`:P1110_CTRY_CD`), so APEX binds it, the cursor is shared and cascading LOVs work;

@@ -1,0 +1,19 @@
+[
+ "DA client-side condition JAVASCRIPT_EXPRESSION this.browserEvent.which === 13 (Enter key; not in f345)",
+ "DA client-side condition p_triggering_condition_type / p_triggering_expression (not in f345)",
+ "DATE columns as Display Only items with a Hijri format mask (&P1210_HIJRI_DATE_FORMAT.) set by PRE_INSERT (as IMPR1160 ENTRY_DT)",
+ "NATIVE_CLEAR action with p_affected_elements (page 121001 CLEAR; not in f345)",
+ "NATIVE_CONFIRM with the text in p_attribute_01 (as page 1125); &P1210_CONFIRM_STOP. substitution in it",
+ "NATIVE_FORM region p_edit_operations => i:u (IMPR1140 uses i:u:d)",
+ "NATIVE_RADIOGROUP with an inline STATIC2 LOV, p_attribute_01 (columns) / 02 (page action NONE) - no radio group in f345 / f202604",
+ "NATIVE_SHOW / NATIVE_HIDE / NATIVE_SET_FOCUS with p_affected_elements items (f345 hides a region only)",
+ "NATIVE_SUBMIT_PAGE attributes 01 / 02 (not in f345)",
+ "ROWID primary key of the Form region: p_include_rowid_column, item source ROWID / p_source_data_type ROWID (as IMPR1110 / IMPR1140)",
+ "button DA: p_triggering_button_id (as page 113001 SEARCH; IMPR1110 uses it)",
+ "button IMP_NEW: p_button_action REDIRECT_URL with p_button_redirect_url (as the f345 page 0 CLEAR button), position BODY in the Form region",
+ "p_item_default with a static value on the Select List ALLOW_EXPORT (0) and the radio group ATHRZTN_STA_CD (1)",
+ "p_read_only_when2 => PLSQL with p_read_only_when_type => EXPRESSION (f345 shows the pattern only for p_display_when)",
+ "read-only IG LOV_AGNT_ATHR_IMPR on page 1210 with a link column (as the search grid)",
+ "search IG 121001: p_lazy_loading true, p_show_total_row_count false, toolbar ACTIONS_MENU:RESET (search field removed)",
+ "wwv_flow_api.create_message (Text Message; f345 has none; IMPR1110 / IMPR1120 / IMPR1140 use it) - p_message_language ar-sa"
+]

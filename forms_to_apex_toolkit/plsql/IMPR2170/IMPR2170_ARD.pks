@@ -4,7 +4,7 @@
 -- Pattern     : ARD reports (Forms_to_APEX standard 13-c, DEC-014 / DEC-024), as plsql/Shared/DCLN3300_ARD
 --               and plsql/IMPR2110/IMPR2110_ARD: ARD_IMPR2170 returns the report as HTML, the ARD server (ardpdf)
 --               turns it into PDF.
--- Called from : page 2170 through IMPR2170.PRINT_IMPR2170_ARD (ardpdf link) - page not built yet. SHOW_USER = 1 ran IMPR2170n.rep, which is not in forms/IMPR/reports (not converted).
+-- Called from : page 2170 through IMPR2170.PRINT_IMPR2170_ARD (ardpdf link; plsql/IMPR2170/impr2170_body.sql). SHOW_USER = 1 ran IMPR2170n.rep, which is not in forms/IMPR/reports (not converted).
 -- Generated   : scripts/gen_ard_impr_reports.py (a change goes there, then re-run)
 -- Author      : Claude Code      Created: 2026-11-25      Version: 001
 -- Status      : NOT COMPILED. Depends on ARD_LOGO (static file LOGO1.jpg, DEC-034) and HIJDATE_DB, IMPR_UTILITIES (get_main_szr_rsn / get_sub_szr_rsn).

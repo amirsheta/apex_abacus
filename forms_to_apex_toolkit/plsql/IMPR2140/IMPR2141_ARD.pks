@@ -4,7 +4,7 @@
 -- Pattern     : ARD reports (Forms_to_APEX standard 13-c, DEC-014 / DEC-024), as plsql/Shared/DCLN3300_ARD
 --               and plsql/IMPR2110/IMPR2110_ARD: ARD_IMPR2141 returns the report as HTML, the ARD server (ardpdf)
 --               turns it into PDF.
--- Called from : page 2140 through IMPR2140.PRINT_IMPR2141_ARD (ardpdf link) - page not built yet. IMPR2140 picks the letter: LETTER_DIRCTION 1 = IMPR2141, 2 = IMPR2142, else IMPR2143.
+-- Called from : page 2140 through IMPR2140.PRINT_IMPR2141_ARD (ardpdf link; plsql/IMPR2140/impr2140_body.sql). IMPR2140 picks the letter: LETTER_DIRCTION 1 = IMPR2141, 2 = IMPR2142, else IMPR2143.
 -- Generated   : scripts/gen_ard_impr_reports.py (a change goes there, then re-run)
 -- Author      : Claude Code      Created: 2026-11-25      Version: 001
 -- Status      : NOT COMPILED. Depends on ARD_LOGO (static file LOGO1.jpg, DEC-034) and HIJDATE_DB.

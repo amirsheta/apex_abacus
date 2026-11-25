@@ -1,0 +1,31 @@
+written /Volumes/Volume E/apex_abacus/forms_to_apex_toolkit/apex/IMPR1170/f345_impr1170.sql 1513 lines
+  create_page                      2
+  create_page_plug                 5
+  create_page_item                 20
+  create_page_button               2
+  create_page_validation           0
+  create_page_process              11
+  create_page_da_event             5
+  create_page_da_action            6
+  create_page_computation          1
+  create_page_branch               2
+  create_region_column             16
+  create_interactive_grid          2
+  create_ig_report_column          16
+  create_list_of_values            0
+  create_flow_item                 0
+  FOS actions                      0
+placeholders: __APP_ID__, __ID_OFFSET__, __SCHEMA_NAME__, __WORKSPACE_ID__
+uncertain parameters (import_notes.md):
+  - DA client-side condition JAVASCRIPT_EXPRESSION this.browserEvent.which === 13 (Enter key; not in f345)
+  - DA client-side condition p_triggering_condition_type / p_triggering_expression (not in f345)
+  - NATIVE_CLEAR action with p_affected_elements (page 117001 CLEAR; not in f345)
+  - NATIVE_FORM region with p_query_type TABLE and p_is_editable false (query only; IMPR1150 uses SQL + false)
+  - NATIVE_SUBMIT_PAGE attributes 01 / 02 (not in f345)
+  - button DA: p_triggering_button_id (as page 113001 SEARCH; IMPR1110 uses it)
+  - not displayed DATE column CR_EXPIRY_DATE as a Display Only item with p_grid_column_css_classes u-hidden (as IMPR1160)
+  - p_item_default 1 on the always read-only Select List CR_TYPE (Forms initial value of the new record)
+  - p_read_only_when2 => PLSQL with p_read_only_when_type => EXPRESSION (f345 shows the pattern only for p_display_when)
+  - read-only IG MCI_OWNERS: p_is_editable false with p_lazy_loading false (as the IMPORTER_DOCS grid of page 1150)
+  - search IG 117001: p_lazy_loading true, p_show_total_row_count false, toolbar ACTIONS_MENU:RESET (search field removed)
+problems: none

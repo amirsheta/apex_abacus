@@ -261,7 +261,7 @@ def body(r):
 IMPR2120 = dict(
     name='IMPR2120', folder='IMPR2120', file='IMPR2120.xml', query='CG$Q_IMPR_SUSPNS',
     title='توقيفات المستوردين',
-    caller='page 2120 through IMPR2120.PRINT_IMPR2120_ARD (ardpdf link) - page not built yet.',
+    caller='page 2120 through IMPR2120.PRINT_IMPR2120_ARD (ardpdf link; plsql/IMPR2120/impr2120_body.sql).',
     params=[('P_CURR_PORT_CD', 'الجمرك (P_PORT_CD في الشاشة، وإلا جمرك المستخدم)'),
             ('CG$P_IMPR_NBR', 'أرقام المستوردين مفصولة بفاصلة (فاضي = كل المستوردين)'),
             ('P_TYPE', 'حالة التوقيف 1 / 2 / 3 (P_TYPE في الشاشة)'),
@@ -429,7 +429,7 @@ def impr2130_rows():
 IMPR2130 = dict(
     name='IMPR2130', folder='IMPR2130', file='IMPR2130.xml', query='IMPR_UPDTS',
     title='تعديلات بيانات المستوردين',
-    caller='page 2130 through IMPR2130.PRINT_IMPR2130_ARD (ardpdf link) - page not built yet.',
+    caller='page 2130 through IMPR2130.PRINT_IMPR2130_ARD (ardpdf link; plsql/IMPR2130/impr2130_body.sql).',
     params=[('P_CURR_PORT_CD', 'الجمرك (P_PORT_CD في الشاشة، وإلا جمرك المستخدم)'),
             ('P_IMPR_NBR', 'أرقام المستوردين مفصولة بفاصلة (فاضي = كل المستوردين)'),
             ('START_DT', "من تاريخ 'YYYY-MM-MI' (الفورم مش بيبعته)"),
@@ -582,8 +582,8 @@ def letter_report(name, query_sql, letter_html, formulas, decls, department, not
     return dict(
         name=name, folder='IMPR2140', file=(name if name == 'IMPR2141' else name.lower()) + '.xml', query='CG$Q_SMPL_ITEMS',
         title=title, size='A4 portrait', css=LETTER_CSS, counter=False,
-        caller=('page 2140 through IMPR2140.PRINT_%s_ARD (ardpdf link) - page not built yet. IMPR2140 picks the '
-                'letter: LETTER_DIRCTION 1 = IMPR2141, 2 = IMPR2142, else IMPR2143.') % name,
+        caller=('page 2140 through IMPR2140.PRINT_%s_ARD (ardpdf link; plsql/IMPR2140/impr2140_body.sql). IMPR2140 picks '
+                'the letter: LETTER_DIRCTION 1 = IMPR2141, 2 = IMPR2142, else IMPR2143.') % name,
         params=[('P_CURR_PORT_CD', 'الجمرك (P_PORT_CD في الشاشة، وإلا جمرك المستخدم)'),
                 ('IMPR_NO', 'رقم المستورد (إجباري في الشاشة)')],
         notes=notes,
@@ -821,7 +821,7 @@ def rule_formulas(rule_type_rownum):
 IMPR2150 = dict(
     name='IMPR2150', folder='IMPR2150', file='IMPR2150.xml', query='IMPR_RULS',
     title='استثناءات المستوردين',
-    caller='page 2150 through IMPR2150.PRINT_IMPR2150_ARD (ardpdf link) - page not built yet.',
+    caller='page 2150 through IMPR2150.PRINT_IMPR2150_ARD (ardpdf link; plsql/IMPR2150/impr2150_body.sql).',
     params=[('P_CURR_PORT_CD', 'جمرك المستخدم لاسم الجمرك في الهيدر (الفورم مكانش بيبعته فالـ RDF من غير اسم)'),
             ('P_HQ_IMPR_NBR', 'الرقم الموحد (فاضي = الكل)'),
             ('P_REC_STATUS', 'حالة السجل 1 / 0'),
@@ -926,7 +926,7 @@ IMPR2150 = dict(
 IMPR2170 = dict(
     name='IMPR2170', folder='IMPR2170', file='IMPR2170.xml', query='CG$Q_IMPR_SUSPNS, Q_2',
     title='تقرير حالة مستورد', deps=', IMPR_UTILITIES (get_main_szr_rsn / get_sub_szr_rsn)',
-    caller=('page 2170 through IMPR2170.PRINT_IMPR2170_ARD (ardpdf link) - page not built yet. SHOW_USER = 1 '
+    caller=('page 2170 through IMPR2170.PRINT_IMPR2170_ARD (ardpdf link; plsql/IMPR2170/impr2170_body.sql). SHOW_USER = 1 '
             'ran IMPR2170n.rep, which is not in forms/IMPR/reports (not converted).'),
     params=[('P_CURR_PORT_CD', 'جمرك المستخدم (فاضي = 99 زي BeforeReport)'),
             ('PPORT_CD', 'جمرك المستورد (P_PORT_CD في الشاشة)'),
@@ -1126,7 +1126,7 @@ IMPR2170 = dict(
 IMPR2180 = dict(
     name='IMPR2180', folder='IMPR2180', file='IMPR2180.xml', query='CG$Q_BRKR_MSTR',
     title='تقرير ازدواجية مهنتي الإستيراد والتخليص الجمركي',
-    caller='page 2180 through IMPR2180.PRINT_IMPR2180_ARD (ardpdf link) - page not built yet.',
+    caller='page 2180 through IMPR2180.PRINT_IMPR2180_ARD (ardpdf link; plsql/IMPR2180/impr2180_body.sql).',
     params=[('P_CURR_PORT_CD', 'الجمرك (لو المستخدم 99: P_PORT_CD أو فاضي = الكل، وإلا جمرك المستخدم)'),
             ('P_LIC_TYPE', 'نوع الرخصة (فاضي = الكل)'),
             ('P_MODULE_NAME', 'عنوان التقرير'),

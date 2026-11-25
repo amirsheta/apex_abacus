@@ -1,0 +1,8 @@
+# IMPR1170 – Inventory & Migration Risk Assessment
+
+- **Form:** IMPR1170 (module name in the XML: `IMPR1170_CNTRL`, module title "صيانة تفاويض الشركات الوسيطة", window title `Agnts` – both left over from the template form; the screen itself is the commercial-registration look-up "جدول بيانات السجل التجارى من وزارة التجارة"): the clerk types a unified commercial-registration number (CR_NBR); when the record was not refreshed today the form calls the Ministry of Commerce (MCI) web service, which loads `MCI_DATA` / `MCI_OWNERS`, and then shows the registration and its owners (query only)
+- **Source:** `forms/IMPR/IMPR1170_fmb.xml` (frmf2xml output)
+- **Target:** Oracle APEX 21.2 on Oracle Database 12.1.0.2, reference application f345 (CLAUDE.md §4b, §4c)
+- **Produced:** 2026-11-25 (step 01): mechanical sections by `scripts/gen_inv.py`; manual analysis in sections 1, 13–15 (sources in `work/IMPR1170/inv_man/`).
+- **Sources used besides the form XML:** library text `forms/COMMON/libraries/CIC_LIB.pld` (NIB, STR, HIJDATE), OLB `forms/COMMON/olb/CIC_OLB_OLB.xml` (item classes `CGSO$CHAR_ARB`, `CGSO$HDATE_ARB_DO`, `CGSO$COMBO_DO`); the IMPR1140 / IMPR1150 / IMPR1160 inventories for the shared OLB frame findings.
+- **Scope rule:** anything not available is marked **MISSING SOURCE** and is not guessed: the libraries OFGTEL, SEC_LIB, OFGTAB, PICKLIST, POS, SCDLL, VCDLL; DB package `LIB_USR.PRTL_NEBRAS_SERVICES` (`CALL_WEB_SERVICE`, called unchanged) and the MCI web service behind it; the DDL of `MCI_DATA`, `MCI_OWNERS`, `MCI_BUS_ID_STATUS`, `MCI_RELATION_TYPES` (column types taken from the Forms items).

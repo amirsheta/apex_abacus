@@ -69,7 +69,7 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(914005000040)
 ,p_lov_name=>'LOV_SINGLE_IMPORTERS'
-,p_lov_query=>'return LOV_APX.LOV_SINGLE_IMPORTERS(P_RULE_TYPE_ITEM => ''P1140_RULE_TYPE'');'
+,p_lov_query=>'return LOV_APX.SINGLE_IMPORTERS(P_RULE_TYPE_ITEM => ''P1140_RULE_TYPE'');'
 ,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
 ,p_return_column_name=>'R'

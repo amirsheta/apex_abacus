@@ -134,7 +134,7 @@ AS
         IF P_IMPR_TYPE_CD IS NOT NULL THEN
             BEGIN
                 SELECT it.impr_type_name
-                  INTO P_IMPR_TYPE_NAME
+                  INTO POST_QUERY.P_IMPR_TYPE_NAME
                   FROM impr_types it
                  WHERE it.impr_type_cd = POST_QUERY.P_IMPR_TYPE_CD;
             EXCEPTION
@@ -144,7 +144,7 @@ AS
         IF P_BUS_ID_TYPE_CD IS NOT NULL THEN
             BEGIN
                 SELECT bt.bus_id_type_name
-                  INTO P_BUS_ID_TYPE_NAME
+                  INTO POST_QUERY.P_BUS_ID_TYPE_NAME
                   FROM bus_id_types bt
                  WHERE bt.bus_id_type_cd = POST_QUERY.P_BUS_ID_TYPE_CD;
             EXCEPTION
@@ -154,7 +154,7 @@ AS
         IF P_CTRY_CD IS NOT NULL THEN
             BEGIN
                 SELECT ctry.crty_arbc_name
-                  INTO P_CRTY_ARBC_NAME
+                  INTO POST_QUERY.P_CRTY_ARBC_NAME
                   FROM countries ctry
                  WHERE ctry.ctry_cd     = POST_QUERY.P_CTRY_CD
                    AND ctry.ctry_status = 1;
@@ -164,7 +164,7 @@ AS
             IF P_ADD_CTRY_CD IS NOT NULL THEN
                 BEGIN
                     SELECT c.crty_arbc_name
-                      INTO P_ADD_CRTY_ARBC_NAME
+                      INTO POST_QUERY.P_ADD_CRTY_ARBC_NAME
                       FROM countries c
                      WHERE c.ctry_cd = POST_QUERY.P_ADD_CTRY_CD;
                 EXCEPTION
@@ -174,7 +174,7 @@ AS
             IF P_CITY_CODE IS NOT NULL THEN
                 BEGIN
                     SELECT ci.city_arb_name
-                      INTO P_CITY_NAME
+                      INTO POST_QUERY.P_CITY_NAME
                       FROM cities ci
                      WHERE ci.ctry_cd = POST_QUERY.P_ADD_CTRY_CD
                        AND ci.city_cd = POST_QUERY.P_CITY_CODE;

@@ -1,0 +1,13 @@
+[
+ "DA client-side condition JAVASCRIPT_EXPRESSION this.browserEvent.which === 13 (Enter key; not in f345)",
+ "DA client-side condition p_triggering_condition_type / p_triggering_expression (not in f345)",
+ "NATIVE_CLEAR action with p_affected_elements (page 117001 CLEAR; not in f345)",
+ "NATIVE_FORM region with p_query_type TABLE and p_is_editable false (query only; IMPR1150 uses SQL + false)",
+ "NATIVE_SUBMIT_PAGE attributes 01 / 02 (not in f345)",
+ "button DA: p_triggering_button_id (as page 113001 SEARCH; IMPR1110 uses it)",
+ "not displayed DATE column CR_EXPIRY_DATE as a Display Only item with p_grid_column_css_classes u-hidden (as IMPR1160)",
+ "p_item_default 1 on the always read-only Select List CR_TYPE (Forms initial value of the new record)",
+ "p_read_only_when2 => PLSQL with p_read_only_when_type => EXPRESSION (f345 shows the pattern only for p_display_when)",
+ "read-only IG MCI_OWNERS: p_is_editable false with p_lazy_loading false (as the IMPORTER_DOCS grid of page 1150)",
+ "search IG 117001: p_lazy_loading true, p_show_total_row_count false, toolbar ACTIONS_MENU:RESET (search field removed)"
+]

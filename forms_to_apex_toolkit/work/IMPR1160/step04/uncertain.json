@@ -1,0 +1,16 @@
+[
+ "DA client-side condition JAVASCRIPT_EXPRESSION this.browserEvent.which === 13 (Enter key; not in f345)",
+ "DA client-side condition p_triggering_condition_type / p_triggering_expression (not in f345)",
+ "NATIVE_CLEAR action with p_affected_elements (page 116001 CLEAR; not in f345)",
+ "NATIVE_FORM region p_edit_operations => i:u:d (as IMPR1140)",
+ "NATIVE_SHOW / NATIVE_HIDE / NATIVE_SET_FOCUS with p_affected_elements items (f345 hides a region only)",
+ "Process form - DELETE: a second NATIVE_FORM_DML process on request DELETE (f345 standard 6, as IMPR1140)",
+ "ROWID primary key of the Form region: p_include_rowid_column, item source ROWID / p_source_data_type ROWID (as IMPR1110 / IMPR1140)",
+ "button DA: p_triggering_button_id (as page 113001 SEARCH; IMPR1110 uses it)",
+ "not displayed DATE columns as Display Only items with p_grid_column_css_classes u-hidden and a format mask (as IMPR1110 LST_TRAN_DT)",
+ "p_item_default with a static value on the Select List DCLTN_TYPE (1; IMPR1110 / IMPR1140 use p_item_default)",
+ "p_read_only_when2 => PLSQL with p_read_only_when_type => EXPRESSION (f345 shows the pattern only for p_display_when)",
+ "search IG 116001: p_lazy_loading true, p_show_total_row_count false, toolbar ACTIONS_MENU:RESET (search field removed)",
+ "shared LOV p_source_type 'FUNC_BODY_RETURNING_SQL' with the function body in p_lov_query (no function-body LOV in f345 or the real 21.2 export f202604; p_function_body_language left out = PL/SQL)",
+ "wwv_flow_api.create_message (Text Message; f345 has none; IMPR1110 / IMPR1120 / IMPR1140 use it) - p_message_language ar-sa"
+]

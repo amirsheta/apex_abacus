@@ -1,0 +1,32 @@
+written /Volumes/Volume E/apex_abacus/forms_to_apex_toolkit/apex/IMPR1150/f345_impr1150.sql 1849 lines
+  create_page                      2
+  create_page_plug                 5
+  create_page_item                 30
+  create_page_button               2
+  create_page_validation           2
+  create_page_process              13
+  create_page_da_event             9
+  create_page_da_action            16
+  create_page_computation          2
+  create_page_branch               2
+  create_region_column             13
+  create_interactive_grid          2
+  create_ig_report_column          13
+  create_list_of_values            2
+  create_flow_item                 0
+  FOS actions                      2
+placeholders: __APP_ID__, __ID_OFFSET__, __SCHEMA_NAME__, __WORKSPACE_ID__
+uncertain parameters (import_notes.md):
+  - DA client-side condition JAVASCRIPT_EXPRESSION this.browserEvent.which === 13 (Enter key; not in f345)
+  - DA client-side condition p_triggering_condition_type / p_triggering_expression (not in f345)
+  - NATIVE_ALERT with the text in p_attribute_01 (as page 1140; not in f345)
+  - NATIVE_CLEAR action with p_affected_elements (page 115001 CLEAR; not in f345)
+  - NATIVE_FORM region with p_query_type SQL over a database link and p_is_editable false (f345 AGR1100 uses TABLE, editable)
+  - NATIVE_SHOW / NATIVE_HIDE / NATIVE_SET_FOCUS with p_affected_elements items (f345 hides a region only)
+  - NATIVE_SUBMIT_PAGE attributes 01 / 02 (not in f345)
+  - button DA: p_triggering_button_id (as page 113001 SEARCH; IMPR1110 uses it)
+  - p_read_only_when2 => PLSQL with p_read_only_when_type => EXPRESSION (f345 shows the pattern only for p_display_when)
+  - read-only IG IMPORTER_DOCS: p_is_editable false with p_lazy_loading false (documents grid of page 1150)
+  - search IG 115001: p_lazy_loading true, p_show_total_row_count false, toolbar ACTIONS_MENU:RESET (search field removed)
+  - shared LOV p_source_type 'FUNC_BODY_RETURNING_SQL' with the function body in p_lov_query (no function-body LOV in f345 or the real 21.2 export f202604; p_function_body_language left out = PL/SQL)
+problems: none

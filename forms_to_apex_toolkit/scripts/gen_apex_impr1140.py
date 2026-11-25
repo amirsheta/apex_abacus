@@ -461,7 +461,7 @@ NEW_LOVS = [  # spec 6: (name, LOV_APX call, columns for a Popup LOV, source)
      'pop list IMPR_RULES.RULE_TYPE (CGDV$POPULATE_DYNAMIC_LISTS, domain RULE_TYPE)'),
     ('LOV_REC_STATUS', lov_apx.call('REFERENCE_CODES', P_DOMAIN='REC_STATUS'), None,
      'pop lists REC_STATUS of IMPR_RULES, IMPR_RULE_PORTS, IMPR_RULE_TARIFF (CGDV$POPULATE_DYNAMIC_LISTS)'),
-    ('LOV_SINGLE_IMPORTERS', lov_apx.call('LOV_SINGLE_IMPORTERS', P_RULE_TYPE_ITEM='P1140_RULE_TYPE'),
+    ('LOV_SINGLE_IMPORTERS', lov_apx.call('SINGLE_IMPORTERS', P_RULE_TYPE_ITEM='P1140_RULE_TYPE'),
      [('D', 'رقم المستورد الموحد', 'NUMBER'), ('ARBC_IMPR_NAME', 'اسم المستورد', 'VARCHAR2'), ('BUS_ID', 'الرقم الاستدلالى', 'VARCHAR2')],
      'PU SINGLE_IMP_LOV (LOV forms LOV_IMPORT_HQ_NBR / LOV_IMPORT_HQ_N12)'),
     ('LOV_HARMONIZED_TARIFF', lov_apx.call('LOV_HARMONIZED_TARIFF'),

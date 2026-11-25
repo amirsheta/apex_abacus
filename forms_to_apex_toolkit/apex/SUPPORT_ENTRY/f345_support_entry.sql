@@ -63,7 +63,7 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(900195000010)
 ,p_lov_name=>'LOV_SD_PORTS_TYPES'
-,p_lov_query=>'return LOV_APX.PORTS_WITH_TYPES;'
+,p_lov_query=>'return LOV_APX.LOV_SD_PORTS_TYPES;'
 ,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
 ,p_return_column_name=>'R'
@@ -111,7 +111,7 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(900195000020)
 ,p_lov_name=>'LOV_SUPP_TITLES'
-,p_lov_query=>'return LOV_APX.SUPPORT_TITLES;'
+,p_lov_query=>'return LOV_APX.LOV_SUPP_TITLES;'
 ,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
 ,p_return_column_name=>'R'

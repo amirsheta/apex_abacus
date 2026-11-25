@@ -240,8 +240,11 @@ Full rules: `docs/f345_reference_standard.md` §9a; code and check: `scripts/lov
    display column `D`. Static LOVs (fixed values from the XML) stay Static.
    Column definitions always include `D` (visible) and `R` (hidden): a Popup LOV fetches only the defined
    columns and shows no rows without them (`lov_apx.column_definitions()`).
-2. LOVs are common to all systems: one function per list (ports, countries, cities, importers, CG_REF_CODES
-   domains ...), full-word names; reuse a function before adding one, and add parameters rather than a copy.
+2. LOVs are common to all systems: one function per list; reuse a function before adding one, and add parameters
+   rather than a copy. **Function names (user decision 2026-11-25):** a function used by one shared LOV only has the
+   name of that LOV (`LOV_APX.LOV_SD_PORTS` for `LOV_SD_PORTS`, `LOV_APX.LOV_HARMONIZED_TARIFF` ...); a function shared by
+   several LOVs keeps a generic full-word name (`REFERENCE_CODES`, `CITIES`, `IMPORTERS`, `BUSINESS_ID_TYPES`,
+   `GULF_COUNTRIES`). When a second LOV starts using a LOV-named function, rename it to a generic name.
 3. The functions never read session state: the caller passes the item **name** (`P_<X>_ITEM => 'P1110_CTRY_CD'`)
    and the returned SQL keeps it as a bind variable; names go through `DBMS_ASSERT`.
 4. Every generator calls `lov_apx.check()`: the function and its parameter names must exist in `lov_apx.sql`.

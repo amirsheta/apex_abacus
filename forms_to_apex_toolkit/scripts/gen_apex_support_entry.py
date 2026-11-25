@@ -226,10 +226,10 @@ end;
         ('p_item_comment', src('SUPPORT_ENTRY - caller page for G_LAST_PAGE KEEP (f345 SCREEN ENTRY RESET), set by SUPPORT_ENTRY.OPEN_DIALOG / spec 0.2, 13.2'))])))
     lovs = [
         ('LOV_SD_PORTS_TYPES', 'SUPPORT_ENTRY LOV LOV_SD_PORTS / RG LOV_SD_PORTS (decision D2) / spec 6',
-         lov_apx.call('PORTS_WITH_TYPES'),
+         lov_apx.call('LOV_SD_PORTS_TYPES'),
          [('D', 'رمز الجمرك', 'NUMBER'), ('RV_MEANING', 'نوع الجمرك', 'VARCHAR2'), ('PORT_NAME', 'اسم الجمرك', 'VARCHAR2')]),
         ('LOV_SUPP_TITLES', 'SUPPORT_ENTRY LOV LOV_SUPP_TITLES / RG LOV_SUPP_TITLES / spec 6',
-         lov_apx.call('SUPPORT_TITLES'),
+         lov_apx.call('LOV_SUPP_TITLES'),
          [('D', 'رمز معتمد الخطاب', 'NUMBER'), ('SUPP_TITLE_NM', 'معتمد الخطاب', 'VARCHAR2')]),
     ]
     for name, comment, sql, cols in lovs:

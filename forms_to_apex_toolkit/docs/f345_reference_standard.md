@@ -259,9 +259,11 @@ owner `LIB_APX_USR`), and used by every system. The APEX shared LOV only calls i
 | Column definitions | `D` (code, visible, Arabic heading), the list columns, then `R` hidden (`p_is_visible=>'N'`). A Popup LOV fetches only the defined columns: without `D` and `R` it shows no rows (fix 2026-11-24; as every LOV of the real 21.2 export f202604) |
 
 Rules of the package:
-- one function per list, full-word names (`PORTS`, `PORTS_WITH_TYPES`, `COUNTRIES`, `GULF_COUNTRIES`, `CITIES`,
-  `CITIES_OF_BUSINESS_ID`, `IMPORTER_TYPES`, `BUSINESS_ID_TYPES`, `IMPORTERS`, `REFERENCE_CODES`, `SUPPORT_TITLES`);
-  a function returns `SELECT <display> d, <return> r, <list columns> ...`;
+- one function per list. Names (user decision 2026-11-25): a function used by one LOV only is named like that LOV
+  (`LOV_SD_PORTS`, `LOV_SD_PORTS_TYPES`, `LOV_COUNTRIES`, `LOV_IMPR_TYPE`, `LOV_CITIES_IMP_ID`, `LOV_SINGLE_IMPORTERS`,
+  `LOV_HARMONIZED_TARIFF`, `LOV_SUPP_TITLES`); a function shared by several LOVs keeps a generic full-word name
+  (`REFERENCE_CODES`, `CITIES`, `IMPORTERS`, `BUSINESS_ID_TYPES`, `GULF_COUNTRIES`); a function returns
+  `SELECT <display> d, <return> r, <list columns> ...`;
 - no session-state read: a page or application item is passed by **name** and stays a bind variable in the
   returned SQL (`:P1110_CTRY_CD`), so APEX binds it, the cursor is shared and cascading LOVs work;
   names are checked with `DBMS_ASSERT.SIMPLE_SQL_NAME`, literals with `DBMS_ASSERT.ENQUOTE_LITERAL`;

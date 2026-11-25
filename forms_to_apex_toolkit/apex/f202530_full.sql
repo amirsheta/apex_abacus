@@ -93689,7 +93689,7 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(460633361722563840)
 ,p_lov_name=>'LOV_SD_PORTS'
-,p_lov_query=>'return LOV_APX.PORTS(P_PORT_TYPE_ITEM => ''P_PORT_TYPE'');'
+,p_lov_query=>'return LOV_APX.LOV_SD_PORTS(P_PORT_TYPE_ITEM => ''P_PORT_TYPE'');'
 ,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
 ,p_return_column_name=>'R'
@@ -93729,7 +93729,7 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(460633361722563850)
 ,p_lov_name=>'LOV_IMPR_TYPE'
-,p_lov_query=>'return LOV_APX.IMPORTER_TYPES(P_ALL_STATUSES_ITEM => ''G_CHK_IMP_TYP'');'
+,p_lov_query=>'return LOV_APX.LOV_IMPR_TYPE(P_ALL_STATUSES_ITEM => ''G_CHK_IMP_TYP'');'
 ,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
 ,p_return_column_name=>'R'
@@ -93784,7 +93784,7 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(460633361722563870)
 ,p_lov_name=>'LOV_CITIES_IMP_ID'
-,p_lov_query=>'return LOV_APX.CITIES_OF_BUSINESS_ID(P_COUNTRY_ITEM => ''P1110_CTRY_CD'', P_IMPORTER_TYPE_ITEM => ''P1110_IMPR_TYPE_CD'', P_BUSINESS_ID_TYPE_ITEM => ''P1110_BUS_ID_TYPE_CD'');'
+,p_lov_query=>'return LOV_APX.LOV_CITIES_IMP_ID(P_COUNTRY_ITEM => ''P1110_CTRY_CD'', P_IMPORTER_TYPE_ITEM => ''P1110_IMPR_TYPE_CD'', P_BUSINESS_ID_TYPE_ITEM => ''P1110_BUS_ID_TYPE_CD'');'
 ,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
 ,p_return_column_name=>'R'
@@ -93920,7 +93920,7 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(460633361722563900)
 ,p_lov_name=>'LOV_COUNTRIES'
-,p_lov_query=>'return LOV_APX.COUNTRIES;'
+,p_lov_query=>'return LOV_APX.LOV_COUNTRIES;'
 ,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
 ,p_return_column_name=>'R'
@@ -101673,7 +101673,7 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(460633361912563840)
 ,p_lov_name=>'LOV_SD_PORTS_TYPES'
-,p_lov_query=>'return LOV_APX.PORTS_WITH_TYPES;'
+,p_lov_query=>'return LOV_APX.LOV_SD_PORTS_TYPES;'
 ,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
 ,p_return_column_name=>'R'
@@ -101721,7 +101721,7 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(460633361912563850)
 ,p_lov_name=>'LOV_SUPP_TITLES'
-,p_lov_query=>'return LOV_APX.SUPPORT_TITLES;'
+,p_lov_query=>'return LOV_APX.LOV_SUPP_TITLES;'
 ,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
 ,p_return_column_name=>'R'
@@ -109231,7 +109231,7 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(460633375722563870)
 ,p_lov_name=>'LOV_SINGLE_IMPORTERS'
-,p_lov_query=>'return LOV_APX.SINGLE_IMPORTERS(P_RULE_TYPE_ITEM => ''P1140_RULE_TYPE'');'
+,p_lov_query=>'return LOV_APX.LOV_SINGLE_IMPORTERS(P_RULE_TYPE_ITEM => ''P1140_RULE_TYPE'');'
 ,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
 ,p_return_column_name=>'R'
@@ -109279,7 +109279,7 @@ begin
 wwv_flow_api.create_list_of_values(
  p_id=>wwv_flow_api.id(460633375722563880)
 ,p_lov_name=>'LOV_HARMONIZED_TARIFF'
-,p_lov_query=>'return LOV_APX.HARMONIZED_TARIFF;'
+,p_lov_query=>'return LOV_APX.LOV_HARMONIZED_TARIFF;'
 ,p_source_type=>'FUNC_BODY_RETURNING_SQL'
 ,p_location=>'LOCAL'
 ,p_return_column_name=>'R'

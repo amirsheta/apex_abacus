@@ -167,7 +167,7 @@ for b in blocks:
 
 # ------------------------------------------------------------------ LOVs and record groups
 LOVS = {'CGFK$IMPR_RULE_PORTS_PORT_CD': ('LOV', 'LOV_SD_PORTS (reused, IMPR1110)'),
-        'CGFK$IMPR_RULE_TARIFF_HRMNZD_C': ('LOV', 'LOV_HARMONIZED_TARIFF (LOV_APX.HARMONIZED_TARIFF)')}
+        'CGFK$IMPR_RULE_TARIFF_HRMNZD_C': ('LOV', 'LOV_HARMONIZED_TARIFF (LOV_APX.LOV_HARMONIZED_TARIFF)')}
 for l in fm.findall(NS + 'LOV'):
     a = LOVS.get(l.get('Name'))
     if a:

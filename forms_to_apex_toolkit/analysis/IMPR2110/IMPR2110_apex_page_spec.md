@@ -79,7 +79,7 @@ search page, no submit, no DML.
 | `P2110_P_PORT_CD` | Popup LOV `LOV_SD_PORTS` (IMPR1110) | `P_PORT_CD`, `P_LOV_PORT` | condition `IMPR2110.P_PORT_CD_IS_VISIBLE` (port 99 only) |
 | `P2110_P_PORT_NAME` | Display only | `P_PORT_NAME` | same condition |
 | `P2110_SECT_LOV` | Popup LOV `LOV_REP_IMPR`, label «رقم المستورد» | `LICE_NO` KEY-LISTVAL, button `SECT_LOV` (REP_LOV_IMPR) | **the only importer entry** (user request 2026-11-25): each pick is added to the table CTR_BLK, then the LOV is cleared |
-| `P2110_LICE_NO` | Hidden, not protected | `LICE_NO` | the picked numbers, comma separated (no typing); empty = all importers of the port. **Session state only**: written by the FOS of `SECT_LOV`, read by the CTR_BLK query and `PRINT_CHECK_VAL`, never submitted from the browser (fix 2026-11-25: the table did not update after a pick) |
+| `P2110_LICE_NO` | Hidden, not protected | `LICE_NO` | the picked numbers, comma separated (no typing); empty = all importers of the port. Returned by the FOS of `SECT_LOV`, and in the Items to Submit of CTR_BLK, `SECT_LOV` and `REPORT_PRINT` (rule 2026-11-25: every page item a query / LOV / FOS call reads is submitted) |
 | `P2110_HERO_TITLE` | Hidden | `TITLE.SCREEN_NAME` (`P_MODULE_NAME`) | sent as report `P_MODULE_NAME` |
 | `P2110_MODULE_ID` | Hidden | `:PARAMETER.P_MODULE_ID` | f345 |
 | `P2110_REPORT_NO` | Hidden (hero) | `TITLE.REPORT_NO` = `P_SYS_ID-P_REP_NO` | values from `SC_PORT_SETTING` |

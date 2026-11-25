@@ -603,6 +603,7 @@ wwv_flow_api.create_page_da_action(
 ,p_attribute_05=>'#SQLERRM#'
 ,p_attribute_15=>'suppressChangeEvent:escape-message'
 ,p_wait_for_result=>'Y'
+,p_attribute_02=>'P9001_P_MODE'
 );
 wwv_flow_api.create_page_da_action(
  p_id=>wwv_flow_api.id(900109000090)

@@ -224,7 +224,13 @@ Full rules: `docs/f345_reference_standard.md` §9 and §10. Summary:
    (Arabic-Indic digits become 0-9); user decisions 2026-11-24. It is the one addition to f345's page 0:
    `scripts/build_full_app.py` adds it to the full application file; form pages never have a copy (the
    generators check it); a component-only import needs it added to page 0 once by hand (import notes).
-3. **One readable package per form.** No adapter packages and no all-items record copied through
+3. **Items to Submit (user rule 2026-11-25).** Every page item that a component reads or sets is in that
+   component's *Items to Submit*: the region query (IG / report) → region *Page Items to Submit*; the LOV query of a
+   Popup LOV / Select List item (also the `P_X_ITEM => 'P<page>_X'` names of its LOV_APX call) → item *Items to Submit*;
+   the PL/SQL of a FOS action (IN and OUT binds) → FOS *Items to Submit*. Application items and `P0_` items are session
+   state and are not listed. Every generator runs `scripts/items_to_submit.py` (`fix` before writing, `check` in the
+   self-check).
+4. **One readable package per form.** No adapter packages and no all-items record copied through
    session state: each member takes only the items it uses (IN / IN OUT parameters named by §4). Fixed section order
    (version → helpers → form level → each block: query, record, items in navigation order, DML,
    buttons → program units → private helpers → UI comments). One Forms trigger = one member,

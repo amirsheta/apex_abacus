@@ -26,6 +26,7 @@ sys.path.insert(0, os.path.join(ROOT, 'scripts'))
 import number_only      # Number Field items: CSS class number_only + one page-load handler
 import functions_drawer # the FUNCS region is on page 0, never on a form page
 import item_icons      # Post Text icon next to every entry item, from the item name (f202604 convention)
+import items_to_submit # every page item a query / LOV / FOS call reads is in its Items to Submit (user rule 2026-11-25)
 import lov_apx         # shared LOVs: function body returning SQL, code in LOV_APX (CLAUDE.md 4d)
 REF = os.path.join(ROOT, 'apex', 'Reference', 'f345.sql')
 IMPR1110_EXPORT = os.path.join(ROOT, 'apex', 'IMPR1110', 'f345_impr1110.sql')
@@ -673,7 +674,7 @@ end;
 set verify on feedback on define on
 prompt  ...done
 ''')
-    text = '\n'.join(out)
+    text = items_to_submit.fix('\n'.join(out))   # Items to Submit = every page item read (user rule 2026-11-25)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, 'w', encoding='utf-8', newline='\n') as f:
         f.write(text)
@@ -696,7 +697,7 @@ def unq(s):
     return s[1:-1].replace("''", "'") if s.startswith("'") else s
 
 def selfcheck(text):
-    problems = item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
+    problems = items_to_submit.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
     ref_txt = open(REF, encoding='utf-8', errors='replace').read()
     i1110 = open(IMPR1110_EXPORT, encoding='utf-8', errors='replace').read()
     pkg_txt = re.sub(r'--[^\n]*', '', open(PKG, encoding='utf-8').read())

@@ -23,6 +23,7 @@ import os, re, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'scripts'))
 import item_icons      # Post Text icon next to every entry item, from the item name (f202604 convention)
+import items_to_submit # every page item a query / LOV / FOS call reads is in its Items to Submit (user rule 2026-11-25)
 import lov_apx         # shared LOVs: function body returning SQL, code in LOV_APX (CLAUDE.md 4d)
 REF = os.path.join(ROOT, 'apex', 'Reference', 'f345.sql')
 PKG = os.path.join(ROOT, 'plsql', 'SUPPORT_ENTRY', 'support_entry_spec.sql')
@@ -343,7 +344,7 @@ end;
 set verify on feedback on define on
 prompt  ...done
 """)
-    text = '\n'.join(out)
+    text = items_to_submit.fix('\n'.join(out))   # Items to Submit = every page item read (user rule 2026-11-25)
     with open(OUT, 'w', encoding='utf-8', newline='\n') as f:
         f.write(text)
     return text
@@ -357,7 +358,7 @@ def names_of(text, api):
     return out
 
 def selfcheck(text):
-    problems = item_icons.check(text) + lov_apx.check(text)
+    problems = items_to_submit.check(text) + item_icons.check(text) + lov_apx.check(text)
     ref_txt = open(REF, encoding='utf-8', errors='replace').read()
     pkg_txt = re.sub(r'--[^\n]*', '', open(PKG, encoding='utf-8').read())
     if 'wwv_flow_imp' in text: problems.append('wwv_flow_imp found')

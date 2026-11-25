@@ -152,7 +152,7 @@ unistr('       NVL(i.arbc_impr_name, ''\0647\0630\0627 \0627\0644\0645\0633\062A
 '   AND i.port_cd (+) = NVL(:P2110_P_PORT_CD, :P_CURR_PORT_CD)',
 ' ORDER BY l.seq'))
 ,p_plug_source_type=>'NATIVE_IG'
-,p_ajax_items_to_submit=>'P2110_P_PORT_CD'
+,p_ajax_items_to_submit=>'P2110_LICE_NO,P2110_P_PORT_CD'
 ,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
 ,p_plug_comment=>'Source: IMPR2110.CTR_BLK (control block, 5 records, read only: the numbers of LICE_NO and their names) / spec 3'
 );
@@ -370,7 +370,7 @@ wwv_flow_api.create_page_item(
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
-,p_item_comment=>'Source: IMPR2110.CALLING_PARAMETERS.LICE_NO (importer numbers separated by commas, filled by the Popup LOV P2110_SECT_LOV; empty = every importer of the port). Kept in session state: the FOS of SECT_LOV writes it, the table CTR_BLK and PRINT_CHECK_VAL read it; never submitted from the browser'
+,p_item_comment=>'Source: IMPR2110.CALLING_PARAMETERS.LICE_NO (importer numbers separated by commas, filled by the Popup LOV P2110_SECT_LOV; empty = every importer of the port); submitted by CTR_BLK, SECT_LOV and REPORT_PRINT'
 );
 wwv_flow_api.create_page_item(
  p_id=>wwv_flow_api.id(211004000050)
@@ -508,7 +508,7 @@ wwv_flow_api.create_page_da_action(
 ,p_execute_on_page_init=>'N'
 ,p_action=>'PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE'
 ,p_attribute_01=>'IMPR2110.P_PORT_CD_WHEN_VALIDATE_ITEM(P_PORT_CD => :P2110_P_PORT_CD, P_PORT_NAME => :P2110_P_PORT_NAME);'
-,p_attribute_02=>'P2110_P_PORT_CD'
+,p_attribute_02=>'P2110_P_PORT_CD,P2110_P_PORT_NAME'
 ,p_attribute_03=>'P2110_P_PORT_NAME'
 ,p_attribute_05=>'#SQLERRM#'
 ,p_attribute_15=>'suppressChangeEvent:escape-message'
@@ -542,7 +542,7 @@ wwv_flow_api.create_page_da_action(
 ,p_execute_on_page_init=>'N'
 ,p_action=>'PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE'
 ,p_attribute_01=>'IMPR2110.SECT_LOV_WHEN_BUTTON_PRESSED(P_SECT_LOV => :P2110_SECT_LOV, P_LICE_NO => :P2110_LICE_NO);'
-,p_attribute_02=>'P2110_SECT_LOV'
+,p_attribute_02=>'P2110_SECT_LOV,P2110_LICE_NO'
 ,p_attribute_03=>'P2110_SECT_LOV,P2110_LICE_NO'
 ,p_attribute_05=>'#SQLERRM#'
 ,p_attribute_15=>'suppressChangeEvent:escape-message'
@@ -587,7 +587,7 @@ wwv_flow_api.create_page_da_action(
 ,p_execute_on_page_init=>'N'
 ,p_action=>'PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE'
 ,p_attribute_01=>'IMPR2110.PRINT_CHECK_VAL(P_LICE_NO => :P2110_LICE_NO, P_PORT_CD => :P2110_P_PORT_CD, P_REPORT_NO => :P2110_REPORT_NO, P_HERO_TITLE => :P2110_HERO_TITLE, P_MODULE_ID => :P2110_MODULE_ID, P_CURR_PORT_CD => :P_CURR_PORT_CD, P_REPORT_URL => :P2110_REPORT_URL);'
-,p_attribute_02=>'P2110_P_PORT_CD,P2110_REPORT_NO,P2110_HERO_TITLE,P2110_MODULE_ID'
+,p_attribute_02=>'P2110_LICE_NO,P2110_P_PORT_CD,P2110_REPORT_NO,P2110_HERO_TITLE,P2110_MODULE_ID,P2110_REPORT_URL'
 ,p_attribute_03=>'P2110_REPORT_URL'
 ,p_attribute_05=>'#SQLERRM#'
 ,p_attribute_15=>'suppressChangeEvent:escape-message'

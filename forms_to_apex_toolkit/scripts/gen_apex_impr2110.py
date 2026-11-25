@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.join(ROOT, 'scripts'))
 import number_only      # Number Field items: CSS class number_only + one page-load handler on page 0
 import functions_drawer # the FUNCS region is on page 0, never on a form page
 import item_icons      # Post Text icon next to every entry item, from the item name (f202604 convention)
+import items_to_submit # every page item a query / LOV / FOS call reads is in its Items to Submit (user rule 2026-11-25)
 import lov_apx         # shared LOVs: function body returning SQL, code in LOV_APX (CLAUDE.md 4d)
 REF = os.path.join(ROOT, 'apex', 'Reference', 'f345.sql')
 IMPR1110_EXPORT = os.path.join(ROOT, 'apex', 'IMPR1110', 'f345_impr1110.sql')
@@ -369,8 +370,7 @@ PARAM_ITEMS = [
                  'the picked importer is added to the table CTR_BLK (LICE_NO)'),
     dict(name='P2110_LICE_NO', kind='NATIVE_HIDDEN', value_protected='N',
          comment='Source: IMPR2110.CALLING_PARAMETERS.LICE_NO (importer numbers separated by commas, filled by the '
-                 'Popup LOV P2110_SECT_LOV; empty = every importer of the port). Kept in session state: the FOS of '
-                 'SECT_LOV writes it, the table CTR_BLK and PRINT_CHECK_VAL read it; never submitted from the browser'),
+                 'Popup LOV P2110_SECT_LOV; empty = every importer of the port); submitted by CTR_BLK, SECT_LOV and REPORT_PRINT'),
 ]
 HERO_ITEMS = [
     dict(name='P2110_HERO_TITLE', kind='NATIVE_HIDDEN', value_protected='Y',
@@ -416,7 +416,7 @@ NEW_LOVS = [
 REPORT_ARGS = ('P_LICE_NO => :P2110_LICE_NO, P_PORT_CD => :P2110_P_PORT_CD, P_REPORT_NO => :P2110_REPORT_NO, '
                'P_HERO_TITLE => :P2110_HERO_TITLE, P_MODULE_ID => :P2110_MODULE_ID, P_CURR_PORT_CD => :P_CURR_PORT_CD, '
                'P_REPORT_URL => :P2110_REPORT_URL')
-REPORT_SUBMIT = ['P2110_P_PORT_CD', 'P2110_REPORT_NO', 'P2110_HERO_TITLE', 'P2110_MODULE_ID']   # LICE_NO: session state
+REPORT_SUBMIT = ['P2110_LICE_NO', 'P2110_P_PORT_CD', 'P2110_REPORT_NO', 'P2110_HERO_TITLE', 'P2110_MODULE_ID', 'P2110_REPORT_URL']
 OPEN_URL = "var u = $v('P2110_REPORT_URL'); if (u) { window.open(u, '_blank'); }"
 
 # ----------------------------------------------------------------------------- generation
@@ -510,8 +510,7 @@ end;
         ('p_region_css_classes', q('cg-card cg-grid')), ('p_region_template_options', q('#DEFAULT#:t-Region--noPadding')),
         ('p_plug_template', fid('REGION_GRID')), ('p_plug_display_sequence', '30'), ('p_query_type', q('SQL')),
         ('p_plug_source', lit(CTR_SQL)), ('p_plug_source_type', q('NATIVE_IG')),
-        # P2110_LICE_NO is server state (set by the FOS of SECT_LOV): not submitted, so the refresh reads the new list
-        ('p_ajax_items_to_submit', q('P2110_P_PORT_CD')), ('p_plug_query_options', q('DERIVED_REPORT_COLUMNS')),
+        ('p_ajax_items_to_submit', q('P2110_LICE_NO,P2110_P_PORT_CD')), ('p_plug_query_options', q('DERIVED_REPORT_COLUMNS')),
         ('p_plug_comment', src('IMPR2110.CTR_BLK (control block, 5 records, read only: the numbers of LICE_NO and their names) / spec 3'))]))
     for i, c in enumerate(CTR_COLUMNS):
         A(ig_column(R_CTR, c, (i + 1) * 10))
@@ -547,12 +546,12 @@ end;
     refresh = [('p_action', q('NATIVE_REFRESH')), ('p_affected_elements_type', q('REGION')), ('p_affected_region_id', ref(R_CTR))]
     A(da(PG, 10, 'P_PORT_CD WHEN-VALIDATE-ITEM', ('ITEM', 'P2110_P_PORT_CD'), 'change', [
         fos('IMPR2110.P_PORT_CD_WHEN_VALIDATE_ITEM(P_PORT_CD => :P2110_P_PORT_CD, P_PORT_NAME => :P2110_P_PORT_NAME);',
-            ['P2110_P_PORT_CD'], ['P2110_P_PORT_NAME']), refresh],
+            ['P2110_P_PORT_CD', 'P2110_P_PORT_NAME'], ['P2110_P_PORT_NAME']), refresh],
         'IMPR2110.CALLING_PARAMETERS.P_PORT_CD.WHEN-VALIDATE-ITEM / spec 10'))
     # LICE_NO is not typed any more (hidden, filled by SECT_LOV): its list check runs in PRINT_CHECK_VAL
     A(da(PG, 30, 'SECT_LOV WHEN-BUTTON-PRESSED', ('ITEM', 'P2110_SECT_LOV'), 'change', [
         fos('IMPR2110.SECT_LOV_WHEN_BUTTON_PRESSED(P_SECT_LOV => :P2110_SECT_LOV, P_LICE_NO => :P2110_LICE_NO);',
-            ['P2110_SECT_LOV'], ['P2110_SECT_LOV', 'P2110_LICE_NO']), refresh],   # LICE_NO read / written in session state
+            ['P2110_SECT_LOV', 'P2110_LICE_NO'], ['P2110_SECT_LOV', 'P2110_LICE_NO']), refresh],
         'IMPR2110.CALLING_PARAMETERS.SECT_LOV.WHEN-BUTTON-PRESSED, LICE_NO.KEY-LISTVAL (REP_LOV_IMPR) / spec 10'))   # no client-side condition (user 2026-11-25): an empty pick is ignored in SECT_LOV_WHEN_BUTTON_PRESSED
     # report page buttons: PRINT, CLEAR, BACK only (DEC-017 / DEC-018): page 0 REPORT_SHOW is Never, so no REPORT_SHOW DA;
     # Forms VIEW / KEY-F5 (PU CHECK_VAL, same code) open the same ARD PDF as PRINT
@@ -577,7 +576,7 @@ end;
 set verify on feedback on define on
 prompt  ...done
 ''')
-    text = '\n'.join(out)
+    text = items_to_submit.fix('\n'.join(out))   # Items to Submit = every page item read (user rule 2026-11-25)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, 'w', encoding='utf-8', newline='\n') as f:
         f.write(text)
@@ -600,7 +599,7 @@ def unq(s):
     return s[1:-1].replace("''", "'") if s.startswith("'") else s
 
 def selfcheck(text):
-    problems = item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
+    problems = items_to_submit.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
     ref_txt = open(REF, encoding='utf-8', errors='replace').read()
     i1110 = open(IMPR1110_EXPORT, encoding='utf-8', errors='replace').read()
     others = '\n'.join(open(p, encoding='utf-8', errors='replace').read() for p in OTHER_EXPORTS)

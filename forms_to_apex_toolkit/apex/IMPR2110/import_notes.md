@@ -13,12 +13,14 @@ Design: [IMPR2110_apex_page_spec.md](../../analysis/IMPR2110/IMPR2110_apex_page_
 |---|---|
 | `apex/IMPR2110/f345_impr2110.sql` | component export with the 4 placeholders |
 | `apex/IMPR2110/f202530_impr2110_import.sql` | the same with workspace 23232323, application 202530, offset 460632461717563830, schema CUSTOMS |
-| `plsql/IMPR2110/impr2110_spec.sql`, `impr2110_body.sql` | package `LIB_APX_USR.IMPR2110` 001 |
+| `plsql/IMPR2110/impr2110_spec.sql`, `impr2110_body.sql` | screen package `LIB_APX_USR.IMPR2110` **002** (previous: `rollback/IMPR2110/v001/`) |
+| `plsql/IMPR2110/IMPR2110_ARD.pks`, `IMPR2110_ARD.pkb` | report package `LIB_APX_USR.IMPR2110_ARD` 001 (the RDF as an ARD report) |
+| `scripts/report_toolbar.py` | page 0 buttons on report pages: PRINT, CLEAR, BACK (applied by `build_full_app.py`) |
 | `plsql_templates/lov_apx.sql` | package `LOV_APX` **003** (`IMPORTERS` + optional `P_DEFAULT_PORT_ITEM`; previous `rollback/LOV_APX/v002/`) |
 | `registry/IMPR2110_registry.sql` | MIG_FORM_REGISTRY / MIG_OBJECT_MAP rows |
 
 Contents: 1 page, 3 regions (hero `TITLE`, static `CALLING_PARAMETERS`, read-only IG `CTR_BLK`), 10 items, 5 processes
-(Before Header), 5 dynamic actions (5 FOS actions, **2 one-line JavaScript actions** that open the report URL), 1 LOV.
+(Before Header), 3 dynamic actions (3 FOS actions, **1 one-line JavaScript action** that opens the ardpdf link), 1 LOV.
 
 Regenerate: `python3 -I scripts/gen_apex_impr2110.py --workspace-id=23232323 --app-id=202530 --id-offset=460632461717563830 --schema=CUSTOMS`
 (the self-check must print `problems: none`).
@@ -34,36 +36,44 @@ Regenerate: `python3 -I scripts/gen_apex_impr2110.py --workspace-id=23232323 --a
    `LOV_HARMONIZED_TARIFF`, `SUPPORT_TITLES` → `LOV_SUPP_TITLES`. The old names are gone, so an application that still holds
    the earlier IMPR1110 / IMPR1140 / SUPPORT_ENTRY exports gets "PLS-00302" in those LOVs. **Compile 003 and re-import
    those exports (or `apex/f202530_full.sql`) together.** All exports in `apex/` already call the new names.
-4. **Package IMPR2110 001** as `LIB_APX_USR.IMPR2110` (spec, then body). `LIB_APX_USR` needs direct grants:
-   SELECT on `IMPORTERS`, `HQ_IMPRS`, `SD_PORTS`, `SC_PORT_SETTING`; EXECUTE on **`SC_PORT_SETTINGS_PKG`**.
-   That package has no source in this repository. Check that `GET_SC_PORT_REPORT_URL(port, 23, text)` exists, as in
-   the WVR packages of Forms_to_APEX, or the body does not compile.
-5. **`IMPR2110.rdf` deployed on the Reports Server** that `GET_SC_PORT_REPORT_URL` points to.
+4. **Report package `IMPR2110_ARD` 001** (`.pks`, then `.pkb`). It uses `ARD_LOGO` (static file `LOGO1.jpg` in the
+   application, DEC-034; without it the ARD server logo link is used) and `HIJDATE_DB`. `LIB_APX_USR` needs SELECT on
+   `IMPORTERS`, `HQ_IMPRS`, `IMPR_TYPES`, `PRIVILEGED_IMPORTERS`, `BUS_ID_TYPES`, `CITIES`, `SD_PORTS`. The ARD data source
+   user (setting `ARD_DSNAME`) needs EXECUTE on `IMPR2110_ARD` (grants as `DCLN3300_ARD`; add the ARD user if it is not one of them).
+5. **Screen package `IMPR2110` 002** (spec, then body). `LIB_APX_USR` needs SELECT on `IMPORTERS`, `HQ_IMPRS`,
+   `SD_PORTS`, `SC_PORT_SETTING`. It no longer uses `SC_PORT_SETTINGS_PKG`.
 6. `SC_PORT_SETTING` rows for the module (SYSOBJ_ID = `P2110_MODULE_ID`): `P_SYS_ID`, `P_REP_NO` (report number in the
-   hero; without them it shows `-`), and optionally `P_REPORT_FILE` (default `IMPR2110`).
+   hero and the footer; without them it shows `-`).
+   **ARD server settings** (required, no default in the code): run `migration/001_ard_settings.sql` - `SC_PORT_SETTING`
+   rows SYSOBJ_ID 999, PORT_CD 99: `ARD_URL` = `http://stgnibrasapx01.myzatca.gov.sa:8001/ard/ardpdf`, `ARD_DSNAME` = `hqqaDS`
+   (staging values; change `VAR_VALUE` per environment). Without them طباعة stops with «إعداد خادم التقارير غير موجود ...».
+7. **Page 0 toolbar (PRINT, CLEAR, BACK on report pages):** included in `apex/f202530_full.sql` (`scripts/report_toolbar.py`).
+   A component-only import has no page 0, so change it once by hand in Page Designer, page 0 → buttons:
+   `REPORT_SHOW` Server-side Condition = *Never*; `CREATE` and `SEARCH` condition = the PL/SQL function body
+   `report_toolbar.NOT_REPORT_PAGE` (P0_PAGE_PK null and the page has no `P<page>_REPORT` item).
 
 ## 3. Import
 
 App Builder → Import → *Page or Component Export* → `apex/IMPR2110/f202530_impr2110_import.sql`. It removes and re-creates
 page 2110 and creates `LOV_REP_IMPR` (IDs `2110…`, `9210…`, checked against f345 and every other export).
-Full application: add `apex/IMPR2110/f345_impr2110.sql` to the `scripts/build_full_app.py` command of
-`apex/IMPR1140/import_notes.md` §4 B (not run).
+Full application (includes the page 0 toolbar change): `apex/f202530_full.sql`, rebuilt 2026-11-25 with
+`python3 -I scripts/build_full_app.py --app-id=202530 --shift-ids=460632461717563830 apex/IMPR1110/f345_impr1110.sql apex/IMPR1120/f345_impr1120.sql apex/SUPPORT_ENTRY/f345_support_entry.sql apex/IMPR1116/f345_impr1116.sql apex/IMPR1125/f345_impr1125.sql apex/IMPR1130/f345_impr1130.sql apex/IMPR1140/f345_impr1140.sql apex/IMPR2110/f345_impr2110.sql`.
+Importing it replaces application 202530.
 
 ## 4. After import – tests
 
-1. Page 0 toolbar on 2110: **عرض** and **طباعة** shown, **الوظائف** hidden, SAVE / DELETE hidden. CREATE and SEARCH stay
-   (f345 page 0 conditions only look at `P0_PAGE_PK`): SEARCH says «لا توجد شاشة بحث لهذه الشاشة», and CREATE reloads the page.
-   To hide them, the page 0 conditions would have to change (a shell decision, not made here).
+1. Page 0 toolbar on 2110: **only طباعة, مسح, رجوع**. On a normal form page (e.g. 1110), CREATE and SEARCH still show with no record open.
 2. Port user (P_CURR_PORT_CD ≠ 99): no port item; the hero shows the port name.
 3. Head office (99): wrong port code → «رمز الجمرك غير صحيح»; a valid one fills the name.
-4. Pick importers in «اختيار مستورد»: each one is added to «رقم المستورد» once, and the grid lists numbers and names.
-   Typing `1, 2,` works; typing letters → list error; an unknown number shows «هذا المستورد غير موجود».
-5. عرض / طباعة with no matching importer → «لا يوجد سجلات تحقق المطلوب», and no tab opens.
-6. عرض with matches → new tab with the RDF (`DESTYPE=SCREEN`). طباعة → `DESTYPE=PRINTER` (Reports Server printer).
+4. One Popup LOV «رقم المستورد»: each importer picked is added once to the table «المستوردون المختارون» (number + name),
+   and the LOV is empty again for the next pick. No picks → the report covers every importer of the port. CLEAR empties the table.
+5. طباعة with no matching importer → «لا يوجد سجلات تحقق المطلوب», and no tab opens.
+6. طباعة with matches → new tab with the PDF from ardpdf: landscape, header on every page (port, logo, title), one block
+   per importer (مسلسل, نوع المستورد, نوع الاقامة + the 8 columns), footer with report number and dates, «صفحة X من Y».
+   The rows must be exactly the listed importers (all importers of the port when the list is empty).
    **The browser may block the tab**: `window.open` runs after the AJAX call, as on f202604 page 2100. Allow
    pop-ups for the APEX host.
-7. **Expected finding**: the RDF in the repository filters `HQ_IMPR_NBR = :P_IMPR_NBR`, which the form does not send →
-   empty report. See spec §12.1 before raising it as a conversion bug.
+7. Direct check without APEX: `SELECT IMPR2110_ARD.ARD_IMPR2110('30', '1,2', 'test', '1-1') FROM dual;` returns the HTML.
 
 ## 5. Uncertain parameters (not in f345; check after import)
 

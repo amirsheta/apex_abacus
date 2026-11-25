@@ -19,6 +19,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'scripts'))
 import number_only      # page 0 DA "NUMBER ONLY" (user decision 2026-11-24)
 import functions_drawer # page 0 region FUNCS: the functions side drawer of every page (user request 2026-11-24)
+import report_toolbar   # page 0 buttons on report pages: PRINT, CLEAR, BACK only (user request 2026-11-25)
 REF = os.path.join(ROOT, 'apex', 'Reference', 'f345.sql')
 
 def main(argv):
@@ -58,6 +59,11 @@ def main(argv):
     if "p_region_name=>'FUNCS'" in ref[p0:p0_end] or 'wwv_flow_api.id(%s)' % functions_drawer.PAGE0_REGION_ID in ref:
         sys.exit('f345.sql page 0 already has a FUNCS region / its id is used')
     ref = ref[:p0_end] + '\n' + functions_drawer.page0_region() + '\n' + functions_drawer.page0_dynamic_action() + ref[p0_end:]
+    # page 0 toolbar on report pages (P<page>_REPORT): PRINT, CLEAR, BACK only (user request 2026-11-25, DEC-018,
+    # scripts/report_toolbar.py): CREATE / SEARCH not on report pages, REPORT_SHOW Never
+    ref = report_toolbar.patch_page0(ref)
+    if report_toolbar.check(ref):
+        sys.exit('; '.join(report_toolbar.check(ref)))
 
     # ---- component bodies
     bodies, pages = [], []

@@ -6,8 +6,8 @@
 -- Target      : Oracle APEX 21.2 (export version 2021.10.15), Oracle Database 12.1.0.2,
 --               reference application f345 (apex/Reference/f345.sql)
 -- Standard    : CLAUDE.md 4b / 4c / 4d, docs/f345_reference_standard.md; report screen as the approved standard
---               13-b (P2110_REPORT, page 0 REPORT_SHOW / REPORT_PRINT custom events, CHECK_VAL / PRINT_CHECK_VAL
---               return the Reports Server URL). One-line calls into package IMPR2110 (version 001).
+--               13-b / 13-c (P2110_REPORT, page 0 REPORT_PRINT custom event, PRINT_CHECK_VAL returns the ardpdf link of
+--               the report package IMPR2110_ARD). One-line calls into package IMPR2110 (version 002).
 -- Contents    : component export INTO the application installed from f345 AND already holding the
 --               IMPR1110 export (page group IMPR and LOV_SD_PORTS are reused):
 --               page 2110 (report parameters) + 1 LOV. No search page, no DML.
@@ -152,7 +152,7 @@ unistr('       NVL(i.arbc_impr_name, ''\0647\0630\0627 \0627\0644\0645\0633\062A
 '   AND i.port_cd (+) = NVL(:P2110_P_PORT_CD, :P_CURR_PORT_CD)',
 ' ORDER BY l.seq'))
 ,p_plug_source_type=>'NATIVE_IG'
-,p_ajax_items_to_submit=>'P2110_LICE_NO,P2110_P_PORT_CD'
+,p_ajax_items_to_submit=>'P2110_P_PORT_CD'
 ,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
 ,p_plug_comment=>'Source: IMPR2110.CTR_BLK (control block, 5 records, read only: the numbers of LICE_NO and their names) / spec 3'
 );
@@ -342,38 +342,17 @@ wwv_flow_api.create_page_item(
 );
 wwv_flow_api.create_page_item(
  p_id=>wwv_flow_api.id(211004000030)
-,p_name=>'P2110_LICE_NO'
+,p_name=>'P2110_SECT_LOV'
 ,p_item_sequence=>30
 ,p_item_plug_id=>wwv_flow_api.id(211001000020)
 ,p_prompt=>unistr('\0631\0642\0645 \0627\0644\0645\0633\062A\0648\0631\062F')
-,p_display_as=>'NATIVE_TEXT_FIELD'
-,p_cSize=>30
-,p_cMaxlength=>2000
-,p_post_element_text=>'<span class="cg-ic fa fa-hashtag" aria-hidden="true"></span>'
-,p_begin_on_new_line=>'YES'
-,p_colspan=>6
-,p_field_template=>wwv_flow_api.id(11621983529556869749)
-,p_item_template_options=>'#DEFAULT#:t-Form-fieldContainer--stretchInputs'
-,p_is_persistent=>'N'
-,p_attribute_01=>'N'
-,p_attribute_02=>'N'
-,p_attribute_04=>'TEXT'
-,p_attribute_05=>'BOTH'
-,p_item_comment=>'Source: IMPR2110.CALLING_PARAMETERS.LICE_NO (importer numbers separated by commas; empty = every importer of the port)'
-);
-wwv_flow_api.create_page_item(
- p_id=>wwv_flow_api.id(211004000040)
-,p_name=>'P2110_SECT_LOV'
-,p_item_sequence=>40
-,p_item_plug_id=>wwv_flow_api.id(211001000020)
-,p_prompt=>unistr('\0627\062E\062A\064A\0627\0631 \0645\0633\062A\0648\0631\062F')
 ,p_display_as=>'NATIVE_POPUP_LOV'
 ,p_named_lov=>'LOV_REP_IMPR'
 ,p_lov_display_null=>'YES'
 ,p_ajax_items_to_submit=>'P2110_P_PORT_CD'
 ,p_cSize=>30
 ,p_post_element_text=>'<span class="cg-ic fa fa-list" aria-hidden="true"></span>'
-,p_begin_on_new_line=>'NO'
+,p_begin_on_new_line=>'YES'
 ,p_colspan=>6
 ,p_field_template=>wwv_flow_api.id(11621983529556869749)
 ,p_item_template_options=>'#DEFAULT#:t-Form-fieldContainer--stretchInputs'
@@ -381,7 +360,17 @@ wwv_flow_api.create_page_item(
 ,p_attribute_01=>'DIALOG'
 ,p_attribute_02=>'FIRST_ROWSET'
 ,p_attribute_03=>'N'
-,p_item_comment=>'Source: IMPR2110.CALLING_PARAMETERS.SECT_LOV (button) / LICE_NO.KEY-LISTVAL -> LOV form REP_LOV_IMPR; the picked importer is added to LICE_NO'
+,p_item_comment=>'Source: IMPR2110.CALLING_PARAMETERS.LICE_NO (KEY-LISTVAL) / SECT_LOV (button) -> LOV form REP_LOV_IMPR; the picked importer is added to the table CTR_BLK (LICE_NO)'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(211004000040)
+,p_name=>'P2110_LICE_NO'
+,p_item_sequence=>40
+,p_item_plug_id=>wwv_flow_api.id(211001000020)
+,p_display_as=>'NATIVE_HIDDEN'
+,p_is_persistent=>'N'
+,p_attribute_01=>'N'
+,p_item_comment=>'Source: IMPR2110.CALLING_PARAMETERS.LICE_NO (importer numbers separated by commas, filled by the Popup LOV P2110_SECT_LOV; empty = every importer of the port). Kept in session state: the FOS of SECT_LOV writes it, the table CTR_BLK and PRINT_CHECK_VAL read it; never submitted from the browser'
 );
 wwv_flow_api.create_page_item(
  p_id=>wwv_flow_api.id(211004000050)
@@ -432,7 +421,7 @@ wwv_flow_api.create_page_item(
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'Y'
-,p_item_comment=>'Source: f345 report flag - page 0 shows REPORT_SHOW / REPORT_PRINT (Forms TOOLBAR.VIEW / PRINT) and hides FUNCS when this item exists (no value)'
+,p_item_comment=>'Source: f345 report flag - page 0 shows only REPORT_PRINT, CLEAR, BACK when this item exists (no value; scripts/report_toolbar.py, DEC-018)'
 );
 wwv_flow_api.create_page_item(
  p_id=>wwv_flow_api.id(211004000100)
@@ -442,7 +431,7 @@ wwv_flow_api.create_page_item(
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
-,p_item_comment=>'Source: IMPR2110 REP.Run_Product (CHECK_VAL / PRINT_CHECK_VAL) - Reports Server URL returned by FOS, opened in a new tab'
+,p_item_comment=>'Source: IMPR2110 REP.Run_Product (PRINT_CHECK_VAL) - ardpdf link of IMPR2110_ARD returned by FOS, opened in a new tab'
 );
 wwv_flow_api.create_page_process(
  p_id=>wwv_flow_api.id(211007000010)
@@ -537,13 +526,13 @@ wwv_flow_api.create_page_da_action(
 );
 wwv_flow_api.create_page_da_event(
  p_id=>wwv_flow_api.id(211008000020)
-,p_name=>'LICE_NO WHEN-VALIDATE-ITEM'
-,p_event_sequence=>20
+,p_name=>'SECT_LOV WHEN-BUTTON-PRESSED'
+,p_event_sequence=>30
 ,p_triggering_element_type=>'ITEM'
-,p_triggering_element=>'P2110_LICE_NO'
+,p_triggering_element=>'P2110_SECT_LOV'
 ,p_bind_type=>'bind'
 ,p_bind_event_type=>'change'
-,p_da_event_comment=>'Source: IMPR2110.CALLING_PARAMETERS.LICE_NO.WHEN-VALIDATE-ITEM + CTR_BLK.WHEN-NEW-BLOCK-INSTANCE / spec 10'
+,p_da_event_comment=>'Source: IMPR2110.CALLING_PARAMETERS.SECT_LOV.WHEN-BUTTON-PRESSED, LICE_NO.KEY-LISTVAL (REP_LOV_IMPR) / spec 10'
 );
 wwv_flow_api.create_page_da_action(
  p_id=>wwv_flow_api.id(211009000030)
@@ -552,8 +541,9 @@ wwv_flow_api.create_page_da_action(
 ,p_action_sequence=>10
 ,p_execute_on_page_init=>'N'
 ,p_action=>'PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE'
-,p_attribute_01=>'FORMS_APX.CHECK_ERROR(IMPR2110.LICE_NO_VALIDATION(P_LICE_NO => :P2110_LICE_NO));'
-,p_attribute_02=>'P2110_LICE_NO'
+,p_attribute_01=>'IMPR2110.SECT_LOV_WHEN_BUTTON_PRESSED(P_SECT_LOV => :P2110_SECT_LOV, P_LICE_NO => :P2110_LICE_NO);'
+,p_attribute_02=>'P2110_SECT_LOV'
+,p_attribute_03=>'P2110_SECT_LOV,P2110_LICE_NO'
 ,p_attribute_05=>'#SQLERRM#'
 ,p_attribute_15=>'suppressChangeEvent:escape-message'
 ,p_wait_for_result=>'Y'
@@ -570,85 +560,6 @@ wwv_flow_api.create_page_da_action(
 );
 wwv_flow_api.create_page_da_event(
  p_id=>wwv_flow_api.id(211008000030)
-,p_name=>'SECT_LOV WHEN-BUTTON-PRESSED'
-,p_event_sequence=>30
-,p_triggering_element_type=>'ITEM'
-,p_triggering_element=>'P2110_SECT_LOV'
-,p_triggering_condition_type=>'NOT_NULL'
-,p_bind_type=>'bind'
-,p_bind_event_type=>'change'
-,p_da_event_comment=>'Source: IMPR2110.CALLING_PARAMETERS.SECT_LOV.WHEN-BUTTON-PRESSED, LICE_NO.KEY-LISTVAL (REP_LOV_IMPR) / spec 10'
-);
-wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(211009000050)
-,p_event_id=>wwv_flow_api.id(211008000030)
-,p_event_result=>'TRUE'
-,p_action_sequence=>10
-,p_execute_on_page_init=>'N'
-,p_action=>'PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE'
-,p_attribute_01=>'IMPR2110.SECT_LOV_WHEN_BUTTON_PRESSED(P_SECT_LOV => :P2110_SECT_LOV, P_LICE_NO => :P2110_LICE_NO);'
-,p_attribute_02=>'P2110_SECT_LOV,P2110_LICE_NO'
-,p_attribute_03=>'P2110_SECT_LOV,P2110_LICE_NO'
-,p_attribute_05=>'#SQLERRM#'
-,p_attribute_15=>'suppressChangeEvent:escape-message'
-,p_wait_for_result=>'Y'
-);
-wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(211009000060)
-,p_event_id=>wwv_flow_api.id(211008000030)
-,p_event_result=>'TRUE'
-,p_action_sequence=>20
-,p_execute_on_page_init=>'N'
-,p_action=>'NATIVE_REFRESH'
-,p_affected_elements_type=>'REGION'
-,p_affected_region_id=>wwv_flow_api.id(211001000030)
-);
-wwv_flow_api.create_page_da_event(
- p_id=>wwv_flow_api.id(211008000040)
-,p_name=>'REPORT_SHOW'
-,p_event_sequence=>50
-,p_triggering_element_type=>'JAVASCRIPT_EXPRESSION'
-,p_triggering_element=>'document'
-,p_bind_type=>'bind'
-,p_bind_event_type=>'custom'
-,p_bind_event_type_custom=>'REPORT_SHOW'
-,p_da_event_comment=>'Source: IMPR2110.TOOLBAR.VIEW.WHEN-BUTTON-PRESSED, KEY-F5 -> PU CHECK_VAL (page 0 button REPORT_SHOW triggers the custom event; standard 13-b) / spec 10'
-);
-wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(211009000070)
-,p_event_id=>wwv_flow_api.id(211008000040)
-,p_event_result=>'TRUE'
-,p_action_sequence=>10
-,p_execute_on_page_init=>'N'
-,p_action=>'NATIVE_CLEAR'
-,p_affected_elements_type=>'ITEM'
-,p_affected_elements=>'P2110_REPORT_URL'
-);
-wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(211009000080)
-,p_event_id=>wwv_flow_api.id(211008000040)
-,p_event_result=>'TRUE'
-,p_action_sequence=>20
-,p_execute_on_page_init=>'N'
-,p_action=>'PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE'
-,p_attribute_01=>'IMPR2110.CHECK_VAL(P_LICE_NO => :P2110_LICE_NO, P_PORT_CD => :P2110_P_PORT_CD, P_REPORT_NO => :P2110_REPORT_NO, P_HERO_TITLE => :P2110_HERO_TITLE, P_MODULE_ID => :P2110_MODULE_ID, P_CURR_PORT_CD => :P_CURR_PORT_CD, P_REPORT_URL => :P2110_REPORT_URL);'
-,p_attribute_02=>'P2110_LICE_NO,P2110_P_PORT_CD,P2110_REPORT_NO,P2110_HERO_TITLE,P2110_MODULE_ID'
-,p_attribute_03=>'P2110_REPORT_URL'
-,p_attribute_05=>'#SQLERRM#'
-,p_attribute_15=>'suppressChangeEvent:escape-message'
-,p_wait_for_result=>'Y'
-);
-wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(211009000090)
-,p_event_id=>wwv_flow_api.id(211008000040)
-,p_event_result=>'TRUE'
-,p_action_sequence=>30
-,p_execute_on_page_init=>'N'
-,p_action=>'NATIVE_JAVASCRIPT_CODE'
-,p_attribute_01=>'var u = $v(''P2110_REPORT_URL''); if (u) { window.open(u, ''_blank''); }'
-);
-wwv_flow_api.create_page_da_event(
- p_id=>wwv_flow_api.id(211008000050)
 ,p_name=>'REPORT_PRINT'
 ,p_event_sequence=>60
 ,p_triggering_element_type=>'JAVASCRIPT_EXPRESSION'
@@ -656,11 +567,11 @@ wwv_flow_api.create_page_da_event(
 ,p_bind_type=>'bind'
 ,p_bind_event_type=>'custom'
 ,p_bind_event_type_custom=>'REPORT_PRINT'
-,p_da_event_comment=>'Source: IMPR2110.TOOLBAR.PRINT.WHEN-BUTTON-PRESSED, KEY-PRINT, KEY-F4 -> PU PRINT_CHECK_VAL (page 0 button REPORT_PRINT triggers the custom event; standard 13-b) / spec 10'
+,p_da_event_comment=>'Source: IMPR2110.TOOLBAR.PRINT / VIEW.WHEN-BUTTON-PRESSED, KEY-PRINT, KEY-F4, KEY-F5 -> PU PRINT_CHECK_VAL / CHECK_VAL, report IMPR2110_ARD (page 0 button REPORT_PRINT triggers the custom event; standard 13-b) / spec 10'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(211009000100)
-,p_event_id=>wwv_flow_api.id(211008000050)
+ p_id=>wwv_flow_api.id(211009000050)
+,p_event_id=>wwv_flow_api.id(211008000030)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>10
 ,p_execute_on_page_init=>'N'
@@ -669,22 +580,22 @@ wwv_flow_api.create_page_da_action(
 ,p_affected_elements=>'P2110_REPORT_URL'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(211009000110)
-,p_event_id=>wwv_flow_api.id(211008000050)
+ p_id=>wwv_flow_api.id(211009000060)
+,p_event_id=>wwv_flow_api.id(211008000030)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>20
 ,p_execute_on_page_init=>'N'
 ,p_action=>'PLUGIN_COM.FOS.EXECUTE_PLSQL_CODE'
 ,p_attribute_01=>'IMPR2110.PRINT_CHECK_VAL(P_LICE_NO => :P2110_LICE_NO, P_PORT_CD => :P2110_P_PORT_CD, P_REPORT_NO => :P2110_REPORT_NO, P_HERO_TITLE => :P2110_HERO_TITLE, P_MODULE_ID => :P2110_MODULE_ID, P_CURR_PORT_CD => :P_CURR_PORT_CD, P_REPORT_URL => :P2110_REPORT_URL);'
-,p_attribute_02=>'P2110_LICE_NO,P2110_P_PORT_CD,P2110_REPORT_NO,P2110_HERO_TITLE,P2110_MODULE_ID'
+,p_attribute_02=>'P2110_P_PORT_CD,P2110_REPORT_NO,P2110_HERO_TITLE,P2110_MODULE_ID'
 ,p_attribute_03=>'P2110_REPORT_URL'
 ,p_attribute_05=>'#SQLERRM#'
 ,p_attribute_15=>'suppressChangeEvent:escape-message'
 ,p_wait_for_result=>'Y'
 );
 wwv_flow_api.create_page_da_action(
- p_id=>wwv_flow_api.id(211009000120)
-,p_event_id=>wwv_flow_api.id(211008000050)
+ p_id=>wwv_flow_api.id(211009000070)
+,p_event_id=>wwv_flow_api.id(211008000030)
 ,p_event_result=>'TRUE'
 ,p_action_sequence=>30
 ,p_execute_on_page_init=>'N'

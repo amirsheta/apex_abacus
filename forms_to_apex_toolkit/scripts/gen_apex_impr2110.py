@@ -2,8 +2,8 @@
 """
 gen_apex_impr2110.py - APEX 21.2 component export of IMPR2110 (report parameter form) (wwv_flow_api),
 f345 reference standard (CLAUDE.md 4b / 4c / 4d, docs/f345_reference_standard.md) and the approved report-screen
-standard 13-b (Forms_to_APEX APPROVED_STANDARD.md: P<page>_REPORT, page 0 REPORT_SHOW / REPORT_PRINT custom events,
-CHECK_VAL / PRINT_CHECK_VAL return the Reports Server URL of the RDF).
+standard 13-b (Forms_to_APEX APPROVED_STANDARD.md: P<page>_REPORT, page 0 REPORT_PRINT custom event,
+PRINT_CHECK_VAL returns the ardpdf link of the report package IMPR2110_ARD; standard 13-c).
 
 Design : analysis/IMPR2110/IMPR2110_apex_page_spec.md; the design data is written in this script (sections marked
          "spec N"), so a spec change means a change here and a re-run.
@@ -361,13 +361,16 @@ PARAM_ITEMS = [
                  'hidden when P_CURR_PORT_CD != 99, WHEN-NEW-FORM-INSTANCE)'),
     dict(name='P2110_P_PORT_NAME', kind='NATIVE_DISPLAY_ONLY', newline=False, span=9, cond=PORT_VISIBLE,
          comment='Source: IMPR2110.CALLING_PARAMETERS.P_PORT_NAME (set by P_PORT_CD WHEN-VALIDATE-ITEM)'),
-    dict(name='P2110_LICE_NO', kind='NATIVE_TEXT_FIELD', label='رقم المستورد', maxlen=2000, span=6,
-         comment='Source: IMPR2110.CALLING_PARAMETERS.LICE_NO (importer numbers separated by commas; '
-                 'empty = every importer of the port)'),
-    dict(name='P2110_SECT_LOV', kind='NATIVE_POPUP_LOV', label='اختيار مستورد', lov='LOV_REP_IMPR', submit='P2110_P_PORT_CD',
-         newline=False, span=6,
-         comment='Source: IMPR2110.CALLING_PARAMETERS.SECT_LOV (button) / LICE_NO.KEY-LISTVAL -> LOV form REP_LOV_IMPR; '
-                 'the picked importer is added to LICE_NO'),
+    # one Popup LOV for the importers (user request 2026-11-25): each pick is added to the table CTR_BLK;
+    # LICE_NO only holds the picked numbers (comma list, empty = every importer of the port), not typed any more
+    dict(name='P2110_SECT_LOV', kind='NATIVE_POPUP_LOV', label='رقم المستورد', lov='LOV_REP_IMPR', submit='P2110_P_PORT_CD',
+         span=6,
+         comment='Source: IMPR2110.CALLING_PARAMETERS.LICE_NO (KEY-LISTVAL) / SECT_LOV (button) -> LOV form REP_LOV_IMPR; '
+                 'the picked importer is added to the table CTR_BLK (LICE_NO)'),
+    dict(name='P2110_LICE_NO', kind='NATIVE_HIDDEN', value_protected='N',
+         comment='Source: IMPR2110.CALLING_PARAMETERS.LICE_NO (importer numbers separated by commas, filled by the '
+                 'Popup LOV P2110_SECT_LOV; empty = every importer of the port). Kept in session state: the FOS of '
+                 'SECT_LOV writes it, the table CTR_BLK and PRINT_CHECK_VAL read it; never submitted from the browser'),
 ]
 HERO_ITEMS = [
     dict(name='P2110_HERO_TITLE', kind='NATIVE_HIDDEN', value_protected='Y',
@@ -379,10 +382,10 @@ HERO_ITEMS = [
     dict(name='P2110_P_CURR_PORT_NAME', kind='NATIVE_HIDDEN', value_protected='Y',
          comment='Source: IMPR2110.TITLE.P_CURR_PORT_NAME (port name of the user, WHEN-NEW-FORM-INSTANCE) - hero'),
     dict(name='P2110_REPORT', kind='NATIVE_HIDDEN', value_protected='Y',
-         comment='Source: f345 report flag - page 0 shows REPORT_SHOW / REPORT_PRINT (Forms TOOLBAR.VIEW / PRINT) '
-                 'and hides FUNCS when this item exists (no value)'),
+         comment='Source: f345 report flag - page 0 shows only REPORT_PRINT, CLEAR, BACK when this item exists (no value; '
+                 'scripts/report_toolbar.py, DEC-018)'),
     dict(name='P2110_REPORT_URL', kind='NATIVE_HIDDEN', value_protected='N',
-         comment='Source: IMPR2110 REP.Run_Product (CHECK_VAL / PRINT_CHECK_VAL) - Reports Server URL returned by FOS, '
+         comment='Source: IMPR2110 REP.Run_Product (PRINT_CHECK_VAL) - ardpdf link of IMPR2110_ARD returned by FOS, '
                  'opened in a new tab'),
 ]
 CTR_SQL = '\n'.join([
@@ -413,7 +416,7 @@ NEW_LOVS = [
 REPORT_ARGS = ('P_LICE_NO => :P2110_LICE_NO, P_PORT_CD => :P2110_P_PORT_CD, P_REPORT_NO => :P2110_REPORT_NO, '
                'P_HERO_TITLE => :P2110_HERO_TITLE, P_MODULE_ID => :P2110_MODULE_ID, P_CURR_PORT_CD => :P_CURR_PORT_CD, '
                'P_REPORT_URL => :P2110_REPORT_URL')
-REPORT_SUBMIT = ['P2110_LICE_NO', 'P2110_P_PORT_CD', 'P2110_REPORT_NO', 'P2110_HERO_TITLE', 'P2110_MODULE_ID']
+REPORT_SUBMIT = ['P2110_P_PORT_CD', 'P2110_REPORT_NO', 'P2110_HERO_TITLE', 'P2110_MODULE_ID']   # LICE_NO: session state
 OPEN_URL = "var u = $v('P2110_REPORT_URL'); if (u) { window.open(u, '_blank'); }"
 
 # ----------------------------------------------------------------------------- generation
@@ -428,8 +431,8 @@ def gen():
 -- Target      : Oracle APEX 21.2 (export version 2021.10.15), Oracle Database 12.1.0.2,
 --               reference application f345 (apex/Reference/f345.sql)
 -- Standard    : CLAUDE.md 4b / 4c / 4d, docs/f345_reference_standard.md; report screen as the approved standard
---               13-b (P2110_REPORT, page 0 REPORT_SHOW / REPORT_PRINT custom events, CHECK_VAL / PRINT_CHECK_VAL
---               return the Reports Server URL). One-line calls into package IMPR2110 (version 001).
+--               13-b / 13-c (P2110_REPORT, page 0 REPORT_PRINT custom event, PRINT_CHECK_VAL returns the ardpdf link of
+--               the report package IMPR2110_ARD). One-line calls into package IMPR2110 (version 002).
 -- Contents    : component export INTO the application installed from f345 AND already holding the
 --               IMPR1110 export (page group IMPR and LOV_SD_PORTS are reused):
 --               page 2110 (report parameters) + 1 LOV. No search page, no DML.
@@ -507,7 +510,8 @@ end;
         ('p_region_css_classes', q('cg-card cg-grid')), ('p_region_template_options', q('#DEFAULT#:t-Region--noPadding')),
         ('p_plug_template', fid('REGION_GRID')), ('p_plug_display_sequence', '30'), ('p_query_type', q('SQL')),
         ('p_plug_source', lit(CTR_SQL)), ('p_plug_source_type', q('NATIVE_IG')),
-        ('p_ajax_items_to_submit', q('P2110_LICE_NO,P2110_P_PORT_CD')), ('p_plug_query_options', q('DERIVED_REPORT_COLUMNS')),
+        # P2110_LICE_NO is server state (set by the FOS of SECT_LOV): not submitted, so the refresh reads the new list
+        ('p_ajax_items_to_submit', q('P2110_P_PORT_CD')), ('p_plug_query_options', q('DERIVED_REPORT_COLUMNS')),
         ('p_plug_comment', src('IMPR2110.CTR_BLK (control block, 5 records, read only: the numbers of LICE_NO and their names) / spec 3'))]))
     for i, c in enumerate(CTR_COLUMNS):
         A(ig_column(R_CTR, c, (i + 1) * 10))
@@ -545,16 +549,16 @@ end;
         fos('IMPR2110.P_PORT_CD_WHEN_VALIDATE_ITEM(P_PORT_CD => :P2110_P_PORT_CD, P_PORT_NAME => :P2110_P_PORT_NAME);',
             ['P2110_P_PORT_CD'], ['P2110_P_PORT_NAME']), refresh],
         'IMPR2110.CALLING_PARAMETERS.P_PORT_CD.WHEN-VALIDATE-ITEM / spec 10'))
-    A(da(PG, 20, 'LICE_NO WHEN-VALIDATE-ITEM', ('ITEM', 'P2110_LICE_NO'), 'change', [
-        fos('FORMS_APX.CHECK_ERROR(IMPR2110.LICE_NO_VALIDATION(P_LICE_NO => :P2110_LICE_NO));', ['P2110_LICE_NO']), refresh],
-        'IMPR2110.CALLING_PARAMETERS.LICE_NO.WHEN-VALIDATE-ITEM + CTR_BLK.WHEN-NEW-BLOCK-INSTANCE / spec 10'))
+    # LICE_NO is not typed any more (hidden, filled by SECT_LOV): its list check runs in PRINT_CHECK_VAL
     A(da(PG, 30, 'SECT_LOV WHEN-BUTTON-PRESSED', ('ITEM', 'P2110_SECT_LOV'), 'change', [
         fos('IMPR2110.SECT_LOV_WHEN_BUTTON_PRESSED(P_SECT_LOV => :P2110_SECT_LOV, P_LICE_NO => :P2110_LICE_NO);',
-            ['P2110_SECT_LOV', 'P2110_LICE_NO'], ['P2110_SECT_LOV', 'P2110_LICE_NO']), refresh],
-        'IMPR2110.CALLING_PARAMETERS.SECT_LOV.WHEN-BUTTON-PRESSED, LICE_NO.KEY-LISTVAL (REP_LOV_IMPR) / spec 10', cond='NOT_NULL'))
+            ['P2110_SECT_LOV'], ['P2110_SECT_LOV', 'P2110_LICE_NO']), refresh],   # LICE_NO read / written in session state
+        'IMPR2110.CALLING_PARAMETERS.SECT_LOV.WHEN-BUTTON-PRESSED, LICE_NO.KEY-LISTVAL (REP_LOV_IMPR) / spec 10'))   # no client-side condition (user 2026-11-25): an empty pick is ignored in SECT_LOV_WHEN_BUTTON_PRESSED
+    # report page buttons: PRINT, CLEAR, BACK only (DEC-017 / DEC-018): page 0 REPORT_SHOW is Never, so no REPORT_SHOW DA;
+    # Forms VIEW / KEY-F5 (PU CHECK_VAL, same code) open the same ARD PDF as PRINT
     for seq, event, member, s in [
-            (50, 'REPORT_SHOW', 'CHECK_VAL', 'IMPR2110.TOOLBAR.VIEW.WHEN-BUTTON-PRESSED, KEY-F5 -> PU CHECK_VAL'),
-            (60, 'REPORT_PRINT', 'PRINT_CHECK_VAL', 'IMPR2110.TOOLBAR.PRINT.WHEN-BUTTON-PRESSED, KEY-PRINT, KEY-F4 -> PU PRINT_CHECK_VAL')]:
+            (60, 'REPORT_PRINT', 'PRINT_CHECK_VAL', 'IMPR2110.TOOLBAR.PRINT / VIEW.WHEN-BUTTON-PRESSED, KEY-PRINT, KEY-F4, KEY-F5 '
+                                                    '-> PU PRINT_CHECK_VAL / CHECK_VAL, report IMPR2110_ARD')]:
         A(da(PG, seq, event, ('CUSTOM', event), 'custom', [
             item_action('NATIVE_CLEAR', 'P2110_REPORT_URL'),
             fos('IMPR2110.%s(%s);' % (member, REPORT_ARGS), REPORT_SUBMIT, ['P2110_REPORT_URL']),
@@ -563,7 +567,6 @@ end;
     UNCERTAIN.add('DA on a custom event of document: p_triggering_element_type JAVASCRIPT_EXPRESSION, p_triggering_element document, '
                   'p_bind_event_type custom + p_bind_event_type_custom (as the real 21.2 export f202604, page 2100 REPORT_SHOW)')
     UNCERTAIN.add('NATIVE_CLEAR with p_affected_elements_type ITEM (IMPR1120 uses it)')
-    UNCERTAIN.add('DA client-side condition p_triggering_condition_type => NOT_NULL (not in f345; IMPR1110 uses it)')
     W(block('application/pages/page_02110', '\n'.join(P)))
 
     W('''prompt --application/end_environment

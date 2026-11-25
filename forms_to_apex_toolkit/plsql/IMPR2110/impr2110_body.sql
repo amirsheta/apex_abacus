@@ -1,6 +1,6 @@
 -- =============================================================================
 -- Package body: IMPR2110   (matches impr2110_spec.sql - f345 standard)
--- Source form : IMPR2110.fmb   Target: APEX 21.2 / DB 12.1.0.2   Version: 001
+-- Source form : IMPR2110.fmb   Target: APEX 21.2 / DB 12.1.0.2   Version: 002
 -- Author      : Claude Code     Created: 2026-11-25   (see the spec history)
 -- Rules: no Forms built-ins (FORMS_APX instead), no COMMIT / ROLLBACK, no V('...'),
 --        parameters named after their binds without I_ / IO_ / O_; page items P<page>_X -> P_X;
@@ -8,15 +8,17 @@
 -- Common helpers: FORMS_APX (version 004), called as FORMS_APX.<NAME>.
 -- Layout (docs/f345_reference_standard.md §10): PRIVATE HELPERS -> VERSION -> FORM LEVEL
 -- -> BLOCK CALLING_PARAMETERS -> BLOCK TOOLBAR -> PROGRAM UNITS.
--- Status: NOT COMPILED. External DB package without source here: SC_PORT_SETTINGS_PKG.
+-- Status: NOT COMPILED. The report itself: IMPR2110_ARD (IMPR2110_ARD.pks / .pkb).
 -- =============================================================================
 SET DEFINE OFF
 
 CREATE OR REPLACE PACKAGE BODY LIB_APX_USR.IMPR2110
 AS
     c_all_ports        CONSTANT VARCHAR2(2)  := '99';         -- P_CURR_PORT_CD 99 = head office (all ports)
-    c_report_file      CONSTANT VARCHAR2(30) := 'IMPR2110';   -- :PARAMETER.P_REPORT_FILE default
-    c_report_server    CONSTANT NUMBER       := 23;           -- 2nd argument of GET_SC_PORT_REPORT_URL (standard 13-b)
+    c_ard_function     CONSTANT VARCHAR2(60) := 'LIB_APX_USR.IMPR2110_ARD.ARD_IMPR2110';
+    -- ARD server settings in SC_PORT_SETTING (user decision 2026-11-25): SYSOBJ_ID 999, PORT_CD 99, VAR_NAME ARD_URL / ARD_DSNAME
+    c_settings_object  CONSTANT VARCHAR2(10) := '999';
+    c_msg_ard_setting  CONSTANT VARCHAR2(200) := 'إعداد خادم التقارير غير موجود في SC_PORT_SETTING (SYSOBJ_ID 999، PORT_CD 99): ';
     c_list_pattern     CONSTANT VARCHAR2(60) := '^[0-9]+(,[0-9]+)*$';
 
     -- Forms texts
@@ -82,43 +84,13 @@ AS
         RETURN v_count;
     END importers_count;
 
-    -- CHECK_VAL and PRINT_CHECK_VAL: the item checks again (the DAs may not have run), the count check
-    -- and the report URL (standard 13-b). p_destype SCREEN = VIEW, PRINTER = PRINT.
-    PROCEDURE run_report (p_destype      IN  VARCHAR2,
-                          p_lice_no      IN  VARCHAR2,
-                          p_port_cd      IN  VARCHAR2,
-                          p_report_no    IN  VARCHAR2,
-                          p_module_name  IN  VARCHAR2,
-                          p_module_id    IN  VARCHAR2,
-                          p_curr_port_cd IN  VARCHAR2,
-                          p_report_url   OUT VARCHAR2)
+    -- ardpdf parameter: &P_PARAMETER<n>=<value>, URL-escaped (UTF-8), as PRINT_<FORM>_ARD of the other report screens
+    FUNCTION ard_parameter (p_n IN PLS_INTEGER, p_value IN VARCHAR2)
+       RETURN VARCHAR2
     IS
-        v_list   VARCHAR2(4000);
-        v_port   VARCHAR2(30) := NVL(p_port_cd, p_curr_port_cd);
-        v_select VARCHAR2(4000);
     BEGIN
-        FORMS_APX.CHECK_ERROR(P_PORT_CD_VALIDATION(P_PORT_CD => p_port_cd));
-        FORMS_APX.CHECK_ERROR(LICE_NO_VALIDATION(P_LICE_NO => p_lice_no));
-        v_list := normalized_list(p_lice_no);
-        -- Forms: :parameter.TRAN_SELECT (report lexical CG$P_impr_nbr)
-        IF v_list IS NULL THEN
-            v_select := ' AND IMP.IMPR_NBR IS NOT NULL';
-        ELSE
-            v_select := ' AND  IMP.IMPR_NBR in ( ' || v_list || ')';
-        END IF;
-        IF importers_count(v_list, v_port) = 0 THEN
-            FORMS_APX.CHECK_ERROR(c_msg_no_rows);
-        END IF;
-        p_report_url := PRINT_IMPR2110(p_destype      => p_destype,
-                                       p_desname      => NULL,      -- Forms P_NAME: printer dialog commented out
-                                       p_report_no    => p_report_no,
-                                       p_module_name  => p_module_name,
-                                       p_impr_nbr     => v_select,
-                                       p_curr_port_cd => v_port,
-                                       p_v_order      => NULL,      -- :parameter.V_ORDER, never set (PU P_ORDER is empty)
-                                       p_module_id    => p_module_id,
-                                       p_user_port_cd => p_curr_port_cd);
-    END run_report;
+        RETURN CHR(38) || 'P_PARAMETER' || p_n || '=' || UTL_URL.ESCAPE(p_value, TRUE, 'UTF-8');
+    END ard_parameter;
 
     -- =========================================================================
     -- VERSION
@@ -248,25 +220,9 @@ AS
     -- BLOCK TOOLBAR
     -- =========================================================================
 
-    -- Source: PU CHECK_VAL (VIEW, KEY-F5)
-    -- Original Forms code: see the spec; parameter list DESTYPE=SCREEN, PARAMFORM=NO, PRINTJOB=YES,
-    --   CG$P_impr_nbr, P_CURR_PORT_CD, P_MODULE_NAME, P_REPORT_NO, V_ORDER, MAXIMIZE, ORACLE_SHUTDOWN.
-    PROCEDURE CHECK_VAL (P_LICE_NO        IN  VARCHAR2,
-                         P_PORT_CD        IN  VARCHAR2,
-                         P_REPORT_NO      IN  VARCHAR2,
-                         P_HERO_TITLE     IN  VARCHAR2,
-                         P_MODULE_ID      IN  VARCHAR2,
-                         P_CURR_PORT_CD   IN  VARCHAR2,
-                         P_REPORT_URL     OUT VARCHAR2)
-    IS
-    BEGIN
-        run_report('SCREEN', P_LICE_NO, P_PORT_CD, P_REPORT_NO, P_HERO_TITLE, P_MODULE_ID, P_CURR_PORT_CD, P_REPORT_URL);
-    END CHECK_VAL;
-
-    -- Source: PU PRINT_CHECK_VAL (PRINT, KEY-PRINT, KEY-F4)
-    -- Original Forms code: as CHECK_VAL; parameter list PRINTJOB=YES, DESTYPE=PRINTER, DESNAME=P_NAME (NULL:
-    --   WIN_API_DIALOG.SELECT_PRINTER is commented out), PARAMFORM=NO, P_REPORT_NO, P_MODULE_NAME,
-    --   CG$P_impr_nbr, P_CURR_PORT_CD, MAXIMIZE, ORACLE_SHUTDOWN (no V_ORDER).
+    -- Source: PU PRINT_CHECK_VAL (PRINT, KEY-PRINT, KEY-F4) and PU CHECK_VAL (VIEW, KEY-F5) - same code:
+    --   item checks again (the DAs may not have run), :parameter.TRAN_SELECT (importer list), the count
+    --   (no rows -> 'لا يوجد سجلات تحقق المطلوب' + FTF), then REP.Run_Product -> the ardpdf link.
     PROCEDURE PRINT_CHECK_VAL (P_LICE_NO        IN  VARCHAR2,
                                P_PORT_CD        IN  VARCHAR2,
                                P_REPORT_NO      IN  VARCHAR2,
@@ -275,8 +231,19 @@ AS
                                P_CURR_PORT_CD   IN  VARCHAR2,
                                P_REPORT_URL     OUT VARCHAR2)
     IS
+        v_list VARCHAR2(4000);
+        v_port VARCHAR2(30) := NVL(P_PORT_CD, P_CURR_PORT_CD);
     BEGIN
-        run_report('PRINTER', P_LICE_NO, P_PORT_CD, P_REPORT_NO, P_HERO_TITLE, P_MODULE_ID, P_CURR_PORT_CD, P_REPORT_URL);
+        FORMS_APX.CHECK_ERROR(P_PORT_CD_VALIDATION(P_PORT_CD => P_PORT_CD));
+        FORMS_APX.CHECK_ERROR(LICE_NO_VALIDATION(P_LICE_NO => P_LICE_NO));
+        v_list := normalized_list(P_LICE_NO);
+        IF importers_count(v_list, v_port) = 0 THEN
+            FORMS_APX.CHECK_ERROR(c_msg_no_rows);
+        END IF;
+        P_REPORT_URL := PRINT_IMPR2110_ARD(p_impr_list    => v_list,
+                                           p_curr_port_cd => v_port,
+                                           p_module_name  => P_HERO_TITLE,
+                                           p_report_no    => P_REPORT_NO);
     END PRINT_CHECK_VAL;
 
     -- =========================================================================
@@ -284,52 +251,32 @@ AS
     -- =========================================================================
 
     -- Source: REP.Run_Product(REPORTS, V_REPORT_FILE, SYNCHRONOUS, RUNTIME, FILESYSTEM, pl_id, NULL)
-    -- Pattern: approved standard 13-b (PRINT_<FORM>), values sent as in the other report screens.
-    FUNCTION PRINT_IMPR2110 (p_destype        IN VARCHAR2,
-                             p_desname        IN VARCHAR2,
-                             p_report_no      IN VARCHAR2,
-                             p_module_name    IN VARCHAR2,
-                             p_impr_nbr       IN VARCHAR2,
-                             p_curr_port_cd   IN VARCHAR2,
-                             p_v_order        IN VARCHAR2,
-                             p_module_id      IN VARCHAR2,
-                             p_user_port_cd   IN VARCHAR2)
+    -- Pattern: PRINT_<FORM>_ARD of the approved standard 13-b / 13-c; no server link in the code: ARD_URL and
+    -- ARD_DSNAME are settings (SC_PORT_SETTING, SYSOBJ_ID 999, PORT_CD 99 - migration/001_ard_settings.sql);
+    -- a missing setting stops with a message.
+    FUNCTION PRINT_IMPR2110_ARD (p_impr_list      IN VARCHAR2,
+                                 p_curr_port_cd   IN VARCHAR2,
+                                 p_module_name    IN VARCHAR2,
+                                 p_report_no      IN VARCHAR2)
        RETURN VARCHAR2
     IS
-        v_other_parameter VARCHAR2(32000);
-        report_name       VARCHAR2(200);
-        show_parameters   VARCHAR2(50);
-        send_parameter1   VARCHAR2(4000);
-        send_parameter2   VARCHAR2(4000);
-        send_parameter3   VARCHAR2(4000);
-        send_parameter4   VARCHAR2(4000);
-        send_parameter5   VARCHAR2(4000);
-        send_parameter6   VARCHAR2(4000);
-        send_parameter7   VARCHAR2(4000);
+        v_url    VARCHAR2(4000) := parameter_value('ARD_URL', c_settings_object, c_all_ports, NULL);
+        v_dsname VARCHAR2(200)  := parameter_value('ARD_DSNAME', c_settings_object, c_all_ports, NULL);
     BEGIN
-        -- :PARAMETER.P_REPORT_FILE (file name without path; P_REPORT_PATH is the Reports Server's business)
-        report_name     := REGEXP_REPLACE(REGEXP_SUBSTR(parameter_value('P_REPORT_FILE', p_module_id, p_user_port_cd,
-                                                                        c_report_file), '[^\\/]+$'), '\.[^.]*$')
-                           || '.rdf';
-        show_parameters := CHR(38) || 'paramform=no';
-        send_parameter1 := CASE WHEN p_destype IS NOT NULL THEN CHR(38) || 'DESTYPE=' || p_destype END;
-        send_parameter2 := CASE WHEN p_desname IS NOT NULL THEN CHR(38) || 'DESNAME=' || p_desname END;
-        send_parameter3 := CASE WHEN p_report_no IS NOT NULL THEN CHR(38) || 'P_REPORT_NO=' || p_report_no END;
-        send_parameter4 := CASE WHEN p_module_name IS NOT NULL THEN CHR(38) || 'P_MODULE_NAME=' || p_module_name END;
-        send_parameter5 := CASE WHEN p_impr_nbr IS NOT NULL THEN CHR(38) || 'CG$P_impr_nbr=' || p_impr_nbr END;
-        send_parameter6 := CASE WHEN p_curr_port_cd IS NOT NULL THEN CHR(38) || 'P_CURR_PORT_CD=' || p_curr_port_cd END;
-        send_parameter7 := CASE WHEN p_v_order IS NOT NULL THEN CHR(38) || 'V_ORDER=' || p_v_order END;
-        v_other_parameter := report_name
-                             || show_parameters
-                             || send_parameter1
-                             || send_parameter2
-                             || send_parameter3
-                             || send_parameter4
-                             || send_parameter5
-                             || send_parameter6
-                             || send_parameter7;
-        RETURN SC_PORT_SETTINGS_PKG.GET_SC_PORT_REPORT_URL(p_user_port_cd, c_report_server, v_other_parameter);
-    END PRINT_IMPR2110;
+        IF v_url IS NULL THEN
+            FORMS_APX.CHECK_ERROR(c_msg_ard_setting || 'ARD_URL');
+        END IF;
+        IF v_dsname IS NULL THEN
+            FORMS_APX.CHECK_ERROR(c_msg_ard_setting || 'ARD_DSNAME');
+        END IF;
+        RETURN v_url || CASE WHEN INSTR(v_url, '?') > 0 THEN CHR(38) ELSE '?' END
+               || 'func_name=' || c_ard_function
+               || ard_parameter(1, p_curr_port_cd)
+               || ard_parameter(2, p_impr_list)
+               || ard_parameter(3, p_module_name)
+               || ard_parameter(4, p_report_no)
+               || CHR(38) || 'DsName=' || UTL_URL.ESCAPE(v_dsname, TRUE, 'UTF-8');
+    END PRINT_IMPR2110_ARD;
 
 END IMPR2110;
 /

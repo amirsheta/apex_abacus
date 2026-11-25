@@ -112102,7 +112102,6 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>30
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P2110_SECT_LOV'
-,p_triggering_condition_type=>'NOT_NULL'
 ,p_bind_type=>'bind'
 ,p_bind_event_type=>'change'
 ,p_da_event_comment=>'Source: IMPR2110.CALLING_PARAMETERS.SECT_LOV.WHEN-BUTTON-PRESSED, LICE_NO.KEY-LISTVAL (REP_LOV_IMPR) / spec 10'

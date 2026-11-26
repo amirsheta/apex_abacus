@@ -4,7 +4,7 @@
 -- Pattern     : ARD reports (Forms_to_APEX standard 13-c, DEC-014 / DEC-024), as plsql/Shared/DCLN3300_ARD
 --               and plsql/IMPR2110/IMPR2110_ARD: ARD_IMPR2420 returns the report as HTML, the ARD server (ardpdf)
 --               turns it into PDF.
--- Called from : page 2420 through IMPR2420.PRINT_IMPR2420_ARD (ardpdf link) - page not built yet.
+-- Called from : page 2420 through IMPR2420.PRINT_IMPR2420_ARD (ardpdf link; plsql/IMPR2420/impr2420_body.sql).
 -- Generated   : scripts/gen_ard_impr_reports.py (a change goes there, then re-run)
 -- Author      : Claude Code      Created: 2026-11-25      Version: 001
 -- Status      : NOT COMPILED. Depends on ARD_LOGO (static file LOGO1.jpg, DEC-034) and HIJDATE_DB.

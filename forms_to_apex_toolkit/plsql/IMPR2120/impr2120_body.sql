@@ -8,7 +8,7 @@
 -- Common helpers: FORMS_APX (version 004), called as FORMS_APX.<NAME>.
 -- Layout (docs/f345_reference_standard.md §10): PRIVATE HELPERS -> VERSION -> FORM LEVEL
 -- -> BLOCK CALLING_PARAMETERS -> BLOCK TOOLBAR -> PROGRAM UNITS.
--- Status: NOT COMPILED. The report itself: IMPR2120_ARD (IMPR2120_ARD.pks / .pkb).
+-- Status: NOT COMPILED. The report itself: IMPR2120_ARD (IMPR2120_ARD_spec.sql / _body.sql).
 -- =============================================================================
 SET DEFINE OFF
 

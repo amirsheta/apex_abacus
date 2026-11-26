@@ -1,5 +1,5 @@
 -- =============================================================================
--- Package body: IMPR2210_ARD   (matches IMPR2210_ARD.pks)   Version: 001
+-- Package body: IMPR2210_ARD   (matches IMPR2210_ARD_spec.sql)   Version: 001
 -- Layout of IMPR2210.rdf (Landscape, right to left):
 --   margin : port name, logo, الرقم / التاريخ / المرفقات, title P_MODULE_NAME, footer report number + dates + page
 --   M_CG$G_AGNTS_GRPFR (printed only when there are rows): header row + R_CG$G_AGNTS rows.

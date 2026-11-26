@@ -995,6 +995,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>10
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1160_IMPR_NBR'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1160_IMPR_NBR'
 ,p_triggering_condition_type=>'NOT_NULL'
 ,p_bind_type=>'bind'
 ,p_bind_event_type=>'change'
@@ -1030,6 +1032,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>20
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1160_DCLTN_NBR'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1160_DCLTN_NBR'
 ,p_triggering_condition_type=>'NOT_NULL'
 ,p_bind_type=>'bind'
 ,p_bind_event_type=>'change'
@@ -1065,6 +1069,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>30
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1160_AWARD_NBR'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1160_AWARD_NBR'
 ,p_triggering_condition_type=>'NOT_NULL'
 ,p_bind_type=>'bind'
 ,p_bind_event_type=>'change'
@@ -1089,6 +1095,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>40
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1160_AWARD_DATE'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1160_AWARD_DATE'
 ,p_triggering_condition_type=>'NOT_NULL'
 ,p_bind_type=>'bind'
 ,p_bind_event_type=>'change'
@@ -1113,6 +1121,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>50
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1160_NO_OF_CARS'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1160_NO_OF_CARS'
 ,p_triggering_condition_type=>'NOT_NULL'
 ,p_bind_type=>'bind'
 ,p_bind_event_type=>'change'

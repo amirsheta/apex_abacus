@@ -129,7 +129,7 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR2140 AS
     -- Return the ardpdf link of IMPR214<n>_ARD.ARD_IMPR214<n> (standard 13-c):
     --   <ARD_URL>?func_name=LIB_APX_USR.IMPR214<n>_ARD.ARD_IMPR214<n>&P_PARAMETER1=<port>&P_PARAMETER2=<IMPR_NO>&DsName=<ARD_DSNAME>
     --   P_PARAMETER1 P_CURR_PORT_CD = NVL(:P_PORT_CD, :PARAMETER.P_CURR_PORT_CD), P_PARAMETER2 IMPR_NO
-    --   (the order of IMPR214<n>_ARD.pks).
+    --   (the order of IMPR214<n>_ARD_spec.sql).
     --   ARD_URL / ARD_DSNAME: settings in SC_PORT_SETTING (SYSOBJ_ID 999, PORT_CD 99; migration/001_ard_settings.sql);
     --   missing -> error message. Not sent: DESTYPE, DESNAME, PARAMFORM, PRINTJOB, MAXIMIZE, ORACLE_SHUTDOWN (Reports
     --   Runtime options), P_REPORT_NO, P_MODULE_NAME, V_ORDER (not parameters of the letter reports).

@@ -1,5 +1,5 @@
 -- =============================================================================
--- Package body: IMPR2180_ARD   (matches IMPR2180_ARD.pks)   Version: 001
+-- Package body: IMPR2180_ARD   (matches IMPR2180_ARD_spec.sql)   Version: 001
 -- Layout of IMPR2180.rdf (Landscape, right to left):
 --   margin : port name, logo, الرقم / التاريخ / المرفقات, title P_MODULE_NAME, footer report number + dates + page
 --   R_1 (G_TYP): header row (رقم رخصه المخلص for TYP 1, رقم بطاقة المعقب otherwise) + rows, then إجمالي العدد

@@ -1,5 +1,5 @@
 -- =============================================================================
--- Package body: IMPR2420_ARD   (matches IMPR2420_ARD.pks)   Version: 001
+-- Package body: IMPR2420_ARD   (matches IMPR2420_ARD_spec.sql)   Version: 001
 -- Layout of IMPR2420.rdf (Landscape, right to left):
 --   margin : port name, logo, الرقم / التاريخ / المرفقات, title P_MODULE_NAME, footer report number + dates + page
 --   R_G_PORT_CD1 (G_PORT): اسم الجمرك; R_G_TYP1 (G_TYP): نوع الخطـأ; then header row + R_G_IMPR_NBR1 rows:

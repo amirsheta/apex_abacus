@@ -1,5 +1,5 @@
 -- =============================================================================
--- Package body: IMPR2130_ARD   (matches IMPR2130_ARD.pks)   Version: 001
+-- Package body: IMPR2130_ARD   (matches IMPR2130_ARD_spec.sql)   Version: 001
 -- Layout of IMPR2130.rdf (Landscape, right to left):
 --   margin : port name, logo, الرقم / التاريخ / المرفقات, title P_MODULE_NAME, footer report number + dates + page
 --   R_CG$G_MAS_G (per importer IMPR_NBR): "رقم المستورد :"

@@ -15,7 +15,7 @@ Design: [IMPR2170_apex_page_spec.md](../../analysis/IMPR2170/IMPR2170_apex_page_
 | `apex/IMPR2170/f345_impr2170.sql` | component export with the 4 placeholders |
 | `apex/IMPR2170/f202530_impr2170_import.sql` | the same with workspace 23232323, application 202530, offset 460632461717563830, schema CUSTOMS |
 | `plsql/IMPR2170/impr2170_spec.sql`, `impr2170_body.sql` | screen package `LIB_APX_USR.IMPR2170` **001** |
-| `plsql/IMPR2170/IMPR2170_ARD.*` | report package 001 (`scripts/gen_ard_impr_reports.py`; only the caller note changed) |
+| `plsql/IMPR2170/IMPR2170_ARD_*.sql` | report package 001 (`scripts/gen_ard_impr_reports.py`; only the caller note changed) |
 | `registry/IMPR2170_registry.sql` | MIG_FORM_REGISTRY / MIG_OBJECT_MAP rows |
 | `apex/f202530_full.sql` | full application, rebuilt 2026-11-25 with every export including IMPR2170 |
 
@@ -33,7 +33,7 @@ Regenerate: `python3 -I scripts/gen_apex_impr2170.py --workspace-id=23232323 --a
 1. Application 202530 already holds the **IMPR1110** export (page group IMPR `id(900001000010)`, LOV `LOV_SD_PORTS`) and the
    **IMPR2150** export (LOV `LOV_IMPORT_HQ_NBR`).
 2. **FORMS_APX 004** and **LOV_APX 005** are compiled (no LOV_APX change in this conversion).
-3. Compile the report package `IMPR2170_ARD` 001 (`.pks` first, then `.pkb`). It depends on `ARD_LOGO` (static file
+3. Compile the report package `IMPR2170_ARD` 001 (`_spec.sql` first, then `_body.sql`). It depends on `ARD_LOGO` (static file
    `LOGO1.jpg`, DEC-034), `HIJDATE_DB` and `IMPR_UTILITIES`. The ARD data source user (`ARD_DSNAME`) needs EXECUTE on it.
 4. Compile the screen package `IMPR2170` 001 (`impr2170_spec.sql`, then `impr2170_body.sql`). `LIB_APX_USR` needs:
    - SELECT on `SD_PORTS`, `SC_PORT_SETTING`, `IMPORTERS`, `SINGLE_IMPORTERS`, `IMPR_SUSPNS`, `IMPORTER_SEIZURES`, `HQ_IMPRS`,

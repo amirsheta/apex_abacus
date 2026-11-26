@@ -405,6 +405,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>10
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P2170_SELECT1'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P2170_SELECT1'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'2'
 ,p_bind_type=>'bind'

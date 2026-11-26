@@ -118,7 +118,7 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR2180 AS
     -- =========================================================================
     -- Source: REP.Run_Product(REPORTS, :PARAMETER.P_REPORT_PATH || :PARAMETER.P_REPORT_FILE, SYNCHRONOUS, RUNTIME,
     --         FILESYSTEM, pl_id, NULL)
-    -- Returns the ardpdf link of IMPR2180_ARD.ARD_IMPR2180 (standard 13-c), parameters in the order of IMPR2180_ARD.pks:
+    -- Returns the ardpdf link of IMPR2180_ARD.ARD_IMPR2180 (standard 13-c), parameters in the order of IMPR2180_ARD_spec.sql:
     --   P_PARAMETER1 P_CURR_PORT_CD, P_PARAMETER2 P_LIC_TYPE, P_PARAMETER3 P_MODULE_NAME, P_PARAMETER4 P_REPORT_NO.
     --   ARD_URL / ARD_DSNAME: settings in SC_PORT_SETTING (SYSOBJ_ID 999, PORT_CD 99; migration/001_ard_settings.sql);
     --   missing -> error message. Not sent: DESTYPE, DESNAME, PARAMFORM, PRINTJOB, MAXIMIZE, ORACLE_SHUTDOWN

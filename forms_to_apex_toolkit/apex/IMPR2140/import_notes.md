@@ -15,7 +15,7 @@ Design: [IMPR2140_apex_page_spec.md](../../analysis/IMPR2140/IMPR2140_apex_page_
 | `apex/IMPR2140/f345_impr2140.sql` | component export with the 4 placeholders |
 | `apex/IMPR2140/f202530_impr2140_import.sql` | the same with workspace 23232323, application 202530, offset 460632461717563830, schema CUSTOMS |
 | `plsql/IMPR2140/impr2140_spec.sql`, `impr2140_body.sql` | screen package `LIB_APX_USR.IMPR2140` **001** |
-| `plsql/IMPR2140/IMPR2141_ARD.*`, `IMPR2142_ARD.*`, `IMPR2143_ARD.*` | letter packages 001 (`scripts/gen_ard_impr_reports.py`) |
+| `plsql/IMPR2140/IMPR2141_ARD_*.sql`, `IMPR2142_ARD_*.sql`, `IMPR2143_ARD_*.sql` | letter packages 001 (`scripts/gen_ard_impr_reports.py`) |
 | `registry/IMPR2140_registry.sql` | MIG_FORM_REGISTRY / MIG_OBJECT_MAP rows |
 | `apex/f202530_full.sql` | full application, rebuilt 2026-11-25 with every export including IMPR2140 |
 
@@ -32,7 +32,7 @@ Regenerate: `python3 -I scripts/gen_apex_impr2140.py --workspace-id=23232323 --a
 
 1. Application 202530 already holds the **IMPR1110** export (page group IMPR `id(900001000010)`, LOV `LOV_SD_PORTS`).
 2. **FORMS_APX 004** and **LOV_APX 003** are compiled. This form needs no LOV_APX change.
-3. Compile the letter packages `IMPR2141_ARD`, `IMPR2142_ARD` and `IMPR2143_ARD` 001 (each `.pks` first, then `.pkb`).
+3. Compile the letter packages `IMPR2141_ARD`, `IMPR2142_ARD` and `IMPR2143_ARD` 001 (each `_spec.sql` first, then `_body.sql`).
    They depend on `ARD_LOGO` (static file `LOGO1.jpg`, DEC-034), `HIJDATE_DB` and `SC_PORT_SETTING` (PORT_MANAGER_NAME).
    The ARD data source user (`ARD_DSNAME`) needs EXECUTE on them.
 4. Compile the screen package `IMPR2140` 001 (`impr2140_spec.sql`, then `impr2140_body.sql`). `LIB_APX_USR` needs:

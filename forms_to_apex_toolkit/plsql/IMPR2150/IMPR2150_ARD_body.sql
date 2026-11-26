@@ -1,5 +1,5 @@
 -- =============================================================================
--- Package body: IMPR2150_ARD   (matches IMPR2150_ARD.pks)   Version: 001
+-- Package body: IMPR2150_ARD   (matches IMPR2150_ARD_spec.sql)   Version: 001
 -- Layout of IMPR2150.rdf (Landscape, right to left):
 --   margin : port name, logo, الرقم / التاريخ / المرفقات, title P_MODULE_NAME, footer report number + dates + page
 --   R_2 (G_HQ_IMPR_NBR): الرقم الموحد للمستورد + الاسم / نوع الرقم الاستدلالي, الرقم الاستدلالي, الفرع

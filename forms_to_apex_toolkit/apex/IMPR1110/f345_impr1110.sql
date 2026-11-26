@@ -2440,6 +2440,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1110_IMPR_TYPE_CD_LOCKED'
 ,p_item_sequence=>2830
 ,p_item_plug_id=>wwv_flow_api.id(111001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -2450,6 +2451,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1110_BUS_ID_EXPRD_DT_LOCKED'
 ,p_item_sequence=>2840
 ,p_item_plug_id=>wwv_flow_api.id(111001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -2460,6 +2462,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1110_COMM_RGSTRTN_TYPE_LOCKED'
 ,p_item_sequence=>2850
 ,p_item_plug_id=>wwv_flow_api.id(111001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -2470,6 +2473,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1110_CITY_CODE_OF_ID_LOCKED'
 ,p_item_sequence=>2860
 ,p_item_plug_id=>wwv_flow_api.id(111001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -2480,6 +2484,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1110_BUS_ID_LOCKED'
 ,p_item_sequence=>2870
 ,p_item_plug_id=>wwv_flow_api.id(111001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -2490,6 +2495,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1110_BRNH_CITY_CD_LOCKED'
 ,p_item_sequence=>2880
 ,p_item_plug_id=>wwv_flow_api.id(111001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -2500,6 +2506,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1110_BUS_ID_BRNCH_LOCKED'
 ,p_item_sequence=>2890
 ,p_item_plug_id=>wwv_flow_api.id(111001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -2510,6 +2517,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1110_CTRY_CD_LOCKED'
 ,p_item_sequence=>2900
 ,p_item_plug_id=>wwv_flow_api.id(111001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -2520,6 +2528,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1110_ARBC_IMPR_NAME_LOCKED'
 ,p_item_sequence=>2910
 ,p_item_plug_id=>wwv_flow_api.id(111001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -2530,6 +2539,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1110_REGISTER_ITEMS_LOCKED'
 ,p_item_sequence=>2920
 ,p_item_plug_id=>wwv_flow_api.id(111001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -2540,6 +2550,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1110_IMPR_TEL_NBR_LOCKED'
 ,p_item_sequence=>2930
 ,p_item_plug_id=>wwv_flow_api.id(111001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -2550,6 +2561,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1110_ACTIVITY_LOCKED'
 ,p_item_sequence=>2940
 ,p_item_plug_id=>wwv_flow_api.id(111001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -2560,6 +2572,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1110_B_ID_NBR_LOCKED'
 ,p_item_sequence=>2950
 ,p_item_plug_id=>wwv_flow_api.id(111001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -2570,6 +2583,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1110_CAR_AGENT_FLAG_LOCKED'
 ,p_item_sequence=>2960
 ,p_item_plug_id=>wwv_flow_api.id(111001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -4246,6 +4260,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>330
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1110_IMPR_TYPE_CD_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1110_IMPR_TYPE_CD_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'
@@ -4278,6 +4294,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>340
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1110_BUS_ID_EXPRD_DT_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1110_BUS_ID_EXPRD_DT_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'
@@ -4310,6 +4328,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>350
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1110_COMM_RGSTRTN_TYPE_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1110_COMM_RGSTRTN_TYPE_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'
@@ -4342,6 +4362,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>360
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1110_CITY_CODE_OF_ID_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1110_CITY_CODE_OF_ID_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'
@@ -4374,6 +4396,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>370
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1110_BUS_ID_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1110_BUS_ID_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'
@@ -4406,6 +4430,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>380
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1110_BRNH_CITY_CD_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1110_BRNH_CITY_CD_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'
@@ -4438,6 +4464,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>390
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1110_BUS_ID_BRNCH_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1110_BUS_ID_BRNCH_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'
@@ -4470,6 +4498,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>400
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1110_CTRY_CD_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1110_CTRY_CD_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'
@@ -4502,6 +4532,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>410
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1110_ARBC_IMPR_NAME_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1110_ARBC_IMPR_NAME_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'
@@ -4534,6 +4566,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>420
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1110_REGISTER_ITEMS_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1110_REGISTER_ITEMS_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'
@@ -4566,6 +4600,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>430
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1110_IMPR_TEL_NBR_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1110_IMPR_TEL_NBR_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'
@@ -4598,6 +4634,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>440
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1110_ACTIVITY_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1110_ACTIVITY_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'
@@ -4630,6 +4668,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>450
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1110_B_ID_NBR_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1110_B_ID_NBR_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'
@@ -4662,6 +4702,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>460
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1110_CAR_AGENT_FLAG_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1110_CAR_AGENT_FLAG_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'
@@ -5121,6 +5163,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>580
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1110_FUNCTION_CODE'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1110_FUNCTION_CODE'
 ,p_triggering_condition_type=>'NOT_NULL'
 ,p_bind_type=>'bind'
 ,p_bind_event_type=>'change'

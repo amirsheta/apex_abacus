@@ -1658,6 +1658,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1130_COMM_RGSTRTN_TYPE_LOCKED'
 ,p_item_sequence=>2680
 ,p_item_plug_id=>wwv_flow_api.id(113001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -1668,6 +1669,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1130_CTRY_CD_LOCKED'
 ,p_item_sequence=>2690
 ,p_item_plug_id=>wwv_flow_api.id(113001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -1678,6 +1680,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1130_ADD_CTRY_CD_LOCKED'
 ,p_item_sequence=>2700
 ,p_item_plug_id=>wwv_flow_api.id(113001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -1688,6 +1691,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1130_CITY_CODE_OF_ID_LOCKED'
 ,p_item_sequence=>2710
 ,p_item_plug_id=>wwv_flow_api.id(113001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -1698,6 +1702,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1130_BUS_ID_LOCKED'
 ,p_item_sequence=>2720
 ,p_item_plug_id=>wwv_flow_api.id(113001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -1708,6 +1713,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1130_BUS_ID_BRNCH_LOCKED'
 ,p_item_sequence=>2730
 ,p_item_plug_id=>wwv_flow_api.id(113001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -1718,6 +1724,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1130_BUS_ID_EXPRD_DT_LOCKED'
 ,p_item_sequence=>2740
 ,p_item_plug_id=>wwv_flow_api.id(113001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -1728,6 +1735,7 @@ wwv_flow_api.create_page_item(
 ,p_name=>'P1130_REGISTER_ITEMS_LOCKED'
 ,p_item_sequence=>2750
 ,p_item_plug_id=>wwv_flow_api.id(113001000020)
+,p_item_default=>'N'
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attribute_01=>'N'
@@ -2244,6 +2252,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>10
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1130_IMPR_NBR'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1130_IMPR_NBR'
 ,p_triggering_condition_type=>'NOT_NULL'
 ,p_bind_type=>'bind'
 ,p_bind_event_type=>'change'
@@ -2815,6 +2825,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>200
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1130_COMM_RGSTRTN_TYPE_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1130_COMM_RGSTRTN_TYPE_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'
@@ -2847,6 +2859,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>210
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1130_CTRY_CD_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1130_CTRY_CD_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'
@@ -2879,6 +2893,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>220
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1130_ADD_CTRY_CD_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1130_ADD_CTRY_CD_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'
@@ -2911,6 +2927,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>230
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1130_CITY_CODE_OF_ID_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1130_CITY_CODE_OF_ID_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'
@@ -2943,6 +2961,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>240
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1130_BUS_ID_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1130_BUS_ID_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'
@@ -2975,6 +2995,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>250
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1130_BUS_ID_BRNCH_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1130_BUS_ID_BRNCH_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'
@@ -3007,6 +3029,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>260
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1130_BUS_ID_EXPRD_DT_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1130_BUS_ID_EXPRD_DT_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'
@@ -3039,6 +3063,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>270
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1130_REGISTER_ITEMS_LOCKED'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1130_REGISTER_ITEMS_LOCKED'
 ,p_triggering_condition_type=>'EQUALS'
 ,p_triggering_expression=>'Y'
 ,p_bind_type=>'bind'

@@ -24,7 +24,7 @@ Both count the matching importers. If there are none, they stop with «لا يو
 `REP.Run_Product` is a decision point in CLAUDE.md §7. It follows the approved standard of the same project
 (Forms_to_APEX `APPROVED_STANDARD.md` 13-b / 13-c) and the in-repo references `plsql/Shared/DCLN3300_ARD` and `DCLN3100_ARD`:
 
-* **The report itself becomes the package `IMPR2110_ARD`** (`plsql/IMPR2110/IMPR2110_ARD.pks` / `.pkb`).
+* **The report itself becomes the package `IMPR2110_ARD`** (`plsql/IMPR2110/IMPR2110_ARD_spec.sql` / `IMPR2110_ARD_body.sql`).
   `ARD_IMPR2110(P_PARAMETER1..4) RETURN CLOB` builds the report as HTML from the RDF query, its formula columns
   (same names, same code) and its layout. The ARD server (`ardpdf`) turns it into a PDF.
   The RDF on the Reports Server is no longer used (user: ARD package only).

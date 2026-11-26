@@ -1,5 +1,5 @@
 -- =============================================================================
--- Package body: IMPR2142_ARD   (matches IMPR2142_ARD.pks)   Version: 001
+-- Package body: IMPR2142_ARD   (matches IMPR2142_ARD_spec.sql)   Version: 001
 -- Layout of IMPR2142.rdf (Portrait, right to left): a letter per importer (R_1), one page each.
 --   margin : port name + "التدقيق والفروقات" (right), logo, الرقم / التاريخ / المرفقات (left)
 --   R_1    : the letter text of the RDF boilerplate with the importer fields.

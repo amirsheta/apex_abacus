@@ -1,5 +1,5 @@
 -- =============================================================================
--- Package body: IMPR2230_ARD   (matches IMPR2230_ARD.pks)   Version: 001
+-- Package body: IMPR2230_ARD   (matches IMPR2230_ARD_spec.sql)   Version: 001
 -- Layout of IMPR2230.rdf (Landscape, right to left):
 --   margin : port name, logo, الرقم / التاريخ / المرفقات, title P_MODULE_NAME, footer report number + dates + page
 --   R_1 (G_L_IMP_ARBC_IMPR_NAME, per importer): مسلسل / اسم / نوع المستورد, then header row + R_CG$G_AGNTS rows.

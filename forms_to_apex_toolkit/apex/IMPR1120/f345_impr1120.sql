@@ -1252,6 +1252,8 @@ wwv_flow_api.create_page_da_event(
 ,p_event_sequence=>10
 ,p_triggering_element_type=>'ITEM'
 ,p_triggering_element=>'P1120_IMPR_NBR'
+,p_condition_element_type=>'ITEM'
+,p_condition_element=>'P1120_IMPR_NBR'
 ,p_triggering_condition_type=>'NOT_NULL'
 ,p_bind_type=>'bind'
 ,p_bind_event_type=>'change'

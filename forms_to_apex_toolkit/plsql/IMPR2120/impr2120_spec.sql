@@ -12,7 +12,7 @@
 --               -> BLOCK TOOLBAR (PRINT) -> PROGRAM UNITS (PRINT_CHECK_VAL, PRINT_IMPR2120_ARD).
 --               Same screen as IMPR2110 (template: plsql/IMPR2110) plus the list item P_TYPE (suspension status)
 --               and the count on IMPR_SUSPNS.
--- Report      : IMPR2120.rdf is the ARD package IMPR2120_ARD (IMPR2120_ARD.pks / .pkb, standard 13-c,
+-- Report      : IMPR2120.rdf is the ARD package IMPR2120_ARD (IMPR2120_ARD_spec.sql / _body.sql, standard 13-c,
 --               scripts/gen_ard_impr_reports.py). REP.Run_Product becomes PRINT_IMPR2120_ARD, which returns the ardpdf
 --               link of IMPR2120_ARD.ARD_IMPR2120; the page opens it in a new tab (standard 13-b). Report page buttons:
 --               PRINT, CLEAR, BACK only (DEC-017 / DEC-018): Forms VIEW and PRINT both open the same PDF.
@@ -133,7 +133,7 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR2120 AS
     -- Returns the ardpdf link of IMPR2120_ARD.ARD_IMPR2120 (standard 13-c):
     --   <ARD_URL>?func_name=LIB_APX_USR.IMPR2120_ARD.ARD_IMPR2120&P_PARAMETER1..5=...&DsName=<ARD_DSNAME>
     --   P_PARAMETER1 P_CURR_PORT_CD, P_PARAMETER2 importer list (CG$P_IMPR_NBR), P_PARAMETER3 P_TYPE,
-    --   P_PARAMETER4 P_MODULE_NAME, P_PARAMETER5 P_REPORT_NO (the order of IMPR2120_ARD.pks).
+    --   P_PARAMETER4 P_MODULE_NAME, P_PARAMETER5 P_REPORT_NO (the order of IMPR2120_ARD_spec.sql).
     --   ARD_URL / ARD_DSNAME: settings in SC_PORT_SETTING (SYSOBJ_ID 999, PORT_CD 99; migration/001_ard_settings.sql);
     --   missing -> error message. Not sent: DESTYPE, DESNAME, PARAMFORM, PRINTJOB, MAXIMIZE, ORACLE_SHUTDOWN,
     --   V_ORDER (Reports Runtime options / P_ORDER is NULL in Forms).

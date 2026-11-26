@@ -1,5 +1,5 @@
 -- =============================================================================
--- Package body: IMPR2310_ARD   (matches IMPR2310_ARD.pks)   Version: 001
+-- Package body: IMPR2310_ARD   (matches IMPR2310_ARD_spec.sql)   Version: 001
 -- Layout of IMPR2310.rdf (Landscape, right to left):
 --   margin : port name, logo, الرقم / التاريخ / المرفقات, title P_MODULE_NAME + CF_TITLE, footer report number
 --            + dates + page

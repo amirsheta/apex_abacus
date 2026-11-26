@@ -14,7 +14,7 @@ Design: [IMPR2120_apex_page_spec.md](../../analysis/IMPR2120/IMPR2120_apex_page_
 | `apex/IMPR2120/f345_impr2120.sql` | component export with the 4 placeholders |
 | `apex/IMPR2120/f202530_impr2120_import.sql` | the same with workspace 23232323, application 202530, offset 460632461717563830, schema CUSTOMS |
 | `plsql/IMPR2120/impr2120_spec.sql`, `impr2120_body.sql` | screen package `LIB_APX_USR.IMPR2120` **001** |
-| `plsql/IMPR2120/IMPR2120_ARD.pks`, `IMPR2120_ARD.pkb` | report package `LIB_APX_USR.IMPR2120_ARD` 001 (the RDF as an ARD report, `scripts/gen_ard_impr_reports.py`) |
+| `plsql/IMPR2120/IMPR2120_ARD_spec.sql`, `IMPR2120_ARD_body.sql` | report package `LIB_APX_USR.IMPR2120_ARD` 001 (the RDF as an ARD report, `scripts/gen_ard_impr_reports.py`) |
 | `scripts/report_toolbar.py` | page 0 buttons on report pages: PRINT, CLEAR, BACK (applied by `build_full_app.py`) |
 | `registry/IMPR2120_registry.sql` | MIG_FORM_REGISTRY / MIG_OBJECT_MAP rows |
 
@@ -29,8 +29,8 @@ Regenerate: `python3 -I scripts/gen_apex_impr2120.py --workspace-id=23232323 --a
 1. Application 202530 holds the **IMPR1110** export: page group IMPR `id(900001000010)`, LOV `LOV_SD_PORTS`.
 2. **FORMS_APX 004** (`CHECK_ERROR`, `GET_MODULE_ID`, `HEADER_TITLE`).
 3. **LOV_APX 003** compiled (`SELECT LOV_APX.PKG_VERSION FROM dual`); no change for this form. `CUSTOMS` needs SELECT on `IMPORTERS`, `SD_PORTS`.
-4. **Report package `IMPR2120_ARD` 001** (`.pks`, then `.pkb`). It uses `ARD_LOGO` (static file `LOGO1.jpg` in the
-   application, DEC-034; without it the ARD server logo link is used) and `HIJDATE_DB`. `LIB_APX_USR` needs SELECT on `IMPORTERS`, `IMPR_SUSPNS`, `SD_PORTS` (see `IMPR2120_ARD.pkb`). The ARD data source
+4. **Report package `IMPR2120_ARD` 001** (`_spec.sql`, then `_body.sql`). It uses `ARD_LOGO` (static file `LOGO1.jpg` in the
+   application, DEC-034; without it the ARD server logo link is used) and `HIJDATE_DB`. `LIB_APX_USR` needs SELECT on `IMPORTERS`, `IMPR_SUSPNS`, `SD_PORTS` (see `IMPR2120_ARD_body.sql`). The ARD data source
    user (setting `ARD_DSNAME`) needs EXECUTE on `IMPR2120_ARD` (grants as `DCLN3300_ARD`; add the ARD user if it is not one of them).
 5. **Screen package `IMPR2120` 001** (`impr2120_spec.sql`, then `impr2120_body.sql`). `LIB_APX_USR` needs SELECT on `IMPORTERS`,
    `IMPR_SUSPNS`, `SD_PORTS`, `SC_PORT_SETTING` and EXECUTE on `FORMS_APX` (`CUR_HIJ_DATE` → `HIJDATE_DB`).

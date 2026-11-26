@@ -31,7 +31,7 @@ swapped in Forms (`KEY-F4` runs CHECK_VAL, `KEY-F5` runs PRINT_CHECK_VAL). Both 
 ## 2. Approach
 
 1. **Report.** `IMPR2170_ARD` (`plsql/IMPR2170`), generated earlier by `scripts/gen_ard_impr_reports.py`; this conversion
-   only changed its caller note (the `.pkb` is unchanged).
+   only changed its caller note (the `_body.sql` is unchanged).
 2. **Toolbar.** Page 0 shows only PRINT, CLEAR and BACK (`P2170_REPORT`).
 3. **Print.** The custom event `REPORT_PRINT` runs FOS `IMPR2170.PRINT_CHECK_VAL`, which returns the ardpdf link from
    `PRINT_IMPR2170_ARD`; one line of JavaScript opens it in a new tab.

@@ -230,6 +230,13 @@ Full rules: `docs/f345_reference_standard.md` §9 and §10. Summary:
    the PL/SQL of a FOS action (IN and OUT binds) → FOS *Items to Submit*. Application items and `P0_` items are session
    state and are not listed. Every generator runs `scripts/items_to_submit.py` (`fix` before writing, `check` in the
    self-check).
+3a. **Client-side conditions need a value (user rule 2026-11-26).** An item tested by an item-type client-side
+   condition of a DA (Item = Value, Item != Value, in list ...; event `p_triggering_condition_type` or action
+   `p_client_condition_type`) names that item (`p_condition_element_type` + `p_condition_element` = the triggering
+   item / column, as real 20.2 / 21.2 exports do; without them the condition's Item is empty) and always has a Default value: while the item is empty the comparison never matches and a
+   Change event does not fire, so the actions do not run. Y / N flag items default to `N`. `NULL` / `NOT_NULL` (the
+   "only when entered" guard) and JavaScript expressions are exempt. Every generator runs `scripts/client_condition.py`
+   (`fix` before writing, `check` in the self-check).
 4. **One readable package per form.** No adapter packages and no all-items record copied through
    session state: each member takes only the items it uses (IN / IN OUT parameters named by §4). Fixed section order
    (version → helpers → form level → each block: query, record, items in navigation order, DML,

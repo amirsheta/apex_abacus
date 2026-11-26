@@ -10,7 +10,7 @@
 -- Purpose     : Business logic of the form, organised like the form itself:
 --               VERSION -> FORM LEVEL -> BLOCK CALLING_PARAMETERS (items in navigation order)
 --               -> BLOCK TOOLBAR (PRINT) -> PROGRAM UNITS (PRINT_CHECK_VAL, PRINT_IMPR2110_ARD).
--- Report      : IMPR2110.rdf is converted to the ARD package IMPR2110_ARD (IMPR2110_ARD.pks / .pkb, standard 13-c).
+-- Report      : IMPR2110.rdf is converted to the ARD package IMPR2110_ARD (IMPR2110_ARD_spec.sql / _body.sql, standard 13-c).
 --               REP.Run_Product becomes PRINT_IMPR2110_ARD, which returns the ardpdf link of
 --               IMPR2110_ARD.ARD_IMPR2110; the page opens it in a new tab (standard 13-b). Report page buttons:
 --               PRINT, CLEAR, BACK only (DEC-017 / DEC-018): Forms VIEW and PRINT both open the same PDF.

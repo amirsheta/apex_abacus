@@ -10,7 +10,7 @@
 -- Target      : Oracle APEX 21.2 / Oracle Database 12.1.0.2
 -- Author      : Claude Code
 -- Created     : 2026-11-24
--- Version     : 006
+-- Version     : 007
 -- Contract    : every function returns the text of a SELECT with the columns  D (display), R (return), then the
 --               columns shown in the list. The shared LOV sets Return Column R, Display Column D.
 --               Page or application items are NOT read here: the caller passes the NAME of the item
@@ -46,17 +46,19 @@
 --               2026-11-25 Claude Code 006 IMPR2180: REFERENCE_CODES gets the optional P_EXCLUDED_VALUE (one low value
 --                          left out of the domain - PU LOAD_LIST: LIC_TYPE without 3); existing calls unchanged.
 --                          Previous version: rollback/LOV_APX/v005/
+--               2026-11-26 Claude Code 007 IMPR3100: new LOV_USER (users of a port, SC_USERS - LOV form LOV_USER,
+--                          MISSING SOURCE: built from USER_ID.WHEN-VALIDATE-ITEM). Previous version: rollback/LOV_APX/v006/
 -- =============================================================================
 SET DEFINE OFF
 
 CREATE OR REPLACE PACKAGE LIB_APX_USR.LOV_APX AS
-   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '006';
-   V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '006';
-   V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '006';
+   V_PKG_VERSION       VARCHAR2 (100) := 'VERSION NO. IS:' || '007';
+   V_PKG_VERSION_QC    VARCHAR2 (100) := 'VERSION NO. IS:' || '007';
+   V_PKG_VERSION_DEV   VARCHAR2 (100) := 'VERSION NO. IS:' || '007';
    FUNCTION PKG_VERSION
       RETURN VARCHAR2;
    V_PACKAGE_NAME      VARCHAR2 (50) := 'LOV_APX';
-   V_LAST_MODIFY_DT    VARCHAR2 (10) := '25-11-2026';
+   V_LAST_MODIFY_DT    VARCHAR2 (10) := '26-11-2026';
    V_MODIFIED_BY       VARCHAR2 (50) := 'Claude Code';
    V_INFO              VARCHAR2 (500)
       :=    'PACKAGE NAME :  '
@@ -190,6 +192,17 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.LOV_APX AS
     -- Source: SUPPORT_ENTRY record group LOV_SUPP_TITLES
     -- Columns: D = R = SUPP_TITLE_CD, SUPP_TITLE_NM.  Active titles.
     FUNCTION LOV_SUPP_TITLES
+       RETURN VARCHAR2;
+
+    -- =========================================================================
+    -- USERS (SC_USERS)
+    -- =========================================================================
+    -- Source: IMPR3100 PU LOV_USER -> LOV form LOV_USER (CALL_FORM with PORT_CD = :P_PORT_CD, returns
+    --         :GLOBAL.USER_ID2 / USR_ANAME). TODO: MISSING SOURCE LOV_USER.fmb (not in the repository): the query is
+    --         taken from USER_ID.WHEN-VALIDATE-ITEM (SC_USERS WHERE PORT_CD = :P_PORT_CD AND USER_ID = :USER_ID).
+    -- Columns: D = R = USER_ID, USR_ANAME.  Users of the port item, else of the fallback item.
+    FUNCTION LOV_USER (P_PORT_ITEM         IN VARCHAR2,
+                       P_DEFAULT_PORT_ITEM IN VARCHAR2 DEFAULT NULL)
        RETURN VARCHAR2;
 END LOV_APX;
 /
@@ -430,6 +443,23 @@ AS
               || ' WHERE title_status = 1'
               || ' ORDER BY supp_title_cd';
     END LOV_SUPP_TITLES;
+
+    -- =========================================================================
+    -- USERS (SC_USERS)
+    -- =========================================================================
+    FUNCTION LOV_USER (P_PORT_ITEM         IN VARCHAR2,
+                       P_DEFAULT_PORT_ITEM IN VARCHAR2 DEFAULT NULL)
+       RETURN VARCHAR2
+    IS
+       v_port VARCHAR2 (200) := BIND_VARIABLE (P_PORT_ITEM);
+    BEGIN
+       IF P_DEFAULT_PORT_ITEM IS NOT NULL THEN
+          v_port := 'NVL(' || v_port || ', ' || BIND_VARIABLE (P_DEFAULT_PORT_ITEM) || ')';
+       END IF;
+       RETURN    'SELECT user_id d, user_id r, usr_aname FROM sc_users'
+              || ' WHERE port_cd = ' || v_port
+              || ' ORDER BY user_id';
+    END LOV_USER;
 
     -- =========================================================================
     -- PACKAGE VERSION   (SELECT LOV_APX.PKG_VERSION FROM dual;)

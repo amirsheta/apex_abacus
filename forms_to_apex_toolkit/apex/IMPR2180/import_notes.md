@@ -15,7 +15,7 @@ Design: [IMPR2180_apex_page_spec.md](../../analysis/IMPR2180/IMPR2180_apex_page_
 | `apex/IMPR2180/f345_impr2180.sql` | component export with the 4 placeholders |
 | `apex/IMPR2180/f202530_impr2180_import.sql` | the same with workspace 23232323, application 202530, offset 460632461717563830, schema CUSTOMS |
 | `plsql/IMPR2180/impr2180_spec.sql`, `impr2180_body.sql` | screen package `LIB_APX_USR.IMPR2180` **001** |
-| `plsql/IMPR2180/IMPR2180_ARD.*` | report package 001 (`scripts/gen_ard_impr_reports.py`; caller note updated, `.pkb` unchanged) |
+| `plsql/IMPR2180/IMPR2180_ARD_*.sql` | report package 001 (`scripts/gen_ard_impr_reports.py`; caller note updated, `_body.sql` unchanged) |
 | `plsql_templates/lov_apx.sql` | **LOV_APX 006**: `REFERENCE_CODES` gets the optional `P_EXCLUDED_VALUE` (previous: `rollback/LOV_APX/v005/`) |
 | `registry/IMPR2180_registry.sql` | MIG_FORM_REGISTRY / MIG_OBJECT_MAP rows |
 | `apex/f202530_full.sql` | full application, rebuilt 2026-11-25 with every export including IMPR2180 |
@@ -34,7 +34,7 @@ Regenerate: `python3 -I scripts/gen_apex_impr2180.py --workspace-id=23232323 --a
 1. Application 202530 already holds the **IMPR1110** export (page group IMPR `id(900001000010)`, LOV `LOV_SD_PORTS`).
 2. **FORMS_APX 004** and **LOV_APX 006** are compiled. LOV_APX 006 only adds an optional parameter: every existing LOV
    keeps working.
-3. Compile the report package `IMPR2180_ARD` 001 (`.pks` first, then `.pkb`). It depends on `ARD_LOGO` (static file
+3. Compile the report package `IMPR2180_ARD` 001 (`_spec.sql` first, then `_body.sql`). It depends on `ARD_LOGO` (static file
    `LOGO1.jpg`, DEC-034) and `HIJDATE_DB`. The ARD data source user (`ARD_DSNAME`) needs EXECUTE on it.
 4. Compile the screen package `IMPR2180` 001 (`impr2180_spec.sql`, then `impr2180_body.sql`). `LIB_APX_USR` needs:
    - SELECT on `SD_PORTS`, `CG_REF_CODES` and `SC_PORT_SETTING`;

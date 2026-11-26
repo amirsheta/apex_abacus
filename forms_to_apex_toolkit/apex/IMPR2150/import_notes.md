@@ -15,7 +15,7 @@ Design: [IMPR2150_apex_page_spec.md](../../analysis/IMPR2150/IMPR2150_apex_page_
 | `apex/IMPR2150/f345_impr2150.sql` | component export with the 4 placeholders |
 | `apex/IMPR2150/f202530_impr2150_import.sql` | the same with workspace 23232323, application 202530, offset 460632461717563830, schema CUSTOMS |
 | `plsql/IMPR2150/impr2150_spec.sql`, `impr2150_body.sql` | screen package `LIB_APX_USR.IMPR2150` **001** |
-| `plsql/IMPR2150/IMPR2150_ARD.*` | report package 001 (`scripts/gen_ard_impr_reports.py`; caller note updated) |
+| `plsql/IMPR2150/IMPR2150_ARD_*.sql` | report package 001 (`scripts/gen_ard_impr_reports.py`; caller note updated) |
 | `plsql_templates/lov_apx.sql` | **LOV_APX 005**: `LOV_SINGLE_IMPORTERS` renamed `SINGLE_IMPORTERS`, `P_RULE_TYPE_ITEM` optional (previous: `rollback/LOV_APX/v004/`) |
 | `apex/IMPR1140/f345_impr1140.sql`, `f202530_impr1140_import.sql` | regenerated: `LOV_SINGLE_IMPORTERS` now calls `LOV_APX.SINGLE_IMPORTERS` (one line) |
 | `registry/IMPR2150_registry.sql` | MIG_FORM_REGISTRY / MIG_OBJECT_MAP rows |
@@ -38,7 +38,7 @@ Regenerate: `python3 -I scripts/gen_apex_impr2150.py --workspace-id=23232323 --a
    `LOV_SINGLE_IMPORTERS` no longer exists, so the IMPR1140 LOV `LOV_SINGLE_IMPORTERS` must be the regenerated one
    (re-import `apex/IMPR1140/f202530_impr1140_import.sql`, or use the rebuilt `apex/f202530_full.sql`, or change its
    query by hand to `return LOV_APX.SINGLE_IMPORTERS(P_RULE_TYPE_ITEM => 'P1140_RULE_TYPE');`).
-3. Compile the report package `IMPR2150_ARD` 001 (`.pks` first, then `.pkb`). It depends on `ARD_LOGO` (static file
+3. Compile the report package `IMPR2150_ARD` 001 (`_spec.sql` first, then `_body.sql`). It depends on `ARD_LOGO` (static file
    `LOGO1.jpg`, DEC-034) and `HIJDATE_DB`. The ARD data source user (`ARD_DSNAME`) needs EXECUTE on it.
 4. Compile the screen package `IMPR2150` 001 (`impr2150_spec.sql`, then `impr2150_body.sql`). `LIB_APX_USR` needs:
    - SELECT on `SINGLE_IMPORTERS`, `BUS_ID_TYPES`, `IMPR_RULES`, `IMPR_RULE_PORTS`, `CG_REF_CODES`, `SD_PORTS` and

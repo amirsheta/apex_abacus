@@ -125,7 +125,7 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR2150 AS
     -- PROGRAM UNITS
     -- =========================================================================
     -- Source: REP.Run_Product(REPORTS, :PARAMETER.P_REPORT_PATH || 'IMPR2150.REP', SYNCHRONOUS, RUNTIME, FILESYSTEM, pl_id)
-    -- Returns the ardpdf link of IMPR2150_ARD.ARD_IMPR2150 (standard 13-c), parameters in the order of IMPR2150_ARD.pks:
+    -- Returns the ardpdf link of IMPR2150_ARD.ARD_IMPR2150 (standard 13-c), parameters in the order of IMPR2150_ARD_spec.sql:
     --   P_PARAMETER1 P_CURR_PORT_CD (port name of the report header; the form did not send it), P_PARAMETER2
     --   P_HQ_IMPR_NBR, P_PARAMETER3 P_REC_STATUS, P_PARAMETER4 P_RULE_TYPE, P_PARAMETER5 P_MODULE_NAME,
     --   P_PARAMETER6 P_REPORT_NO.

@@ -14,7 +14,7 @@ Design: [IMPR2110_apex_page_spec.md](../../analysis/IMPR2110/IMPR2110_apex_page_
 | `apex/IMPR2110/f345_impr2110.sql` | component export with the 4 placeholders |
 | `apex/IMPR2110/f202530_impr2110_import.sql` | the same with workspace 23232323, application 202530, offset 460632461717563830, schema CUSTOMS |
 | `plsql/IMPR2110/impr2110_spec.sql`, `impr2110_body.sql` | screen package `LIB_APX_USR.IMPR2110` **002** (previous: `rollback/IMPR2110/v001/`) |
-| `plsql/IMPR2110/IMPR2110_ARD.pks`, `IMPR2110_ARD.pkb` | report package `LIB_APX_USR.IMPR2110_ARD` 001 (the RDF as an ARD report) |
+| `plsql/IMPR2110/IMPR2110_ARD_spec.sql`, `IMPR2110_ARD_body.sql` | report package `LIB_APX_USR.IMPR2110_ARD` 001 (the RDF as an ARD report) |
 | `scripts/report_toolbar.py` | page 0 buttons on report pages: PRINT, CLEAR, BACK (applied by `build_full_app.py`) |
 | `plsql_templates/lov_apx.sql` | package `LOV_APX` **003** (`IMPORTERS` + optional `P_DEFAULT_PORT_ITEM`; previous `rollback/LOV_APX/v002/`) |
 | `registry/IMPR2110_registry.sql` | MIG_FORM_REGISTRY / MIG_OBJECT_MAP rows |
@@ -36,7 +36,7 @@ Regenerate: `python3 -I scripts/gen_apex_impr2110.py --workspace-id=23232323 --a
    `LOV_HARMONIZED_TARIFF`, `SUPPORT_TITLES` → `LOV_SUPP_TITLES`. The old names are gone, so an application that still holds
    the earlier IMPR1110 / IMPR1140 / SUPPORT_ENTRY exports gets "PLS-00302" in those LOVs. **Compile 003 and re-import
    those exports (or `apex/f202530_full.sql`) together.** All exports in `apex/` already call the new names.
-4. **Report package `IMPR2110_ARD` 001** (`.pks`, then `.pkb`). It uses `ARD_LOGO` (static file `LOGO1.jpg` in the
+4. **Report package `IMPR2110_ARD` 001** (`_spec.sql`, then `_body.sql`). It uses `ARD_LOGO` (static file `LOGO1.jpg` in the
    application, DEC-034; without it the ARD server logo link is used) and `HIJDATE_DB`. `LIB_APX_USR` needs SELECT on
    `IMPORTERS`, `HQ_IMPRS`, `IMPR_TYPES`, `PRIVILEGED_IMPORTERS`, `BUS_ID_TYPES`, `CITIES`, `SD_PORTS`. The ARD data source
    user (setting `ARD_DSNAME`) needs EXECUTE on `IMPR2110_ARD` (grants as `DCLN3300_ARD`; add the ARD user if it is not one of them).

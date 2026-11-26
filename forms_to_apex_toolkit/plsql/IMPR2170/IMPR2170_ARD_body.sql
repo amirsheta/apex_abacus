@@ -1,5 +1,5 @@
 -- =============================================================================
--- Package body: IMPR2170_ARD   (matches IMPR2170_ARD.pks)   Version: 001
+-- Package body: IMPR2170_ARD   (matches IMPR2170_ARD_spec.sql)   Version: 001
 -- Layout of IMPR2170.rdf (Landscape, right to left, 2024 design):
 --   margin : title P_MODULE_NAME and port name (V_PORT_NAME_SEC1 on PPORT_CD) right, logo left,
 --            رقم التقرير + التاريخ (Hijri / Gregorian) line; footer the address line and the page counter

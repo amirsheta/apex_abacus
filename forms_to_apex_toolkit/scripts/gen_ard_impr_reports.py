@@ -11,7 +11,7 @@ Pattern : as plsql/IMPR2110/IMPR2110_ARD (user decision 2026-11-25, Forms_to_APE
           form) become a list of numbers checked with a pattern, never concatenated into SQL (as IMPR2110_ARD).
 Data    : each report is written below by hand from its RDF (data model, formulas, layout); the shared parts
           (spec, styles, header / footer, synonym, grants) come from the functions at the top.
-Writes  : plsql/<FORM>/<REPORT>_ARD.pks / .pkb  (IMPR2141..2143 under plsql/IMPR2140, the form that calls them)
+Writes  : plsql/<FORM>/<REPORT>_ARD_spec.sql / <REPORT>_ARD_body.sql  (IMPR2141..2143 under plsql/IMPR2140, the form that calls them)
           IMPR2110_ARD was written before this script and is not generated here.
 
 Usage (from forms_to_apex_toolkit):  python3 -I scripts/gen_ard_impr_reports.py [IMPR2120 ...]
@@ -243,7 +243,7 @@ AS
 def body(r):
     n = r['name']
     head = ('-- =============================================================================\n'
-            '-- Package body: %s_ARD   (matches %s_ARD.pks)   Version: %s\n' % (n, n, VERSION)
+            '-- Package body: %s_ARD   (matches %s_ARD_spec.sql)   Version: %s\n' % (n, n, VERSION)
             + ''.join('-- ' + line + '\n' for line in r['layout'])
             + '-- =============================================================================\n'
               'SET DEFINE OFF\n\nCREATE OR REPLACE PACKAGE BODY LIB_APX_USR.%s_ARD\nAS\n' % n)
@@ -1324,7 +1324,7 @@ AGNT_LAYOUT_MARGIN = '  margin : port name, logo, الرقم / التاريخ / 
 IMPR2210 = dict(
     name='IMPR2210', folder='IMPR2210', file='IMPR2210.xml', query='AGNTS',
     title='تفويضات الشركات الوسيطة',
-    caller='page 2210 through IMPR2210.PRINT_IMPR2210_ARD (ardpdf link) - page not built yet.',
+    caller='page 2210 through IMPR2210.PRINT_IMPR2210_ARD (ardpdf link; plsql/IMPR2210/impr2210_body.sql).',
     params=[('P_CURR_PORT_CD', 'الجمرك (P_PORT_CD في الشاشة، وإلا جمرك المستخدم)'),
             ('IMPR_NBR', 'أرقام الشركات الوسيطة مفصولة بفاصلة (LICE_NO في الشاشة، فاضي = الكل)'),
             ('P_MODULE_NAME', 'عنوان التقرير'),
@@ -1457,6 +1457,8 @@ IMPR2220 = agnt_grouped(
     'IMP.IMPR_NBR, IMP.ARBC_IMPR_NAME, AG.ATHRZTN_SEQ_NBR',
     '  R_1 (G_V_NAME, per intermediary company): مسلسل / اسم / نوع الشركة الوسيطه, then header row + R_CG$G_AGNTS rows.')
 
+IMPR2220['caller'] = 'page 2220 through IMPR2220.PRINT_IMPR2220_ARD (ardpdf link; plsql/IMPR2220/impr2220_body.sql).'
+
 IMPR2230 = agnt_grouped(
     'IMPR2230', 'تفويضات الشركات الوسيطة حسب المستورد',
     'L_IMPR_NBR', 'أرقام المستوردين مفصولة بفاصلة (LICE_NO في الشاشة، فاضي = الكل)',
@@ -1487,6 +1489,8 @@ IMPR2230 = agnt_grouped(
 """,
     'L_IMP.IMPR_NBR, L_IMP.ARBC_IMPR_NAME, AG.ATHRZTN_SEQ_NBR',
     '  R_1 (G_L_IMP_ARBC_IMPR_NAME, per importer): مسلسل / اسم / نوع المستورد, then header row + R_CG$G_AGNTS rows.')
+
+IMPR2230['caller'] = 'page 2230 through IMPR2230.PRINT_IMPR2230_ARD (ardpdf link; plsql/IMPR2230/impr2230_body.sql).'
 
 # ============================================================================= IMPR2250
 IMPR2250 = dict(
@@ -1574,7 +1578,7 @@ IMPR2250 = dict(
 IMPR2310 = dict(
     name='IMPR2310', folder='IMPR2310', file='IMPR2310.xml', query='CG$Q_IMPORTERS (JOURNAL.IMPORTERS_JN)',
     title='بيانات المستوردين المعدلة / المضافة',
-    caller='page 2310 through IMPR2310.PRINT_IMPR2310_ARD (ardpdf link) - page not built yet.',
+    caller='page 2310 through IMPR2310.PRINT_IMPR2310_ARD (ardpdf link; plsql/IMPR2310/impr2310_body.sql).',
     params=[('P_CURR_PORT_CD', 'الجمرك (P_PORT_CD في الشاشة)'),
             ('SELECT1', '1 = مستورد محدد، 2 = خطاب / فترة'),
             ('REPORT1', '0 = المعدلة، 1 = المضافة (REPORT في الشاشة)'),
@@ -1925,7 +1929,7 @@ def impr2420_query():
 IMPR2420 = dict(
     name='IMPR2420', folder='IMPR2420', file='IMPR2420.xml', query='CG$Q_IMPR_SUSPNS',
     title='تقرير أخطاء المستوردين',
-    caller='page 2420 through IMPR2420.PRINT_IMPR2420_ARD (ardpdf link) - page not built yet.',
+    caller='page 2420 through IMPR2420.PRINT_IMPR2420_ARD (ardpdf link; plsql/IMPR2420/impr2420_body.sql).',
     params=[('P_CURR_PORT_CD', 'جمرك المستخدم (فاضي = 99 زي BeforeReport)'),
             ('P_TYPE', '1 منتهي / 2 ساري / 3 الكل (P_TYPE في الشاشة)'),
             ('P_MODULE_NAME', 'عنوان التقرير'),
@@ -2070,8 +2074,141 @@ IMPR2420 = dict(
         END IF;
 """)
 
+# ============================================================================= IMPR3100
+# IMPR3100.rdf has the IMPR2310 data model and layout (same groups, same formula code - only a comment differs in
+# CF_USER - and the same column positions; the header text «فرع» instead of «الفرع»). Different: SELECT DISTINCT and
+# the WHERE clause (NVL filters on every parameter instead of SELECT1 / letter / period). The parameters are the ones
+# the form's PU CHECK_VAL (VIEW) sends - user decision 2026-11-26: the page follows CHECK_VAL, not the stale
+# PRINT_CHECK_VAL. The RDF reads :LETTER_DT while the form sent P_LETTER_DT (so Forms never filtered by the letter
+# date); user decision 2026-11-26: the letter date is applied (parameter 8 = LETTER_DT).
+IMPR3100 = dict(
+    name='IMPR3100', folder='IMPR3100', file='IMPR3100.xml', query='CG$Q_IMPORTERS (JOURNAL.IMPORTERS_JN)',
+    title='تقرير إضافات وتعديلات بيانات المستوردين (مساندة فنية)',
+    caller='page 3100 through IMPR3100.PRINT_IMPR3100_ARD (ardpdf link; plsql/IMPR3100/impr3100_body.sql).',
+    params=[('P_CURR_PORT_CD', 'الجمرك (P_PORT_CD في الشاشة)'),
+            ('START_DT', "من تاريخ 'YYYY-MM-MI'"),
+            ('END_DT', "إلى تاريخ 'YYYY-MM-MI'"),
+            ('P_SUPP_SRCE_CD', 'جمرك الخطاب (SUP_PORT_CD في الشاشة)'),
+            ('P_IMPR_NBR', 'رقم المستورد (IMPR_NBR1 في الشاشة)'),
+            ('P_SUPP_TITLE_CD', 'جهة الخطاب'),
+            ('P_LETTER_NBR', 'رقم الخطاب'),
+            ('LETTER_DT', "تاريخ الخطاب 'YYYY-MM-MI'"),
+            ('P_USER_ID', 'رمز المستخدم (JN_ORACLE_USER)'),
+            ('REPORT1', '0 = المعدلة، 1 = المضافة (REPORT في الشاشة)'),
+            ('P_MODULE_NAME', 'عنوان التقرير'),
+            ('P_REPORT_NO', 'رقم التقرير')],
+    notes=['الكويري في الـ RDF بيقرا :LETTER_DT والفورم كان بيبعت P_LETTER_DT، فتاريخ الخطاب ماكانش بيفلتر في Forms؛',
+           'هنا بيتبعت LETTER_DT وبيفلتر (قرار المستخدم 2026-11-26). التواريخ YYYY-MM-MI زي DCLN3300_ARD.'],
+    decls=IMPR2310['decls'],
+    layout=['Layout of IMPR3100.rdf (Landscape, right to left) = the IMPR2310 layout:',
+            '  margin : port name, logo, الرقم / التاريخ / المرفقات, title P_MODULE_NAME + CF_TITLE, footer report number',
+            '           + dates + page',
+            '  M_CG$G_IMPORTERS_HDR once (repeated on every page by thead), then R_1 (G_SUPP_SRCE_CD, per letter):',
+            '  جمرك / جهة / رقم / تاريخ الخطاب, اسم المستخدم on the first line, next to R_CG$G_IMPORTERS rows: نوع',
+            '  المستورد, الرقم الجمركي, اسم المستورد, نوع الرقم الإستدلالي, الرقم الاستدلالى, فرع, الرقم الموحد.',
+            '  C_CODEFormula is in the RDF group but not in the layout; kept for the same package API as IMPR2310_ARD.',
+            '  The RDF DECODE of JN_OPERATION (OPERATION) is not in the layout and its Arabic text is lost in the XML: left out.'],
+    formulas=IMPR2310['formulas'],
+    vars=r"""        v_p_curr_port_cd       NUMBER := TO_NUMBER (P_PARAMETER1);
+        v_start_dt             DATE := TO_DATE (P_PARAMETER2, 'YYYY-MM-MI');
+        v_end_dt               DATE := TO_DATE (P_PARAMETER3, 'YYYY-MM-MI');
+        v_p_supp_srce_cd       NUMBER := TO_NUMBER (P_PARAMETER4);
+        v_p_impr_nbr           NUMBER := TO_NUMBER (P_PARAMETER5);
+        v_p_supp_title_cd      NUMBER := TO_NUMBER (P_PARAMETER6);
+        v_p_letter_nbr         VARCHAR2 (4000) := P_PARAMETER7;
+        v_letter_dt            DATE := TO_DATE (P_PARAMETER8, 'YYYY-MM-MI');
+        v_p_user_id            VARCHAR2 (4000) := P_PARAMETER9;
+        v_report1              NUMBER := TO_NUMBER (P_PARAMETER10);
+        v_p_module_name        VARCHAR2 (4000) := P_PARAMETER11;
+        v_p_report_no          VARCHAR2 (4000) := P_PARAMETER12;
+        v_port_name            VARCHAR2 (100);   -- V_PORT_NAME_SEC1
+        v_key                  VARCHAR2 (4000);
+        v_prev_key             VARCHAR2 (4000);  -- G_SUPP_SRCE_CD اللي فات
+        v_rows                 NUMBER := 0;
+""",
+    init="\n        v_port_name := V_PORT_NAME_SEC1FormatTrigger (v_p_curr_port_cd);\n",
+    header=standard_header('CF_TITLEFormula (v_report1)'),
+    data=r"""
+        -- CG$Q_IMPORTERS بالحرف من الـ RDF (SELECT DISTINCT على كل الأعمدة)، الـ binds بقت variables
+        FOR q IN (SELECT DISTINCT
+                         IMP.PORT_CD               PORT_CD,
+                         IMP.IMPR_NBR              IMPR_NBR,
+                         IMP.IMPR_TYPE_CD,
+                         IMP.BUS_ID_BRNCH          BUS_ID_BRNCH2,
+                         IMP.BUS_ID                BUS_ID,
+                         IMP.CITY_CODE,
+                         IMP.BUS_ID_TYPE_CD,
+                         ' ' || IMP.ARBC_IMPR_NAME ARBC_IMPR_NAME,
+                         IMP.IMPR_TEL_NBR          IMPR_TEL_NBR,
+                         IMP.IMPR_POB_NBR          IMPR_POB_NBR,
+                         IMP.IMPR_ZIP_CD           IMPR_ZIP_CD,
+                         IMP.IMPR_FAX_NBR          IMPR_FAX_NBR,
+                         IMP.IMPR_TELEX_NBR        IMPR_TELEX_NBR,
+                         IMP.ENG_IMPR_NAME         ENG_IMPR_NAME,
+                         IMP.IMPR_CNTCT_NAME       IMPR_CNTCT_NAME,
+                         IMP.BUS_ID_BRNCH          BUS_ID_BRNCH,
+                         IMP.HQ_IMPR_NBR,
+                         IMP.EMAIL                 EMAIL,
+                         IMP.SUPP_SRCE_CD,
+                         IMP.SUPP_TITLE_CD,
+                         IMP.SUPP_LETR_NO,
+                         IMP.SUPP_LETR_DT,
+                         IMP.JN_ORACLE_USER,
+                         IMP.JN_OPERATION
+                    FROM JOURNAL.IMPORTERS_JN IMP
+                   WHERE     IMP.PORT_CD = v_p_curr_port_cd /*CNTRL BY AHMED*/
+                         AND IMP.IMPR_NBR = NVL (v_p_impr_nbr, IMP.IMPR_NBR)
+                         AND IMP.SUPP_SRCE_CD = NVL (v_p_supp_srce_cd, IMP.SUPP_SRCE_CD)
+                         AND IMP.SUPP_TITLE_CD = NVL (v_p_supp_title_cd, IMP.SUPP_TITLE_CD)
+                         AND IMP.SUPP_LETR_NO = NVL (v_p_letter_nbr, IMP.SUPP_LETR_NO)
+                         AND IMP.JN_ORACLE_USER = NVL (v_p_user_id, IMP.JN_ORACLE_USER)
+                         AND TO_CHAR (IMP.SUPP_LETR_DT, 'RRRR-MM-MI') =
+                                TO_CHAR (NVL (v_letter_dt, IMP.SUPP_LETR_DT), 'RRRR-MM-MI')
+                         AND TO_CHAR (IMP.SUPP_LETR_DT, 'RRRR-MM-MI') >=
+                                TO_CHAR (NVL (v_start_dt, IMP.SUPP_LETR_DT), 'RRRR-MM-MI')
+                         AND TO_CHAR (IMP.SUPP_LETR_DT, 'RRRR-MM-MI') <=
+                                TO_CHAR (NVL (v_end_dt, IMP.SUPP_LETR_DT), 'RRRR-MM-MI')
+                         AND (   (IMP.JN_OPERATION IN ('UPB', 'UPA') AND v_report1 = 0)
+                              OR (IMP.JN_OPERATION = 'INS' AND v_report1 = 1))
+                   ORDER BY IMP.SUPP_SRCE_CD, IMP.SUPP_TITLE_CD, IMP.SUPP_LETR_NO, IMP.JN_ORACLE_USER, IMP.SUPP_LETR_DT)
+        LOOP
+            v_rows := v_rows + 1;
+            IF v_rows = 1 THEN
+                -- M_CG$G_IMPORTERS_HDR
+                dbms_lob.append (retVal, '
+              <table class="data" dir="rtl"><thead><tr>
+                <th style="width:10%;">جمرك الخطاب</th><th style="width:8%;">جهة الخطاب</th><th style="width:7%;">رقم الخطاب</th>
+                <th style="width:7%;">تاريخ الخطاب</th><th style="width:9%;">اسم المستخدم</th><th style="width:10%;">نوع المستورد</th>
+                <th style="width:6%;">الرقم الجمركي</th><th style="width:15%;">اسم المستورد</th><th style="width:10%;">نوع الرقم الإستدلالي</th>
+                <th style="width:8%;">الرقم الاستدلالى</th><th style="width:4%;">فرع</th><th style="width:6%;">الرقم الموحد</th>
+              </tr></thead><tbody>');
+            END IF;
+
+            -- R_1 (G_SUPP_SRCE_CD): خانات الخطاب في أول سطر
+            v_key := q.SUPP_SRCE_CD || '|' || q.SUPP_TITLE_CD || '|' || q.SUPP_LETR_NO || '|' || q.JN_ORACLE_USER || '|'
+                     || TO_CHAR (q.SUPP_LETR_DT, 'YYYY-MM-DD HH24:MI:SS');
+            IF v_prev_key IS NULL OR v_prev_key <> v_key THEN
+                v_prev_key := v_key;
+                dbms_lob.append (retVal, '<tr>' || HTML_CELL (CF_SUPP_PORT_NAMEFormula (q.SUPP_SRCE_CD)) || HTML_CELL (CF_DEPTFormula (q.SUPP_TITLE_CD))
+                                         || HTML_CELL (q.SUPP_LETR_NO) || HTML_CELL (TO_CHAR (q.SUPP_LETR_DT, 'MI-MM-RRRR'))
+                                         || HTML_CELL (CF_USERFormula (q.JN_ORACLE_USER, v_p_curr_port_cd)));
+            ELSE
+                dbms_lob.append (retVal, '<tr><td></td><td></td><td></td><td></td><td></td>');
+            END IF;
+
+            -- R_CG$G_IMPORTERS
+            dbms_lob.append (retVal, HTML_CELL (V_NAMEFormula (q.IMPR_TYPE_CD)) || HTML_CELL (q.IMPR_NBR)
+                                     || HTML_CELL (q.ARBC_IMPR_NAME, 'text-align:right;') || HTML_CELL (v_name2Formula (q.BUS_ID_TYPE_CD))
+                                     || HTML_CELL (q.BUS_ID) || HTML_CELL (q.BUS_ID_BRNCH) || HTML_CELL (q.HQ_IMPR_NBR) || '</tr>');
+        END LOOP;
+
+        IF v_rows > 0 THEN
+            dbms_lob.append (retVal, '</tbody></table>');
+        END IF;
+""")
+
 REPORTS = [IMPR2120, IMPR2130, IMPR2141, IMPR2142, IMPR2143, IMPR2150, IMPR2170, IMPR2180, IMPR2210, IMPR2220,
-           IMPR2230, IMPR2250, IMPR2310, IMPR2410, IMPR2420]
+           IMPR2230, IMPR2250, IMPR2310, IMPR2410, IMPR2420, IMPR3100]
 
 
 def impr2170_query():
@@ -2087,8 +2224,8 @@ def main(names):
             r['data'] = r['data'].replace('@@IMPR2170_QUERY@@', impr2170_query())
         folder = os.path.join(ROOT, 'plsql', r['folder'])
         os.makedirs(folder, exist_ok=True)
-        for ext, text in (('pks', spec(r)), ('pkb', body(r))):
-            path = os.path.join(folder, '%s_ARD.%s' % (r['name'], ext))
+        for part, text in (('spec', spec(r)), ('body', body(r))):
+            path = os.path.join(folder, '%s_ARD_%s.sql' % (r['name'], part))
             with open(path, 'w', encoding='utf-8') as f:
                 f.write(text)
             print('wrote', os.path.relpath(path, ROOT))

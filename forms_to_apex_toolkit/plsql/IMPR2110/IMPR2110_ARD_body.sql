@@ -1,5 +1,5 @@
 -- =============================================================================
--- Package body: IMPR2110_ARD   (matches IMPR2110_ARD.pks)   Version: 001
+-- Package body: IMPR2110_ARD   (matches IMPR2110_ARD_spec.sql)   Version: 001
 -- Layout of IMPR2110.rdf (Landscape, right to left):
 --   margin    : port name (V_PORT_NAME_SEC1), logo, الرقم / التاريخ / المرفقات, title P_MODULE_NAME,
 --               footer report number + Hijri / Gregorian date + "page x of y"

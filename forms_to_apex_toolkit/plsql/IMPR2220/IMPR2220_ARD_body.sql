@@ -1,5 +1,5 @@
 -- =============================================================================
--- Package body: IMPR2220_ARD   (matches IMPR2220_ARD.pks)   Version: 001
+-- Package body: IMPR2220_ARD   (matches IMPR2220_ARD_spec.sql)   Version: 001
 -- Layout of IMPR2220.rdf (Landscape, right to left):
 --   margin : port name, logo, الرقم / التاريخ / المرفقات, title P_MODULE_NAME, footer report number + dates + page
 --   R_1 (G_V_NAME, per intermediary company): مسلسل / اسم / نوع الشركة الوسيطه, then header row + R_CG$G_AGNTS rows.

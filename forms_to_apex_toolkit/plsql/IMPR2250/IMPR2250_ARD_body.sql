@@ -1,5 +1,5 @@
 -- =============================================================================
--- Package body: IMPR2250_ARD   (matches IMPR2250_ARD.pks)   Version: 001
+-- Package body: IMPR2250_ARD   (matches IMPR2250_ARD_spec.sql)   Version: 001
 -- Layout of IMPR2250.rdf (Landscape, right to left):
 --   margin : port name, logo, الرقم / التاريخ / المرفقات, title P_MODULE_NAME, footer report number + dates + page
 --   R_1 (per exception): مسلسل / نوع / استخدام الاستثناء, نوع الرقم الاستدلالي : الرقم, الفرع, حالة السجل,

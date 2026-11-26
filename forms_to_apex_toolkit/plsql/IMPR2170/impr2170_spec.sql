@@ -152,7 +152,7 @@ CREATE OR REPLACE PACKAGE LIB_APX_USR.IMPR2170 AS
     -- =========================================================================
     -- Source: REP.Run_Product(REPORTS, :PARAMETER.P_REPORT_PATH || :PARAMETER.P_REPORT_FILE, SYNCHRONOUS, RUNTIME,
     --         FILESYSTEM, pl_id, NULL)
-    -- Returns the ardpdf link of IMPR2170_ARD.ARD_IMPR2170 (standard 13-c), parameters in the order of IMPR2170_ARD.pks:
+    -- Returns the ardpdf link of IMPR2170_ARD.ARD_IMPR2170 (standard 13-c), parameters in the order of IMPR2170_ARD_spec.sql:
     --   P_PARAMETER1 P_CURR_PORT_CD, P_PARAMETER2 PPORT_CD, P_PARAMETER3 PSELECT1, P_PARAMETER4 PIMPR_NBR,
     --   P_PARAMETER5 PHQ_IMPR_NBR, P_PARAMETER6 P_MODULE_NAME, P_PARAMETER7 P_REPORT_NO.
     --   ARD_URL / ARD_DSNAME: settings in SC_PORT_SETTING (SYSOBJ_ID 999, PORT_CD 99; migration/001_ard_settings.sql);

@@ -28,7 +28,7 @@ relevant). The user optionally picks a port (head office only) and a licence typ
 ## 2. Approach
 
 1. **Report.** `IMPR2180_ARD` (`plsql/IMPR2180`), generated earlier by `scripts/gen_ard_impr_reports.py`; this conversion
-   only changed its caller note (the `.pkb` is unchanged).
+   only changed its caller note (the `_body.sql` is unchanged).
 2. **Toolbar.** Page 0 shows only PRINT, CLEAR and BACK (`P2180_REPORT`).
 3. **Print.** The custom event `REPORT_PRINT` runs FOS `IMPR2180.PRINT_CHECK_VAL`, which returns the ardpdf link from
    `PRINT_IMPR2180_ARD`; one line of JavaScript opens it in a new tab.

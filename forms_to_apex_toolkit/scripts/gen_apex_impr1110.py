@@ -27,6 +27,7 @@ import number_only      # Number Field items: CSS class number_only + one page-l
 import functions_drawer # the FUNCS region is on page 0, never on a form page
 import item_icons      # Post Text icon next to every entry item, from the item name (f202604 convention)
 import items_to_submit # every page item a query / LOV / FOS call reads is in its Items to Submit (user rule 2026-11-25)
+import client_condition  # an item in an item-type client-side condition has a default value (user rule 2026-11-26)
 import lov_apx         # shared LOVs: function body returning SQL, code in LOV_APX (CLAUDE.md 4d)
 DESIGN = os.path.join(ROOT, 'work', 'step03', 'page_design.json')
 XML = os.path.join(ROOT, 'forms', 'IMPR', 'IMPR1110_fmb.xml')
@@ -843,7 +844,7 @@ end;
 set verify on feedback on define on
 prompt  ...done
 ''')
-    text = items_to_submit.fix('\n'.join(out))   # Items to Submit = every page item read (user rule 2026-11-25)
+    text = client_condition.fix(items_to_submit.fix('\n'.join(out)))   # Items to Submit = every page item read (user rule 2026-11-25)
     with open(OUT, 'w', encoding='utf-8', newline='\n') as f:
         f.write(text)
     return text
@@ -858,7 +859,7 @@ def names_of(text, api):
     return out
 
 def selfcheck(text):
-    problems = items_to_submit.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
+    problems = items_to_submit.check(text) + client_condition.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
     ref_txt = open(REF, encoding='utf-8', errors='replace').read()
     pkg_txt = re.sub(r'--[^\n]*', '', open(PKG, encoding='utf-8').read())
     if 'wwv_flow_imp' in text: problems.append('wwv_flow_imp found')

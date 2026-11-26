@@ -1,5 +1,5 @@
 -- =============================================================================
--- Package body: IMPR2410_ARD   (matches IMPR2410_ARD.pks)   Version: 001
+-- Package body: IMPR2410_ARD   (matches IMPR2410_ARD_spec.sql)   Version: 001
 -- Layout of IMPR2410.rdf (Portrait, left to right layout of Arabic text; here dir rtl with the same
 -- positions mirrored):
 --   margin : letterhead (logo) and port name right, التاريخ / الموافق / الرقم left, title P_MODULE_NAME,

@@ -98,6 +98,11 @@ Item template options: `#DEFAULT#:t-Form-fieldContainer--stretchInputs`. Hidden 
 | `p_page_template_options` | `#DEFAULT#` | `#DEFAULT#` |
 | `p_protection_level` | `C` | `C` |
 
+Search page `01`: the dialog opens with every row and the search text narrows them (user requests 2026-11-26).
+The IG SQL has no `:P<page>01_SEARCH IS NOT NULL` gate; the text filter is `(:P<page>01_SEARCH IS NULL OR INSTR(...) > 0)`.
+A Before Header process `CLEAR SEARCH` (`NATIVE_SESSION_STATE`, `p_attribute_01=>'CLEAR_CACHE_CURRENT_PAGE'`) empties the
+search text on every opening, since `P0_SEARCH_URL` does not clear the cache. Added and checked by `scripts/search_page.py`.
+
 Note: `SCREEN ENTRY RESET` keeps the open record only between the main page and its `01` page.
 Any other child modal page (`<main page>02`…) clears `P0_PAGE_PK` when the user returns. Flag
 this in import_notes.md whenever you generate such a page.

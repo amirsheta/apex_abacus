@@ -26,7 +26,7 @@
   - 2 dynamic lists.
   The requery, the lookup and the lists become region SQL and shared LOVs, not PL/SQL (prompt rule 6).
 - **APEX page shape (input for step 03).** This is a design decision, see §8 #1:
-  - Search page 111601 = Forms Enter Query / Execute Query on `IMPR_PRTL_NAT`. It lists the pending rows (`IMPR_PRTL_NAT_IS_PENDING = 'Y'`); a row link sets `P0_PAGE_PK` to the URL-safe ROWID.
+  - Search page 111601 = Forms Enter Query / Execute Query on `IMPR_PRTL_NAT`. It lists the pending rows (`IMPR_PRTL_NAT_IS_PENDING = 'Y'`) (all on opening; the search text narrows them, user request 2026-11-26); a row link sets `P0_PAGE_PK` to the URL-safe ROWID.
   - Main page 1116 has a Form region `IMPR_PRTL_NAT` (one record, every item read only except `REVIEW_FLAG`) and below it a read-only IG `IMPORTERS`, queried with the Forms WHERE on the five identification items of the record.
   - Page 0 `SAVE` → `PRE-UPDATE` (activity log) → `Process form`. `CREATE` / `DELETE` are refused by `PRE_INSERT` / `PRE_DELETE`, because the Forms block forbids insert and delete.
 - **Business rules kept:**

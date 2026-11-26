@@ -78,6 +78,7 @@ IMPR1116, plus the page 0 `NUMBER ONLY` DA and `FUNCS` drawer).
    `return LOV_APX.REFERENCE_CODES(P_DOMAIN => 'PRTL_NAT_FLAG');`, Return `R` / Display `D`.
 3. Run page 1116 → page 0 `SEARCH` → page 111601 lists the rows with `REVIEW_FLAG = 0` and a Gazette name (Forms
    Execute Query). Type part of a name, then press Enter → the list is filtered. Press **مسح البحث** → all rows again.
+   Close the dialog after a search and open it again → the search text is empty and all rows are shown (`CLEAR SEARCH`).
 4. Click a `مسلسل` link → page 1116 shows the record; the importers grid lists the importers with the same commercial
    activity, country, identification type, number and branch (compare with Forms for one row whose branch is empty).
 5. Set `حالة المراجعة` to 1 → `SAVE` → "تم الحفظ بنجاح"; the record stays open; `ACTIVITY` log has a row

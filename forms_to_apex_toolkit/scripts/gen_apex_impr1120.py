@@ -28,6 +28,7 @@ import functions_drawer # the FUNCS region is on page 0, never on a form page
 import item_icons      # Post Text icon next to every entry item, from the item name (f202604 convention)
 import items_to_submit # every page item a query / LOV / FOS call reads is in its Items to Submit (user rule 2026-11-25)
 import client_condition  # an item in an item-type client-side condition has a default value (user rule 2026-11-26)
+import search_page      # a search page <page>01 reads no data when the dialog opens (user request 2026-11-26)
 import lov_apx         # shared LOVs: function body returning SQL, code in LOV_APX (CLAUDE.md 4d)
 REF = os.path.join(ROOT, 'apex', 'Reference', 'f345.sql')
 IMPR1110_EXPORT = os.path.join(ROOT, 'apex', 'IMPR1110', 'f345_impr1110.sql')
@@ -432,8 +433,8 @@ SUSPN_SQL = '\n'.join([
     '   AND s.suspn_rlse_dt IS NULL',
     ' ORDER BY s.suspn_seq'])
 SEARCH_SQL = '\n'.join([
-    '-- one search text over every shown column (user request 2026-11-23); no rows until a search is made, as Forms',
-    '-- opens the block in Enter-Query mode: the dialog opens without reading IMPORTERS. No sort clause (user request',
+    '-- one search text over every shown column (user request 2026-11-23); every row while the search text is empty (user request 2026-11-26).',
+    '-- No sort clause (user request',
     '-- 2026-11-23: the whole result is not sorted; the grid columns can still be sorted)',
     "SELECT TRANSLATE(ROWIDTOCHAR(i.ROWID), '+/', '-_') AS row_id,   -- URL-safe: a '+' in f?p arrives as a space",
     '       i.port_cd, p.port_name, i.impr_nbr, i.hq_impr_nbr,',
@@ -441,14 +442,13 @@ SEARCH_SQL = '\n'.join([
     '       i.impr_type_cd, it.impr_type_name, i.bus_id_type_cd, i.bus_id, i.bus_id_brnch,',
     '       i.ctry_cd, c.crty_arbc_name, i.city_code_of_id, i.impr_expr_type',
     '  FROM importers i, sd_ports p, impr_types it, countries c',
-    ' WHERE :P112001_SEARCH IS NOT NULL',
-    '   AND i.port_cd = NVL((SELECT IMPR1120.IMPORTERS_PRE_QUERY_PORT_CD(PORT_CD        => NULL,',
+    ' WHERE i.port_cd = NVL((SELECT IMPR1120.IMPORTERS_PRE_QUERY_PORT_CD(PORT_CD        => NULL,',
     '                                                                    P_CURR_PORT_CD => :P_CURR_PORT_CD)',
     '                          FROM dual), i.port_cd)',
     '   AND p.port_cd (+)       = i.port_cd',
     '   AND it.impr_type_cd (+) = i.impr_type_cd',
     '   AND c.ctry_cd (+)       = i.ctry_cd',
-    "   AND (INSTR(UPPER(i.port_cd || '|' || p.port_name || '|' || i.impr_nbr || '|' || i.hq_impr_nbr || '|' ||",
+    "   AND (:P112001_SEARCH IS NULL OR INSTR(UPPER(i.port_cd || '|' || p.port_name || '|' || i.impr_nbr || '|' || i.hq_impr_nbr || '|' ||",
     "                    i.arbc_impr_name || '|' || i.eng_impr_name || '|' || i.impr_cntct_name || '|' ||",
     "                    i.impr_type_cd || '|' || it.impr_type_name || '|' || i.bus_id_type_cd || '|' || i.bus_id || '|' ||",
     "                    i.bus_id_brnch || '|' || i.ctry_cd || '|' || c.crty_arbc_name || '|' || i.city_code_of_id || '|' ||",
@@ -729,7 +729,7 @@ end;
         ('p_ajax_items_to_submit', q('P112001_SEARCH')),
         ('p_plug_query_options', q('DERIVED_REPORT_COLUMNS')),
         ('p_plug_comment', src('IMPR1120.IMPORTERS block query + PRE-QUERY (block ORDER BY dropped); one search text over all columns, '
-                               'no query until a search, no total row count / spec 3'))]))
+                               'every row until a search narrows it (user request 2026-11-26), no total row count / spec 3'))]))
     for i, (c, h, dt) in enumerate(SEARCH_COLUMNS):
         if c == 'ROW_ID':
             col = dict(name=c, kind='HIDDEN', data_type=dt, pk=True)
@@ -739,7 +739,7 @@ end;
         else:
             col = dict(name=c, kind='DISPLAY', data_type=dt, heading=h)
         A(ig_column(PG_SEARCH, col, (i + 1) * 10))
-    for c in ig(PG_SEARCH, '112001:plug:IG', False, [c for c, _, _ in SEARCH_COLUMNS], 'لا توجد نتائج - أدخل نص البحث ثم اضغط بحث'):
+    for c in ig(PG_SEARCH, '112001:plug:IG', False, [c for c, _, _ in SEARCH_COLUMNS], 'لا توجد نتائج'):
         A(c)
     A(page_item(PG_SEARCH, '112001:plug:CRIT', 10, dict(
         name='P112001_SEARCH', kind='NATIVE_TEXT_FIELD', label='بحث في كل الأعمدة', maxlen=200, span=6,
@@ -790,7 +790,7 @@ end;
 set verify on feedback on define on
 prompt  ...done
 ''')
-    text = client_condition.fix(items_to_submit.fix('\n'.join(out)))   # Items to Submit = every page item read (user rule 2026-11-25)
+    text = search_page.fix(client_condition.fix(items_to_submit.fix('\n'.join(out))))   # Items to Submit = every page item read (user rule 2026-11-25)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, 'w', encoding='utf-8', newline='\n') as f:
         f.write(text)
@@ -812,7 +812,7 @@ def unq(s):
     return s[1:-1].replace("''", "'") if s.startswith("'") else s
 
 def selfcheck(text):
-    problems = items_to_submit.check(text) + client_condition.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
+    problems = items_to_submit.check(text) + client_condition.check(text) + search_page.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
     ref_txt = open(REF, encoding='utf-8', errors='replace').read()
     i1110 = open(IMPR1110_EXPORT, encoding='utf-8', errors='replace').read()
     pkg_txt = re.sub(r'--[^\n]*', '', open(PKG, encoding='utf-8').read())

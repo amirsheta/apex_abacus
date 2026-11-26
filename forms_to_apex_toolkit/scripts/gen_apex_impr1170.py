@@ -33,6 +33,7 @@ import functions_drawer # the FUNCS region is on page 0, never on a form page
 import item_icons       # Post Text icon next to every entry item
 import items_to_submit  # every page item a query / LOV / FOS call reads is in its Items to Submit
 import client_condition  # an item in an item-type client-side condition has a default value (user rule 2026-11-26)
+import search_page      # a search page <page>01 reads no data when the dialog opens (user request 2026-11-26)
 import lov_apx          # shared LOVs: function body returning SQL, code in LOV_APX (CLAUDE.md 4d)
 import forms_apx_helpers
 import parameter_names
@@ -148,7 +149,7 @@ OWNERS_COLUMNS = [   # name, heading, data type, kind (X order of the Forms canv
     ('OWNER_NATIONALITY_AR', 'جنسية المالك', 'VARCHAR2', 'text'), ('OWNER_NATIONALITY_EN', 'جنسية المالكEN', 'VARCHAR2', 'text'),
     ('RELATION_TYPE', None, 'NUMBER', 'hidden'), ('RELATION_DESC', 'العلاقة', 'VARCHAR2', 'text')]
 SEARCH_SQL = '\n'.join([
-    '-- one search text over every shown column; no rows until a search is made (Forms Enter-Query). The block has no',
+    '-- one search text over every shown column; every row while the search text is empty (user request 2026-11-26). The block has no',
     '-- WHERE clause: every cached registration (MCI_DATA is national, not per port). POST-QUERY status text as outer join.',
     'SELECT x.*',
     '  FROM (SELECT md.cr_nbr, md.cr_name_ar, ct.rv_meaning AS cr_type_name, md.main_cr_nbr,',
@@ -159,10 +160,9 @@ SEARCH_SQL = '\n'.join([
     "         WHERE ct.rv_domain (+) = 'COMM_RGSTRTN_TYPE'",
     '           AND ct.rv_low_value (+) = TO_CHAR(md.cr_type)',
     '           AND st.bus_id_status (+) = md.cr_status) x',
-    ' WHERE :P117001_SEARCH IS NOT NULL',
-    "   AND INSTR(UPPER(x.cr_nbr || '|' || x.cr_name_ar || '|' || x.cr_type_name || '|' || x.main_cr_nbr || '|' ||",
+    " WHERE (:P117001_SEARCH IS NULL OR INSTR(UPPER(x.cr_nbr || '|' || x.cr_name_ar || '|' || x.cr_type_name || '|' || x.main_cr_nbr || '|' ||",
     "                   x.cr_stat_desc || '|' || x.cr_issue_date || '|' || x.cr_city_ar || '|' || x.legal_type_a),",
-    '             UPPER(TRIM(:P117001_SEARCH))) > 0'])
+    '             UPPER(TRIM(:P117001_SEARCH))) > 0)'])
 SEARCH_COLUMNS = [   # name, heading, data type, kind
     ('CR_NBR', 'الرقم الموحد للسجل التجاري', 'VARCHAR2', 'link'), ('CR_NAME_AR', 'الاسم التجارى', 'VARCHAR2', 'text'),
     ('CR_TYPE_NAME', 'نوع السجل التجارى', 'VARCHAR2', 'text'), ('MAIN_CR_NBR', 'السجل التجارى الرئيسى', 'VARCHAR2', 'text'),
@@ -579,9 +579,9 @@ end;
         ('p_attribute_02', q('TEXT')), ('p_attribute_03', q('Y')),
         ('p_plug_comment', src('IMPR1170.MCI_DATA query criteria as one search text over all columns / spec 3'))]))
     P.extend(ig_region(PG_SEARCH, '117001:plug:IG', SEARCH_SQL, 'P117001_SEARCH', SEARCH_COLUMNS,
-                       '117001000201', 'لا توجد نتائج - أدخل نص البحث ثم اضغط بحث', True,
+                       '117001000201', 'لا توجد نتائج', True,
                        'IMPR1170.MCI_DATA block query (no WHERE clause: every cached registration) with the POST-QUERY status '
-                       'text; one search text over all columns, no query until a search / spec 3', 'السجلات التجارية',
+                       'text; one search text over all columns, every row until a search narrows it (user request 2026-11-26) / spec 3', 'السجلات التجارية',
                        'MCI_DATA_SEARCH', 20, link='f?p=&APP_ID.:1170:&SESSION.::&DEBUG.:1170:P0_PAGE_PK:&CR_NBR.'))
     UNCERTAIN.add('search IG 117001: p_lazy_loading true, p_show_total_row_count false, toolbar ACTIONS_MENU:RESET (search field removed)')
     A(page_item(PG_SEARCH, '117001:plug:CRIT', 10, dict(
@@ -636,7 +636,7 @@ end;
 set verify on feedback on define on
 prompt  ...done
 ''')
-    text = client_condition.fix(items_to_submit.fix('\n'.join(out)))
+    text = search_page.fix(client_condition.fix(items_to_submit.fix('\n'.join(out))))
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, 'w', encoding='utf-8', newline='\n') as f:
         f.write(text)
@@ -651,7 +651,7 @@ def names_of(text, api):
     return out
 
 def selfcheck(text):
-    problems = items_to_submit.check(text) + client_condition.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
+    problems = items_to_submit.check(text) + client_condition.check(text) + search_page.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
     ref_txt = open(REF, encoding='utf-8', errors='replace').read()
     others = '\n'.join(open(f, encoding='utf-8', errors='replace').read() for f in OTHER_EXPORTS)
     pkg_txt = re.sub(r'--[^\n]*', '', open(PKG, encoding='utf-8').read())

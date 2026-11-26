@@ -28,6 +28,7 @@ import functions_drawer # the FUNCS region is on page 0, never on a form page
 import item_icons      # Post Text icon next to every entry item, from the item name (f202604 convention)
 import items_to_submit # every page item a query / LOV / FOS call reads is in its Items to Submit (user rule 2026-11-25)
 import client_condition  # an item in an item-type client-side condition has a default value (user rule 2026-11-26)
+import search_page      # a search page <page>01 reads no data when the dialog opens (user request 2026-11-26)
 import lov_apx         # shared LOVs: function body returning SQL, code in LOV_APX (CLAUDE.md 4d)
 REF = os.path.join(ROOT, 'apex', 'Reference', 'f345.sql')
 IMPR1110_EXPORT = os.path.join(ROOT, 'apex', 'IMPR1110', 'f345_impr1110.sql')
@@ -431,7 +432,7 @@ TARIFF_SQL = '\n'.join([
     '   AND ht.hrmnzd_code (+) = t.hrmnzd_code',
     ' ORDER BY t.item_sequence'])
 SEARCH_SQL = '\n'.join([
-    '-- one search text over every shown column; no rows until a search is made (Forms opens in Enter-Query mode).',
+    '-- one search text over every shown column; every row while the search text is empty (user request 2026-11-26).',
     '-- The PRE-QUERY BUS_ID_TYPE_NAME criterion is part of the text search. No ORDER BY (as IMPR1120).',
     "SELECT TRANSLATE(ROWIDTOCHAR(r.ROWID), '+/', '-_') AS row_id,   -- URL-safe: a '+' in f?p arrives as a space",
     '       r.rule_isn, r.rule_type, rt.rv_meaning AS rule_type_name,',
@@ -444,13 +445,12 @@ SEARCH_SQL = '\n'.join([
     '       END AS l_si_arbc_impr_name,',
     '       r.bus_id_type_cd, b.bus_id_type_name, r.bus_id, r.bus_id_brnch, rs.rv_meaning AS rec_status_name',
     '  FROM impr_rules r, bus_id_types b, cg_ref_codes rt, cg_ref_codes rs',
-    ' WHERE :P114001_SEARCH IS NOT NULL',
-    '   AND b.bus_id_type_cd (+) = r.bus_id_type_cd',
+    ' WHERE b.bus_id_type_cd (+) = r.bus_id_type_cd',
     "   AND rt.rv_domain (+) = 'RULE_TYPE'  AND rt.rv_low_value (+) = TO_CHAR(r.rule_type)",
     "   AND rs.rv_domain (+) = 'REC_STATUS' AND rs.rv_low_value (+) = TO_CHAR(r.rec_status)",
-    "   AND INSTR(UPPER(r.rule_isn || '|' || r.rule_type || '|' || rt.rv_meaning || '|' || r.hq_impr_nbr || '|' ||",
+    "   AND (:P114001_SEARCH IS NULL OR INSTR(UPPER(r.rule_isn || '|' || r.rule_type || '|' || rt.rv_meaning || '|' || r.hq_impr_nbr || '|' ||",
     "                   b.bus_id_type_name || '|' || r.bus_id || '|' || r.bus_id_brnch || '|' || rs.rv_meaning),",
-    '             UPPER(TRIM(:P114001_SEARCH))) > 0'])
+    '             UPPER(TRIM(:P114001_SEARCH))) > 0)'])
 SEARCH_COLUMNS = [
     ('ROW_ID', None, 'VARCHAR2'), ('RULE_ISN', 'مسلسل الاستثناء', 'NUMBER'), ('RULE_TYPE', 'نوع الاستثناء', 'NUMBER'),
     ('RULE_TYPE_NAME', 'وصف نوع الاستثناء', 'VARCHAR2'), ('ALL_BRNCH_FLAG_NAME', 'استخدام الاستثناء', 'VARCHAR2'),
@@ -777,7 +777,7 @@ end;
         ('p_plug_template', fid('REGION_GRID')), ('p_plug_display_sequence', '20'), ('p_query_type', q('SQL')),
         ('p_plug_source', lit(SEARCH_SQL)), ('p_plug_source_type', q('NATIVE_IG')),
         ('p_ajax_items_to_submit', q('P114001_SEARCH')), ('p_plug_query_options', q('DERIVED_REPORT_COLUMNS')),
-        ('p_plug_comment', src('IMPR1140.IMPR_RULES block query + PRE-QUERY (ORDER BY dropped); no query until a search / spec 3'))]))
+        ('p_plug_comment', src('IMPR1140.IMPR_RULES block query + PRE-QUERY (ORDER BY dropped); every row until a search narrows it (user request 2026-11-26) / spec 3'))]))
     for i, (c, h, dt) in enumerate(SEARCH_COLUMNS):
         if c == 'ROW_ID':
             col = dict(name=c, kind='HIDDEN', data_type=dt, pk=True)
@@ -788,7 +788,7 @@ end;
             col = dict(name=c, kind='DISPLAY', data_type=dt, heading=h)
         A(ig_column('114001:plug:IG', col, (i + 1) * 10))
     for c in ig('114001:plug:IG', '114001000201', None, [c for c, _, _ in SEARCH_COLUMNS], ['ROW_ID'],
-                'لا توجد نتائج - أدخل نص البحث ثم اضغط بحث', search=True):
+                'لا توجد نتائج', search=True):
         A(c)
     UNCERTAIN.add('search IG: p_lazy_loading true, p_show_total_row_count false, toolbar ACTIONS_MENU:RESET (as IMPR1120)')
     A(page_item(PG_SEARCH, '114001:plug:CRIT', 10, dict(
@@ -829,7 +829,7 @@ end;
 set verify on feedback on define on
 prompt  ...done
 ''')
-    text = client_condition.fix(items_to_submit.fix('\n'.join(out)))   # Items to Submit = every page item read (user rule 2026-11-25)
+    text = search_page.fix(client_condition.fix(items_to_submit.fix('\n'.join(out))))   # Items to Submit = every page item read (user rule 2026-11-25)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, 'w', encoding='utf-8', newline='\n') as f:
         f.write(text)
@@ -851,7 +851,7 @@ def unq(s):
     return s[1:-1].replace("''", "'") if s.startswith("'") else s
 
 def selfcheck(text):
-    problems = items_to_submit.check(text) + client_condition.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
+    problems = items_to_submit.check(text) + client_condition.check(text) + search_page.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
     ref_txt = open(REF, encoding='utf-8', errors='replace').read()
     i1110 = open(IMPR1110_EXPORT, encoding='utf-8', errors='replace').read()
     others = '\n'.join(open(p, encoding='utf-8', errors='replace').read() for p in OTHER_EXPORTS)

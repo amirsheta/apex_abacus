@@ -83,28 +83,25 @@ IG settings (standard §8): `p_add_row_if_empty false`, `p_submit_checked_rows f
 | 20 | قواعد التعامل مع المستوردين | `IMPR_RULES_SEARCH` | IG read only | Standard, `#DEFAULT#:t-Region--noPadding`, `cg-card cg-grid`; lazy loading, no total row count, toolbar `ACTIONS_MENU:RESET` (as IMPR1120) | SQL below |
 
 ```sql
--- one search text over every shown column; no rows until a search is made (Forms opens in Enter-Query);
--- the PRE-QUERY BUS_ID_TYPE_NAME criterion is part of the text search (join, no concatenated SQL).
--- No ORDER BY (as IMPR1120, user request 2026-11-23); the grid columns can be sorted.
-SELECT TRANSLATE(ROWIDTOCHAR(r.ROWID), '+/', '-_') AS row_id,
+-- one search text over every shown column; every row while the search text is empty (user request 2026-11-26).
+-- The PRE-QUERY BUS_ID_TYPE_NAME criterion is part of the text search. No ORDER BY (as IMPR1120).
+SELECT TRANSLATE(ROWIDTOCHAR(r.ROWID), '+/', '-_') AS row_id,   -- URL-safe: a '+' in f?p arrives as a space
        r.rule_isn, r.rule_type, rt.rv_meaning AS rule_type_name,
-       r.all_brnch_flag, DECODE(r.all_brnch_flag, 1, 'جميع الجمارك', 0, 'جمرك محدد') AS all_brnch_flag_name,
+       DECODE(r.all_brnch_flag, 1, 'جميع الجمارك', 0, 'جمرك محدد') AS all_brnch_flag_name,
        r.hq_impr_nbr,
        CASE WHEN r.rule_type = 12
             THEN (SELECT MAX(i.arbc_impr_name) FROM importers i
                    WHERE i.port_cd = :P_CURR_PORT_CD AND i.hq_impr_nbr = r.hq_impr_nbr)
             ELSE (SELECT MAX(s.arbc_impr_name) FROM single_importers s WHERE s.hq_impr_nbr = r.hq_impr_nbr)
        END AS l_si_arbc_impr_name,
-       r.bus_id_type_cd, b.bus_id_type_name, r.bus_id, r.bus_id_brnch,
-       r.rec_status, rs.rv_meaning AS rec_status_name
+       r.bus_id_type_cd, b.bus_id_type_name, r.bus_id, r.bus_id_brnch, rs.rv_meaning AS rec_status_name
   FROM impr_rules r, bus_id_types b, cg_ref_codes rt, cg_ref_codes rs
- WHERE :P114001_SEARCH IS NOT NULL
-   AND b.bus_id_type_cd (+) = r.bus_id_type_cd
+ WHERE b.bus_id_type_cd (+) = r.bus_id_type_cd
    AND rt.rv_domain (+) = 'RULE_TYPE'  AND rt.rv_low_value (+) = TO_CHAR(r.rule_type)
    AND rs.rv_domain (+) = 'REC_STATUS' AND rs.rv_low_value (+) = TO_CHAR(r.rec_status)
-   AND INSTR(UPPER(r.rule_isn || '|' || r.rule_type || '|' || rt.rv_meaning || '|' || r.hq_impr_nbr || '|' ||
+   AND (:P114001_SEARCH IS NULL OR INSTR(UPPER(r.rule_isn || '|' || r.rule_type || '|' || rt.rv_meaning || '|' || r.hq_impr_nbr || '|' ||
                    b.bus_id_type_name || '|' || r.bus_id || '|' || r.bus_id_brnch || '|' || rs.rv_meaning),
-             UPPER(TRIM(:P114001_SEARCH))) > 0
+             UPPER(TRIM(:P114001_SEARCH))) > 0)
 ```
 
 ## 4. Items

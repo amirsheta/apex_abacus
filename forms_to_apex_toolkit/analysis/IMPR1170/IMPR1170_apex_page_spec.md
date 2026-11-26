@@ -45,7 +45,7 @@
 | 1170 | بيانات السجل التجارى (`MCI_DATA`) | Form, table `MCI_DATA`, key CR_NBR, not editable, Interactive Report template, `zatca-forms cg-form cg-card` | block MCI_DATA |
 | 1170 | ملاك السجل التجارى (`MCI_OWNERS`) | read-only IG, Standard template, `cg-card cg-grid`, Page Items to Submit `P1170_CR_NBR` | block MCI_OWNERS + its POST-QUERY |
 | 117001 | بحث (`MCI_DATA_SEARCH_CRITERIA`) | Static, text `P117001_SEARCH` + buttons SEARCH / CLEAR | Enter-Query criteria |
-| 117001 | السجلات التجارية (`MCI_DATA_SEARCH`) | read-only IG, lazy loading, no rows until a search; link `CR_NBR` → page 1170 with `P0_PAGE_PK = CR_NBR` | block query (no WHERE clause) + POST-QUERY status |
+| 117001 | السجلات التجارية (`MCI_DATA_SEARCH`) | read-only IG, lazy loading, every row on opening (search text optional, user request 2026-11-26); link `CR_NBR` → page 1170 with `P0_PAGE_PK = CR_NBR` | block query (no WHERE clause) + POST-QUERY status |
 
 ### 3.1 Grid MCI_OWNERS
 
@@ -73,7 +73,7 @@ SELECT o.owner_isn, o.cr_nbr, o.owner_name, o.national_id, o.owner_nationality_a
 ### 3.2 Search grid (page 117001)
 
 ```sql
--- one search text over every shown column; no rows until a search is made (Forms Enter-Query). The block has no
+-- one search text over every shown column; every row while the search text is empty (user request 2026-11-26). The block has no
 -- WHERE clause: every cached registration (MCI_DATA is national, not per port). POST-QUERY status text as outer join.
 SELECT x.*
   FROM (SELECT md.cr_nbr, md.cr_name_ar, ct.rv_meaning AS cr_type_name, md.main_cr_nbr,
@@ -84,10 +84,9 @@ SELECT x.*
          WHERE ct.rv_domain (+) = 'COMM_RGSTRTN_TYPE'
            AND ct.rv_low_value (+) = TO_CHAR(md.cr_type)
            AND st.bus_id_status (+) = md.cr_status) x
- WHERE :P117001_SEARCH IS NOT NULL
-   AND INSTR(UPPER(x.cr_nbr || '|' || x.cr_name_ar || '|' || x.cr_type_name || '|' || x.main_cr_nbr || '|' ||
+ WHERE (:P117001_SEARCH IS NULL OR INSTR(UPPER(x.cr_nbr || '|' || x.cr_name_ar || '|' || x.cr_type_name || '|' || x.main_cr_nbr || '|' ||
                    x.cr_stat_desc || '|' || x.cr_issue_date || '|' || x.cr_city_ar || '|' || x.legal_type_a),
-             UPPER(TRIM(:P117001_SEARCH))) > 0
+             UPPER(TRIM(:P117001_SEARCH))) > 0)
 ```
 
 | Column | Heading | Data type | Kind |

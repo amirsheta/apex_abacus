@@ -211,7 +211,7 @@ Change 2026-11-23 (user request): the Hijri date format comes from one place, th
 
 Change 2026-11-23 (user request, as IMPR1120): search page 111001 has one search text `P111001_SEARCH` over all
 columns (replacing `P111001_ARBC_IMPR_NAME` and the grid's toolbar search), a CLEAR button, search on Enter, focus
-on the search field, and opens fast: no query until a search, Lazy Loading, no total row count, no sort clause.
+on the search field, and opens with every row (search text optional, user request 2026-11-26), Lazy Loading, no total row count, no sort clause.
 Port and personal-importer rules unchanged. No package change.
 
 Fix 2026-11-23 (found on IMPR1120): opening an importer from the search page could fail with "The checksum

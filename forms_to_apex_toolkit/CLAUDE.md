@@ -237,6 +237,13 @@ Full rules: `docs/f345_reference_standard.md` §9 and §10. Summary:
    Change event does not fire, so the actions do not run. Y / N flag items default to `N`. `NULL` / `NOT_NULL` (the
    "only when entered" guard) and JavaScript expressions are exempt. Every generator runs `scripts/client_condition.py`
    (`fix` before writing, `check` in the self-check).
+3b. **Search pages show every row on opening (user requests 2026-11-26).** The IG SQL of every `<FORM>_SEARCH` page
+   (`<main page>01`) has no `:P<page>01_SEARCH IS NOT NULL` gate: the search text filter is optional
+   (`AND (:P<page>01_SEARCH IS NULL OR INSTR(...) > 0)`), so the dialog opens with every row and a search narrows them.
+   The page has the Before Header process `CLEAR SEARCH` (*Clear Session State*, `CLEAR_CACHE_CURRENT_PAGE`, as the
+   f345 login page), because the search text keeps its session state and page 0 opens the dialog without clearing
+   the cache. Every generator with a search page runs `scripts/search_page.py` (`fix` before writing, `check` in the
+   self-check).
 4. **One readable package per form.** No adapter packages and no all-items record copied through
    session state: each member takes only the items it uses (IN / IN OUT parameters named by §4). Fixed section order
    (version → helpers → form level → each block: query, record, items in navigation order, DML,

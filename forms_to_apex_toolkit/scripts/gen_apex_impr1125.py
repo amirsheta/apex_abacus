@@ -28,6 +28,7 @@ import functions_drawer # the FUNCS region is on page 0, never on a form page
 import item_icons      # Post Text icon next to every entry item, from the item name (f202604 convention)
 import items_to_submit # every page item a query / LOV / FOS call reads is in its Items to Submit (user rule 2026-11-25)
 import client_condition  # an item in an item-type client-side condition has a default value (user rule 2026-11-26)
+import search_page      # a search page <page>01 reads no data when the dialog opens (user request 2026-11-26)
 import lov_apx         # shared LOVs: function body returning SQL, code in LOV_APX (CLAUDE.md 4d)
 REF = os.path.join(ROOT, 'apex', 'Reference', 'f345.sql')
 IMPR1110_EXPORT = os.path.join(ROOT, 'apex', 'IMPR1110', 'f345_impr1110.sql')
@@ -428,15 +429,14 @@ SUSPN_SQL = '\n'.join([
     '   AND s.suspn_rlse_dt IS NULL',
     ' ORDER BY s.suspn_seq'])
 SEARCH_SQL = '\n'.join([
-    '-- one search text over every shown column; no rows until a search is made, as Forms opens the',
+    '-- one search text over every shown column; every row while the search text is empty (user request 2026-11-26), as the Forms',
     '-- LOV form LOV_IMPORT_HQ_NBR on SINGLE_IMPORTERS; only unified importers that exist in HQ_IMPRS',
     "SELECT TRANSLATE(ROWIDTOCHAR(h.ROWID), '+/', '-_') AS row_id,   -- URL-safe: a '+' in f?p arrives as a space",
     '       s.arbc_impr_name, h.hq_impr_nbr, s.bus_id, s.bus_id_brnch',
     '  FROM single_importers s, hq_imprs h',
-    ' WHERE :P112501_SEARCH IS NOT NULL',
-    '   AND h.hq_impr_nbr = s.hq_impr_nbr',
-    "   AND INSTR(UPPER(s.arbc_impr_name || '|' || h.hq_impr_nbr || '|' || s.bus_id || '|' || s.bus_id_brnch),",
-    '             UPPER(TRIM(:P112501_SEARCH))) > 0'])
+    ' WHERE h.hq_impr_nbr = s.hq_impr_nbr',
+    "   AND (:P112501_SEARCH IS NULL OR INSTR(UPPER(s.arbc_impr_name || '|' || h.hq_impr_nbr || '|' || s.bus_id || '|' || s.bus_id_brnch),",
+    '             UPPER(TRIM(:P112501_SEARCH))) > 0)'])
 SEARCH_COLUMNS = [
     ('ROW_ID', None, 'VARCHAR2'), ('ARBC_IMPR_NAME', 'اسم المستورد العربي', 'VARCHAR2'),
     ('HQ_IMPR_NBR', 'الرقم الموحد للمستورد', 'NUMBER'), ('BUS_ID', 'الرقم الاستدلالي', 'VARCHAR2'),
@@ -724,7 +724,7 @@ end;
         ('p_plug_template', fid('REGION_GRID')), ('p_plug_display_sequence', '20'), ('p_query_type', q('SQL')),
         ('p_plug_source', lit(SEARCH_SQL)), ('p_plug_source_type', q('NATIVE_IG')),
         ('p_ajax_items_to_submit', q('P112501_SEARCH')), ('p_plug_query_options', q('DERIVED_REPORT_COLUMNS')),
-        ('p_plug_comment', src('IMPR1125 LOV form LOV_IMPORT_HQ_NBR block SING_IMP (SINGLE_IMPORTERS); no query until a search / spec 3'))]))
+        ('p_plug_comment', src('IMPR1125 LOV form LOV_IMPORT_HQ_NBR block SING_IMP (SINGLE_IMPORTERS); every row until a search narrows it (user request 2026-11-26) / spec 3'))]))
     for i, (c, h, dt) in enumerate(SEARCH_COLUMNS):
         if c == 'ROW_ID':
             col = dict(name=c, kind='HIDDEN', data_type=dt, pk=True)
@@ -734,7 +734,7 @@ end;
         else:
             col = dict(name=c, kind='DISPLAY', data_type=dt, heading=h)
         A(ig_column(PG_SEARCH, col, (i + 1) * 10))
-    for c in ig(PG_SEARCH, '112501:plug:IG', False, [c for c, _, _ in SEARCH_COLUMNS], 'لا توجد نتائج - أدخل نص البحث ثم اضغط بحث',
+    for c in ig(PG_SEARCH, '112501:plug:IG', False, [c for c, _, _ in SEARCH_COLUMNS], 'لا توجد نتائج',
                 search=True):
         A(c)
     A(page_item(PG_SEARCH, '112501:plug:CRIT', 10, dict(
@@ -802,7 +802,7 @@ end;
 set verify on feedback on define on
 prompt  ...done
 ''')
-    text = client_condition.fix(items_to_submit.fix('\n'.join(out)))   # Items to Submit = every page item read (user rule 2026-11-25)
+    text = search_page.fix(client_condition.fix(items_to_submit.fix('\n'.join(out))))   # Items to Submit = every page item read (user rule 2026-11-25)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, 'w', encoding='utf-8', newline='\n') as f:
         f.write(text)
@@ -824,7 +824,7 @@ def unq(s):
     return s[1:-1].replace("''", "'") if s.startswith("'") else s
 
 def selfcheck(text):
-    problems = items_to_submit.check(text) + client_condition.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
+    problems = items_to_submit.check(text) + client_condition.check(text) + search_page.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
     ref_txt = open(REF, encoding='utf-8', errors='replace').read()
     i1110 = open(IMPR1110_EXPORT, encoding='utf-8', errors='replace').read()
     i1120 = open(IMPR1120_EXPORT, encoding='utf-8', errors='replace').read()

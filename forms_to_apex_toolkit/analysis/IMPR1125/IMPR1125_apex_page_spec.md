@@ -90,14 +90,14 @@ SELECT s.hq_impr_nbr,
 | 20 | `HQ_IMPRS_SEARCH` | IG, not editable, lazy loading, no total row count | SQL below | `LOV_IMPORT_HQ_NBR` block `SING_IMP` |
 
 ```sql
--- one search text over every shown column; no rows until a search is made (as IMPR1120)
-SELECT TRANSLATE(ROWIDTOCHAR(h.ROWID), '+/', '-_') AS row_id,   -- URL-safe ROWID of HQ_IMPRS
+-- one search text over every shown column; every row while the search text is empty (user request 2026-11-26), as the Forms
+-- LOV form LOV_IMPORT_HQ_NBR on SINGLE_IMPORTERS; only unified importers that exist in HQ_IMPRS
+SELECT TRANSLATE(ROWIDTOCHAR(h.ROWID), '+/', '-_') AS row_id,   -- URL-safe: a '+' in f?p arrives as a space
        s.arbc_impr_name, h.hq_impr_nbr, s.bus_id, s.bus_id_brnch
   FROM single_importers s, hq_imprs h
- WHERE :P112501_SEARCH IS NOT NULL
-   AND h.hq_impr_nbr = s.hq_impr_nbr                   -- only unified importers that exist in HQ_IMPRS
-   AND INSTR(UPPER(s.arbc_impr_name || '|' || h.hq_impr_nbr || '|' || s.bus_id || '|' || s.bus_id_brnch),
-             UPPER(TRIM(:P112501_SEARCH))) > 0
+ WHERE h.hq_impr_nbr = s.hq_impr_nbr
+   AND (:P112501_SEARCH IS NULL OR INSTR(UPPER(s.arbc_impr_name || '|' || h.hq_impr_nbr || '|' || s.bus_id || '|' || s.bus_id_brnch),
+             UPPER(TRIM(:P112501_SEARCH))) > 0)
 ```
 
 - Link column `HQ_IMPR_NBR` → page 1125, clear cache 1125, `P0_PAGE_PK = &ROW_ID.` (checksum; `P0_PAGE_PK_CHECK` restores the ROWID).

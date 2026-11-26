@@ -32,6 +32,7 @@ import functions_drawer # the FUNCS region is on page 0, never on a form page
 import item_icons      # Post Text icon next to every entry item, from the item name (f202604 convention)
 import items_to_submit # every page item a query / LOV / FOS call reads is in its Items to Submit (user rule 2026-11-25)
 import client_condition  # an item in an item-type client-side condition has a default value (user rule 2026-11-26)
+import search_page      # a search page <page>01 reads no data when the dialog opens (user request 2026-11-26)
 import lov_apx         # shared LOVs: function body returning SQL, code in LOV_APX (CLAUDE.md 4d)
 DESIGN = os.path.join(ROOT, 'work', 'IMPR1130', 'step03', 'page_design.json')
 XML = os.path.join(ROOT, 'forms', 'IMPR', 'IMPR1130_fmb.xml')
@@ -584,19 +585,18 @@ end;
         ('p_plug_template', fid('REGION_HERO')), ('p_plug_display_sequence', '10'), ('p_attribute_01', q('N')),
         ('p_attribute_02', q('TEXT')), ('p_attribute_03', q('Y')),
         ('p_plug_comment', src('IMPR1130.IMPORTERS.PRE-QUERY criteria as one search text over all columns / spec 3'))]))
-    # one search text over every shown column; no rows until a search (Forms Enter-Query), no sort clause (user request 2026-11-23)
+    # one search text over every shown column; every row while the search text is empty (user request 2026-11-26), no sort clause (user request 2026-11-23)
     ig_sql = '\n'.join([
-        '-- one search text over every shown column; no rows until a search is made, as Forms opens the block in',
-        '-- Enter-Query mode: the dialog opens without reading IMPORTERS. No sort clause: the whole result is not sorted',
+        '-- one search text over every shown column; every row while the search text is empty (user request 2026-11-26).',
+        '-- No sort clause: the whole result is not sorted',
         "SELECT TRANSLATE(ROWIDTOCHAR(i.ROWID), '+/', '-_') AS row_id,   -- URL-safe: a '+' in f?p arrives as a space",
         '       i.impr_nbr, i.arbc_impr_name, i.eng_impr_name, i.bus_id, i.bus_id_brnch,',
         "       i.impr_type_cd || ' - ' || it.impr_type_name AS impr_type, i.hq_impr_nbr",
         '  FROM importers i, impr_types it',
-        ' WHERE :P113001_SEARCH IS NOT NULL',
-        '   AND i.port_cd = :P_CURR_PORT_CD',
+        ' WHERE i.port_cd = :P_CURR_PORT_CD',
         '   AND it.impr_type_cd (+) = i.impr_type_cd',
         '   AND (NVL(:P1130_P_PRSNL_IMPR, 0) <> 1 OR i.impr_type_cd = 4)',
-        "   AND (INSTR(UPPER(i.impr_nbr || '|' || i.arbc_impr_name || '|' || i.eng_impr_name || '|' || i.bus_id || '|' ||",
+        "   AND (:P113001_SEARCH IS NULL OR INSTR(UPPER(i.impr_nbr || '|' || i.arbc_impr_name || '|' || i.eng_impr_name || '|' || i.bus_id || '|' ||",
         "                    i.bus_id_brnch || '|' || i.impr_type_cd || ' - ' || it.impr_type_name || '|' || i.hq_impr_nbr),",
         '              UPPER(TRIM(:P113001_SEARCH))) > 0',
         "        OR i.impr_name_std LIKE '%' || (SELECT str_db.strformat(TRIM(:P113001_SEARCH), 1) FROM dual) || '%')"])
@@ -608,7 +608,7 @@ end;
         ('p_plug_source', lit(ig_sql)), ('p_plug_source_type', q('NATIVE_IG')),
         ('p_ajax_items_to_submit', q('P113001_SEARCH')), ('p_plug_query_options', q('DERIVED_REPORT_COLUMNS')),
         ('p_plug_comment', src('IMPR1130.IMPORTERS block query + PRE-QUERY (PRSNL_IMPR; block ORDER BY dropped); one search text '
-                               'over all columns, no query until a search, no total row count, lazy loading / spec 3'))]))
+                               'over all columns, every row until a search narrows it (user request 2026-11-26), no total row count, lazy loading / spec 3'))]))
     cols = [('ROW_ID', None, 'VARCHAR2'), ('IMPR_NBR', 'الرقم الجمركي', 'NUMBER'), ('ARBC_IMPR_NAME', 'الاسم العربي', 'VARCHAR2'),
             ('ENG_IMPR_NAME', 'الاسم الأجنبي', 'VARCHAR2'), ('BUS_ID', 'الرقم الإستدلالي', 'VARCHAR2'),
             ('BUS_ID_BRNCH', 'الرقم الفرعي', 'VARCHAR2'), ('IMPR_TYPE', 'النشاط التجاري', 'VARCHAR2'), ('HQ_IMPR_NBR', 'الرقم الموحد', 'NUMBER')]
@@ -640,7 +640,7 @@ end;
     A(call('create_interactive_grid', [
         ('p_id', ref('113001:ig')), ('p_internal_uid', '113001000201'), ('p_is_editable', 'false'), ('p_lazy_loading', 'true'),
         ('p_requires_filter', 'false'), ('p_select_first_row', 'true'), ('p_fixed_row_height', 'true'), ('p_pagination_type', q('SET')),
-        ('p_show_total_row_count', 'false'), ('p_no_data_found_message', q('لا توجد نتائج - أدخل نص البحث ثم اضغط بحث')),
+        ('p_show_total_row_count', 'false'), ('p_no_data_found_message', q('لا توجد نتائج')),
         ('p_show_toolbar', 'true'), ('p_toolbar_buttons', q('ACTIONS_MENU:RESET')), ('p_enable_save_public_report', 'false'),
         ('p_enable_subscriptions', 'true'), ('p_enable_flashback', 'true'), ('p_define_chart_view', 'true'),
         ('p_enable_download', 'true'), ('p_download_formats', q('CSV:HTML:XLSX:PDF')), ('p_enable_mail_download', 'true'),
@@ -724,7 +724,7 @@ end;
 set verify on feedback on define on
 prompt  ...done
 ''')
-    text = client_condition.fix(items_to_submit.fix('\n'.join(out)))   # Items to Submit = every page item read (user rule 2026-11-25)
+    text = search_page.fix(client_condition.fix(items_to_submit.fix('\n'.join(out))))   # Items to Submit = every page item read (user rule 2026-11-25)
     with open(OUT, 'w', encoding='utf-8', newline='\n') as f:
         f.write(text)
     return text
@@ -739,7 +739,7 @@ def names_of(text, api):
     return out
 
 def selfcheck(text):
-    problems = items_to_submit.check(text) + client_condition.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
+    problems = items_to_submit.check(text) + client_condition.check(text) + search_page.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
     ref_txt = open(REF, encoding='utf-8', errors='replace').read()
     others = '\n'.join(open(f, encoding='utf-8', errors='replace').read() for f in OTHER_EXPORTS)
     pkg_txt = re.sub(r'--[^\n]*', '', open(PKG, encoding='utf-8').read())

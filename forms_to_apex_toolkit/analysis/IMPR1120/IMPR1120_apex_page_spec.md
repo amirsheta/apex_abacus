@@ -107,8 +107,8 @@ SELECT s.port_cd,
 | 20 | `IMPORTERS_SEARCH` | Interactive Grid, not editable | SQL below | Standard, `#DEFAULT#:t-Region--noPadding`, `cg-card cg-grid`; IG defaults (standard §8) except: toolbar `ACTIONS_MENU:RESET` (no second search field), Lazy Loading on, no total row count | QBE on the IMPORTERS items: the one search text and the column filters |
 
 ```sql
--- one search text over every shown column (user request 2026-11-23); no rows until a search is made, as Forms
--- opens the block in Enter-Query mode: the dialog opens without reading IMPORTERS. No sort clause (user request
+-- one search text over every shown column (user request 2026-11-23); every row while the search text is empty (user request 2026-11-26).
+-- No sort clause (user request
 -- 2026-11-23: the whole result is not sorted; the grid columns can still be sorted)
 SELECT TRANSLATE(ROWIDTOCHAR(i.ROWID), '+/', '-_') AS row_id,   -- URL-safe: a '+' in f?p arrives as a space
        i.port_cd, p.port_name, i.impr_nbr, i.hq_impr_nbr,
@@ -116,14 +116,13 @@ SELECT TRANSLATE(ROWIDTOCHAR(i.ROWID), '+/', '-_') AS row_id,   -- URL-safe: a '
        i.impr_type_cd, it.impr_type_name, i.bus_id_type_cd, i.bus_id, i.bus_id_brnch,
        i.ctry_cd, c.crty_arbc_name, i.city_code_of_id, i.impr_expr_type
   FROM importers i, sd_ports p, impr_types it, countries c
- WHERE :P112001_SEARCH IS NOT NULL
-   AND i.port_cd = NVL((SELECT IMPR1120.IMPORTERS_PRE_QUERY_PORT_CD(PORT_CD        => NULL,
+ WHERE i.port_cd = NVL((SELECT IMPR1120.IMPORTERS_PRE_QUERY_PORT_CD(PORT_CD        => NULL,
                                                                     P_CURR_PORT_CD => :P_CURR_PORT_CD)
                           FROM dual), i.port_cd)
    AND p.port_cd (+)       = i.port_cd
    AND it.impr_type_cd (+) = i.impr_type_cd
    AND c.ctry_cd (+)       = i.ctry_cd
-   AND (INSTR(UPPER(i.port_cd || '|' || p.port_name || '|' || i.impr_nbr || '|' || i.hq_impr_nbr || '|' ||
+   AND (:P112001_SEARCH IS NULL OR INSTR(UPPER(i.port_cd || '|' || p.port_name || '|' || i.impr_nbr || '|' || i.hq_impr_nbr || '|' ||
                     i.arbc_impr_name || '|' || i.eng_impr_name || '|' || i.impr_cntct_name || '|' ||
                     i.impr_type_cd || '|' || it.impr_type_name || '|' || i.bus_id_type_cd || '|' || i.bus_id || '|' ||
                     i.bus_id_brnch || '|' || i.ctry_cd || '|' || c.crty_arbc_name || '|' || i.city_code_of_id || '|' ||
@@ -295,7 +294,7 @@ All server calls use **FOS – Execute PL/SQL Code** (`COM.FOS.EXECUTE_PLSQL_COD
 | `IMPR_SUSPN SUSPN_SIDE_CD WHEN-LIST-CHANGED` | 1120 | Change, column `SUSPN_SIDE_CD` | FOS `FORMS_APX.CHECK_ERROR(IMPR1120.SUSPN_SIDE_CD_VALIDATION(SUSPN_SIDE_CD => :SUSPN_SIDE_CD, P_CURRENT_SIDE => :P1120_P_CURRENT_SIDE, P_CURR_PORT_CD => :P_CURR_PORT_CD, PORT_CD => :PORT_CD, IMPR_NBR => :IMPR_NBR, SUSPN_SEQ => :SUSPN_SEQ));` | – | Submit `SUSPN_SIDE_CD`, `P1120_P_CURRENT_SIDE`, `PORT_CD`, `IMPR_NBR`, `SUSPN_SEQ` | No | SUSPN_SIDE_CD WLC |
 | `SEARCH WHEN-BUTTON-PRESSED` | 112001 | Click, button `SEARCH` | native Refresh, region `IMPORTERS_SEARCH` | – | – | No | TOOLBAR.EXECUTE |
 | `SEARCH KEY-ENTER` | 112001 | Key Up, item `P112001_SEARCH`; client condition JavaScript expression `this.browserEvent.which === 13` (Enter) | native Refresh, region `IMPORTERS_SEARCH` | – | – | No | KEY-EXEQRY; f345 AGR1100_SEARCH `SEARCH REFRESH` (keyup) |
-| `CLEAR WHEN-BUTTON-PRESSED` | 112001 | Click, button `CLEAR` | native Clear, item `P112001_SEARCH` | native Refresh, region `IMPORTERS_SEARCH` (empty again) | – | No | TOOLBAR.CLEAR_ALL (criteria) |
+| `CLEAR WHEN-BUTTON-PRESSED` | 112001 | Click, button `CLEAR` | native Clear, item `P112001_SEARCH` | native Refresh, region `IMPORTERS_SEARCH` (every row again) | – | No | TOOLBAR.CLEAR_ALL (criteria) |
 
 **Not built:**
 - the Forms resets of a rejected value (start date → today, reason / side → the site's default; §16 #9);

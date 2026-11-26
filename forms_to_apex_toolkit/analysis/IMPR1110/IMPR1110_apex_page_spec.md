@@ -108,17 +108,16 @@ the Before Header processes and the FOS *Items to Return*.
 | 20 | `IMPORTERS_SEARCH` | Interactive Grid, not editable | SQL below | Standard, `#DEFAULT#:t-Region--noPadding`, `cg-card cg-grid`; f345 IG defaults (standard §8) except: toolbar `ACTIONS_MENU:RESET` (no second search field), Lazy Loading on, no total row count | the one search text and the column filters = Forms query-by-example |
 
 ```sql
--- one search text over every shown column; no rows until a search is made, as Forms opens the block in
--- Enter-Query mode: the dialog opens without reading IMPORTERS. No sort clause: the whole result is not sorted
+-- one search text over every shown column; every row while the search text is empty (user request 2026-11-26).
+-- No sort clause: the whole result is not sorted
 SELECT TRANSLATE(ROWIDTOCHAR(i.ROWID), '+/', '-_') AS row_id,   -- URL-safe: a '+' in f?p arrives as a space
        i.impr_nbr, i.arbc_impr_name, i.eng_impr_name, i.bus_id, i.bus_id_brnch,
        i.impr_type_cd || ' - ' || it.impr_type_name AS impr_type, i.hq_impr_nbr
   FROM importers i, impr_types it
- WHERE :P111001_SEARCH IS NOT NULL
-   AND i.port_cd = :P_CURR_PORT_CD
+ WHERE i.port_cd = :P_CURR_PORT_CD
    AND it.impr_type_cd (+) = i.impr_type_cd
    AND (NVL(:P1110_P_PRSNL_IMPR, 0) <> 1 OR i.impr_type_cd = 4)
-   AND (INSTR(UPPER(i.impr_nbr || '|' || i.arbc_impr_name || '|' || i.eng_impr_name || '|' || i.bus_id || '|' ||
+   AND (:P111001_SEARCH IS NULL OR INSTR(UPPER(i.impr_nbr || '|' || i.arbc_impr_name || '|' || i.eng_impr_name || '|' || i.bus_id || '|' ||
                     i.bus_id_brnch || '|' || i.impr_type_cd || ' - ' || it.impr_type_name || '|' || i.hq_impr_nbr),
               UPPER(TRIM(:P111001_SEARCH))) > 0
         OR i.impr_name_std LIKE '%' || (SELECT str_db.strformat(TRIM(:P111001_SEARCH), 1) FROM dual) || '%')

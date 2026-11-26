@@ -33,6 +33,7 @@ import functions_drawer # the FUNCS region is on page 0, never on a form page
 import item_icons       # Post Text icon next to every entry item
 import items_to_submit  # every page item a query / LOV / FOS call reads is in its Items to Submit
 import client_condition  # an item in an item-type client-side condition has a default value (user rule 2026-11-26)
+import search_page      # a search page <page>01 reads no data when the dialog opens (user request 2026-11-26)
 import lov_apx          # shared LOVs: function body returning SQL, code in LOV_APX (CLAUDE.md 4d)
 import forms_apx_helpers
 import parameter_names
@@ -251,7 +252,7 @@ AUTH_COLUMNS = [   # name, heading, data type, kind
     ('ALLOW_EXPORT_NAME', 'إستخدام التفويض', 'VARCHAR2', 'text'), ('ATHRZTN_CRET_DT', 'تاريخ انشاء التفويض', 'VARCHAR2', 'text'),
     ('ATHRZTN_STA_NAME', 'وضع التفويض', 'VARCHAR2', 'text')]
 SEARCH_SQL = '\n'.join([
-    '-- one search text over every shown column; no rows until a search is made (Forms opens in Enter-Query mode).',
+    '-- one search text over every shown column; every row while the search text is empty (user request 2026-11-26).',
     '-- Block WHERE clause: the authorizations of the user\'s port (P_CURR_PORT_CD). No ORDER BY in the block.',
     'SELECT x.*',
     "  FROM (SELECT TRANSLATE(ROWIDTOCHAR(a.ROWID), '+/', '-_') AS row_id,   -- URL-safe: a '+' in f?p arrives as a space",
@@ -266,10 +267,9 @@ SEARCH_SQL = '\n'.join([
     '           AND i.port_cd (+) = a.port_cd AND i.impr_nbr (+) = a.impr_nbr',
     '           AND g.port_cd (+) = a.port_cd AND g.impr_nbr (+) = a.impr_nbr_agent_id',
     "           AND ae.rv_domain (+) = 'ALLOWED EXPORT' AND ae.rv_low_value (+) = TO_CHAR(a.allow_export)) x",
-    ' WHERE :P121001_SEARCH IS NOT NULL',
-    "   AND INSTR(UPPER(x.athrztn_seq_nbr || '|' || x.impr_nbr || '|' || x.impr_name || '|' || x.impr_nbr_ag || '|' ||",
+    " WHERE (:P121001_SEARCH IS NULL OR INSTR(UPPER(x.athrztn_seq_nbr || '|' || x.impr_nbr || '|' || x.impr_name || '|' || x.impr_nbr_ag || '|' ||",
     "                   x.impr_name_ag || '|' || x.allow_export_name || '|' || x.athrztn_note || '|' || x.athrztn_cret_dt || '|' ||",
-    "                   x.athrztn_sta_name || '|' || x.athrztn_cncld_dt), UPPER(TRIM(:P121001_SEARCH))) > 0"])
+    "                   x.athrztn_sta_name || '|' || x.athrztn_cncld_dt), UPPER(TRIM(:P121001_SEARCH))) > 0)"])
 SEARCH_COLUMNS = [   # name, heading, data type, kind
     ('ROW_ID', None, 'VARCHAR2', 'pk'), ('ATHRZTN_SEQ_NBR', 'مسلسل التفويض', 'NUMBER', 'link'),
     ('IMPR_NBR', 'رقم المستورد', 'NUMBER', 'text'), ('IMPR_NAME', 'اسم المستورد', 'VARCHAR2', 'text'),
@@ -750,9 +750,9 @@ end;
         ('p_attribute_02', q('TEXT')), ('p_attribute_03', q('Y')),
         ('p_plug_comment', src('IMPR1210.AGNTS query criteria as one search text over all columns / spec 3'))]))
     P.extend(ig_region(PG_SEARCH, '121001:plug:IG', SEARCH_SQL, 'P121001_SEARCH', SEARCH_COLUMNS,
-                       '121001000201', 'لا توجد نتائج - أدخل نص البحث ثم اضغط بحث', True,
+                       '121001000201', 'لا توجد نتائج', True,
                        'IMPR1210.AGNTS block query (WHERE PORT_CD = P_CURR_PORT_CD) with the POST-QUERY names; one search '
-                       'text over all columns, no query until a search / spec 3', 'تفاويض الشركات الوسيطة', 'AGNTS_SEARCH', 20,
+                       'text over all columns, every row until a search narrows it (user request 2026-11-26) / spec 3', 'تفاويض الشركات الوسيطة', 'AGNTS_SEARCH', 20,
                        link='f?p=&APP_ID.:1210:&SESSION.::&DEBUG.:1210:P0_PAGE_PK:&ROW_ID.'))
     UNCERTAIN.add('search IG 121001: p_lazy_loading true, p_show_total_row_count false, toolbar ACTIONS_MENU:RESET (search field removed)')
     A(page_item(PG_SEARCH, '121001:plug:CRIT', 10, dict(
@@ -807,7 +807,7 @@ end;
 set verify on feedback on define on
 prompt  ...done
 ''')
-    text = client_condition.fix(items_to_submit.fix('\n'.join(out)))
+    text = search_page.fix(client_condition.fix(items_to_submit.fix('\n'.join(out))))
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, 'w', encoding='utf-8', newline='\n') as f:
         f.write(text)
@@ -822,7 +822,7 @@ def names_of(text, api):
     return out
 
 def selfcheck(text):
-    problems = items_to_submit.check(text) + client_condition.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
+    problems = items_to_submit.check(text) + client_condition.check(text) + search_page.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
     ref_txt = open(REF, encoding='utf-8', errors='replace').read()
     others = '\n'.join(open(f, encoding='utf-8', errors='replace').read() for f in OTHER_EXPORTS)
     pkg_txt = re.sub(r'--[^\n]*', '', open(PKG, encoding='utf-8').read())

@@ -1190,7 +1190,7 @@ wwv_flow_api.create_page_plug(
 ,p_plug_display_sequence=>20
 ,p_query_type=>'SQL'
 ,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
-'-- one search text over every shown column; no rows until a search is made (Forms opens in Enter-Query mode).',
+'-- one search text over every shown column; every row while the search text is empty (user request 2026-11-26).',
 '-- The block has no WHERE clause: the exceptions of every port are listed (inventory 15 #3). No ORDER BY (as IMPR1140).',
 'SELECT x.*',
 '  FROM (SELECT TRANSLATE(ROWIDTOCHAR(e.ROWID), ''+/'', ''-_'') AS row_id,   -- URL-safe: a ''+'' in f?p arrives as a space',
@@ -1210,14 +1210,13 @@ wwv_flow_api.create_page_plug(
 '           AND i.impr_nbr (+) = e.impr_nbr',
 '           AND dt.rv_domain (+) = ''DCL_STA_FLAG'' AND dt.rv_low_value (+) = TO_CHAR(e.dcltn_type)',
 '           AND st.rv_domain (+) = ''REC_STATUS''   AND st.rv_low_value (+) = TO_CHAR(e.status)) x',
-' WHERE :P116001_SEARCH IS NOT NULL',
-'   AND INSTR(UPPER(x.port_cd || ''|'' || x.excpt_isn || ''|'' || x.impr_nbr || ''|'' || x.impr_name || ''|'' ||',
+' WHERE (:P116001_SEARCH IS NULL OR INSTR(UPPER(x.port_cd || ''|'' || x.excpt_isn || ''|'' || x.impr_nbr || ''|'' || x.impr_name || ''|'' ||',
 '                   x.dcltn_type_name || ''|'' || x.dcltn_nbr || ''|'' || x.award_nbr || ''|'' || x.award_date || ''|'' ||',
-'                   x.no_of_cars || ''|'' || x.status_name), UPPER(TRIM(:P116001_SEARCH))) > 0'))
+'                   x.no_of_cars || ''|'' || x.status_name), UPPER(TRIM(:P116001_SEARCH))) > 0)'))
 ,p_plug_source_type=>'NATIVE_IG'
 ,p_ajax_items_to_submit=>'P116001_SEARCH'
 ,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
-,p_plug_comment=>'Source: IMPR1160.IMPR_CAR_EXCEPTION block query (no WHERE clause: all ports) with the POST-QUERY names; one search text over all columns, no query until a search / spec 3'
+,p_plug_comment=>'Source: IMPR1160.IMPR_CAR_EXCEPTION block query (no WHERE clause: all ports) with the POST-QUERY names; one search text over all columns, every row until a search narrows it (user request 2026-11-26) / spec 3'
 );
 wwv_flow_api.create_region_column(
  p_id=>wwv_flow_api.id(11600102000010)
@@ -1516,7 +1515,7 @@ wwv_flow_api.create_interactive_grid(
 ,p_fixed_row_height=>true
 ,p_pagination_type=>'SET'
 ,p_show_total_row_count=>false
-,p_no_data_found_message=>unistr('\0644\0627 \062A\0648\062C\062F \0646\062A\0627\0626\062C - \0623\062F\062E\0644 \0646\0635 \0627\0644\0628\062D\062B \062B\0645 \0627\0636\063A\0637 \0628\062D\062B')
+,p_no_data_found_message=>unistr('\0644\0627 \062A\0648\062C\062F \0646\062A\0627\0626\062C')
 ,p_show_toolbar=>true
 ,p_toolbar_buttons=>'ACTIONS_MENU:RESET'
 ,p_enable_save_public_report=>false
@@ -1774,6 +1773,16 @@ wwv_flow_api.create_page_da_action(
 ,p_action=>'NATIVE_HIDE'
 ,p_affected_elements_type=>'REGION'
 ,p_affected_region_id=>wwv_flow_api.id(73488102084440079322)
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(11600107999990)
+,p_process_sequence=>10
+,p_process_point=>'BEFORE_HEADER'
+,p_process_type=>'NATIVE_SESSION_STATE'
+,p_process_name=>'CLEAR SEARCH'
+,p_attribute_01=>'CLEAR_CACHE_CURRENT_PAGE'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_comment=>'Source: Forms Enter-Query (empty criteria on entry); clears P116001_SEARCH on every opening of the dialog, so it shows every row (user requests 2026-11-26, scripts/search_page.py)'
 );
 end;
 /

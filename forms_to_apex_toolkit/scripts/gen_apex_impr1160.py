@@ -32,6 +32,7 @@ import functions_drawer # the FUNCS region is on page 0, never on a form page
 import item_icons       # Post Text icon next to every entry item
 import items_to_submit  # every page item a query / LOV / FOS call reads is in its Items to Submit
 import client_condition  # an item in an item-type client-side condition has a default value (user rule 2026-11-26)
+import search_page      # a search page <page>01 reads no data when the dialog opens (user request 2026-11-26)
 import lov_apx          # shared LOVs: function body returning SQL, code in LOV_APX (CLAUDE.md 4d)
 import forms_apx_helpers
 import parameter_names
@@ -220,7 +221,7 @@ DAS = [
      'IMPR_CAR_EXCEPTION.NO_OF_CARS.WHEN-VALIDATE-ITEM'),
 ]
 SEARCH_SQL = '\n'.join([
-    '-- one search text over every shown column; no rows until a search is made (Forms opens in Enter-Query mode).',
+    '-- one search text over every shown column; every row while the search text is empty (user request 2026-11-26).',
     '-- The block has no WHERE clause: the exceptions of every port are listed (inventory 15 #3). No ORDER BY (as IMPR1140).',
     'SELECT x.*',
     "  FROM (SELECT TRANSLATE(ROWIDTOCHAR(e.ROWID), '+/', '-_') AS row_id,   -- URL-safe: a '+' in f?p arrives as a space",
@@ -240,10 +241,9 @@ SEARCH_SQL = '\n'.join([
     '           AND i.impr_nbr (+) = e.impr_nbr',
     "           AND dt.rv_domain (+) = 'DCL_STA_FLAG' AND dt.rv_low_value (+) = TO_CHAR(e.dcltn_type)",
     "           AND st.rv_domain (+) = 'REC_STATUS'   AND st.rv_low_value (+) = TO_CHAR(e.status)) x",
-    ' WHERE :P116001_SEARCH IS NOT NULL',
-    "   AND INSTR(UPPER(x.port_cd || '|' || x.excpt_isn || '|' || x.impr_nbr || '|' || x.impr_name || '|' ||",
+    " WHERE (:P116001_SEARCH IS NULL OR INSTR(UPPER(x.port_cd || '|' || x.excpt_isn || '|' || x.impr_nbr || '|' || x.impr_name || '|' ||",
     "                   x.dcltn_type_name || '|' || x.dcltn_nbr || '|' || x.award_nbr || '|' || x.award_date || '|' ||",
-    "                   x.no_of_cars || '|' || x.status_name), UPPER(TRIM(:P116001_SEARCH))) > 0"])
+    "                   x.no_of_cars || '|' || x.status_name), UPPER(TRIM(:P116001_SEARCH))) > 0)"])
 SEARCH_COLUMNS = [   # name, heading, data type, kind
     ('ROW_ID', None, 'VARCHAR2', 'pk'), ('EXCPT_ISN', 'مسلسل الإستثناء', 'NUMBER', 'link'), ('PORT_CD', 'رقم المنفذ', 'NUMBER', 'text'),
     ('IMPR_NBR', 'رقم المستورد', 'NUMBER', 'text'), ('IMPR_NAME', 'اسم المستورد', 'VARCHAR2', 'text'),
@@ -687,9 +687,9 @@ end;
         ('p_attribute_02', q('TEXT')), ('p_attribute_03', q('Y')),
         ('p_plug_comment', src('IMPR1160.IMPR_CAR_EXCEPTION query criteria as one search text over all columns / spec 3'))]))
     P.extend(ig_region(PG_SEARCH, '116001:plug:IG', SEARCH_SQL, 'P116001_SEARCH', SEARCH_COLUMNS,
-                       '116001000201', 'لا توجد نتائج - أدخل نص البحث ثم اضغط بحث', True,
+                       '116001000201', 'لا توجد نتائج', True,
                        'IMPR1160.IMPR_CAR_EXCEPTION block query (no WHERE clause: all ports) with the POST-QUERY names; one search '
-                       'text over all columns, no query until a search / spec 3', 'استثناءات السيارات', 'IMPR_CAR_EXCEPTION_SEARCH', 20,
+                       'text over all columns, every row until a search narrows it (user request 2026-11-26) / spec 3', 'استثناءات السيارات', 'IMPR_CAR_EXCEPTION_SEARCH', 20,
                        link='f?p=&APP_ID.:1160:&SESSION.::&DEBUG.:1160:P0_PAGE_PK:&ROW_ID.'))
     UNCERTAIN.add('search IG 116001: p_lazy_loading true, p_show_total_row_count false, toolbar ACTIONS_MENU:RESET (search field removed)')
     A(page_item(PG_SEARCH, '116001:plug:CRIT', 10, dict(
@@ -744,7 +744,7 @@ end;
 set verify on feedback on define on
 prompt  ...done
 ''')
-    text = client_condition.fix(items_to_submit.fix('\n'.join(out)))
+    text = search_page.fix(client_condition.fix(items_to_submit.fix('\n'.join(out))))
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, 'w', encoding='utf-8', newline='\n') as f:
         f.write(text)
@@ -759,7 +759,7 @@ def names_of(text, api):
     return out
 
 def selfcheck(text):
-    problems = items_to_submit.check(text) + client_condition.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
+    problems = items_to_submit.check(text) + client_condition.check(text) + search_page.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
     ref_txt = open(REF, encoding='utf-8', errors='replace').read()
     others = '\n'.join(open(f, encoding='utf-8', errors='replace').read() for f in OTHER_EXPORTS)
     pkg_txt = re.sub(r'--[^\n]*', '', open(PKG, encoding='utf-8').read())

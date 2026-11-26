@@ -1428,8 +1428,8 @@ wwv_flow_api.create_page_plug(
 ,p_plug_display_sequence=>20
 ,p_query_type=>'SQL'
 ,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
-'-- one search text over every shown column (user request 2026-11-23); no rows until a search is made, as Forms',
-'-- opens the block in Enter-Query mode: the dialog opens without reading IMPORTERS. No sort clause (user request',
+'-- one search text over every shown column (user request 2026-11-23); every row while the search text is empty (user request 2026-11-26).',
+'-- No sort clause (user request',
 '-- 2026-11-23: the whole result is not sorted; the grid columns can still be sorted)',
 'SELECT TRANSLATE(ROWIDTOCHAR(i.ROWID), ''+/'', ''-_'') AS row_id,   -- URL-safe: a ''+'' in f?p arrives as a space',
 '       i.port_cd, p.port_name, i.impr_nbr, i.hq_impr_nbr,',
@@ -1437,14 +1437,13 @@ wwv_flow_api.create_page_plug(
 '       i.impr_type_cd, it.impr_type_name, i.bus_id_type_cd, i.bus_id, i.bus_id_brnch,',
 '       i.ctry_cd, c.crty_arbc_name, i.city_code_of_id, i.impr_expr_type',
 '  FROM importers i, sd_ports p, impr_types it, countries c',
-' WHERE :P112001_SEARCH IS NOT NULL',
-'   AND i.port_cd = NVL((SELECT IMPR1120.IMPORTERS_PRE_QUERY_PORT_CD(PORT_CD        => NULL,',
+' WHERE i.port_cd = NVL((SELECT IMPR1120.IMPORTERS_PRE_QUERY_PORT_CD(PORT_CD        => NULL,',
 '                                                                    P_CURR_PORT_CD => :P_CURR_PORT_CD)',
 '                          FROM dual), i.port_cd)',
 '   AND p.port_cd (+)       = i.port_cd',
 '   AND it.impr_type_cd (+) = i.impr_type_cd',
 '   AND c.ctry_cd (+)       = i.ctry_cd',
-'   AND (INSTR(UPPER(i.port_cd || ''|'' || p.port_name || ''|'' || i.impr_nbr || ''|'' || i.hq_impr_nbr || ''|'' ||',
+'   AND (:P112001_SEARCH IS NULL OR INSTR(UPPER(i.port_cd || ''|'' || p.port_name || ''|'' || i.impr_nbr || ''|'' || i.hq_impr_nbr || ''|'' ||',
 '                    i.arbc_impr_name || ''|'' || i.eng_impr_name || ''|'' || i.impr_cntct_name || ''|'' ||',
 '                    i.impr_type_cd || ''|'' || it.impr_type_name || ''|'' || i.bus_id_type_cd || ''|'' || i.bus_id || ''|'' ||',
 '                    i.bus_id_brnch || ''|'' || i.ctry_cd || ''|'' || c.crty_arbc_name || ''|'' || i.city_code_of_id || ''|'' ||',
@@ -1455,7 +1454,7 @@ wwv_flow_api.create_page_plug(
 ,p_plug_source_type=>'NATIVE_IG'
 ,p_ajax_items_to_submit=>'P112001_SEARCH'
 ,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
-,p_plug_comment=>'Source: IMPR1120.IMPORTERS block query + PRE-QUERY (block ORDER BY dropped); one search text over all columns, no query until a search, no total row count / spec 3'
+,p_plug_comment=>'Source: IMPR1120.IMPORTERS block query + PRE-QUERY (block ORDER BY dropped); one search text over all columns, every row until a search narrows it (user request 2026-11-26), no total row count / spec 3'
 );
 wwv_flow_api.create_region_column(
  p_id=>wwv_flow_api.id(11200102000010)
@@ -1916,7 +1915,7 @@ wwv_flow_api.create_interactive_grid(
 ,p_fixed_row_height=>true
 ,p_pagination_type=>'SET'
 ,p_show_total_row_count=>false
-,p_no_data_found_message=>unistr('\0644\0627 \062A\0648\062C\062F \0646\062A\0627\0626\062C - \0623\062F\062E\0644 \0646\0635 \0627\0644\0628\062D\062B \062B\0645 \0627\0636\063A\0637 \0628\062D\062B')
+,p_no_data_found_message=>unistr('\0644\0627 \062A\0648\062C\062F \0646\062A\0627\0626\062C')
 ,p_show_toolbar=>true
 ,p_toolbar_buttons=>'ACTIONS_MENU:RESET'
 ,p_enable_save_public_report=>false
@@ -2222,6 +2221,16 @@ wwv_flow_api.create_page_da_action(
 ,p_action=>'NATIVE_HIDE'
 ,p_affected_elements_type=>'REGION'
 ,p_affected_region_id=>wwv_flow_api.id(73488102084440079322)
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(11200107999990)
+,p_process_sequence=>10
+,p_process_point=>'BEFORE_HEADER'
+,p_process_type=>'NATIVE_SESSION_STATE'
+,p_process_name=>'CLEAR SEARCH'
+,p_attribute_01=>'CLEAR_CACHE_CURRENT_PAGE'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_comment=>'Source: Forms Enter-Query (empty criteria on entry); clears P112001_SEARCH on every opening of the dialog, so it shows every row (user requests 2026-11-26, scripts/search_page.py)'
 );
 end;
 /

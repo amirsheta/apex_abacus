@@ -43,7 +43,7 @@
 | 1160 | الهيدر (`IMPR_CAR_EXCEPTION_HERO`) | Static HTML, Blank with Attributes, `cg-hero`, title `&P1160_HERO_TITLE.` | OLB block TITLE |
 | 1160 | استثناء المستوردين الافراد للسيارات (`IMPR_CAR_EXCEPTION`) | Form, table `IMPR_CAR_EXCEPTION`, ROWID, `i:u:d`, Interactive Report template, `zatca-forms cg-form cg-card` | block IMPR_CAR_EXCEPTION |
 | 116001 | بحث (`IMPR_CAR_EXCEPTION_SEARCH_CRITERIA`) | Static, text `P116001_SEARCH` + buttons SEARCH / CLEAR | Enter-Query criteria |
-| 116001 | استثناءات السيارات (`IMPR_CAR_EXCEPTION_SEARCH`) | read-only IG, lazy loading, no rows until a search; link `EXCPT_ISN` → page 1160 with `P0_PAGE_PK = ROW_ID` | block query (no WHERE clause: all ports) + POST-QUERY names |
+| 116001 | استثناءات السيارات (`IMPR_CAR_EXCEPTION_SEARCH`) | read-only IG, lazy loading, every row on opening (search text optional, user request 2026-11-26); link `EXCPT_ISN` → page 1160 with `P0_PAGE_PK = ROW_ID` | block query (no WHERE clause: all ports) + POST-QUERY names |
 
 ## 4. Items (page 1160)
 

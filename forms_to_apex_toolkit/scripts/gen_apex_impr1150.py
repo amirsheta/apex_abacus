@@ -31,6 +31,7 @@ import functions_drawer # the FUNCS region is on page 0, never on a form page
 import item_icons       # Post Text icon next to every entry item
 import items_to_submit  # every page item a query / LOV / FOS call reads is in its Items to Submit
 import client_condition  # an item in an item-type client-side condition has a default value (user rule 2026-11-26)
+import search_page      # a search page <page>01 reads no data when the dialog opens (user request 2026-11-26)
 import lov_apx          # shared LOVs: function body returning SQL, code in LOV_APX (CLAUDE.md 4d)
 import forms_apx_helpers
 import parameter_names
@@ -626,29 +627,28 @@ end;
         ('p_attribute_02', q('TEXT')), ('p_attribute_03', q('Y')),
         ('p_plug_comment', src('IMPR1150.IMPORTERS_CENTRAL query criteria as one search text over all columns / spec 3'))]))
     search_sql = '\n'.join([
-        '-- one search text over every shown column; no rows until a search is made (Forms Enter-Query); HQ table',
+        '-- one search text over every shown column; every row while the search text is empty (user request 2026-11-26); HQ table',
         '-- over the database link in the block scope (PORT_CD 99 = :P_CURR_PORT_CD), all statuses (Forms QBE)',
         'SELECT ic.impr_nbr, ic.bus_id, ic.bus_id_brnch, ic.arbc_impr_name, ic.hq_impr_nbr,',
         "       ic.pending_active || ' - ' || rc.rv_meaning AS pending_active_name,",
         "       ic.impr_type_cd || ' - ' || it.impr_type_name AS impr_type",
         '  FROM ' + HQ_TABLE + ' ic, impr_types it, cg_ref_codes rc',
-        ' WHERE :P115001_SEARCH IS NOT NULL',
-        '   AND ic.port_cd = 99',
+        ' WHERE ic.port_cd = 99',
         '   AND ic.port_cd = :P_CURR_PORT_CD',
         '   AND it.impr_type_cd (+) = ic.impr_type_cd',
         "   AND rc.rv_domain (+) = 'PENDING_ACTIVE'",
         '   AND rc.rv_low_value (+) = TO_CHAR(ic.pending_active)',
-        "   AND INSTR(UPPER(ic.impr_nbr || '|' || ic.bus_id || '|' || ic.bus_id_brnch || '|' || ic.arbc_impr_name || '|' ||",
+        "   AND (:P115001_SEARCH IS NULL OR INSTR(UPPER(ic.impr_nbr || '|' || ic.bus_id || '|' || ic.bus_id_brnch || '|' || ic.arbc_impr_name || '|' ||",
         "                   ic.hq_impr_nbr || '|' || rc.rv_meaning || '|' || it.impr_type_name),",
-        '             UPPER(TRIM(:P115001_SEARCH))) > 0'])
+        '             UPPER(TRIM(:P115001_SEARCH))) > 0)'])
     P.extend(ig_region(PG_SEARCH, '115001:plug:IG', search_sql, 'P115001_SEARCH',
                        [('IMPR_NBR', 'الرقم الجمركي', 'NUMBER', 'link'), ('BUS_ID', 'الرقم الإستدلالي', 'VARCHAR2', 'text'),
                         ('BUS_ID_BRNCH', 'الرقم الفرعي', 'VARCHAR2', 'text'), ('ARBC_IMPR_NAME', 'اسم المستورد', 'VARCHAR2', 'text'),
                         ('HQ_IMPR_NBR', 'الرقم الموحد', 'NUMBER', 'text'), ('PENDING_ACTIVE_NAME', 'حالة المستورد', 'VARCHAR2', 'text'),
                         ('IMPR_TYPE', 'النشاط التجاري', 'VARCHAR2', 'text')],
-                       '115001000201', 'لا توجد نتائج - أدخل نص البحث ثم اضغط بحث', True,
+                       '115001000201', 'لا توجد نتائج', True,
                        'IMPR1150.IMPORTERS_CENTRAL block query (HQ table, block WHERE + PRE-QUERY PORT_CD 99); one search '
-                       'text over all columns, no query until a search / spec 3', 'المستوردون', 'IMPORTERS_CENTRAL_SEARCH', 20,
+                       'text over all columns, every row until a search narrows it (user request 2026-11-26) / spec 3', 'المستوردون', 'IMPORTERS_CENTRAL_SEARCH', 20,
                        link='f?p=&APP_ID.:1150:&SESSION.::&DEBUG.:1150:P0_PAGE_PK:&IMPR_NBR.'))
     UNCERTAIN.add('search IG 115001: p_lazy_loading true, p_show_total_row_count false, toolbar ACTIONS_MENU:RESET (search field removed)')
     # IG primary key: the search grid has no hidden key column; IMPR_NBR is unique per PORT_CD 99
@@ -704,7 +704,7 @@ end;
 set verify on feedback on define on
 prompt  ...done
 ''')
-    text = client_condition.fix(items_to_submit.fix('\n'.join(out)))
+    text = search_page.fix(client_condition.fix(items_to_submit.fix('\n'.join(out))))
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, 'w', encoding='utf-8', newline='\n') as f:
         f.write(text)
@@ -719,7 +719,7 @@ def names_of(text, api):
     return out
 
 def selfcheck(text):
-    problems = items_to_submit.check(text) + client_condition.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
+    problems = items_to_submit.check(text) + client_condition.check(text) + search_page.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
     ref_txt = open(REF, encoding='utf-8', errors='replace').read()
     others = '\n'.join(open(f, encoding='utf-8', errors='replace').read() for f in OTHER_EXPORTS)
     pkg_txt = re.sub(r'--[^\n]*', '', open(PKG, encoding='utf-8').read())

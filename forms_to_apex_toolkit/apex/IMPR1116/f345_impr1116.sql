@@ -935,7 +935,8 @@ wwv_flow_api.create_page_plug(
 ,p_query_type=>'SQL'
 ,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
 '-- Forms block IMPR_PRTL_NAT query: WHERE REVIEW_FLAG = 0 AND GAZT_NAME IS NOT NULL (IMPR1116.IMPR_PRTL_NAT_IS_PENDING);',
-'-- optional search text over every shown column. URL-safe ROWID: a ''+'' in f?p arrives as a space.',
+'-- one search text over every shown column; every row while the search text is empty (user request 2026-11-26),',
+'-- the pending work queue as in Forms Execute Query without criteria. URL-safe ROWID: a ''+'' in f?p arrives as a space.',
 'SELECT TRANSLATE(ROWIDTOCHAR(n.ROWID), ''+/'', ''-_'') AS row_id,',
 '       n.prtl_nat_isn,',
 '       n.id_type_gzt,',
@@ -945,13 +946,12 @@ wwv_flow_api.create_page_plug(
 '       n.gazt_name',
 '  FROM impr_prtl_nat n',
 ' WHERE (SELECT IMPR1116.IMPR_PRTL_NAT_IS_PENDING(REVIEW_FLAG => n.review_flag, GAZT_NAME => n.gazt_name) FROM dual) = ''Y''',
-'   AND (:P111601_SEARCH IS NULL',
-'        OR INSTR(UPPER(n.prtl_nat_isn || ''|'' || n.id_type_gzt || ''|'' || n.bus_id_new || ''|'' || n.gazt_name),',
-'                 UPPER(TRIM(:P111601_SEARCH))) > 0)'))
+'   AND (:P111601_SEARCH IS NULL OR INSTR(UPPER(n.prtl_nat_isn || ''|'' || n.id_type_gzt || ''|'' || n.bus_id_new || ''|'' || n.gazt_name),',
+'             UPPER(TRIM(:P111601_SEARCH))) > 0)'))
 ,p_plug_source_type=>'NATIVE_IG'
 ,p_ajax_items_to_submit=>'P111601_SEARCH'
 ,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
-,p_plug_comment=>'Source: IMPR1116.IMPR_PRTL_NAT block query (WHERE REVIEW_FLAG = 0 AND GAZT_NAME IS NOT NULL); pending rows shown at once, optional search text (spec decision 2) / spec 3'
+,p_plug_comment=>'Source: IMPR1116.IMPR_PRTL_NAT block query (WHERE REVIEW_FLAG = 0 AND GAZT_NAME IS NOT NULL); one search text over all columns, every row until a search narrows it (spec decision 2, user request 2026-11-26) / spec 3'
 );
 wwv_flow_api.create_region_column(
  p_id=>wwv_flow_api.id(11160102000010)
@@ -1116,7 +1116,7 @@ wwv_flow_api.create_interactive_grid(
 ,p_fixed_row_height=>true
 ,p_pagination_type=>'SET'
 ,p_show_total_row_count=>true
-,p_no_data_found_message=>unistr('\0644\0627 \062A\0648\062C\062F \0628\064A\0627\0646\0627\062A \0628\0648\0627\0628\0629 \0628\0627\0646\062A\0638\0627\0631 \0627\0644\0645\0631\0627\062C\0639\0629')
+,p_no_data_found_message=>unistr('\0644\0627 \062A\0648\062C\062F \0646\062A\0627\0626\062C')
 ,p_show_toolbar=>true
 ,p_toolbar_buttons=>'ACTIONS_MENU:RESET'
 ,p_enable_save_public_report=>false
@@ -1334,6 +1334,16 @@ wwv_flow_api.create_page_da_action(
 ,p_action=>'NATIVE_HIDE'
 ,p_affected_elements_type=>'REGION'
 ,p_affected_region_id=>wwv_flow_api.id(73488102084440079322)
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(11160107999990)
+,p_process_sequence=>10
+,p_process_point=>'BEFORE_HEADER'
+,p_process_type=>'NATIVE_SESSION_STATE'
+,p_process_name=>'CLEAR SEARCH'
+,p_attribute_01=>'CLEAR_CACHE_CURRENT_PAGE'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_comment=>'Source: Forms Enter-Query (empty criteria on entry); clears P111601_SEARCH on every opening of the dialog, so it shows every row (user requests 2026-11-26, scripts/search_page.py)'
 );
 end;
 /

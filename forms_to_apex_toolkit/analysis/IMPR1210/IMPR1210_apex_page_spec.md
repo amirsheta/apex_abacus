@@ -48,7 +48,7 @@
 | 1210 | تفاويض الشركات الوسيطة (`AGNTS`) | Form, table `AGNTS`, ROWID, `i:u`, Interactive Report template, `zatca-forms cg-form cg-card` | block AGNTS |
 | 1210 | تفاويض المستورد (`LOV_AGNT_ATHR_IMPR`) | read-only IG, Standard, `cg-card cg-grid`, Page Items to Submit `P1210_PORT_CD, P1210_IMPR_NBR`; link `ATHRZTN_SEQ_NBR` → page 1210 with `P0_PAGE_PK = ROW_ID` | LOV form LOV_AGNT_ATHR_IMPR |
 | 121001 | بحث (`AGNTS_SEARCH_CRITERIA`) | Static, text `P121001_SEARCH` + buttons SEARCH / CLEAR | Enter-Query criteria |
-| 121001 | تفاويض الشركات الوسيطة (`AGNTS_SEARCH`) | read-only IG, lazy loading, no rows until a search; link `ATHRZTN_SEQ_NBR` → page 1210 | block query (WHERE PORT_CD = P_CURR_PORT_CD) + POST-QUERY names |
+| 121001 | تفاويض الشركات الوسيطة (`AGNTS_SEARCH`) | read-only IG, lazy loading, every row on opening (search text optional, user request 2026-11-26); link `ATHRZTN_SEQ_NBR` → page 1210 | block query (WHERE PORT_CD = P_CURR_PORT_CD) + POST-QUERY names |
 
 Grid query of `LOV_AGNT_ATHR_IMPR`:
 

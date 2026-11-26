@@ -28,6 +28,7 @@ import functions_drawer # the FUNCS region is on page 0, never on a form page
 import item_icons      # Post Text icon next to every entry item, from the item name (f202604 convention)
 import items_to_submit # every page item a query / LOV / FOS call reads is in its Items to Submit (user rule 2026-11-25)
 import client_condition  # an item in an item-type client-side condition has a default value (user rule 2026-11-26)
+import search_page      # a search page <page>01 reads no data when the dialog opens (user request 2026-11-26)
 import lov_apx         # shared LOVs: function body returning SQL, code in LOV_APX (CLAUDE.md 4d)
 REF = os.path.join(ROOT, 'apex', 'Reference', 'f345.sql')
 IMPR1110_EXPORT = os.path.join(ROOT, 'apex', 'IMPR1110', 'f345_impr1110.sql')
@@ -421,7 +422,8 @@ IMPORTERS_SQL = '\n'.join([
     '   AND l_bit.bus_id_type_cd (+)   = l_itidt.bus_id_type_cd'])
 SEARCH_SQL = '\n'.join([
     '-- Forms block IMPR_PRTL_NAT query: WHERE REVIEW_FLAG = 0 AND GAZT_NAME IS NOT NULL (IMPR1116.IMPR_PRTL_NAT_IS_PENDING);',
-    "-- optional search text over every shown column. URL-safe ROWID: a '+' in f?p arrives as a space.",
+    '-- one search text over every shown column; every row while the search text is empty (user request 2026-11-26),',
+    "-- the pending work queue as in Forms Execute Query without criteria. URL-safe ROWID: a '+' in f?p arrives as a space.",
     "SELECT TRANSLATE(ROWIDTOCHAR(n.ROWID), '+/', '-_') AS row_id,",
     '       n.prtl_nat_isn,',
     '       n.id_type_gzt,',
@@ -431,9 +433,8 @@ SEARCH_SQL = '\n'.join([
     '       n.gazt_name',
     '  FROM impr_prtl_nat n',
     " WHERE (SELECT IMPR1116.IMPR_PRTL_NAT_IS_PENDING(REVIEW_FLAG => n.review_flag, GAZT_NAME => n.gazt_name) FROM dual) = 'Y'",
-    '   AND (:P111601_SEARCH IS NULL',
-    "        OR INSTR(UPPER(n.prtl_nat_isn || '|' || n.id_type_gzt || '|' || n.bus_id_new || '|' || n.gazt_name),",
-    '                 UPPER(TRIM(:P111601_SEARCH))) > 0)'])
+    "   AND (:P111601_SEARCH IS NULL OR INSTR(UPPER(n.prtl_nat_isn || '|' || n.id_type_gzt || '|' || n.bus_id_new || '|' || n.gazt_name),",
+    '             UPPER(TRIM(:P111601_SEARCH))) > 0)'])
 SEARCH_COLUMNS = [
     ('ROW_ID', None, 'VARCHAR2'), ('PRTL_NAT_ISN', 'مسلسل', 'NUMBER'), ('ID_TYPE_GZT', 'رمز نوع السجل', 'VARCHAR2'),
     ('ID_TYPE_GZT_NAME', 'نوع السجل', 'VARCHAR2'), ('BUS_ID_NEW', 'رقم السجل', 'VARCHAR2'), ('GAZT_NAME', 'الاسم', 'VARCHAR2')]
@@ -614,8 +615,8 @@ end;
         ('p_plug_source', lit(SEARCH_SQL)), ('p_plug_source_type', q('NATIVE_IG')),
         ('p_ajax_items_to_submit', q('P111601_SEARCH')),
         ('p_plug_query_options', q('DERIVED_REPORT_COLUMNS')),
-        ('p_plug_comment', src('IMPR1116.IMPR_PRTL_NAT block query (WHERE REVIEW_FLAG = 0 AND GAZT_NAME IS NOT NULL); pending rows shown at once, '
-                               'optional search text (spec decision 2) / spec 3'))]))
+        ('p_plug_comment', src('IMPR1116.IMPR_PRTL_NAT block query (WHERE REVIEW_FLAG = 0 AND GAZT_NAME IS NOT NULL); one search text over all columns, '
+                               'every row until a search narrows it (spec decision 2, user request 2026-11-26) / spec 3'))]))
     for i, (c, h, dt) in enumerate(SEARCH_COLUMNS):
         if c == 'ROW_ID':
             col = dict(name=c, kind='HIDDEN', data_type=dt, pk=True)
@@ -627,7 +628,7 @@ end;
             col = dict(name=c, kind='DISPLAY', data_type=dt, heading=h)
         A(ig_column(PG_SEARCH, col, (i + 1) * 10))
     for c in ig(PG_SEARCH, '111601:plug:IG', [c for c, _, _ in SEARCH_COLUMNS], {'ROW_ID'},
-                'لا توجد بيانات بوابة بانتظار المراجعة', search=True):
+                'لا توجد نتائج', search=True):
         A(c)
     UNCERTAIN.add('search IG: p_lazy_loading true, toolbar ACTIONS_MENU:RESET (own search text, as IMPR1120 112001)')
     A(page_item(PG_SEARCH, '111601:plug:CRIT', 10, dict(
@@ -675,7 +676,7 @@ end;
 set verify on feedback on define on
 prompt  ...done
 ''')
-    text = client_condition.fix(items_to_submit.fix('\n'.join(out)))   # Items to Submit = every page item read (user rule 2026-11-25)
+    text = search_page.fix(client_condition.fix(items_to_submit.fix('\n'.join(out))))   # Items to Submit = every page item read (user rule 2026-11-25)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, 'w', encoding='utf-8', newline='\n') as f:
         f.write(text)
@@ -698,7 +699,7 @@ def unq(s):
     return s[1:-1].replace("''", "'") if s.startswith("'") else s
 
 def selfcheck(text):
-    problems = items_to_submit.check(text) + client_condition.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
+    problems = items_to_submit.check(text) + client_condition.check(text) + search_page.check(text) + item_icons.check(text) + lov_apx.check(text) + functions_drawer.check_form_page(text)
     ref_txt = open(REF, encoding='utf-8', errors='replace').read()
     i1110 = open(IMPR1110_EXPORT, encoding='utf-8', errors='replace').read()
     pkg_txt = re.sub(r'--[^\n]*', '', open(PKG, encoding='utf-8').read())

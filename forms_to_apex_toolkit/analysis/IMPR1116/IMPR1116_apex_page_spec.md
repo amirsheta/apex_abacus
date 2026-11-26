@@ -16,7 +16,7 @@
 | # | Decision | Reason |
 |---|---|---|
 | 1 | **The 5-row master block becomes one record per page.** The search page 111601 lists every pending portal row (Forms Execute Query on `IMPR_PRTL_NAT`); its link opens the row on page 1116 (`P0_PAGE_PK` = URL-safe ROWID). Page 1116 shows it in a Form region with `REVIEW_FLAG` as the only editable item, and the importers grid below it | f345 standard: the page 0 toolbar (CREATE / SAVE / DELETE / SEARCH) works on one record key in `P0_PAGE_PK`; a Form region + detail IG is the AGR1100 / IMPR1120 pattern. The importers grid in Forms also belongs to one portal row at a time. **To confirm with the user** (logic extraction §8 #1). Alternative: an editable IG of all pending rows with `IMPORTERS` as its detail IG; SAVE would then need `P0_PAGE_PK` set artificially |
-| 2 | Search page **shows the pending rows at once** (no "search first" as in IMPR1120) and has one optional search text over every column | The list *is* the work queue (`REVIEW_FLAG = 0`); the Forms user runs Execute Query without criteria |
+| 2 | Search page **shows the pending rows at once** and has one optional search text over every column | The list *is* the work queue (`REVIEW_FLAG = 0`); the Forms user runs Execute Query without criteria. User request 2026-11-26: every search page shows all rows on opening (no `IS NOT NULL` gate) |
 | 3 | A reviewed row stays open after SAVE | `P0_PAGE_PK_CHECK` accepts any `IMPR_PRTL_NAT` row; the search list no longer shows it (Forms: visible until the next query) |
 | 4 | CREATE / DELETE of the page 0 toolbar are refused with a message (`PRE_INSERT` / `PRE_DELETE`) | block Insert / Delete Allowed = false; the toolbar buttons cannot be hidden per page without changing page 0 |
 | 5 | `IMPORTERS` = read-only IG whose region SQL holds the Forms WHERE on the master page items, including `NVL(BUS_ID_BRNCH, 0)` | the native Master Region join compares with `=` only; the master is a Form region, not an IG |
@@ -95,7 +95,8 @@ The Forms block has no ORDER BY; none is added.
 
 ```sql
 -- Forms block IMPR_PRTL_NAT query: WHERE REVIEW_FLAG = 0 AND GAZT_NAME IS NOT NULL (IMPR1116.IMPR_PRTL_NAT_IS_PENDING);
--- optional search text over every shown column. URL-safe ROWID: a '+' in f?p arrives as a space.
+-- one search text over every shown column; every row while the search text is empty (user request 2026-11-26),
+-- the pending work queue as in Forms Execute Query without criteria. URL-safe ROWID: a '+' in f?p arrives as a space.
 SELECT TRANSLATE(ROWIDTOCHAR(n.ROWID), '+/', '-_') AS row_id,
        n.prtl_nat_isn,
        n.id_type_gzt,
@@ -105,9 +106,8 @@ SELECT TRANSLATE(ROWIDTOCHAR(n.ROWID), '+/', '-_') AS row_id,
        n.gazt_name
   FROM impr_prtl_nat n
  WHERE (SELECT IMPR1116.IMPR_PRTL_NAT_IS_PENDING(REVIEW_FLAG => n.review_flag, GAZT_NAME => n.gazt_name) FROM dual) = 'Y'
-   AND (:P111601_SEARCH IS NULL
-        OR INSTR(UPPER(n.prtl_nat_isn || '|' || n.id_type_gzt || '|' || n.bus_id_new || '|' || n.gazt_name),
-                 UPPER(TRIM(:P111601_SEARCH))) > 0)
+   AND (:P111601_SEARCH IS NULL OR INSTR(UPPER(n.prtl_nat_isn || '|' || n.id_type_gzt || '|' || n.bus_id_new || '|' || n.gazt_name),
+             UPPER(TRIM(:P111601_SEARCH))) > 0)
 ```
 
 ## 4. Items

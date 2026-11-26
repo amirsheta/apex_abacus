@@ -1384,7 +1384,7 @@ wwv_flow_api.create_page_plug(
 ,p_plug_display_sequence=>20
 ,p_query_type=>'SQL'
 ,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
-'-- one search text over every shown column; no rows until a search is made (Forms opens in Enter-Query mode).',
+'-- one search text over every shown column; every row while the search text is empty (user request 2026-11-26).',
 '-- Block WHERE clause: the authorizations of the user''s port (P_CURR_PORT_CD). No ORDER BY in the block.',
 'SELECT x.*',
 '  FROM (SELECT TRANSLATE(ROWIDTOCHAR(a.ROWID), ''+/'', ''-_'') AS row_id,   -- URL-safe: a ''+'' in f?p arrives as a space',
@@ -1399,14 +1399,13 @@ unistr('               DECODE(a.athrztn_sta_cd, 1, ''\0633\0627\0631\064A'', 2, 
 '           AND i.port_cd (+) = a.port_cd AND i.impr_nbr (+) = a.impr_nbr',
 '           AND g.port_cd (+) = a.port_cd AND g.impr_nbr (+) = a.impr_nbr_agent_id',
 '           AND ae.rv_domain (+) = ''ALLOWED EXPORT'' AND ae.rv_low_value (+) = TO_CHAR(a.allow_export)) x',
-' WHERE :P121001_SEARCH IS NOT NULL',
-'   AND INSTR(UPPER(x.athrztn_seq_nbr || ''|'' || x.impr_nbr || ''|'' || x.impr_name || ''|'' || x.impr_nbr_ag || ''|'' ||',
+' WHERE (:P121001_SEARCH IS NULL OR INSTR(UPPER(x.athrztn_seq_nbr || ''|'' || x.impr_nbr || ''|'' || x.impr_name || ''|'' || x.impr_nbr_ag || ''|'' ||',
 '                   x.impr_name_ag || ''|'' || x.allow_export_name || ''|'' || x.athrztn_note || ''|'' || x.athrztn_cret_dt || ''|'' ||',
-'                   x.athrztn_sta_name || ''|'' || x.athrztn_cncld_dt), UPPER(TRIM(:P121001_SEARCH))) > 0'))
+'                   x.athrztn_sta_name || ''|'' || x.athrztn_cncld_dt), UPPER(TRIM(:P121001_SEARCH))) > 0)'))
 ,p_plug_source_type=>'NATIVE_IG'
 ,p_ajax_items_to_submit=>'P121001_SEARCH'
 ,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
-,p_plug_comment=>'Source: IMPR1210.AGNTS block query (WHERE PORT_CD = P_CURR_PORT_CD) with the POST-QUERY names; one search text over all columns, no query until a search / spec 3'
+,p_plug_comment=>'Source: IMPR1210.AGNTS block query (WHERE PORT_CD = P_CURR_PORT_CD) with the POST-QUERY names; one search text over all columns, every row until a search narrows it (user request 2026-11-26) / spec 3'
 );
 wwv_flow_api.create_region_column(
  p_id=>wwv_flow_api.id(12100102000010)
@@ -1705,7 +1704,7 @@ wwv_flow_api.create_interactive_grid(
 ,p_fixed_row_height=>true
 ,p_pagination_type=>'SET'
 ,p_show_total_row_count=>false
-,p_no_data_found_message=>unistr('\0644\0627 \062A\0648\062C\062F \0646\062A\0627\0626\062C - \0623\062F\062E\0644 \0646\0635 \0627\0644\0628\062D\062B \062B\0645 \0627\0636\063A\0637 \0628\062D\062B')
+,p_no_data_found_message=>unistr('\0644\0627 \062A\0648\062C\062F \0646\062A\0627\0626\062C')
 ,p_show_toolbar=>true
 ,p_toolbar_buttons=>'ACTIONS_MENU:RESET'
 ,p_enable_save_public_report=>false
@@ -1963,6 +1962,16 @@ wwv_flow_api.create_page_da_action(
 ,p_action=>'NATIVE_HIDE'
 ,p_affected_elements_type=>'REGION'
 ,p_affected_region_id=>wwv_flow_api.id(73488102084440079322)
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(12100107999990)
+,p_process_sequence=>10
+,p_process_point=>'BEFORE_HEADER'
+,p_process_type=>'NATIVE_SESSION_STATE'
+,p_process_name=>'CLEAR SEARCH'
+,p_attribute_01=>'CLEAR_CACHE_CURRENT_PAGE'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_comment=>'Source: Forms Enter-Query (empty criteria on entry); clears P121001_SEARCH on every opening of the dialog, so it shows every row (user requests 2026-11-26, scripts/search_page.py)'
 );
 end;
 /
